@@ -1,0 +1,31 @@
+name: Fetch manifests
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+  schedule:
+    # “At 6am and 6pm”
+    - cron: "0 6,18 * * *"
+
+jobs:
+  fetch:
+    name: Fetch
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+
+      - name: fetch
+        run: |
+          pip install -U pip
+          pip install git+https://github.com/tlambert03/npe2.git@fetch-visitor
+          npe2 fetch --all -o public/manifests
+
+      - uses: stefanzweifel/git-auto-commit-action@v4
