@@ -1,12 +1,13 @@
 name: Fetch manifests
 
 on:
-  workflow_dispatch:
-  pull_request:
   push:
+    branches:
+      - main
+  workflow_dispatch:
   schedule:
-    # “At 6am and 6pm”
-    - cron: "0 6,18 * * *"
+    # “Every 10 minutes”
+    - cron: "*/10 * * * *"
 
 jobs:
   fetch:
@@ -29,4 +30,7 @@ jobs:
           npe2 fetch --all -o public/manifest
           python scripts/reindex.py
 
+      # https://github.com/stefanzweifel/git-auto-commit-action
       - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Update manifests
