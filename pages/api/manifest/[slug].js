@@ -8,5 +8,5 @@ export default async function handler(req, res) {
     jsonDirectory + `/${slug}.json`,
     "utf8"
   );
-  res.status(200).json(fileContents);
+  res.status(200).send(fileContents);
 }
