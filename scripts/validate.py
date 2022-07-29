@@ -16,8 +16,5 @@ for mf_file in MANIFESTS.glob("*.json"):
     contributions = data["contributions"]
 
     if not any(contributions.values()):
-        print(f"No contributions in {mf_file.name}")
+        print(f"⚠️  No contributions in {mf_file.name}")
         continue
-
-    if data["npe1_shim"]:
-        print(f"npe1 shim in {mf_file.name}")

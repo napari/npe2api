@@ -20,8 +20,6 @@ class SummaryDict(TypedDict):
 PUBLIC = Path(__file__).parent.parent / "public"
 MANIFESTS = PUBLIC / "manifest"
 
-# index of contribution type to list of plugin names
-CONTRIB_INDEX: DefaultDict[str, List[PluginName]] = DefaultDict(list)
 # index of filename pattern to list of plugin names
 READER_INDEX: DefaultDict[str, List[PluginName]] = DefaultDict(list)
 # summary index, used plugin install widget list items
@@ -58,8 +56,6 @@ for mf_file in MANIFESTS.glob("*.json"):
         if not contribs:
             continue
 
-        CONTRIB_INDEX[contrib_type].append(name)
-
         if contrib_type == "readers":
             for contrib in contribs:
                 for pattern in contrib["filename_patterns"]:
@@ -67,5 +63,4 @@ for mf_file in MANIFESTS.glob("*.json"):
 
 
 (PUBLIC / "index.json").write_text(json.dumps(INDEX))
-(PUBLIC / "contributions.json").write_text(json.dumps(CONTRIB_INDEX))
 (PUBLIC / "readers.json").write_text(json.dumps(READER_INDEX))
