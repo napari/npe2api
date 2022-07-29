@@ -11,7 +11,7 @@
         - fetches all current napari plugin manifests
         - places them into the [`public/manifest`](public/manifest/) directory
         - records any fetch errors in [`public/manifest/errors.json`](public/manifest/errors.json)
-    3. runs [`scripts/reindex.py`](scripts/reindex.py) which validates teh manifests and builds any aggregates/indices.
+    3. runs [`scripts/reindex.py`](scripts/reindex.py) which validates the manifests and builds any aggregates/indices.
     3. commits these changes to the `main` branch using [`git-auto-commit-action`](https://github.com/stefanzweifel/git-auto-commit-action)
 3. This triggers vercel to build the (fully static) API and deploy to
    https://npe2-talley.vercel.app
