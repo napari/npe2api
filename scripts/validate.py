@@ -1,3 +1,9 @@
+"""This script runs during fetch and checks the validity of the data.
+
+If it fails, new data will not be pushed to main or released in the API.
+here we can add any additional checks to prevent invalid data from being
+published.
+"""
 import json
 from pathlib import Path
 
@@ -13,6 +19,8 @@ for mf_file in MANIFESTS.glob("*.json"):
     with mf_file.open() as f:
         data = json.load(f)
 
+    assert data["name"]
+    assert data["package_metadata"]["version"]
     contributions = data["contributions"]
 
     if not any(contributions.values()):
