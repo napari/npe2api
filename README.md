@@ -4,6 +4,7 @@
     - any push to the `main` branch
     - a cron job every 5 minutes
     - a `workflow_dispatch` triggered manually from the [actions page](https://github.com/tlambert03/npe2api/actions/workflows/fetch.yml)
+    - TODO: a comment on an issue that says `please re-index` (or something like that)
 2. When triggered, the fetch action
     1. installs `npe2`
     2. calls `npe2 fetch --all -o public/manifest` which
