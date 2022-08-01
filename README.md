@@ -17,6 +17,8 @@
    https://npe2-talley.vercel.app
 3. Endpoints:
     - https://npe2-talley.vercel.app/api/plugins
+        - object of {plugin_names -> version} 
+    - https://npe2-talley.vercel.app/api/summary
         - all basic plugin info needed to populate the plugin browser in napari
     - [https://npe2-talley.vercel.app/api/manifest/{plugin-name}](https://npe2-talley.vercel.app/api/manifest/napari-animation)
         - the full manifest for a given plugin
