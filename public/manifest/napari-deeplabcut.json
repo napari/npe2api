@@ -1,1 +1,203 @@
-{"name": "napari-deeplabcut", "display_name": "napari DeepLabCut", "schema_version": "0.1.0", "on_activate": null, "on_deactivate": null, "contributions": {"commands": [{"id": "napari-deeplabcut.get_hdf_reader", "title": "Open data with napari DeepLabCut", "python_name": "napari_deeplabcut._reader:get_hdf_reader", "short_title": null, "category": null, "icon": null, "enablement": null}, {"id": "napari-deeplabcut.get_image_reader", "title": "Open images with napari DeepLabCut", "python_name": "napari_deeplabcut._reader:get_image_reader", "short_title": null, "category": null, "icon": null, "enablement": null}, {"id": "napari-deeplabcut.get_folder_parser", "title": "Open folder with napari DeepLabCut", "python_name": "napari_deeplabcut._reader:get_folder_parser", "short_title": null, "category": null, "icon": null, "enablement": null}, {"id": "napari-deeplabcut.get_config_reader", "title": "Open config with napari DeepLabCut", "python_name": "napari_deeplabcut._reader:get_config_reader", "short_title": null, "category": null, "icon": null, "enablement": null}, {"id": "napari-deeplabcut.write_hdf", "title": "Save keypoint annotations with napari DeepLabCut", "python_name": "napari_deeplabcut._writer:write_hdf", "short_title": null, "category": null, "icon": null, "enablement": null}, {"id": "napari-deeplabcut.write_masks", "title": "Save segmentation masks with napari DeepLabCut", "python_name": "napari_deeplabcut._writer:write_masks", "short_title": null, "category": null, "icon": null, "enablement": null}, {"id": "napari-deeplabcut.make_keypoint_controls", "title": "Make keypoint controls", "python_name": "napari_deeplabcut._widgets:KeypointControls", "short_title": null, "category": null, "icon": null, "enablement": null}], "readers": [{"command": "napari-deeplabcut.get_hdf_reader", "filename_patterns": ["*.h5"], "accepts_directories": false}, {"command": "napari-deeplabcut.get_image_reader", "filename_patterns": ["*.png", "*.jpg", "*.jpeg"], "accepts_directories": true}, {"command": "napari-deeplabcut.get_config_reader", "filename_patterns": ["*.yaml"], "accepts_directories": false}, {"command": "napari-deeplabcut.get_folder_parser", "filename_patterns": ["*"], "accepts_directories": true}], "writers": [{"command": "napari-deeplabcut.write_hdf", "layer_types": ["points{1}"], "filename_extensions": [".h5"], "display_name": ""}, {"command": "napari-deeplabcut.write_masks", "layer_types": ["shapes{1}"], "filename_extensions": [".csv"], "display_name": ""}], "widgets": [{"command": "napari-deeplabcut.make_keypoint_controls", "display_name": "Keypoint controls", "autogenerate": false}], "sample_data": null, "themes": null, "menus": {}, "submenus": null}, "package_metadata": {"metadata_version": "2.1", "name": "napari-deeplabcut", "version": "0.0.3", "dynamic": null, "platform": null, "supported_platform": null, "summary": "napari + DeepLabCut annotation tool", "description": "# napari-deeplabcut\n\n\n<img src=\"https://images.squarespace-cdn.com/content/v1/57f6d51c9f74566f55ecf271/1d409ffe-c9f4-47e1-bde2-3010c1c40455/naparidlc.png?format=750w\" width=\"250\" title=\"napari-deeplabcut\" alt=\"napari+deeplabcut\" align=\"right\" vspace = \"80\">\n\n[![License: BSD-3](https://img.shields.io/badge/License-BSD3-blue.svg)](https://www.gnu.org/licenses/bsd3)\n[![PyPI](https://img.shields.io/pypi/v/napari-deeplabcut.svg?color=green)](https://pypi.org/project/napari-deeplabcut)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-deeplabcut.svg?color=green)](https://python.org)\n[![tests](https://github.com/DeepLabCut/napari-deeplabcut/workflows/tests/badge.svg)](https://github.com/DeepLabCut/napari-deeplabcut/actions)\n[![codecov](https://codecov.io/gh/DeepLabCut/napari-deeplabcut/branch/main/graph/badge.svg)](https://codecov.io/gh/DeepLabCut/napari-deeplabcut)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-deeplabcut)](https://napari-hub.org/plugins/napari-deeplabcut)\n\nA napari plugin for keypoint annotation with DeepLabCut\n\n\n## Installation\n\nYou can install `napari-deeplabcut` via [pip]:\n\n    pip install napari-deeplabcut\n\n\n\nTo install latest development version :\n\n    pip install git+https://github.com/DeepLabCut/napari-deeplabcut.git\n\n\n## Usage\n\nTo use the plugin, please run:\n\n    napari\n\nThen, activate the plugin in Plugins > napari-deeplabcut: Keypoint controls.\n\nAll accepted files (config.yaml, images, h5 data files) can be loaded\neither by dropping them directly onto the canvas or via the File menu.\n\nThe easiest way to get started is to drop a folder (typically a folder from within a DeepLabCut's `labeled-data` directory), and, if labeling from scratch, drop the corresponding `config.yaml` to automatically add a `Points layer` and populate the dropdown menus.\n\n**Tools & shortcuts are:**\n\n- `2` and `3`, to easily switch between labeling and selection mode\n- `4`, to enable pan & zoom (which is achieved using the mouse wheel or finger scrolling on the Trackpad)\n- `M`, to cycle through regular (sequential), quick, and cycle annotation mode (see the description [here](https://github.com/DeepLabCut/DeepLabCut-label/blob/ee71b0e15018228c98db3b88769e8a8f4e2c0454/dlclabel/layers.py#L9-L19))\n- `E`, to enable edge coloring (by default, if using this in refinement GUI mode, points with a confidence lower than 0.6 are marked\nin red)\n- `F`, to toggle between animal and body part color scheme.\n- `backspace` to delete a point.\n- Check the box \"display text\" to show the label names on the canvas.\n- To move to another folder, be sure to save (Ctrl+S), then delete the layers, and re-drag/drop the next folder.\n\n\n### Save Layers\n\nAnnotations and segmentations are saved with `File > Save Selected Layer(s)...` (or its shortcut `Ctrl+S`).\nOnly when saving segmentation masks does a save file dialog pop up to name the destination folder;\nkeypoint annotations are otherwise automatically saved in the corresponding folder as `CollectedData_<ScorerName>.h5`.\n- As a reminder, DLC will only use the H5 file; so be sure if you open already labeled images you save/overwrite the H5.\n- Note, before saving a layer, make sure the points layer is selected. If the user clicked on the image(s) layer first, does `Save As`, then closes the window, any labeling work during that session will be lost!\n\n\n## Workflow\n\nSuggested workflows, depending on the image folder contents:\n\n1. **Labeling from scratch** \u2013 the image folder does not contain `CollectedData_<ScorerName>.h5` file.\n\n    Open *napari* as described in [Usage](#usage) and open an image folder together with the DeepLabCut project's `config.yaml`.\n    The image folder creates an *image layer* with the images to label.\n    Supported image formats are: `jpg`, `jpeg`, `png`.\n    The `config.yaml` file creates a *Points layer*, which holds metadata (such as keypoints read from the config file) necessary for labeling.\n    Select the *Points layer* in the layer list (lower left pane on the GUI) and click on the *+*-symbol in the layer controls menu (upper left pane) to start labeling.\n    The current keypoint can be viewed/selected in the keypoints dropdown menu (right pane).\n    The slider below the displayed image (or the left/right arrow keys) allows selecting the image to label.\n\n    To save the labeling progress refer to [Save Layers](#save-layers).\n    `Data successfully saved` should be shown in the status bar, and the image folder should now contain a `CollectedData_<ScorerName>.h5` file.\n    (Note: For convenience, a CSV file with the same name is also saved.)\n\n2. **Resuming labeling** \u2013 the image folder contains a `CollectedData_<ScorerName>.h5` file.\n\n    Open *napari* and open an image folder (which needs to contain a `CollectedData_<ScorerName>.h5` file).\n    In this case, it is not necessary to open the DLC project's `config.yaml` file, as all necessary metadata is read from the `h5` data file.\n\n    Saving works as described in *1*.\n\n3. **Refining labels** \u2013 the image folder contains a `machinelabels-iter<#>.h5` file.\n\n    The process is analog to *2*.\n\n4. **Drawing segmentation masks**\n\n    Drop an image folder as in *1*, manually add a *shapes layer*. Then select the *rectangle* in the layer controls (top left pane),\n    and start drawing rectangles over the images. Masks and rectangle vertices are saved as described in [Save Layers](#save-layers).\n    Note that masks can be reloaded and edited at a later stage by dropping the `vertices.csv` file onto the canvas. \n\n\n### Labeling multiple image folders\n\nLabeling multiple image folders has to be done in sequence; i.e., only one image folder can be opened at a time.\nAfter labeling the images of a particular folder is done and the associated *Points layer* has been saved, *all* layers should be removed from the layers list (lower left pane on the GUI) by selecting them and clicking on the trashcan icon.\nNow, another image folder can be labeled, following the process described in *1*, *2*, or *3*, depending on the particular image folder.\n\n\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\nTo locally install the code, please git clone the repo and then run `pip install -e .`\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-deeplabcut\" is free and open source software.\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[file an issue]: https://github.com/DeepLabCut/napari-deeplabcut/issues\n\n\n## Acknowledgements\n\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template. We thank the Chan Zuckerberg Initiative (CZI) for funding this work!\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/plugins/stable/index.html\n-->\n\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n", "description_content_type": "text/markdown", "keywords": null, "home_page": "https://github.com/DeepLabCut/napari-deeplabcut", "download_url": null, "author": "Jessy Lauer", "author_email": "jessy.lauer@epfl.ch", "maintainer": null, "maintainer_email": null, "license": "BSD-3-Clause", "classifier": ["Development Status :: 2 - Pre-Alpha", "Framework :: napari", "Intended Audience :: Developers", "License :: OSI Approved :: BSD License", "Operating System :: OS Independent", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.8", "Programming Language :: Python :: 3.9", "Programming Language :: Python :: 3.10", "Topic :: Scientific/Engineering :: Artificial Intelligence", "Topic :: Scientific/Engineering :: Image Processing", "Topic :: Scientific/Engineering :: Visualization"], "requires_dist": ["dask-image", "napari (<0.5.0)", "numpy", "pandas", "qtpy", "scikit-image", "tables", "ruamel.yaml", "napari ; extra == 'testing'", "pyqt5 ; extra == 'testing'", "pytest ; extra == 'testing'", "pytest-cov ; extra == 'testing'", "pytest-qt ; extra == 'testing'", "tox ; extra == 'testing'"], "requires_python": ">=3.8", "requires_external": null, "project_url": ["Bug Tracker, https://github.com/DeepLabCut/napari-deeplabcut/issues", "Documentation, https://github.com/DeepLabCut/napari-deeplabcut#README.md", "Source Code, https://github.com/DeepLabCut/napari-deeplabcut", "User Support, https://github.com/DeepLabCut/napari-deeplabcut/issues"], "provides_extra": ["testing"], "provides_dist": null, "obsoletes_dist": null}, "npe1_shim": false}
+{
+  "name": "napari-deeplabcut",
+  "display_name": "napari DeepLabCut",
+  "schema_version": "0.1.0",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-deeplabcut.get_hdf_reader",
+        "title": "Open data with napari DeepLabCut",
+        "python_name": "napari_deeplabcut._reader:get_hdf_reader",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-deeplabcut.get_image_reader",
+        "title": "Open images with napari DeepLabCut",
+        "python_name": "napari_deeplabcut._reader:get_image_reader",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-deeplabcut.get_folder_parser",
+        "title": "Open folder with napari DeepLabCut",
+        "python_name": "napari_deeplabcut._reader:get_folder_parser",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-deeplabcut.get_config_reader",
+        "title": "Open config with napari DeepLabCut",
+        "python_name": "napari_deeplabcut._reader:get_config_reader",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-deeplabcut.write_hdf",
+        "title": "Save keypoint annotations with napari DeepLabCut",
+        "python_name": "napari_deeplabcut._writer:write_hdf",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-deeplabcut.write_masks",
+        "title": "Save segmentation masks with napari DeepLabCut",
+        "python_name": "napari_deeplabcut._writer:write_masks",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-deeplabcut.make_keypoint_controls",
+        "title": "Make keypoint controls",
+        "python_name": "napari_deeplabcut._widgets:KeypointControls",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": [
+      {
+        "command": "napari-deeplabcut.get_hdf_reader",
+        "filename_patterns": [
+          "*.h5"
+        ],
+        "accepts_directories": false
+      },
+      {
+        "command": "napari-deeplabcut.get_image_reader",
+        "filename_patterns": [
+          "*.png",
+          "*.jpg",
+          "*.jpeg"
+        ],
+        "accepts_directories": true
+      },
+      {
+        "command": "napari-deeplabcut.get_config_reader",
+        "filename_patterns": [
+          "*.yaml"
+        ],
+        "accepts_directories": false
+      },
+      {
+        "command": "napari-deeplabcut.get_folder_parser",
+        "filename_patterns": [
+          "*"
+        ],
+        "accepts_directories": true
+      }
+    ],
+    "writers": [
+      {
+        "command": "napari-deeplabcut.write_hdf",
+        "layer_types": [
+          "points{1}"
+        ],
+        "filename_extensions": [
+          ".h5"
+        ],
+        "display_name": ""
+      },
+      {
+        "command": "napari-deeplabcut.write_masks",
+        "layer_types": [
+          "shapes{1}"
+        ],
+        "filename_extensions": [
+          ".csv"
+        ],
+        "display_name": ""
+      }
+    ],
+    "widgets": [
+      {
+        "command": "napari-deeplabcut.make_keypoint_controls",
+        "display_name": "Keypoint controls",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null
+  },
+  "package_metadata": {
+    "metadata_version": "2.1",
+    "name": "napari-deeplabcut",
+    "version": "0.0.3",
+    "dynamic": null,
+    "platform": null,
+    "supported_platform": null,
+    "summary": "napari + DeepLabCut annotation tool",
+    "description": "# napari-deeplabcut\n\n\n<img src=\"https://images.squarespace-cdn.com/content/v1/57f6d51c9f74566f55ecf271/1d409ffe-c9f4-47e1-bde2-3010c1c40455/naparidlc.png?format=750w\" width=\"250\" title=\"napari-deeplabcut\" alt=\"napari+deeplabcut\" align=\"right\" vspace = \"80\">\n\n[![License: BSD-3](https://img.shields.io/badge/License-BSD3-blue.svg)](https://www.gnu.org/licenses/bsd3)\n[![PyPI](https://img.shields.io/pypi/v/napari-deeplabcut.svg?color=green)](https://pypi.org/project/napari-deeplabcut)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-deeplabcut.svg?color=green)](https://python.org)\n[![tests](https://github.com/DeepLabCut/napari-deeplabcut/workflows/tests/badge.svg)](https://github.com/DeepLabCut/napari-deeplabcut/actions)\n[![codecov](https://codecov.io/gh/DeepLabCut/napari-deeplabcut/branch/main/graph/badge.svg)](https://codecov.io/gh/DeepLabCut/napari-deeplabcut)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-deeplabcut)](https://napari-hub.org/plugins/napari-deeplabcut)\n\nA napari plugin for keypoint annotation with DeepLabCut\n\n\n## Installation\n\nYou can install `napari-deeplabcut` via [pip]:\n\n    pip install napari-deeplabcut\n\n\n\nTo install latest development version :\n\n    pip install git+https://github.com/DeepLabCut/napari-deeplabcut.git\n\n\n## Usage\n\nTo use the plugin, please run:\n\n    napari\n\nThen, activate the plugin in Plugins > napari-deeplabcut: Keypoint controls.\n\nAll accepted files (config.yaml, images, h5 data files) can be loaded\neither by dropping them directly onto the canvas or via the File menu.\n\nThe easiest way to get started is to drop a folder (typically a folder from within a DeepLabCut's `labeled-data` directory), and, if labeling from scratch, drop the corresponding `config.yaml` to automatically add a `Points layer` and populate the dropdown menus.\n\n**Tools & shortcuts are:**\n\n- `2` and `3`, to easily switch between labeling and selection mode\n- `4`, to enable pan & zoom (which is achieved using the mouse wheel or finger scrolling on the Trackpad)\n- `M`, to cycle through regular (sequential), quick, and cycle annotation mode (see the description [here](https://github.com/DeepLabCut/DeepLabCut-label/blob/ee71b0e15018228c98db3b88769e8a8f4e2c0454/dlclabel/layers.py#L9-L19))\n- `E`, to enable edge coloring (by default, if using this in refinement GUI mode, points with a confidence lower than 0.6 are marked\nin red)\n- `F`, to toggle between animal and body part color scheme.\n- `backspace` to delete a point.\n- Check the box \"display text\" to show the label names on the canvas.\n- To move to another folder, be sure to save (Ctrl+S), then delete the layers, and re-drag/drop the next folder.\n\n\n### Save Layers\n\nAnnotations and segmentations are saved with `File > Save Selected Layer(s)...` (or its shortcut `Ctrl+S`).\nOnly when saving segmentation masks does a save file dialog pop up to name the destination folder;\nkeypoint annotations are otherwise automatically saved in the corresponding folder as `CollectedData_<ScorerName>.h5`.\n- As a reminder, DLC will only use the H5 file; so be sure if you open already labeled images you save/overwrite the H5.\n- Note, before saving a layer, make sure the points layer is selected. If the user clicked on the image(s) layer first, does `Save As`, then closes the window, any labeling work during that session will be lost!\n\n\n## Workflow\n\nSuggested workflows, depending on the image folder contents:\n\n1. **Labeling from scratch** \u2013 the image folder does not contain `CollectedData_<ScorerName>.h5` file.\n\n    Open *napari* as described in [Usage](#usage) and open an image folder together with the DeepLabCut project's `config.yaml`.\n    The image folder creates an *image layer* with the images to label.\n    Supported image formats are: `jpg`, `jpeg`, `png`.\n    The `config.yaml` file creates a *Points layer*, which holds metadata (such as keypoints read from the config file) necessary for labeling.\n    Select the *Points layer* in the layer list (lower left pane on the GUI) and click on the *+*-symbol in the layer controls menu (upper left pane) to start labeling.\n    The current keypoint can be viewed/selected in the keypoints dropdown menu (right pane).\n    The slider below the displayed image (or the left/right arrow keys) allows selecting the image to label.\n\n    To save the labeling progress refer to [Save Layers](#save-layers).\n    `Data successfully saved` should be shown in the status bar, and the image folder should now contain a `CollectedData_<ScorerName>.h5` file.\n    (Note: For convenience, a CSV file with the same name is also saved.)\n\n2. **Resuming labeling** \u2013 the image folder contains a `CollectedData_<ScorerName>.h5` file.\n\n    Open *napari* and open an image folder (which needs to contain a `CollectedData_<ScorerName>.h5` file).\n    In this case, it is not necessary to open the DLC project's `config.yaml` file, as all necessary metadata is read from the `h5` data file.\n\n    Saving works as described in *1*.\n\n3. **Refining labels** \u2013 the image folder contains a `machinelabels-iter<#>.h5` file.\n\n    The process is analog to *2*.\n\n4. **Drawing segmentation masks**\n\n    Drop an image folder as in *1*, manually add a *shapes layer*. Then select the *rectangle* in the layer controls (top left pane),\n    and start drawing rectangles over the images. Masks and rectangle vertices are saved as described in [Save Layers](#save-layers).\n    Note that masks can be reloaded and edited at a later stage by dropping the `vertices.csv` file onto the canvas. \n\n\n### Labeling multiple image folders\n\nLabeling multiple image folders has to be done in sequence; i.e., only one image folder can be opened at a time.\nAfter labeling the images of a particular folder is done and the associated *Points layer* has been saved, *all* layers should be removed from the layers list (lower left pane on the GUI) by selecting them and clicking on the trashcan icon.\nNow, another image folder can be labeled, following the process described in *1*, *2*, or *3*, depending on the particular image folder.\n\n\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\nTo locally install the code, please git clone the repo and then run `pip install -e .`\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-deeplabcut\" is free and open source software.\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[file an issue]: https://github.com/DeepLabCut/napari-deeplabcut/issues\n\n\n## Acknowledgements\n\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template. We thank the Chan Zuckerberg Initiative (CZI) for funding this work!\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/plugins/stable/index.html\n-->\n\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": "https://github.com/DeepLabCut/napari-deeplabcut",
+    "download_url": null,
+    "author": "Jessy Lauer",
+    "author_email": "jessy.lauer@epfl.ch",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "BSD-3-Clause",
+    "classifier": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Programming Language :: Python :: 3.10",
+      "Topic :: Scientific/Engineering :: Artificial Intelligence",
+      "Topic :: Scientific/Engineering :: Image Processing",
+      "Topic :: Scientific/Engineering :: Visualization"
+    ],
+    "requires_dist": [
+      "dask-image",
+      "napari (<0.5.0)",
+      "numpy",
+      "pandas",
+      "qtpy",
+      "scikit-image",
+      "tables",
+      "ruamel.yaml",
+      "napari ; extra == 'testing'",
+      "pyqt5 ; extra == 'testing'",
+      "pytest ; extra == 'testing'",
+      "pytest-cov ; extra == 'testing'",
+      "pytest-qt ; extra == 'testing'",
+      "tox ; extra == 'testing'"
+    ],
+    "requires_python": ">=3.8",
+    "requires_external": null,
+    "project_url": [
+      "Bug Tracker, https://github.com/DeepLabCut/napari-deeplabcut/issues",
+      "Documentation, https://github.com/DeepLabCut/napari-deeplabcut#README.md",
+      "Source Code, https://github.com/DeepLabCut/napari-deeplabcut",
+      "User Support, https://github.com/DeepLabCut/napari-deeplabcut/issues"
+    ],
+    "provides_extra": [
+      "testing"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}

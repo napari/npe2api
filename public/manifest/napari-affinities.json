@@ -1,1 +1,130 @@
-{"name": "napari-affinities", "display_name": "napari Affinities", "schema_version": "0.1.0", "on_activate": null, "on_deactivate": null, "contributions": {"commands": [{"id": "napari-affinities.make_mutex_watershed_widget", "title": "Make mutex watershed widget", "python_name": "napari_affinities.widgets.mutex_watershed:mutex_watershed_widget", "short_title": null, "category": null, "icon": null, "enablement": null}, {"id": "napari-affinities.make_affinities_widget", "title": "Make model widget", "python_name": "napari_affinities.widgets.affinities:ModelWidget", "short_title": null, "category": null, "icon": null, "enablement": null}, {"id": "napari-affinities.sample_epithelial", "title": "Load sample data from napari Affinities", "python_name": "napari_affinities.sample_data:sample_epithelial", "short_title": null, "category": null, "icon": null, "enablement": null}, {"id": "napari-affinities.sample_lightsheet", "title": "Load sample data from napari Affinities", "python_name": "napari_affinities.sample_data:sample_lightsheet", "short_title": null, "category": null, "icon": null, "enablement": null}], "readers": null, "writers": null, "widgets": [{"command": "napari-affinities.make_mutex_watershed_widget", "display_name": "Mutex Watershed Widget", "autogenerate": false}, {"command": "napari-affinities.make_affinities_widget", "display_name": "Affinities Widget", "autogenerate": false}], "sample_data": [{"key": "epithelial_sample.0", "display_name": "Epithelial sample", "command": "napari-affinities.sample_epithelial"}, {"key": "lightsheet_sample.0", "display_name": "Lightsheet sample", "command": "napari-affinities.sample_lightsheet"}], "themes": null, "menus": {}, "submenus": null}, "package_metadata": {"metadata_version": "2.1", "name": "napari-affinities", "version": "0.1", "dynamic": null, "platform": null, "supported_platform": null, "summary": "A plugin for creating, visualizing, and processing affinities", "description": "# napari-affinities\n\n[![License](https://img.shields.io/pypi/l/napari-affinities.svg?color=green)](https://github.com/pattonw/napari-affinities/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-affinities.svg?color=green)](https://pypi.org/project/napari-affinities)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-affinities.svg?color=green)](https://python.org)\n[![tests](https://github.com/pattonw/napari-affinities/workflows/tests/badge.svg)](https://github.com/pattonw/napari-affinities/actions)\n[![codecov](https://codecov.io/gh/pattonw/napari-affinities/branch/main/graph/badge.svg)](https://codecov.io/gh/pattonw/napari-affinities)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-affinities)](https://napari-hub.org/plugins/napari-affinities)\n\nA plugin for creating, visualizing, and processing affinities\n\n---\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/plugins/stable/index.html\n-->\n\n## Installation\n\nPre-requisites:\n\n    1) Install lsds with: `pip install git+https://github.com/pattonw/lsd.git@no-convenience-imports` (This is necessary since we need lsds but the package name `lsd` is already taken on pypi. While we resolve this the specific lsd version needs to be specified)\n\nYou can install `napari-affinities` via [pip]:\n\n    `pip install napari-affinities`\n\nTo install latest development version :\n\n    `pip install git+https://github.com/pattonw/napari-affinities.git`\n\nInstall torch according to your system [(follow the instructions here)](https://pytorch.org/get-started/locally/). For example with cuda 10.2 available, run:\n\n    conda install pytorch torchvision cudatoolkit=10.2 -c pytorch\n\nInstall conda requirements:\n\n    conda install -c conda-forge affogato\n\n### Download example model:\n\n#### 2D:\n\n[epithelial example model](https://oc.embl.de/index.php/s/zfWMKu7HoQnSJLs)\nPlace the model zip file wherever you want. You can open it in the plugin with the \"load from file\" button.\n\n#### 3D\n\n[lightsheet example model](https://owncloud.gwdg.de/index.php/s/LsShICsOcilqPRs)\nUnpack the tar file into test data (`lightsheet_nuclei_test_data` (an hdf5 file)) and model (`LightsheetNucleusSegmentation.zip` (a bioimageio model)).\nMove the data into sample_data which will enable you to load the \"Lightsheet Sample\" data in napari.\nPlace the model zip file anywhere you want. You can open it in the plugin with the \"load from file\" button.\n\n##### Workarounds to be fixed:\n\n1. you need to update the `rdf.yaml` in the `LightsheetNucleusSegmentation.zip` with the following:\n   - \"shape\" for \"input0\" should be updated with a larger minimum input size and \"output0\" should be updated with a larger halo. If not fixed, there will be significant tiling artifacts.\n   - (Optional) \"output0\" should be renamed to affinities. The plugin supports multiple outputs and relies on names for figuring out which one is which. If unrecognized names are provided we assume the outputs are ordered (affinities, fgbg, lsds) but this is less reliable than explicit names.\n2. This model also generates foreground in the same array as affinities, i.e. a 10 channel output `(fgbg, [-1, 0, 0], [0, -1, 0], [0, 0, -1], [-2, 0, 0], ...)`. Although predictions will work, post processing such as mutex watershed will break unless you manually separate the first channel.\n\n## Use\n\nRequirements for the model:\n\n1. Bioimageio packaged pytorch model\n2. Outputs with names \"affinities\", \"fgbg\"(optional) or \"lsds\"(optional)\n   - if these names are not used, it will be assumed that the outputs are affinities, fgbg, then lsds in that order\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [MIT] license,\n\"napari-affinities\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[mit]: http://opensource.org/licenses/MIT\n[bsd-3]: http://opensource.org/licenses/BSD-3-Clause\n[gnu gpl v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[gnu lgpl v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[apache software license 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[mozilla public license 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n[file an issue]: https://github.com/pattonw/napari-affinities/issues\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[pypi]: https://pypi.org/\n", "description_content_type": "text/markdown", "keywords": null, "home_page": "https://github.com/pattonw/napari-affinities", "download_url": null, "author": "William Patton", "author_email": "will.hunter.patton@gmail.com", "maintainer": null, "maintainer_email": null, "license": "MIT", "classifier": ["Development Status :: 2 - Pre-Alpha", "Intended Audience :: Developers", "Framework :: napari", "Topic :: Software Development :: Testing", "Programming Language :: Python", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3.7", "Programming Language :: Python :: 3.8", "Programming Language :: Python :: 3.9", "Operating System :: OS Independent", "License :: OSI Approved :: MIT License"], "requires_dist": ["numpy", "zarr", "magicgui", "bioimageio.core", "gunpowder", "lsd", "affogato", "matplotlib"], "requires_python": ">=3.7", "requires_external": null, "project_url": ["Bug Tracker, https://github.com/pattonw/napari-affinities/issues", "Documentation, https://github.com/pattonw/napari-affinities#README.md", "Source Code, https://github.com/pattonw/napari-affinities", "User Support, https://github.com/pattonw/napari-affinities/issues"], "provides_extra": null, "provides_dist": null, "obsoletes_dist": null}, "npe1_shim": false}
+{
+  "name": "napari-affinities",
+  "display_name": "napari Affinities",
+  "schema_version": "0.1.0",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-affinities.make_mutex_watershed_widget",
+        "title": "Make mutex watershed widget",
+        "python_name": "napari_affinities.widgets.mutex_watershed:mutex_watershed_widget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-affinities.make_affinities_widget",
+        "title": "Make model widget",
+        "python_name": "napari_affinities.widgets.affinities:ModelWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-affinities.sample_epithelial",
+        "title": "Load sample data from napari Affinities",
+        "python_name": "napari_affinities.sample_data:sample_epithelial",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-affinities.sample_lightsheet",
+        "title": "Load sample data from napari Affinities",
+        "python_name": "napari_affinities.sample_data:sample_lightsheet",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "napari-affinities.make_mutex_watershed_widget",
+        "display_name": "Mutex Watershed Widget",
+        "autogenerate": false
+      },
+      {
+        "command": "napari-affinities.make_affinities_widget",
+        "display_name": "Affinities Widget",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": [
+      {
+        "key": "epithelial_sample.0",
+        "display_name": "Epithelial sample",
+        "command": "napari-affinities.sample_epithelial"
+      },
+      {
+        "key": "lightsheet_sample.0",
+        "display_name": "Lightsheet sample",
+        "command": "napari-affinities.sample_lightsheet"
+      }
+    ],
+    "themes": null,
+    "menus": {},
+    "submenus": null
+  },
+  "package_metadata": {
+    "metadata_version": "2.1",
+    "name": "napari-affinities",
+    "version": "0.1",
+    "dynamic": null,
+    "platform": null,
+    "supported_platform": null,
+    "summary": "A plugin for creating, visualizing, and processing affinities",
+    "description": "# napari-affinities\n\n[![License](https://img.shields.io/pypi/l/napari-affinities.svg?color=green)](https://github.com/pattonw/napari-affinities/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-affinities.svg?color=green)](https://pypi.org/project/napari-affinities)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-affinities.svg?color=green)](https://python.org)\n[![tests](https://github.com/pattonw/napari-affinities/workflows/tests/badge.svg)](https://github.com/pattonw/napari-affinities/actions)\n[![codecov](https://codecov.io/gh/pattonw/napari-affinities/branch/main/graph/badge.svg)](https://codecov.io/gh/pattonw/napari-affinities)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-affinities)](https://napari-hub.org/plugins/napari-affinities)\n\nA plugin for creating, visualizing, and processing affinities\n\n---\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/plugins/stable/index.html\n-->\n\n## Installation\n\nPre-requisites:\n\n    1) Install lsds with: `pip install git+https://github.com/pattonw/lsd.git@no-convenience-imports` (This is necessary since we need lsds but the package name `lsd` is already taken on pypi. While we resolve this the specific lsd version needs to be specified)\n\nYou can install `napari-affinities` via [pip]:\n\n    `pip install napari-affinities`\n\nTo install latest development version :\n\n    `pip install git+https://github.com/pattonw/napari-affinities.git`\n\nInstall torch according to your system [(follow the instructions here)](https://pytorch.org/get-started/locally/). For example with cuda 10.2 available, run:\n\n    conda install pytorch torchvision cudatoolkit=10.2 -c pytorch\n\nInstall conda requirements:\n\n    conda install -c conda-forge affogato\n\n### Download example model:\n\n#### 2D:\n\n[epithelial example model](https://oc.embl.de/index.php/s/zfWMKu7HoQnSJLs)\nPlace the model zip file wherever you want. You can open it in the plugin with the \"load from file\" button.\n\n#### 3D\n\n[lightsheet example model](https://owncloud.gwdg.de/index.php/s/LsShICsOcilqPRs)\nUnpack the tar file into test data (`lightsheet_nuclei_test_data` (an hdf5 file)) and model (`LightsheetNucleusSegmentation.zip` (a bioimageio model)).\nMove the data into sample_data which will enable you to load the \"Lightsheet Sample\" data in napari.\nPlace the model zip file anywhere you want. You can open it in the plugin with the \"load from file\" button.\n\n##### Workarounds to be fixed:\n\n1. you need to update the `rdf.yaml` in the `LightsheetNucleusSegmentation.zip` with the following:\n   - \"shape\" for \"input0\" should be updated with a larger minimum input size and \"output0\" should be updated with a larger halo. If not fixed, there will be significant tiling artifacts.\n   - (Optional) \"output0\" should be renamed to affinities. The plugin supports multiple outputs and relies on names for figuring out which one is which. If unrecognized names are provided we assume the outputs are ordered (affinities, fgbg, lsds) but this is less reliable than explicit names.\n2. This model also generates foreground in the same array as affinities, i.e. a 10 channel output `(fgbg, [-1, 0, 0], [0, -1, 0], [0, 0, -1], [-2, 0, 0], ...)`. Although predictions will work, post processing such as mutex watershed will break unless you manually separate the first channel.\n\n## Use\n\nRequirements for the model:\n\n1. Bioimageio packaged pytorch model\n2. Outputs with names \"affinities\", \"fgbg\"(optional) or \"lsds\"(optional)\n   - if these names are not used, it will be assumed that the outputs are affinities, fgbg, then lsds in that order\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [MIT] license,\n\"napari-affinities\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[mit]: http://opensource.org/licenses/MIT\n[bsd-3]: http://opensource.org/licenses/BSD-3-Clause\n[gnu gpl v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[gnu lgpl v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[apache software license 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[mozilla public license 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n[file an issue]: https://github.com/pattonw/napari-affinities/issues\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[pypi]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": "https://github.com/pattonw/napari-affinities",
+    "download_url": null,
+    "author": "William Patton",
+    "author_email": "will.hunter.patton@gmail.com",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "MIT",
+    "classifier": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Intended Audience :: Developers",
+      "Framework :: napari",
+      "Topic :: Software Development :: Testing",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.7",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Operating System :: OS Independent",
+      "License :: OSI Approved :: MIT License"
+    ],
+    "requires_dist": [
+      "numpy",
+      "zarr",
+      "magicgui",
+      "bioimageio.core",
+      "gunpowder",
+      "lsd",
+      "affogato",
+      "matplotlib"
+    ],
+    "requires_python": ">=3.7",
+    "requires_external": null,
+    "project_url": [
+      "Bug Tracker, https://github.com/pattonw/napari-affinities/issues",
+      "Documentation, https://github.com/pattonw/napari-affinities#README.md",
+      "Source Code, https://github.com/pattonw/napari-affinities",
+      "User Support, https://github.com/pattonw/napari-affinities/issues"
+    ],
+    "provides_extra": null,
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}
