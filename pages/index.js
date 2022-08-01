@@ -30,7 +30,7 @@ export default function home({ data }) {
 
 export const getStaticProps = async () => {
   const source = fs.readFileSync(
-    path.join(process.cwd(), "public", "index.json")
+    path.join(process.cwd(), "public", "summary.json")
   );
   return {
     props: {

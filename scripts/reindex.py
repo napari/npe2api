@@ -61,5 +61,11 @@ for mf_file in MANIFESTS.glob("*.json"):
                 for pattern in contrib["filename_patterns"]:
                     READER_INDEX[pattern].append(name)
 
-(PUBLIC / "index.json").write_text(json.dumps(sorted(INDEX, key=lambda x: x["name"])))
-(PUBLIC / "readers.json").write_text(json.dumps(dict(sorted(READER_INDEX.items()))))
+INDEX = sorted(INDEX, key=lambda x: x["name"].lower())
+READER_INDEX = dict(sorted(READER_INDEX.items()))
+
+(PUBLIC / "summary.json").write_text(json.dumps(INDEX, indent=2))
+(PUBLIC / "readers.json").write_text(json.dumps(READER_INDEX))
+(PUBLIC / "index.json").write_text(
+    json.dumps({x["name"]: x["version"] for x in INDEX}, indent=2)
+)
