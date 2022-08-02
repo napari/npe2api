@@ -17,11 +17,15 @@
    <https://npe2api.vercel.app>
 4. Endpoints:
     - <https://npe2api.vercel.app/api/plugins>
-        - object of {plugin_names -> version}
+        - map of {plugin_names -> version}
     - <https://npe2api.vercel.app/api/summary>
         - all basic plugin info needed to populate the plugin browser in napari
     - [https://npe2api.vercel.app/api/manifest/{plugin-name}](https://npe2api.vercel.app/api/manifest/napari-animation)
         - the full manifest for a given plugin
+    - <https://npe2api.vercel.app/api/conda>
+        - map of {pypi_name -> conda_channel/package_name}
+    - [https://npe2api.vercel.app/api/conda/{plugin-name}](https://npe2api.vercel.app/api/conda/napari-animation)
+        - conda info for a plugin. *name is pypi_name, not conda-name*
     - <https://npe2api.vercel.app/errors.json>
         - errors encountered during the last fetch
     - <https://npe2api.vercel.app/readers.json> *(example ... may change)*
