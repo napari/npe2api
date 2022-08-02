@@ -111,6 +111,11 @@ if not os.getenv("SKIP_CONDA"):
         CONDA_INDEX[package_name] = info.get("full_name")
         if not info:
             continue
+
+        # pop ndownloads, since it makes for an unnecessarily noisy git history
+        for file in info.get("files", []):
+            file.pop('ndownloads', None)
+
         (CONDA / f"{package_name}.json").write_text(json.dumps(info, indent=2))
 
     # write summary map of pypi package name to conda channel/name
