@@ -2,7 +2,7 @@
 
 1. [The fetch action](.github/workflows/fetch.yml) is triggered by:
     - any push to the `main` branch
-    - a cron job every 5 minutes
+    - a cron job every 10 minutes
     - a `workflow_dispatch` triggered manually from the [actions page](https://github.com/napari/npe2api/actions/workflows/fetch.yml)
     - TODO: a comment on an issue that says `please re-index` (or something like that)
 2. When triggered, the fetch action
