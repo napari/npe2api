@@ -6,9 +6,11 @@ export default function home({ data }) {
   return (
     <div>
       <h1>napari plugins</h1>
+      <p><Link href={"https://github.com/napari/npe2api"}><a>source code for this site</a></Link></p>
       <h3>(this page is for humans)</h3>
       <p><Link href={`/errors.json`}><a>fetch errors</a></Link></p>
-      <p><Link href={`/api/plugins`}><a>plugins summary</a></Link></p>
+      <p><Link href={`/api/plugins`}><a>plugins index</a></Link></p>
+      <p><Link href={`/api/summary`}><a>plugins summary</a></Link></p>
       <h4>manifests</h4>
       <ul>
         {data.map((item) => (

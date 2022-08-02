@@ -23,14 +23,20 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: fetch
+      # use `npe2 fetch -all` to fetch all plugin manifests into the public/manifest folder 
+      - name: fetch manifests
         run: |
           pip install -U pip
           pip install git+https://github.com/tlambert03/npe2.git@fetch-visitor
           npe2 fetch --all -o public/manifest
+      
+      # validate and index manifests into easily searchable json files
+      - name: index and validate
+        run: |
           python scripts/reindex.py
           python scripts/validate.py
 
+      # push changes back to the repo, this will trigger a new vercel build
       # https://github.com/stefanzweifel/git-auto-commit-action
       - uses: stefanzweifel/git-auto-commit-action@v4
         with:
