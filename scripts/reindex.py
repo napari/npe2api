@@ -90,7 +90,7 @@ for mf_file in (PUBLIC / "manifest").glob("*.json"):
 
 
 PYPI_INDEX = sorted(PYPI_INDEX, key=lambda x: x["name"].lower())
-READER_INDEX = dict(sorted(READER_INDEX.items()))  # type: ignore
+READER_INDEX = {k: sorted(v, key=str.lower) for k, v in sorted(READER_INDEX.items())}
 
 
 # now check conda for each package and write data to public/conda/{package}.json
