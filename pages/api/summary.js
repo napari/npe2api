@@ -3,7 +3,6 @@ import { promises as fs } from 'fs';
 import logHit from '../../lib/supabase/private';
 
 export default async function handler(req, res) {
-  console.log(JSON.stringify(req.headers));
   const jsonDirectory = path.join(process.cwd(), 'public');
   const fileContents = await fs.readFile(jsonDirectory + '/summary.json', 'utf8');
   logHit(req);
