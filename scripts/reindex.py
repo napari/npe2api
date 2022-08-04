@@ -7,11 +7,6 @@ from urllib import request, error
 import os
 import sys
 
-from conda.models.channel import Channel
-from conda.core.subdir_data import SubdirData
-from conda.gateways.logging import initialize_logging
-from conda.models.records import PackageRecord
-
 PluginName = str
 ANACONDA_ORG = "https://api.anaconda.org/package/{channel}/{package}"
 
@@ -43,16 +38,30 @@ def _normname(name: str, delim="-") -> str:
     return re.sub(r"[-_.]+", delim, name).lower()
 
 
-def repodatas(channel: str = "conda-forge") -> Dict[str, PackageRecord]:
+def repodatas(channel: str = "conda-forge") -> Dict:
+    from concurrent.futures import ThreadPoolExecutor
+    from conda.models.channel import Channel
+    from conda.core.subdir_data import SubdirData
+    from conda.gateways.logging import initialize_logging
+
     initialize_logging()
-    subdirs = ("noarch", "linux-64", "osx-64", "osx-arm64", "win-64")
-    index = {}
-    for url, subdir in zip(Channel(channel).urls(subdirs=subdirs), subdirs):
-        print(f"Fetching {channel}/{subdir}...")
+
+    def repodata_inner(url):
+        print(f"Fetching {url}...")
         subdir_data = SubdirData(Channel(url))
-        subdir_data.load()
-        for record in subdir_data.iter_records():
-            index[f"{subdir}/{record.fn}"] = dict(record.dump())
+        return {
+            f"{rec.subdir}/{rec.fn}": dict(rec.dump())
+            for rec in subdir_data.iter_records()
+        }
+
+    subdirs = ("noarch", "linux-64", "osx-64", "osx-arm64", "win-64")
+    urls = Channel(channel).urls(subdirs=subdirs)
+
+    with ThreadPoolExecutor() as pool:
+        index = {}
+        for repo in pool.map(repodata_inner, urls):
+            index.update(repo)
+
     SubdirData.clear_cached_local_channel_data()
     return index
 
@@ -84,11 +93,15 @@ def conda_data(package_name, channel="conda-forge", repodata=None) -> Tuple[str,
                 data = json.load(resp)
                 if repodata:
                     try:
-                        data = patch_api_data_with_repodata(data, repodata)
+                        patch_api_data_with_repodata(data, repodata)
                     except Exception as exc:
                         print(f"{type(exc)}", file=sys.stderr)
                 return (package_name, data)
     return (package_name, {})
+
+
+def conda_data_wrapper(args):
+    return conda_data(*args)
 
 
 # load each manifest & build the indices (while verifying the manifest)
@@ -150,7 +163,7 @@ if not os.getenv("SKIP_CONDA"):
     with ThreadPoolExecutor() as pool:
         data = dict(
             pool.map(
-                conda_data,
+                conda_data_wrapper,
                 ((i["name"], channel, repodata) for i in PYPI_INDEX),
             )
         )
