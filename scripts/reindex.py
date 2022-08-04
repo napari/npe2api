@@ -73,14 +73,8 @@ def patch_api_data_with_repodata(data: Dict[str, Any], repodata: Dict):
         package.pop("dependencies", None)
         repodata_record = repodata.get(package["basename"])
         if repodata_record:
-            unpatched = package["attrs"]["depends"]
             package["attrs"]["depends"] = tuple(repodata_record["depends"])
             package["attrs"]["constrains"] = tuple(repodata_record["constrains"])
-            if sorted(unpatched) != sorted(package["attrs"]["depends"]):
-                print("Unpatched:")
-                print(*unpatched, sep="\n")
-                print("Patched:")
-                print(*package["attrs"]["depends"], sep="\n")
         patched_files.append(package)
     data["files"] = patched_files
 
@@ -165,9 +159,6 @@ if not os.getenv("SKIP_CONDA"):
     # fetch the index
     channel = "conda-forge"
     repodata = repodatas(channel)
-
-    # DEBUG:
-    PYPI_INDEX.append({"name": "napari"})
 
     with ThreadPoolExecutor() as pool:
         data = dict(
