@@ -72,9 +72,15 @@ def patch_api_data_with_repodata(data: Dict[str, Any], repodata: Dict):
         # dependencies are available in a more useful way under `attrs`
         package.pop("dependencies", None)
         repodata_record = repodata.get(package["basename"])
-        if not repodata_record:
+        if repodata_record:
+            unpatched = package["attrs"]["depends"]
             package["attrs"]["depends"] = repodata_record["depends"]
             package["attrs"]["constrains"] = repodata_record["constrains"]
+            if sorted(unpatched) != sorted(package["attrs"]["depends"]):
+                print("Unpatched:")
+                print(*unpatched, sep="\n")
+                print("Patched:")
+                print(*package["attrs"]["depends"], sep="\n")
         patched_files.append(package)
     data["files"] = patched_files
 
