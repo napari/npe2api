@@ -74,8 +74,8 @@ def patch_api_data_with_repodata(data: Dict[str, Any], repodata: Dict):
         repodata_record = repodata.get(package["basename"])
         if repodata_record:
             unpatched = package["attrs"]["depends"]
-            package["attrs"]["depends"] = repodata_record["depends"].copy()
-            package["attrs"]["constrains"] = repodata_record["constrains"].copy()
+            package["attrs"]["depends"] = tuple(repodata_record["depends"])
+            package["attrs"]["constrains"] = tuple(repodata_record["constrains"])
             if sorted(unpatched) != sorted(package["attrs"]["depends"]):
                 print("Unpatched:")
                 print(*unpatched, sep="\n")
