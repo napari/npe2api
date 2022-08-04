@@ -1,5 +1,4 @@
 import contextlib
-from functools import lru_cache
 import json
 from pathlib import Path
 from typing import Any, DefaultDict, Dict, List, Tuple, TypedDict, Optional
@@ -44,33 +43,34 @@ def _normname(name: str, delim="-") -> str:
     return re.sub(r"[-_.]+", delim, name).lower()
 
 
-@lru_cache
 def repodatas(channel: str = "conda-forge") -> Dict[str, PackageRecord]:
     initialize_logging()
-    subdirs = "noarch", "linux-64", "osx-64", "osx-arm64", "win-64"
+    subdirs = ("noarch", "linux-64", "osx-64", "osx-arm64", "win-64")
     index = {}
     for url, subdir in zip(Channel(channel).urls(subdirs=subdirs), subdirs):
+        print(f"Fetching {channel}/{subdir}...")
         subdir_data = SubdirData(Channel(url))
         subdir_data.load()
         for record in subdir_data.iter_records():
-            index[f"{subdir}/{record.fn}"] = record
+            index[f"{subdir}/{record.fn}"] = dict(record.dump())
+    SubdirData.clear_cached_local_channel_data()
     return index
 
 
-def patch_api_data_with_repodata(data: Dict[str, Any], channel: str):
+def patch_api_data_with_repodata(data: Dict[str, Any], repodata: Dict):
     patched_files = []
     for package in data["files"].copy():
         # dependencies are available in a more useful way under `attrs`
         package.pop("dependencies", None)
-        repodata_record = repodatas(channel=channel).get(package["basename"])
+        repodata_record = repodata.get(package["basename"])
         if not repodata_record:
-            package["attrs"]["depends"] = repodata_record.depends
-            package["attrs"]["constrains"] = repodata_record.constrains
+            package["attrs"]["depends"] = repodata_record["depends"]
+            package["attrs"]["constrains"] = repodata_record["constrains"]
         patched_files.append(package)
     data["files"] = patched_files
 
 
-def conda_data(package_name, channel="conda-forge") -> Tuple[str, dict]:
+def conda_data(package_name, channel="conda-forge", repodata=None) -> Tuple[str, dict]:
     """Try to fetch conda package data from anaconda.org.
 
     Will try package_name as provided, then lower-case with delimiters replaced by
@@ -82,10 +82,11 @@ def conda_data(package_name, channel="conda-forge") -> Tuple[str, dict]:
         with contextlib.suppress(error.HTTPError):
             with request.urlopen(url) as resp:
                 data = json.load(resp)
-                try:
-                    data = patch_api_data_with_repodata(data, channel)
-                except Exception as exc:
-                    print(f"{type(exc)}: {exc}", file=sys.stderr)
+                if repodata:
+                    try:
+                        data = patch_api_data_with_repodata(data, repodata)
+                    except Exception as exc:
+                        print(f"{type(exc)}", file=sys.stderr)
                 return (package_name, data)
     return (package_name, {})
 
@@ -143,12 +144,16 @@ if not os.getenv("SKIP_CONDA"):
     CONDA_INDEX: Dict[str, str] = {}
 
     # fetch the index
-    print("Fetching repodatas...")
-    repodatas()
+    channel = "conda-forge"
+    repodata = repodatas(channel)
 
     with ThreadPoolExecutor() as pool:
-        data = dict(pool.map(conda_data, (i["name"] for i in PYPI_INDEX)))
-
+        data = dict(
+            pool.map(
+                conda_data,
+                ((i["name"], channel, repodata) for i in PYPI_INDEX),
+            )
+        )
     for package_name, info in data.items():
         CONDA_INDEX[package_name] = info.get("full_name")
         if not info:
