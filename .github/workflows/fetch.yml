@@ -13,23 +13,27 @@ jobs:
   fetch:
     name: Fetch
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -el {0}
 
     steps:
       - uses: actions/checkout@v3
         with:
           ref: ${{ github.head_ref }}
 
-      - uses: actions/setup-python@v4
+      - uses: conda-incubator/setup-miniconda@v2
         with:
-          python-version: "3.x"
+          auto-activate-base: true
+          activate-environment: ""
 
-      # use `npe2 fetch -all` to fetch all plugin manifests into the public/manifest folder 
+      # use `npe2 fetch -all` to fetch all plugin manifests into the public/manifest folder
       - name: fetch manifests
         run: |
-          pip install -U pip
-          pip install git+https://github.com/napari/npe2.git
+          python -m pip install -U pip
+          python -m pip install git+https://github.com/napari/npe2.git
           npe2 fetch --all -o public/manifest
-      
+
       # validate and index manifests into easily searchable json files
       - name: index and validate
         run: |

@@ -1,10 +1,17 @@
 import contextlib
+from functools import lru_cache
 import json
 from pathlib import Path
-from typing import DefaultDict, Dict, List, Tuple, TypedDict, Optional
+from typing import Any, DefaultDict, Dict, List, Tuple, TypedDict, Optional
 import re
 from urllib import request, error
 import os
+import sys
+
+from conda.models.channel import Channel
+from conda.core.subdir_data import SubdirData
+from conda.gateways.logging import initialize_logging
+from conda.models.records import PackageRecord
 
 PluginName = str
 ANACONDA_ORG = "https://api.anaconda.org/package/{channel}/{package}"
@@ -37,6 +44,32 @@ def _normname(name: str, delim="-") -> str:
     return re.sub(r"[-_.]+", delim, name).lower()
 
 
+@lru_cache
+def repodatas(channel: str = "conda-forge") -> Dict[str, PackageRecord]:
+    initialize_logging()
+    subdirs = "noarch", "linux-64", "osx-64", "osx-arm64", "win-64"
+    index = {}
+    for url, subdir in zip(Channel(channel).urls(subdirs=subdirs), subdirs):
+        subdir_data = SubdirData(Channel(url))
+        subdir_data.load()
+        for record in subdir_data.iter_records():
+            index[f"{subdir}/{record.fn}"] = record
+    return index
+
+
+def patch_api_data_with_repodata(data: Dict[str, Any], channel: str):
+    patched_files = []
+    for package in data["files"].copy():
+        # dependencies are available in a more useful way under `attrs`
+        package.pop("dependencies", None)
+        repodata_record = repodatas(channel=channel).get(package["basename"])
+        if not repodata_record:
+            package["attrs"]["depends"] = repodata_record.depends
+            package["attrs"]["constrains"] = repodata_record.constrains
+        patched_files.append(package)
+    data["files"] = patched_files
+
+
 def conda_data(package_name, channel="conda-forge") -> Tuple[str, dict]:
     """Try to fetch conda package data from anaconda.org.
 
@@ -48,7 +81,12 @@ def conda_data(package_name, channel="conda-forge") -> Tuple[str, dict]:
         url = ANACONDA_ORG.format(channel=channel, package=name)
         with contextlib.suppress(error.HTTPError):
             with request.urlopen(url) as resp:
-                return (package_name, json.load(resp))
+                data = json.load(resp)
+                try:
+                    data = patch_api_data_with_repodata(data, channel)
+                except Exception as exc:
+                    print(f"{type(exc)}: {exc}", file=sys.stderr)
+                return (package_name, data)
     return (package_name, {})
 
 
@@ -104,6 +142,10 @@ if not os.getenv("SKIP_CONDA"):
     # conda summary, mapping from pypi package name to conda channel/name
     CONDA_INDEX: Dict[str, str] = {}
 
+    # fetch the index
+    print("Fetching repodatas...")
+    repodatas()
+
     with ThreadPoolExecutor() as pool:
         data = dict(pool.map(conda_data, (i["name"] for i in PYPI_INDEX)))
 
@@ -114,7 +156,7 @@ if not os.getenv("SKIP_CONDA"):
 
         # pop ndownloads, since it makes for an unnecessarily noisy git history
         for file in info.get("files", []):
-            file.pop('ndownloads', None)
+            file.pop("ndownloads", None)
 
         (CONDA / f"{package_name}.json").write_text(json.dumps(info, indent=2))
 
