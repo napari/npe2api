@@ -166,6 +166,9 @@ if not os.getenv("SKIP_CONDA"):
     channel = "conda-forge"
     repodata = repodatas(channel)
 
+    # DEBUG:
+    PYPI_INDEX.append("napari")
+
     with ThreadPoolExecutor() as pool:
         data = dict(
             pool.map(
