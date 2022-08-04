@@ -1,10 +1,11 @@
 import contextlib
 import json
 from pathlib import Path
-from typing import DefaultDict, Dict, List, Tuple, TypedDict, Optional
+from typing import Any, DefaultDict, Dict, List, Tuple, TypedDict, Optional
 import re
 from urllib import request, error
 import os
+import sys
 
 PluginName = str
 ANACONDA_ORG = "https://api.anaconda.org/package/{channel}/{package}"
@@ -37,7 +38,48 @@ def _normname(name: str, delim="-") -> str:
     return re.sub(r"[-_.]+", delim, name).lower()
 
 
-def conda_data(package_name, channel="conda-forge") -> Tuple[str, dict]:
+def repodatas(channel: str = "conda-forge") -> Dict:
+    from concurrent.futures import ThreadPoolExecutor
+    from conda.models.channel import Channel
+    from conda.core.subdir_data import SubdirData
+    from conda.gateways.logging import initialize_logging
+
+    initialize_logging()
+
+    def repodata_inner(url):
+        print(f"Fetching {url}...")
+        subdir_data = SubdirData(Channel(url))
+        return {
+            f"{rec.subdir}/{rec.fn}": dict(rec.dump())
+            for rec in subdir_data.iter_records()
+        }
+
+    subdirs = ("noarch", "linux-64", "osx-64", "osx-arm64", "win-64")
+    urls = Channel(channel).urls(subdirs=subdirs)
+
+    with ThreadPoolExecutor() as pool:
+        index = {}
+        for repo in pool.map(repodata_inner, urls):
+            index.update(repo)
+
+    SubdirData.clear_cached_local_channel_data()
+    return index
+
+
+def patch_api_data_with_repodata(data: Dict[str, Any], repodata: Dict):
+    patched_files = []
+    for package in data["files"].copy():
+        # dependencies are available in a more useful way under `attrs`
+        package.pop("dependencies", None)
+        repodata_record = repodata.get(package["basename"])
+        if repodata_record:
+            package["attrs"]["depends"] = tuple(repodata_record["depends"])
+            package["attrs"]["constrains"] = tuple(repodata_record["constrains"])
+        patched_files.append(package)
+    data["files"] = patched_files
+
+
+def conda_data(package_name, channel="conda-forge", repodata=None) -> Tuple[str, dict]:
     """Try to fetch conda package data from anaconda.org.
 
     Will try package_name as provided, then lower-case with delimiters replaced by
@@ -48,8 +90,18 @@ def conda_data(package_name, channel="conda-forge") -> Tuple[str, dict]:
         url = ANACONDA_ORG.format(channel=channel, package=name)
         with contextlib.suppress(error.HTTPError):
             with request.urlopen(url) as resp:
-                return (package_name, json.load(resp))
+                data = json.load(resp)
+                if repodata:
+                    try:
+                        patch_api_data_with_repodata(data, repodata)
+                    except Exception as exc:
+                        print(f"{package_name} -> {type(exc)}: {exc}", file=sys.stderr)
+                return (package_name, data)
     return (package_name, {})
+
+
+def conda_data_wrapper(args):
+    return conda_data(*args)
 
 
 # load each manifest & build the indices (while verifying the manifest)
@@ -104,9 +156,17 @@ if not os.getenv("SKIP_CONDA"):
     # conda summary, mapping from pypi package name to conda channel/name
     CONDA_INDEX: Dict[str, str] = {}
 
-    with ThreadPoolExecutor() as pool:
-        data = dict(pool.map(conda_data, (i["name"] for i in PYPI_INDEX)))
+    # fetch the index
+    channel = "conda-forge"
+    repodata = repodatas(channel)
 
+    with ThreadPoolExecutor() as pool:
+        data = dict(
+            pool.map(
+                conda_data_wrapper,
+                ((i["name"], channel, repodata) for i in PYPI_INDEX),
+            )
+        )
     for package_name, info in data.items():
         CONDA_INDEX[package_name] = info.get("full_name")
         if not info:
@@ -114,7 +174,7 @@ if not os.getenv("SKIP_CONDA"):
 
         # pop ndownloads, since it makes for an unnecessarily noisy git history
         for file in info.get("files", []):
-            file.pop('ndownloads', None)
+            file.pop("ndownloads", None)
 
         (CONDA / f"{package_name}.json").write_text(json.dumps(info, indent=2))
 

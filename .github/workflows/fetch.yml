@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
   schedule:
     # “Every 10 minutes”
@@ -13,23 +16,31 @@ jobs:
   fetch:
     name: Fetch
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -el {0}
 
     steps:
       - uses: actions/checkout@v3
+        if: github.event_name != 'pull_request'
         with:
           ref: ${{ github.head_ref }}
 
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.x"
+      - uses: actions/checkout@v3
+        if: github.event_name == 'pull_request'
 
-      # use `npe2 fetch -all` to fetch all plugin manifests into the public/manifest folder 
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-activate-base: true
+          activate-environment: ""
+
+      # use `npe2 fetch -all` to fetch all plugin manifests into the public/manifest folder
       - name: fetch manifests
         run: |
-          pip install -U pip
-          pip install git+https://github.com/napari/npe2.git
+          python -m pip install -U pip
+          python -m pip install git+https://github.com/napari/npe2.git
           npe2 fetch --all -o public/manifest
-      
+
       # validate and index manifests into easily searchable json files
       - name: index and validate
         run: |
@@ -39,5 +50,6 @@ jobs:
       # push changes back to the repo, this will trigger a new vercel build
       # https://github.com/stefanzweifel/git-auto-commit-action
       - uses: stefanzweifel/git-auto-commit-action@v4
+        if: github.event_name != 'pull_request'
         with:
           commit_message: Update manifests
