@@ -1,0 +1,302 @@
+{
+  "info": {
+    "author": "Computational Microscopy Platform, CZ Biohub",
+    "author_email": "shalin.mehta@czbiohub.org",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Framework :: napari",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: MacOS",
+      "Operating System :: Microsoft :: Windows",
+      "Operating System :: POSIX",
+      "Operating System :: Unix",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.7",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Scientific/Engineering",
+      "Topic :: Scientific/Engineering :: Bio-Informatics",
+      "Topic :: Scientific/Engineering :: Information Analysis",
+      "Topic :: Scientific/Engineering :: Visualization",
+      "Topic :: Utilities"
+    ],
+    "description": "# recOrder\n[![License](https://img.shields.io/pypi/l/recOrder-napari.svg)](https://github.com/recOrder/LICENSE)\n![PyPI - Python Version](https://img.shields.io/pypi/pyversions/recOrder-napari)\n[![Downloads](https://pepy.tech/badge/recOrder-napari)](https://pepy.tech/project/recOrder-napari)\n[![Python package index](https://img.shields.io/pypi/v/recOrder-napari.svg)](https://pypi.org/project/recOrder-napari)\n[![Development Status](https://img.shields.io/pypi/status/napari.svg)](https://en.wikipedia.org/wiki/Software_release_life_cycle#Alpha)\n\nThis package offers a comprehensive pipeline, command line interface, and napari plugin for quantitative label-free microscopy.\n\nIn this repo you will find python tools and UI that allow the user to calibrate microscope hardware, acquire multi-modal data, reconstruct density and anisotropy, and visualize the data.\n\nThe acquisition, calibration, background correction, reconstruction, and applications of QLIPP are described in the following [E-Life Paper](https://elifesciences.org/articles/55502):\n\n``` Syuan-Ming Guo, Li-Hao Yeh, Jenny Folkesson, Ivan E Ivanov, Anitha P Krishnan, Matthew G Keefe, Ezzat Hashemi, David Shin, Bryant B Chhun, Nathan H Cho, Manuel D Leonetti, May H Han, Tomasz J Nowakowski, Shalin B Mehta, \"Revealing architectural order with quantitative label-free imaging and deep learning,\" eLife 2020;9:e55502 DOI: 10.7554/eLife.55502 (2020).```\n\nrecOrder is to be used alongside the QLIPP module, whose design has been optimized to fit on a conventional widefield microscope (Panel A below).  The QLIPP module allows for the collection of label-free information consisting of the intrinsic anisotropy of the sample and its relative phase (density).  All of these measurements are collected through compensated, polarization diverse illumination and quantitatively recovered through recOrder's computational reconstruction pipeline.  The overall structure of recOrder can be visualized below in Panel B, highlighting the two different usage modes and their features: graphical user interface (GUI) through napari and command line interfact (CLI).\n\n![Flow Chart](https://github.com/mehta-lab/recOrder/blob/main/docs/images/recOrder_Fig1_Overview.png?raw=true)\n\n## Dataset\n\n[Slides](https://doi.org/10.5281/zenodo.5135889) and a [dataset](https://doi.org/10.5281/zenodo.5178487) shared during a workshop on QLIPP and recOrder can be found on Zenodo.\n\n[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5178487.svg)](https://doi.org/10.5281/zenodo.5178487)\n[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5135889.svg)](https://doi.org/10.5281/zenodo.5135889)\n\n## Installation\n\n**Easy installation:**\n\n(Optional but recommended) install [anaconda](https://www.anaconda.com/products/distribution) and create a virtual environment  \n```\nconda create -n recorder python\nconda activate recorder\n```\nInstall napari:\n```\npip install \"napari[all]\"\n```\nOpen `napari` and use the `Plugin > Install/Uninstall Plugins...` menu to install `recOrder-napari`.\n\n**Developer installation:**\n\nInstall [`git`](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) and `conda` (either [anaconda](https://www.anaconda.com/products/distribution) or [miniconda](https://docs.conda.io/en/latest/miniconda.html)).\n\nCreate a conda environment dedicated to `recOrder`:\n```\nconda create -n recorder python\nconda activate recorder\n```\n\nClone this repository:\n```buildoutcfg\ngit clone https://github.com/mehta-lab/recOrder.git\n```\n\nInstall recOrder and its dependencies:\n```buildoutcfg\ncd recOrder\npip install -e \".[dev]\"\n```\n\n**Optional `napari` plugin**: `recOrder` includes a `napari` plugin that can be used to acquire data via MicroManager. To install `napari` use\n```\npip install \"napari[all]\"\n```\nTo run the `recOrder` plugin use\n```\nnapari -w recOrder-napari\n```\n\nTo acquire data via MicroManager, follow the [instructions on the wiki](https://github.com/mehta-lab/recOrder/wiki/recOrder-Installation-and-MicroManager-Setup-Guide).\n\n**Optional GPU**: `recOrder` supports NVIDIA GPU computation with the `cupy` package. Follow [these instructions](https://github.com/cupy/cupy) to install `cupy` and check its installation with ```import cupy```. To enable gpu processing, set ```use_gpu: True``` in the config files.\n\n## Command-line usage\nType `recOrder.help` for instructions on the two command-line modes: `recOrder.reconstruct` and `recOrder.convert`.\n\n### `recOrder.reconstruct`\n\n`recOrder.reconstruct` uses configuration files to select reconstruction parameters. Start with an example configuration file `/examples/example_configs/config_example_qlipp.yml` and modify the parameters to match your dataset.\n\nRun the reconstruction with\n```buildoutcfg\nrecOrder.reconstruct --config <path/to/config.yml>\n```\n\nThe following command-line arguments override parameters specified in the configuration file:\n\n   ```\n   --method (str) method of reconstruction: QLIPP,IPS,UPTI'\n   --mode (str) mode of reconstruction: 2D, 3D'\n   --data_dir (str) path to raw data folder'\n   --save_dir (str) path to folder where reconstructed data will be saved'\n   --name (str) name under which to save the reconstructed data'\n   --config (str) path to configuration file (see /examples/example_configs')\n   --overwrite (bool) True/False whether or not to overwrite data that exists under save_dir/name'\n   ```\n\nFor example, this command uses the `QLIPP` reconstruction method even if the configuration file specifies a different reconstruction method\n```buildoutcfg\nrecOrder.reconstruct --config /path/to/config.yml --method QLIPP\n```\n\n### `recOrder.convert`\n\n`recOrder.convert` converts MicroManager `tif` files to `ome-zarr` files. For example\n\n```buildoutcfg\nrecOrder.convert --input <path/to/mm/tifs> --output <path/to/output.zarr>  --data_type ometiff\n```\n\n## License\n\nChan Zuckerberg Biohub Software License\n\nThis software license is the 2-clause BSD license plus clause a third clause\nthat prohibits redistribution and use for commercial purposes without further\npermission.\n\nCopyright \u00a9 2019. Chan Zuckerberg Biohub.\nAll rights reserved.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n\n1.\tRedistributions of source code must retain the above copyright notice,\nthis list of conditions and the following disclaimer.\n\n2.\tRedistributions in binary form must reproduce the above copyright notice,\nthis list of conditions and the following disclaimer in the documentation\nand/or other materials provided with the distribution.\n\n3.\tRedistributions and use for commercial purposes are not permitted without\nthe Chan Zuckerberg Biohub's written permission. For purposes of this license,\ncommercial purposes are the incorporation of the Chan Zuckerberg Biohub's\nsoftware into anything for which you will charge fees or other compensation or\nuse of the software to perform a commercial service for a third party.\nContact ip@czbiohub.org for commercial licensing opportunities.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\"\nAND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\nIMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\nDISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE\nFOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\nDAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR\nSERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER\nCAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,\nOR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\nOF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n\n\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "https://github.com/mehta-lab/recOrder",
+    "keywords": "",
+    "license": "Chan Zuckerberg Biohub Software License",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "recOrder-napari",
+    "package_url": "https://pypi.org/project/recOrder-napari/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/recOrder-napari/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/mehta-lab/recOrder/issues",
+      "Documentation": "https://github.com/mehta-lab/recOrder/wiki",
+      "Homepage": "https://github.com/mehta-lab/recOrder",
+      "Source Code": "https://github.com/mehta-lab/recOrder/tree/main/recOrder",
+      "User Support": "https://github.com/mehta-lab/recOrder/issues"
+    },
+    "release_url": "https://pypi.org/project/recOrder-napari/0.1.0/",
+    "requires_dist": [
+      "numpy (>=1.17.4)",
+      "scipy (>=1.3.0)",
+      "matplotlib (>=3.4.3)",
+      "zarr (>=2.6.1)",
+      "click (>=8.0.1)",
+      "pyyaml (>=5.4.1)",
+      "PyWavelets (>=1.1.1)",
+      "waveorder (>=1.0.0b0)",
+      "pycromanager (>=0.17)",
+      "tqdm (>=4.61.1)",
+      "opencv-python (>=4.5.3.56)",
+      "natsort (>=7.1.1)",
+      "colorspacious (>=1.1.2)",
+      "pyqtgraph (>=0.12.3)",
+      "superqt (>=0.2.4)",
+      "napari-ome-zarr (>=0.3.2)",
+      "qtpy",
+      "flake8 ; extra == 'dev'",
+      "grip ; extra == 'dev'",
+      "pytest (>=5.0.0) ; extra == 'dev'",
+      "pytest-cov ; extra == 'dev'",
+      "pytest-qt ; extra == 'dev'",
+      "requests (>=2.22.0) ; extra == 'dev'",
+      "wget (>=3.2) ; extra == 'dev'",
+      "tox ; extra == 'dev'",
+      "napari ; extra == 'dev'",
+      "pyqt5 ; extra == 'dev'",
+      "pre-commit ; extra == 'dev'",
+      "black ; extra == 'dev'"
+    ],
+    "requires_python": ">=3.7",
+    "summary": "Computational microscopy toolkit for label-free imaging",
+    "version": "0.1.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 13738837,
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "838523b4cf7eb8d926daab3a65c0ae8b",
+          "sha256": "4f88bc8550d4a077a6bfb3dbbc7501ba809bd13fb811cb8aec32c3dfa382801d"
+        },
+        "downloads": -1,
+        "filename": "recOrder_napari-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "838523b4cf7eb8d926daab3a65c0ae8b",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 11629655,
+        "upload_time": "2022-05-07T01:08:48",
+        "upload_time_iso_8601": "2022-05-07T01:08:48.795500Z",
+        "url": "https://files.pythonhosted.org/packages/b9/d7/426052ed28d8a648b23f4400ad2fa584ab09b79c4531718cc6ee9e0157f0/recOrder_napari-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "2a04d4f8e90682a191976f0dc6b87f4e",
+          "sha256": "620341f8a904e4c749b6097cfe69fc64d6ee4bede9986ef4c4ac4e4b50c940ea"
+        },
+        "downloads": -1,
+        "filename": "recOrder-napari-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "2a04d4f8e90682a191976f0dc6b87f4e",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 11588281,
+        "upload_time": "2022-05-07T01:08:51",
+        "upload_time_iso_8601": "2022-05-07T01:08:51.040057Z",
+        "url": "https://files.pythonhosted.org/packages/da/f3/a6df432648c9f9237647f453e0d79c2abfd623b0157f573f3c0669196883/recOrder-napari-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.0b2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "415d5ef3d9b2ba10a8040cafee25d001",
+          "sha256": "373bb0b9ae2228e18c5060feddf333d77fed9bcd1d2858d5a5cb3566795acbbb"
+        },
+        "downloads": -1,
+        "filename": "recOrder_napari-0.1.0b2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "415d5ef3d9b2ba10a8040cafee25d001",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 411914,
+        "upload_time": "2022-04-19T19:14:03",
+        "upload_time_iso_8601": "2022-04-19T19:14:03.116915Z",
+        "url": "https://files.pythonhosted.org/packages/e7/20/0df1741f250d61b980b40ec3a1584077e136429f15e0ef6cac2af9e76cd7/recOrder_napari-0.1.0b2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "b8259a2b02ec21c308211654730f7c42",
+          "sha256": "a847e94069cdb9e8b8e11d8f96f8696e321dfb54cd67a79ddcba815c5ea411c4"
+        },
+        "downloads": -1,
+        "filename": "recOrder-napari-0.1.0b2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "b8259a2b02ec21c308211654730f7c42",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 11593495,
+        "upload_time": "2022-04-19T19:14:05",
+        "upload_time_iso_8601": "2022-04-19T19:14:05.299315Z",
+        "url": "https://files.pythonhosted.org/packages/22/4c/ef24acea8ec6381fadc14c72224119482212cd1a7401c42c22c89ed3df7f/recOrder-napari-0.1.0b2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.0b3": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "723cebe5e8bd664e189081bdf502b7f3",
+          "sha256": "0504d0d1a9f0bfb5ebf1130c0212fa1cbda9eb28a5470d3833c931680d7f5a52"
+        },
+        "downloads": -1,
+        "filename": "recOrder_napari-0.1.0b3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "723cebe5e8bd664e189081bdf502b7f3",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 11639506,
+        "upload_time": "2022-04-21T16:31:16",
+        "upload_time_iso_8601": "2022-04-21T16:31:16.537603Z",
+        "url": "https://files.pythonhosted.org/packages/5d/91/2f48b58a5a0a76c4b9df0157386493d326813e5398462bd6baa35d0d96f1/recOrder_napari-0.1.0b3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "654b92b31635deb4b8f3fb860d9b9b20",
+          "sha256": "f160167e06e1a3d405670d6a1f0b58bf9d7cb48dc6b26fdbbd7d6a607925baac"
+        },
+        "downloads": -1,
+        "filename": "recOrder-napari-0.1.0b3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "654b92b31635deb4b8f3fb860d9b9b20",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 11588373,
+        "upload_time": "2022-04-21T16:31:18",
+        "upload_time_iso_8601": "2022-04-21T16:31:18.806912Z",
+        "url": "https://files.pythonhosted.org/packages/ae/30/edf0a527ba58d7c0b01fcff63e66989c6d5879c6f0b9063c81e0feac45d0/recOrder-napari-0.1.0b3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.0b4": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "02dcec7a047b902f5d645df47f8a2e70",
+          "sha256": "5f738b5d700a3d35a14d60b402526031e586f137406da55688a69c100e5d3260"
+        },
+        "downloads": -1,
+        "filename": "recOrder_napari-0.1.0b4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "02dcec7a047b902f5d645df47f8a2e70",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 11630599,
+        "upload_time": "2022-04-25T18:27:04",
+        "upload_time_iso_8601": "2022-04-25T18:27:04.450669Z",
+        "url": "https://files.pythonhosted.org/packages/8d/cf/92b3c3fd0233d30e8b23dfb80b8db493ed39944c3175f5b6d7f28fb7c925/recOrder_napari-0.1.0b4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "3940f628648b8cea5c34afceb04aefe1",
+          "sha256": "f91ef9cf12d86a1f507f8bc730b9189d3653044050a3296348b42673d0e71b48"
+        },
+        "downloads": -1,
+        "filename": "recOrder-napari-0.1.0b4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "3940f628648b8cea5c34afceb04aefe1",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 11580356,
+        "upload_time": "2022-04-25T18:27:08",
+        "upload_time_iso_8601": "2022-04-25T18:27:08.365841Z",
+        "url": "https://files.pythonhosted.org/packages/eb/e1/aa5ed0a4fae806e26f2e182f603f50dbf2a7af7c37f647271d0e121389d1/recOrder-napari-0.1.0b4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "838523b4cf7eb8d926daab3a65c0ae8b",
+        "sha256": "4f88bc8550d4a077a6bfb3dbbc7501ba809bd13fb811cb8aec32c3dfa382801d"
+      },
+      "downloads": -1,
+      "filename": "recOrder_napari-0.1.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "838523b4cf7eb8d926daab3a65c0ae8b",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.7",
+      "size": 11629655,
+      "upload_time": "2022-05-07T01:08:48",
+      "upload_time_iso_8601": "2022-05-07T01:08:48.795500Z",
+      "url": "https://files.pythonhosted.org/packages/b9/d7/426052ed28d8a648b23f4400ad2fa584ab09b79c4531718cc6ee9e0157f0/recOrder_napari-0.1.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "2a04d4f8e90682a191976f0dc6b87f4e",
+        "sha256": "620341f8a904e4c749b6097cfe69fc64d6ee4bede9986ef4c4ac4e4b50c940ea"
+      },
+      "downloads": -1,
+      "filename": "recOrder-napari-0.1.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "2a04d4f8e90682a191976f0dc6b87f4e",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.7",
+      "size": 11588281,
+      "upload_time": "2022-05-07T01:08:51",
+      "upload_time_iso_8601": "2022-05-07T01:08:51.040057Z",
+      "url": "https://files.pythonhosted.org/packages/da/f3/a6df432648c9f9237647f453e0d79c2abfd623b0157f573f3c0669196883/recOrder-napari-0.1.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

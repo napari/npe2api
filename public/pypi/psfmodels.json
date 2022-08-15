@@ -1,0 +1,2008 @@
+{
+  "info": {
+    "author": "Talley Lambert",
+    "author_email": "talley.lambert@gmail.com",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 3 - Alpha",
+      "Framework :: napari",
+      "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+      "Natural Language :: English",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.7",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9"
+    ],
+    "description": "# psfmodels\n\n[![PyPI](https://img.shields.io/pypi/v/psfmodels.svg?color=green)](https://pypi.org/project/psfmodels)\n[![Python\nVersion](https://img.shields.io/pypi/pyversions/psfmodels.svg?color=green)](https://python.org)\n[![CI](https://github.com/tlambert03/psfmodels/actions/workflows/ci.yml/badge.svg)](https://github.com/tlambert03/psfmodels/actions/workflows/ci.yml)\n[![codecov](https://codecov.io/gh/tlambert03/psfmodels/branch/main/graph/badge.svg)](https://codecov.io/gh/tlambert03/psfmodels)\n\nPython bindings for scalar and vectorial models of the point spread function.\n\nOriginal C++ code and MATLAB MEX bindings Copyright &copy; 2006-2013, [Francois\nAguet](http://www.francoisaguet.net/software.html), distributed under GPL-3.0\nlicense. Python bindings by Talley Lambert\n\nThis package contains three models:\n\n1. The vectorial model is described in Auget et al 2009<sup>1</sup>. For more\ninformation and implementation details, see Francois' Thesis<sup>2</sup>.\n2. A scalar model, based on Gibson & Lanni<sup>3</sup>.\n3. A gaussian approximation (both paraxial and non-paraxial), using paramters from Zhang et al (2007)<sup>4</sup>.\n\n<small>\n\n<sup>1</sup> [F. Aguet et al., (2009) Opt. Express 17(8), pp.\n6829-6848](https://doi.org/10.1364/OE.17.006829)\n\n<sup>2</sup> [F. Aguet. (2009) Super-Resolution Fluorescence Microscopy Based on\nPhysical Models. Swiss Federal Institute of Technology Lausanne, EPFL Thesis no.\n4418](http://bigwww.epfl.ch/publications/aguet0903.html)\n\n<sup>3</sup> [F. Gibson and F. Lanni (1992) J. Opt. Soc. Am. A, vol. 9, no. 1, pp. 154-166](https://opg.optica.org/josaa/abstract.cfm?uri=josaa-9-1-154)\n\n<sup>4</sup> [Zhang et al (2007). Appl Opt\n. 2007 Apr 1;46(10):1819-29.](https://doi.org/10.1364/AO.46.001819)\n\n</small>\n\n### see also:\n\nFor a different (faster) scalar-based Gibson\u2013Lanni PSF model, see the\n[MicroscPSF](https://github.com/MicroscPSF) project, based on [Li et al\n(2017)](https://doi.org/10.1364/JOSAA.34.001029) which has been implemented in\n[Python](https://github.com/MicroscPSF/MicroscPSF-Py),\n[MATLAB](https://github.com/MicroscPSF/MicroscPSF-Matlab), and\n[ImageJ/Java](https://github.com/MicroscPSF/MicroscPSF-ImageJ)\n\n## Install\n\n```sh\npip install psfmodels\n```\n\n### from source\n\n```sh\ngit clone https://github.com/tlambert03/PSFmodels.git\ncd PSFmodels\npip install -e \".[dev]\"  # will compile c code via pybind11\n```\n\n## Usage\n\nThere are two main functions in `psfmodels`: `vectorial_psf` and `scalar_psf`.\nAdditionally, each version has a helper function called `vectorial_psf_centered`\nand `scalar_psf_centered` respectively. The main difference is that the `_psf`\nfunctions accept a vector of Z positions `zv` (relative to coverslip) at which\nPSF is calculated. As such, the point source may or may not actually be in the\ncenter of the rendered volume. The `_psf_centered` variants, by contrast, do\n_not_ accecpt `zv`, but rather accept `nz` (the number of z planes) and `dz`\n(the z step size in microns), and always generates an output volume in which the\npoint source is positioned in the middle of the Z range, with planes equidistant\nfrom each other. All functions accept an argument `pz`, specifying the position\nof the point source relative to the coverslip. See additional keyword arguments\nbelow\n\n_Note, all output dimensions (`nx` and `nz`) should be odd._\n\n```python\nimport psfmodels as psfm\nimport matplotlib.pyplot as plt\nfrom matplotlib.colors import PowerNorm\n\n# generate centered psf with a point source at `pz` microns from coverslip\n# shape will be (127, 127, 127)\npsf = psfm.make_psf(127, 127, dxy=0.05, dz=0.05, pz=0)\nfig, (ax1, ax2) = plt.subplots(1, 2)\nax1.imshow(psf[nz//2], norm=PowerNorm(gamma=0.4))\nax2.imshow(psf[:, nx//2], norm=PowerNorm(gamma=0.4))\nplt.show()\n```\n\n![Image of PSF](fig.png)\n\n```python\n# instead of nz and dz, you can directly specify a vector of z positions\nimport numpy as np\n\n# generate 31 evenly spaced Z positions from -3 to 3 microns\npsf = psfm.make_psf(np.linspace(-3, 3, 31), nx=127)\npsf.shape  # (31, 127, 127)\n```\n\n**all** PSF functions accept the following parameters. Units should be provided\nin microns unless otherwise stated. Python API may change slightly in the\nfuture.  See function docstrings as well.\n\n```\nnx (int):       XY size of output PSF in pixels, must be odd.\ndxy (float):    pixel size in sample space (microns) [default: 0.05]\npz (float):     depth of point source relative to coverslip (in microns) [default: 0]\nti0 (float):    working distance of the objective (microns) [default: 150.0]\nni0 (float):    immersion medium refractive index, design value [default: 1.515]\nni (float):     immersion medium refractive index, experimental value [default: 1.515]\ntg0 (float):    coverslip thickness, design value (microns) [default: 170.0]\ntg (float):     coverslip thickness, experimental value (microns) [default: 170.0]\nng0 (float):    coverslip refractive index, design value [default: 1.515]\nng (float):     coverslip refractive index, experimental value [default: 1.515]\nns (float):     sample refractive index [default: 1.47]\nwvl (float):    emission wavelength (microns) [default: 0.6]\nNA (float):     numerical aperture [default: 1.4]\n```\n\n## Comparison with other models\n\nWhile these models are definitely slower than the one implemented in [Li et al\n(2017)](https://doi.org/10.1364/JOSAA.34.001029) and\n[MicroscPSF](https://github.com/MicroscPSF), there are some interesting\ndifferences between the scalar and vectorial approximations, particularly with\nhigher NA lenses, non-ideal sample refractive index, and increasing spherical\naberration with depth from the coverslip.\n\nFor an interactive comparison, see the [examples.ipynb](notebooks/examples.ipynb) Jupyter\nnotebook.\n\n## Lightsheet PSF utility function\n\nThe `psfmodels.tot_psf()` function provides a quick way to simulate the total\nsystem PSF (excitation x detection) as might be observed on a light sheet\nmicroscope (currently, only strictly orthogonal illumination and detection are\nsupported).  See the [lightsheet.ipynb](notebooks/lightsheet.ipynb) Jupyter notebook for\nexamples.\n\n\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "https://github.com/tlambert03/psfmodels",
+    "keywords": "",
+    "license": "GPL-3.0",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "psfmodels",
+    "package_url": "https://pypi.org/project/psfmodels/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/psfmodels/",
+    "project_urls": {
+      "Homepage": "https://github.com/tlambert03/psfmodels",
+      "Source Code": "https://github.com/tlambert03/psfmodels"
+    },
+    "release_url": "https://pypi.org/project/psfmodels/0.3.2/",
+    "requires_dist": [
+      "numpy",
+      "scipy (>=0.14.0)",
+      "typing-extensions",
+      "black ; extra == 'dev'",
+      "flake8 ; extra == 'dev'",
+      "flake8-docstrings ; extra == 'dev'",
+      "flake8-typing-imports ; extra == 'dev'",
+      "ipython ; extra == 'dev'",
+      "isort ; extra == 'dev'",
+      "mypy ; extra == 'dev'",
+      "pre-commit ; extra == 'dev'",
+      "pydocstyle ; extra == 'dev'",
+      "pytest ; extra == 'dev'",
+      "pytest-cov ; extra == 'dev'",
+      "tox ; extra == 'dev'",
+      "tox-conda ; extra == 'dev'",
+      "pytest ; extra == 'testing'",
+      "pytest-cov ; extra == 'testing'",
+      "tox ; extra == 'testing'",
+      "tox-conda ; extra == 'testing'",
+      "magicgui ; (platform_system != \"Linux\") and extra == 'testing'",
+      "pyside2 ; (platform_system != \"Linux\") and extra == 'testing'",
+      "qtpy ; (platform_system != \"Linux\") and extra == 'testing'"
+    ],
+    "requires_python": ">=3.7",
+    "summary": "Scalar and vectorial models of the microscope point spread function (PSF).",
+    "version": "0.3.2",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 13600985,
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "9a46a21bbf2aafc763d5c35aa92ed954",
+          "sha256": "fcece92e3dabde90b3abae0e7529e44ca3ec7d1cbbc1b67968bef9408ec288a3"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.1.0-cp27-cp27m-macosx_10_6_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "9a46a21bbf2aafc763d5c35aa92ed954",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp27",
+        "requires_python": null,
+        "size": 85317,
+        "upload_time": "2019-09-15T18:38:17",
+        "upload_time_iso_8601": "2019-09-15T18:38:17.604354Z",
+        "url": "https://files.pythonhosted.org/packages/38/6c/57f49efae391630cb9b9a1a1d2d3c1f919c3f6f1316e77b1c9c8d39d4d9e/psfmodels-0.1.0-cp27-cp27m-macosx_10_6_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "9ffd2364b9e5a84c16016f716756faa3",
+          "sha256": "658aa3f20c2fb2d1814b7274643a86f0e0cf63c6c009f21dfdbfd8528c7178db"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.1.0-cp35-cp35m-macosx_10_9_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "9ffd2364b9e5a84c16016f716756faa3",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp35",
+        "requires_python": null,
+        "size": 85088,
+        "upload_time": "2019-09-15T18:38:08",
+        "upload_time_iso_8601": "2019-09-15T18:38:08.265172Z",
+        "url": "https://files.pythonhosted.org/packages/4c/99/202d1e39b764b7c691cf1793a13b30d8ec1ecc91522795abd04856309cfc/psfmodels-0.1.0-cp35-cp35m-macosx_10_9_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "22f623ea147c09e84b310e903338e255",
+          "sha256": "bbbf7207dd2d88ba7605982038d04c447874ef51e10737b20b373067dc0cd8d2"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.1.0-cp35-cp35m-win_amd64.whl",
+        "has_sig": false,
+        "md5_digest": "22f623ea147c09e84b310e903338e255",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp35",
+        "requires_python": null,
+        "size": 83062,
+        "upload_time": "2019-09-15T18:35:55",
+        "upload_time_iso_8601": "2019-09-15T18:35:55.149617Z",
+        "url": "https://files.pythonhosted.org/packages/e0/ed/e4cfcfd550a897824ed9254626a2e8474fa0857a6a810ab4ac4750965196/psfmodels-0.1.0-cp35-cp35m-win_amd64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "895b45d209d41149e5848a965a188acf",
+          "sha256": "e2f50e899c6e4aec252d6f457f98d947f3ad514a39e4e76ad2f0008b7ff918c0"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.1.0-cp36-cp36m-macosx_10_7_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "895b45d209d41149e5848a965a188acf",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp36",
+        "requires_python": null,
+        "size": 85086,
+        "upload_time": "2019-09-15T18:38:19",
+        "upload_time_iso_8601": "2019-09-15T18:38:19.064872Z",
+        "url": "https://files.pythonhosted.org/packages/79/66/4232f69ea7d18566f70e64b2ba85dbfb9d60cfb39137ad5332c5fc3351b3/psfmodels-0.1.0-cp36-cp36m-macosx_10_7_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "ddb031d7a1c08a23ec2dd52c458427eb",
+          "sha256": "cfb4250316206993db10b40b65672b900c344dd437a0e64e704a2046a85e9add"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.1.0-cp36-cp36m-win_amd64.whl",
+        "has_sig": false,
+        "md5_digest": "ddb031d7a1c08a23ec2dd52c458427eb",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp36",
+        "requires_python": null,
+        "size": 83057,
+        "upload_time": "2019-09-15T18:37:30",
+        "upload_time_iso_8601": "2019-09-15T18:37:30.973636Z",
+        "url": "https://files.pythonhosted.org/packages/89/db/35a317d499a97f73e367ba388226c2d4919eaeecdfd4da12d5f7182d336c/psfmodels-0.1.0-cp36-cp36m-win_amd64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "1621cbe837e0c0b1537d1c2319c93f75",
+          "sha256": "48507079967b3251d6cca36868210448d3073fe6ea906dabb66fa94f168482dd"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.1.0-cp37-cp37m-macosx_10_9_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "1621cbe837e0c0b1537d1c2319c93f75",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp37",
+        "requires_python": null,
+        "size": 85012,
+        "upload_time": "2019-09-15T18:38:10",
+        "upload_time_iso_8601": "2019-09-15T18:38:10.472726Z",
+        "url": "https://files.pythonhosted.org/packages/0e/a0/46df88ef4835450e075805256b691f3b7d106eca187c756f452aa016f492/psfmodels-0.1.0-cp37-cp37m-macosx_10_9_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "31119a47389035985dc220285a1baa2b",
+          "sha256": "e8c31082c685e53caea0dc9d8f1190c5b4a735c0879f7199a32c8e805cf063c4"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.1.0-cp37-cp37m-win_amd64.whl",
+        "has_sig": false,
+        "md5_digest": "31119a47389035985dc220285a1baa2b",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp37",
+        "requires_python": null,
+        "size": 83053,
+        "upload_time": "2019-09-15T18:39:04",
+        "upload_time_iso_8601": "2019-09-15T18:39:04.894668Z",
+        "url": "https://files.pythonhosted.org/packages/1b/3b/1fef0cceff331bea1bd4f25b6751c1821006857dc71beba58de0aa64004f/psfmodels-0.1.0-cp37-cp37m-win_amd64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "fcac082be7ba9f47c64686471fdd5cfc",
+          "sha256": "e2786b5218978317f73001ea987d2d3ff398115a402426ef4a1c1d41c3d9e870"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "fcac082be7ba9f47c64686471fdd5cfc",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": null,
+        "size": 162985,
+        "upload_time": "2019-09-15T18:36:13",
+        "upload_time_iso_8601": "2019-09-15T18:36:13.042959Z",
+        "url": "https://files.pythonhosted.org/packages/14/3b/a4a64c858fec5c32036caf469dbdc884fe35381a14f757ae53a7e976a019/psfmodels-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "ac8ac6d60757bc22a33be01152813420",
+          "sha256": "c2281c2b8ceaf385585967017ca2542b69bdf284589e5987ece9fabbf179a4c6"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.2.0-cp27-cp27m-macosx_10_6_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "ac8ac6d60757bc22a33be01152813420",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp27",
+        "requires_python": null,
+        "size": 86641,
+        "upload_time": "2019-09-16T21:17:33",
+        "upload_time_iso_8601": "2019-09-16T21:17:33.538888Z",
+        "url": "https://files.pythonhosted.org/packages/1a/bf/f847aa12cf844ded03a51e9b8aa43cb2240739f251a0ebd3fb5d96beb13f/psfmodels-0.2.0-cp27-cp27m-macosx_10_6_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "61b13077367112e0e4a814524621df9d",
+          "sha256": "5a024e2b124d783efe3434e751e7bcccd2394eb6f472cd6cb2bc4f2cec927b23"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.2.0-cp35-cp35m-macosx_10_9_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "61b13077367112e0e4a814524621df9d",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp35",
+        "requires_python": null,
+        "size": 86409,
+        "upload_time": "2019-09-16T21:17:04",
+        "upload_time_iso_8601": "2019-09-16T21:17:04.708141Z",
+        "url": "https://files.pythonhosted.org/packages/a2/46/febbdcb9bfa7e5ce054129dbb66d95c5c9e19c08319dcf66615ef74486c0/psfmodels-0.2.0-cp35-cp35m-macosx_10_9_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "418dc3d9132e3313643ef27ff2d79d53",
+          "sha256": "282b27e24dc975fe29766f159fee8a0c55536ed48043c9ee7d87acc19dcffee3"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.2.0-cp35-cp35m-win_amd64.whl",
+        "has_sig": false,
+        "md5_digest": "418dc3d9132e3313643ef27ff2d79d53",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp35",
+        "requires_python": null,
+        "size": 84385,
+        "upload_time": "2019-09-16T21:19:53",
+        "upload_time_iso_8601": "2019-09-16T21:19:53.256802Z",
+        "url": "https://files.pythonhosted.org/packages/27/18/c4356fe60c33ed3dc8bb877d4af2ece08b506b35c973258c62131803c29f/psfmodels-0.2.0-cp35-cp35m-win_amd64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "93325b215be1d9f8a8cb1d2e912cb48c",
+          "sha256": "979c5405de2cf7c89f76f736386cf432d3ac380bc4fc11b321a59355aa65a59f"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.2.0-cp36-cp36m-macosx_10_7_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "93325b215be1d9f8a8cb1d2e912cb48c",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp36",
+        "requires_python": null,
+        "size": 86411,
+        "upload_time": "2019-09-16T21:16:41",
+        "upload_time_iso_8601": "2019-09-16T21:16:41.477812Z",
+        "url": "https://files.pythonhosted.org/packages/79/2f/e0f00a3ad5fcb1b38388bff392908333a86a8747eec465e7e3b486e06158/psfmodels-0.2.0-cp36-cp36m-macosx_10_7_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "26ec8d9c19bb6f818ab23938ed9294e7",
+          "sha256": "ae0159178cf11f7f167f7ba1c5241edbf2067f4230f1f105763bb5893f310d9f"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.2.0-cp36-cp36m-win_amd64.whl",
+        "has_sig": false,
+        "md5_digest": "26ec8d9c19bb6f818ab23938ed9294e7",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp36",
+        "requires_python": null,
+        "size": 84380,
+        "upload_time": "2019-09-16T21:21:46",
+        "upload_time_iso_8601": "2019-09-16T21:21:46.429021Z",
+        "url": "https://files.pythonhosted.org/packages/e3/c5/e01563e019644568c9f991bbc65625496a3080fffeb941aad67159bcd4b8/psfmodels-0.2.0-cp36-cp36m-win_amd64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "bb147cbc78e726fa2d784d7567ccdfd2",
+          "sha256": "e97d96224057d2c6a7265471ef140a388fb7c8d70b57b2114db73c27c2dfb3fe"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.2.0-cp37-cp37m-macosx_10_9_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "bb147cbc78e726fa2d784d7567ccdfd2",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp37",
+        "requires_python": null,
+        "size": 86334,
+        "upload_time": "2019-09-16T21:18:24",
+        "upload_time_iso_8601": "2019-09-16T21:18:24.784286Z",
+        "url": "https://files.pythonhosted.org/packages/6d/94/73cda46babaa47af15ed8bdf1046ab60258f810b65c8c4782206ac9f3552/psfmodels-0.2.0-cp37-cp37m-macosx_10_9_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "8aee12ba9f9a4aa74f64b08cab70f913",
+          "sha256": "c2cc28b9eaacf02b2290a76eb9a4c218925510c2f41b7459f145b4193e2f78e1"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.2.0-cp37-cp37m-win_amd64.whl",
+        "has_sig": false,
+        "md5_digest": "8aee12ba9f9a4aa74f64b08cab70f913",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp37",
+        "requires_python": null,
+        "size": 84372,
+        "upload_time": "2019-09-16T21:23:32",
+        "upload_time_iso_8601": "2019-09-16T21:23:32.486782Z",
+        "url": "https://files.pythonhosted.org/packages/83/bf/6044f4385d99444c710981dac3967e3e5dcdda180562a174f3d228153f6b/psfmodels-0.2.0-cp37-cp37m-win_amd64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "3ebc26adba2481edc55d6a1e024d113b",
+          "sha256": "9482ae47ef37e7d1305376885458becfa8536bd15d69de157930325a2b412885"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.2.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "3ebc26adba2481edc55d6a1e024d113b",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": null,
+        "size": 164291,
+        "upload_time": "2019-09-16T21:14:57",
+        "upload_time_iso_8601": "2019-09-16T21:14:57.097830Z",
+        "url": "https://files.pythonhosted.org/packages/d8/3b/0c82b3e25c27453ef453c476fd90cc1a6d2526a7e4f6c368563c06d0fc28/psfmodels-0.2.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "d9f5398adac9035d0da3d7960eb28cac",
+          "sha256": "dfd292f32844b34f1ad13ca9f61a834571b2475b71cd81c61773a2ee98bcc3c0"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.0-cp310-cp310-macosx_10_9_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "d9f5398adac9035d0da3d7960eb28cac",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp310",
+        "requires_python": ">=3.7",
+        "size": 110508,
+        "upload_time": "2022-04-16T22:15:11",
+        "upload_time_iso_8601": "2022-04-16T22:15:11.224245Z",
+        "url": "https://files.pythonhosted.org/packages/41/44/22bd33401b9af2c70434b990655a011a42f24502c3cf45b7224c8b387ae2/psfmodels-0.3.0-cp310-cp310-macosx_10_9_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "0ff7611661ca347c95c32e139047fc7e",
+          "sha256": "8ad92844a2a3ebc380be1c13b72f70e60c930b4a01cc8f98040dcf2a7255712c"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.0-cp310-cp310-macosx_11_0_arm64.whl",
+        "has_sig": false,
+        "md5_digest": "0ff7611661ca347c95c32e139047fc7e",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp310",
+        "requires_python": ">=3.7",
+        "size": 101437,
+        "upload_time": "2022-04-16T22:15:12",
+        "upload_time_iso_8601": "2022-04-16T22:15:12.682008Z",
+        "url": "https://files.pythonhosted.org/packages/6c/f9/76c627252ccd565dabafaf16f8be64559f7a6013ee47450e0de06ea898ca/psfmodels-0.3.0-cp310-cp310-macosx_11_0_arm64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "2e0beab39ce531ce3db5e601766f5453",
+          "sha256": "2ef48c66bcb07bb26c401c7a52669f0f4fab8dd41fdd118087f5dc9d02af58c8"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "2e0beab39ce531ce3db5e601766f5453",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp310",
+        "requires_python": ">=3.7",
+        "size": 150044,
+        "upload_time": "2022-04-16T22:15:13",
+        "upload_time_iso_8601": "2022-04-16T22:15:13.993014Z",
+        "url": "https://files.pythonhosted.org/packages/3c/8c/13fb83a8512d4fd7b7b1aced492e58779980257ca9491c16f2fa1f2ca539/psfmodels-0.3.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "59003b40a0df21d73e1c42f5bdd19539",
+          "sha256": "4d1427ccde696630827e4fe052f3d72a9083b37b9ae4476bb6a4d693361980ed"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.0-cp310-cp310-musllinux_1_1_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "59003b40a0df21d73e1c42f5bdd19539",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp310",
+        "requires_python": ">=3.7",
+        "size": 665077,
+        "upload_time": "2022-04-16T22:15:15",
+        "upload_time_iso_8601": "2022-04-16T22:15:15.180354Z",
+        "url": "https://files.pythonhosted.org/packages/4f/37/949891de3631307c32e501434e75bf34b2da415fc5064f1f997dac32afc5/psfmodels-0.3.0-cp310-cp310-musllinux_1_1_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "d2a404c7cb609dca5b8e171e7688250a",
+          "sha256": "d8b3e364c2a1c0244c10d5f833b8ae77ebaa214c25fa99dbf50439d26eeb4253"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.0-cp310-cp310-win_amd64.whl",
+        "has_sig": false,
+        "md5_digest": "d2a404c7cb609dca5b8e171e7688250a",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp310",
+        "requires_python": ">=3.7",
+        "size": 106536,
+        "upload_time": "2022-04-16T22:15:16",
+        "upload_time_iso_8601": "2022-04-16T22:15:16.251267Z",
+        "url": "https://files.pythonhosted.org/packages/1d/09/99629f63dc68bd8ec6ece4fd551cae96b2a8a5e5bb32be65804edb38cb1c/psfmodels-0.3.0-cp310-cp310-win_amd64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "4cf6fedbc61b917bb60582c825aaa577",
+          "sha256": "7743c41106d346012365b87d5360a7520522d0dd8784f66f8a879c7b7547310d"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.0-cp37-cp37m-macosx_10_9_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "4cf6fedbc61b917bb60582c825aaa577",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp37",
+        "requires_python": ">=3.7",
+        "size": 109897,
+        "upload_time": "2022-04-16T22:15:17",
+        "upload_time_iso_8601": "2022-04-16T22:15:17.507133Z",
+        "url": "https://files.pythonhosted.org/packages/cc/2c/9a43eddc0b1c19af892418a521b444e39878be1fbdf5af3c24ee838f2198/psfmodels-0.3.0-cp37-cp37m-macosx_10_9_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "5cb77a9e7b6fcfe593ff11e930c82012",
+          "sha256": "341bdceba0ab132e60ce1f436f2c99d9dfb5d82046bd26b7025ed1c0687f10ac"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.0-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "5cb77a9e7b6fcfe593ff11e930c82012",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp37",
+        "requires_python": ">=3.7",
+        "size": 150382,
+        "upload_time": "2022-04-16T22:15:18",
+        "upload_time_iso_8601": "2022-04-16T22:15:18.724459Z",
+        "url": "https://files.pythonhosted.org/packages/54/22/866cdc30fa57c3600d5ff88d77601fbeed33fb179fcebb8b6d0d629f8c05/psfmodels-0.3.0-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "b14a4907df99b2686052cd4d0227ab15",
+          "sha256": "88b081e13ae9e99f8889c39a205dbd6e536d5f0a2b309d7a5f9cc2fd21b58990"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.0-cp37-cp37m-musllinux_1_1_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "b14a4907df99b2686052cd4d0227ab15",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp37",
+        "requires_python": ">=3.7",
+        "size": 666872,
+        "upload_time": "2022-04-16T22:15:20",
+        "upload_time_iso_8601": "2022-04-16T22:15:20.191291Z",
+        "url": "https://files.pythonhosted.org/packages/d2/69/80a900aa96912f8c9341ea26bb9ca29d932e2f38444354160700cd059a9e/psfmodels-0.3.0-cp37-cp37m-musllinux_1_1_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "87b59bd1489e52521e35a43afb9ffb61",
+          "sha256": "4ca923c7c7dc31358a00c987c383d917ac478487e77c33312717a40df4792b55"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.0-cp37-cp37m-win_amd64.whl",
+        "has_sig": false,
+        "md5_digest": "87b59bd1489e52521e35a43afb9ffb61",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp37",
+        "requires_python": ">=3.7",
+        "size": 107241,
+        "upload_time": "2022-04-16T22:15:21",
+        "upload_time_iso_8601": "2022-04-16T22:15:21.369952Z",
+        "url": "https://files.pythonhosted.org/packages/15/83/e293ed88f3ffa656e4a23417f2fec480e5ea8e8d034e937d579c5083554c/psfmodels-0.3.0-cp37-cp37m-win_amd64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "5e7bde438f67fa7a94a46b9e3b93b72d",
+          "sha256": "af174880771cd4fb3d0a7d7277f4e87bf6134336f2c7e5cc01f5f0ef9db74207"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.0-cp38-cp38-macosx_10_9_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "5e7bde438f67fa7a94a46b9e3b93b72d",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp38",
+        "requires_python": ">=3.7",
+        "size": 110345,
+        "upload_time": "2022-04-16T22:15:22",
+        "upload_time_iso_8601": "2022-04-16T22:15:22.551264Z",
+        "url": "https://files.pythonhosted.org/packages/5c/c7/84a96214c533b943ed7fda680bf1625da6856ecc57e6ca7456b19d2c5788/psfmodels-0.3.0-cp38-cp38-macosx_10_9_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "fc4f87969e469793819b37b30b8ee538",
+          "sha256": "935c5abf8ae0d171359336ec7c751efe745d825e6dfd9c319755c629a506ea75"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.0-cp38-cp38-macosx_11_0_arm64.whl",
+        "has_sig": false,
+        "md5_digest": "fc4f87969e469793819b37b30b8ee538",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp38",
+        "requires_python": ">=3.7",
+        "size": 101443,
+        "upload_time": "2022-04-16T22:15:23",
+        "upload_time_iso_8601": "2022-04-16T22:15:23.935196Z",
+        "url": "https://files.pythonhosted.org/packages/b1/21/7f2988c12b20aea4729d71aae97229dddfaadde132978cdb41608c8942f9/psfmodels-0.3.0-cp38-cp38-macosx_11_0_arm64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "2f8d2070c255446618affce8fe8acce5",
+          "sha256": "cb19cc00adb5624c6c79467c63ecebfbd4f2d4d8b68365406b6f4a48ee6883e5"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "2f8d2070c255446618affce8fe8acce5",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp38",
+        "requires_python": ">=3.7",
+        "size": 149962,
+        "upload_time": "2022-04-16T22:15:24",
+        "upload_time_iso_8601": "2022-04-16T22:15:24.935027Z",
+        "url": "https://files.pythonhosted.org/packages/be/43/3871f2b428b7a0c7c8c52c77e1ef609572760c0722fc290c6ff4bd315fc7/psfmodels-0.3.0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "164ed472b5d2f05d92b46de2480b8aa3",
+          "sha256": "94e3ea46e962a0b67a91183ae5409779e1bc793e8430f15efd72471f338023da"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.0-cp38-cp38-musllinux_1_1_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "164ed472b5d2f05d92b46de2480b8aa3",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp38",
+        "requires_python": ">=3.7",
+        "size": 665010,
+        "upload_time": "2022-04-16T22:15:26",
+        "upload_time_iso_8601": "2022-04-16T22:15:26.476376Z",
+        "url": "https://files.pythonhosted.org/packages/40/7c/ed5e12064a604b0838f04855876fee97b0db3fad241b5942c36a8249a925/psfmodels-0.3.0-cp38-cp38-musllinux_1_1_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "3326946357fddd06a0c092fb4e76037b",
+          "sha256": "3a384678c53af9e187533e7179e0dfe9c8b295feff05d5250d6fd1e2cdac052d"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.0-cp38-cp38-win_amd64.whl",
+        "has_sig": false,
+        "md5_digest": "3326946357fddd06a0c092fb4e76037b",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp38",
+        "requires_python": ">=3.7",
+        "size": 106520,
+        "upload_time": "2022-04-16T22:15:27",
+        "upload_time_iso_8601": "2022-04-16T22:15:27.673880Z",
+        "url": "https://files.pythonhosted.org/packages/7a/ce/108cbad15b80dc3cc73d39ac59d639515c06f5c9893375d5eaffea25a40e/psfmodels-0.3.0-cp38-cp38-win_amd64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "55f831fbce15f6fe8de438b47ab0dde4",
+          "sha256": "0400adb25aebbb2afbfab02cafe828cb81493d8f532b0dc9aaca317b2ac31203"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.0-cp39-cp39-macosx_10_9_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "55f831fbce15f6fe8de438b47ab0dde4",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp39",
+        "requires_python": ">=3.7",
+        "size": 110602,
+        "upload_time": "2022-04-16T22:15:28",
+        "upload_time_iso_8601": "2022-04-16T22:15:28.628182Z",
+        "url": "https://files.pythonhosted.org/packages/80/c1/3b46b1164ba0b5af613696778a94a6cdfee4886b7cd91df180b0b15872e6/psfmodels-0.3.0-cp39-cp39-macosx_10_9_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "7eaa306b88a7f1d35fafe08802fefcae",
+          "sha256": "fcf8e922f862a9a03d33d3d75474039106b28fce026451711717e440f9c4a5f5"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.0-cp39-cp39-macosx_11_0_arm64.whl",
+        "has_sig": false,
+        "md5_digest": "7eaa306b88a7f1d35fafe08802fefcae",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp39",
+        "requires_python": ">=3.7",
+        "size": 101623,
+        "upload_time": "2022-04-16T22:15:29",
+        "upload_time_iso_8601": "2022-04-16T22:15:29.588397Z",
+        "url": "https://files.pythonhosted.org/packages/f5/e9/95ba9cce01667d7f9a6ef4dffabef4c03c9ddb465c6ea6596aa74d589b36/psfmodels-0.3.0-cp39-cp39-macosx_11_0_arm64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "76f320bd579a79fd62d417c25b6ae4eb",
+          "sha256": "a3d0581841505fa9e3888b335c4acfc8fe9198015f8f71378c5879cf733d4ed9"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "76f320bd579a79fd62d417c25b6ae4eb",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp39",
+        "requires_python": ">=3.7",
+        "size": 150289,
+        "upload_time": "2022-04-16T22:15:30",
+        "upload_time_iso_8601": "2022-04-16T22:15:30.579392Z",
+        "url": "https://files.pythonhosted.org/packages/2c/ac/2bad4b09a2b4f84188f8f3b312966920f554b499878ec825eeb6ccd70e44/psfmodels-0.3.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "a492f470feb4a3a2d83ae8db14fc1a90",
+          "sha256": "1671700ebe598635bb36e4b0db7846f2bb955c153ddf295cdf8ece15f654ea7e"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.0-cp39-cp39-musllinux_1_1_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "a492f470feb4a3a2d83ae8db14fc1a90",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp39",
+        "requires_python": ">=3.7",
+        "size": 666122,
+        "upload_time": "2022-04-16T22:15:31",
+        "upload_time_iso_8601": "2022-04-16T22:15:31.884648Z",
+        "url": "https://files.pythonhosted.org/packages/e7/e8/b7b90541d6f16939d4415fd0f88d235dc64ebcfab9d4dbefc3f15bae0f3c/psfmodels-0.3.0-cp39-cp39-musllinux_1_1_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "a7574bda71ec53dd18b6dd18d11aa160",
+          "sha256": "6ec04a5a8a30f9255850b6a9604c1613873259704831cc75b0510390f49a229b"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.0-cp39-cp39-win_amd64.whl",
+        "has_sig": false,
+        "md5_digest": "a7574bda71ec53dd18b6dd18d11aa160",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp39",
+        "requires_python": ">=3.7",
+        "size": 106501,
+        "upload_time": "2022-04-16T22:15:33",
+        "upload_time_iso_8601": "2022-04-16T22:15:33.116770Z",
+        "url": "https://files.pythonhosted.org/packages/ac/a4/9402720f623cd8267b99e83df9e6a0ccd0a5c801cb71789ff86356b184d0/psfmodels-0.3.0-cp39-cp39-win_amd64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "eafc64e6b47118462c8e787ce16f8033",
+          "sha256": "9d5baee8cc99ad4a8399d272c2a4b13f8a7ba49f54302f6d1746467d69a89e42"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "eafc64e6b47118462c8e787ce16f8033",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 575486,
+        "upload_time": "2022-04-16T22:15:34",
+        "upload_time_iso_8601": "2022-04-16T22:15:34.432898Z",
+        "url": "https://files.pythonhosted.org/packages/43/09/bf7f316a52b53963ffd9c204621f73c7806ae28ecacdda7329f4adf77967/psfmodels-0.3.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "38c036dbd44009fcf817d7eef56ddea3",
+          "sha256": "31815a39274d15f16e65091c3bf597ac32cf9f78c412deb1a8f6c3eeffb24530"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.1-cp310-cp310-macosx_10_9_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "38c036dbd44009fcf817d7eef56ddea3",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp310",
+        "requires_python": ">=3.7",
+        "size": 112513,
+        "upload_time": "2022-04-17T02:39:20",
+        "upload_time_iso_8601": "2022-04-17T02:39:20.755729Z",
+        "url": "https://files.pythonhosted.org/packages/8f/45/8d70514d676979e3ff3156b4f4d6084a379b50d8b9ec79bc26ebc0e70b4c/psfmodels-0.3.1-cp310-cp310-macosx_10_9_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "00fb15fde27cd19ebf5b32166b1e27d6",
+          "sha256": "9407c2930401b7cabb116281bf3704ec2a718f2911ad5a89ec5fd799540d3ddb"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.1-cp310-cp310-macosx_11_0_arm64.whl",
+        "has_sig": false,
+        "md5_digest": "00fb15fde27cd19ebf5b32166b1e27d6",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp310",
+        "requires_python": ">=3.7",
+        "size": 103445,
+        "upload_time": "2022-04-17T02:39:22",
+        "upload_time_iso_8601": "2022-04-17T02:39:22.200100Z",
+        "url": "https://files.pythonhosted.org/packages/40/a7/93e24417c8c00ddc995cc732e8b4cbb98a9372f0045ea080ca156c177b7d/psfmodels-0.3.1-cp310-cp310-macosx_11_0_arm64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "9c75115bb39af4c31fcd9ad2df258633",
+          "sha256": "ac74c5bd10ca39baafbb7b8cee91f91fab43d58967086ba5ca3d312162e99bb9"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "9c75115bb39af4c31fcd9ad2df258633",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp310",
+        "requires_python": ">=3.7",
+        "size": 152057,
+        "upload_time": "2022-04-17T02:39:23",
+        "upload_time_iso_8601": "2022-04-17T02:39:23.261933Z",
+        "url": "https://files.pythonhosted.org/packages/05/2e/5d12f746b7d9d4e495eecc128eddcd3d312d33e861255dcdd7b658b6eae2/psfmodels-0.3.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "31c7e9097a76f82836ea0e53dd7feca5",
+          "sha256": "944305ca8c0fbbd2016579af05e2d8c16d38ef6f1564f346e043ab8ce7d4fb3c"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.1-cp310-cp310-musllinux_1_1_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "31c7e9097a76f82836ea0e53dd7feca5",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp310",
+        "requires_python": ">=3.7",
+        "size": 667090,
+        "upload_time": "2022-04-17T02:39:24",
+        "upload_time_iso_8601": "2022-04-17T02:39:24.182054Z",
+        "url": "https://files.pythonhosted.org/packages/64/fe/945072765b4efef472c09a5370d1bfa497a7877b06c78ffd2e0f5647e111/psfmodels-0.3.1-cp310-cp310-musllinux_1_1_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "85ce417632dca114ee1f407c1b47033e",
+          "sha256": "9f1e983a731ccb32452d7bd2fbde01fd90ec7b6d28dc0296a9691eb2fd2ca333"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.1-cp310-cp310-win_amd64.whl",
+        "has_sig": false,
+        "md5_digest": "85ce417632dca114ee1f407c1b47033e",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp310",
+        "requires_python": ">=3.7",
+        "size": 108559,
+        "upload_time": "2022-04-17T02:39:25",
+        "upload_time_iso_8601": "2022-04-17T02:39:25.568495Z",
+        "url": "https://files.pythonhosted.org/packages/56/16/b4fefc5f58994f58ed70f305703e54cf3b7c9a5163b7bbb5e0ae2af666e8/psfmodels-0.3.1-cp310-cp310-win_amd64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "9db4d3a956d4441e75c7e21f218e15e2",
+          "sha256": "d866632b1f5f45d7368ea5bc4956e9de18266fd6217fd6e630b048b6671c3913"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.1-cp37-cp37m-macosx_10_9_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "9db4d3a956d4441e75c7e21f218e15e2",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp37",
+        "requires_python": ">=3.7",
+        "size": 111904,
+        "upload_time": "2022-04-17T02:39:26",
+        "upload_time_iso_8601": "2022-04-17T02:39:26.830529Z",
+        "url": "https://files.pythonhosted.org/packages/ee/01/fa05d3665b1646c302381a5a5f173892b53646d4917b0c790890033feb7e/psfmodels-0.3.1-cp37-cp37m-macosx_10_9_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "1e4397b4dfdc5d80b0837af324bb218c",
+          "sha256": "e9f39c2845e9d8f9369ddef069a212ca63523d832603085251ab0b56b1001f25"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.1-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "1e4397b4dfdc5d80b0837af324bb218c",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp37",
+        "requires_python": ">=3.7",
+        "size": 152393,
+        "upload_time": "2022-04-17T02:39:28",
+        "upload_time_iso_8601": "2022-04-17T02:39:28.070852Z",
+        "url": "https://files.pythonhosted.org/packages/eb/65/6ef97bce534137f1ac4027dfba5f387b2d2280231c9179389c9425a166dc/psfmodels-0.3.1-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "1f43cda282b577263ab76c931d768168",
+          "sha256": "d36e88bb6f164bf24c439bb5c17695d5ce3f6418e1b2ac72c32763fdc6eff982"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.1-cp37-cp37m-musllinux_1_1_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "1f43cda282b577263ab76c931d768168",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp37",
+        "requires_python": ">=3.7",
+        "size": 668880,
+        "upload_time": "2022-04-17T02:39:29",
+        "upload_time_iso_8601": "2022-04-17T02:39:29.355842Z",
+        "url": "https://files.pythonhosted.org/packages/2e/b3/b540477dd52d2a658773272239a2401178a620698f3920fdbee42aab726f/psfmodels-0.3.1-cp37-cp37m-musllinux_1_1_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "3fcbbfb83d301ea5bde6a132d77f5685",
+          "sha256": "fbe1fd483de54a1413aa014acc876fc4e245b2638e4464c2e923bce2dfcd12ad"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.1-cp37-cp37m-win_amd64.whl",
+        "has_sig": false,
+        "md5_digest": "3fcbbfb83d301ea5bde6a132d77f5685",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp37",
+        "requires_python": ">=3.7",
+        "size": 109258,
+        "upload_time": "2022-04-17T02:39:30",
+        "upload_time_iso_8601": "2022-04-17T02:39:30.262712Z",
+        "url": "https://files.pythonhosted.org/packages/8b/39/e4171f2a0149e2cca3eee9dc1fbe90d86888b815c3a1fe3e53f397ed97ec/psfmodels-0.3.1-cp37-cp37m-win_amd64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "3d846ad24e3c0907aeac8955d65e45a1",
+          "sha256": "2a304214e8a91db2db86a1d0dde2363d406dc068383498e6fc98f870b295bdbc"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.1-cp38-cp38-macosx_10_9_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "3d846ad24e3c0907aeac8955d65e45a1",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp38",
+        "requires_python": ">=3.7",
+        "size": 112356,
+        "upload_time": "2022-04-17T02:39:31",
+        "upload_time_iso_8601": "2022-04-17T02:39:31.483795Z",
+        "url": "https://files.pythonhosted.org/packages/5a/19/4b4768a90edbe26d41335c149a2027414a9d55525db3082b448521e7dff5/psfmodels-0.3.1-cp38-cp38-macosx_10_9_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "8039d46e937066ed7ca3822563e8d56d",
+          "sha256": "41c48fca77edd64e409aaa134c7f3854deae4121e44c20e38455b3be762df196"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.1-cp38-cp38-macosx_11_0_arm64.whl",
+        "has_sig": false,
+        "md5_digest": "8039d46e937066ed7ca3822563e8d56d",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp38",
+        "requires_python": ">=3.7",
+        "size": 103450,
+        "upload_time": "2022-04-17T02:39:32",
+        "upload_time_iso_8601": "2022-04-17T02:39:32.839086Z",
+        "url": "https://files.pythonhosted.org/packages/e0/31/b61b431c57271d161c9337e3b7622626e08a6d3947b9c4df0498805be024/psfmodels-0.3.1-cp38-cp38-macosx_11_0_arm64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "e24265f374e7ede784b9a99d02c6483d",
+          "sha256": "a2ecd9d654d2fc535840e549b3434c0d6e943901cf117e630afc382bcf75de34"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "e24265f374e7ede784b9a99d02c6483d",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp38",
+        "requires_python": ">=3.7",
+        "size": 151971,
+        "upload_time": "2022-04-17T02:39:33",
+        "upload_time_iso_8601": "2022-04-17T02:39:33.871511Z",
+        "url": "https://files.pythonhosted.org/packages/e5/26/f2ec882b8d3e3197e495f533579ecc607372e42fab41ec8e1aac576ce60f/psfmodels-0.3.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "c249a34d1b431d5ba60e1be454bbef01",
+          "sha256": "b6d69119e8ef9a1ab5a950b80039ec2f32cd742febb76cfdc42e7bc369c3ac9c"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.1-cp38-cp38-musllinux_1_1_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "c249a34d1b431d5ba60e1be454bbef01",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp38",
+        "requires_python": ">=3.7",
+        "size": 667016,
+        "upload_time": "2022-04-17T02:39:34",
+        "upload_time_iso_8601": "2022-04-17T02:39:34.815890Z",
+        "url": "https://files.pythonhosted.org/packages/16/ec/c6fec68fcff74baeb567a88ab08eafead43be15d0369b820173e4c1155b1/psfmodels-0.3.1-cp38-cp38-musllinux_1_1_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "aedc3287a2c32c7e6ed5fa99ec5964bd",
+          "sha256": "30267d0350fb5e563df93d90f0e070b4fa7e61520dfc440f133510f2ac8a9498"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.1-cp38-cp38-win_amd64.whl",
+        "has_sig": false,
+        "md5_digest": "aedc3287a2c32c7e6ed5fa99ec5964bd",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp38",
+        "requires_python": ">=3.7",
+        "size": 108541,
+        "upload_time": "2022-04-17T02:39:35",
+        "upload_time_iso_8601": "2022-04-17T02:39:35.948696Z",
+        "url": "https://files.pythonhosted.org/packages/40/a4/90e33893b3010b9a3f6aa383dda499493e80d8a4be917d50717b92f1c9ab/psfmodels-0.3.1-cp38-cp38-win_amd64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "ee0c363599ec2b90f2f44977e8b75d55",
+          "sha256": "2148a0c327fc3e2014dfbe63d291a747bc345a8aa64e1fc666f4725e71787e95"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.1-cp39-cp39-macosx_10_9_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "ee0c363599ec2b90f2f44977e8b75d55",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp39",
+        "requires_python": ">=3.7",
+        "size": 112606,
+        "upload_time": "2022-04-17T02:39:36",
+        "upload_time_iso_8601": "2022-04-17T02:39:36.870590Z",
+        "url": "https://files.pythonhosted.org/packages/fa/41/af06e8a526f24f9f9f551962b571714a4601be8f3a79e6d4aa87c3c53d16/psfmodels-0.3.1-cp39-cp39-macosx_10_9_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "faae2ba30efb6c1746424f66732695ed",
+          "sha256": "9d1fe532fcbc97bd143a8b4cc7e5f7841c90083c86f68183ed4e793c6052b361"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.1-cp39-cp39-macosx_11_0_arm64.whl",
+        "has_sig": false,
+        "md5_digest": "faae2ba30efb6c1746424f66732695ed",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp39",
+        "requires_python": ">=3.7",
+        "size": 103631,
+        "upload_time": "2022-04-17T02:39:37",
+        "upload_time_iso_8601": "2022-04-17T02:39:37.821262Z",
+        "url": "https://files.pythonhosted.org/packages/c2/9a/3ebcc2b076c46f5a360ff54aa0ebe4ef1894d68f42de3f789bc50f19a958/psfmodels-0.3.1-cp39-cp39-macosx_11_0_arm64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "6501e170117a99810bf995855cb66c95",
+          "sha256": "91ab09a6b796acec11fc665f18c50176b26c851e6339ac3efd83de70c38e1912"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "6501e170117a99810bf995855cb66c95",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp39",
+        "requires_python": ">=3.7",
+        "size": 152298,
+        "upload_time": "2022-04-17T02:39:39",
+        "upload_time_iso_8601": "2022-04-17T02:39:39.065517Z",
+        "url": "https://files.pythonhosted.org/packages/ec/f3/97a29ccad638a2bacbd41220ee85f9aa3518a6afe4b6a88ed99e0e9d7ae3/psfmodels-0.3.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "fd946492f89ccbbe96f2364373f0aee6",
+          "sha256": "1586e20549a84f99b5ca8b3dc999db63e12d29eeb539562f0173bf97071569a2"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.1-cp39-cp39-musllinux_1_1_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "fd946492f89ccbbe96f2364373f0aee6",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp39",
+        "requires_python": ">=3.7",
+        "size": 668136,
+        "upload_time": "2022-04-17T02:39:40",
+        "upload_time_iso_8601": "2022-04-17T02:39:40.060754Z",
+        "url": "https://files.pythonhosted.org/packages/e3/93/2d5fa56f39f35e99371c76a53c413fa66baffaf99379ec5bd64846575e6e/psfmodels-0.3.1-cp39-cp39-musllinux_1_1_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "4a1ade18c855dfd916f5220d8cfe3829",
+          "sha256": "dc59f1770129631e80deaa890b001e9c82cc856e2ca03ecf6fb277ff9e230b3a"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.1-cp39-cp39-win_amd64.whl",
+        "has_sig": false,
+        "md5_digest": "4a1ade18c855dfd916f5220d8cfe3829",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp39",
+        "requires_python": ">=3.7",
+        "size": 108519,
+        "upload_time": "2022-04-17T02:39:41",
+        "upload_time_iso_8601": "2022-04-17T02:39:41.083359Z",
+        "url": "https://files.pythonhosted.org/packages/34/d2/f6c95467518490cad2fe369aab4cdfb1606083fdea92c777b1ef3aa1b073/psfmodels-0.3.1-cp39-cp39-win_amd64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "e2e782e15f7dd16c475c75f612150051",
+          "sha256": "1060d72a2df951364a00f41c28b568275244678c0a31b4dddf927c05589b61ba"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e2e782e15f7dd16c475c75f612150051",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 577302,
+        "upload_time": "2022-04-17T02:39:42",
+        "upload_time_iso_8601": "2022-04-17T02:39:42.058531Z",
+        "url": "https://files.pythonhosted.org/packages/4a/51/0b162c0f8d36dfa995f651611e136f9d65d97fdc87d7f8d1b300e520c8bd/psfmodels-0.3.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "77c3ce7a9579dffbf53465eaff72f159",
+          "sha256": "c39ea7d5324dc61938a3113cebc1b8e9b9ab3e666bf6fe5d0fed785f9f8a3324"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.2-cp310-cp310-macosx_10_9_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "77c3ce7a9579dffbf53465eaff72f159",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp310",
+        "requires_python": ">=3.7",
+        "size": 112714,
+        "upload_time": "2022-04-23T15:54:59",
+        "upload_time_iso_8601": "2022-04-23T15:54:59.302073Z",
+        "url": "https://files.pythonhosted.org/packages/e6/95/1514bdc3a7a668b7be28cb9599f877fe03c8006754202a04157a0ec049d3/psfmodels-0.3.2-cp310-cp310-macosx_10_9_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "5547b27f37366d02ac55e006f2af3449",
+          "sha256": "2ad376719f990a3e2deebac6d94bfd6272aec47d57dfeeb915931d91c17c805d"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.2-cp310-cp310-macosx_11_0_arm64.whl",
+        "has_sig": false,
+        "md5_digest": "5547b27f37366d02ac55e006f2af3449",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp310",
+        "requires_python": ">=3.7",
+        "size": 103647,
+        "upload_time": "2022-04-23T15:55:00",
+        "upload_time_iso_8601": "2022-04-23T15:55:00.794635Z",
+        "url": "https://files.pythonhosted.org/packages/38/fb/edf4db4aba169372d1304e71e9ff8ff530bfabdf5fc98de5ce816adc3a8c/psfmodels-0.3.2-cp310-cp310-macosx_11_0_arm64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "c5ac0ee899f64a026af356b14409b600",
+          "sha256": "9245668a217a11a1b4f63d50a5a5e62d1fe375a9fa327c21bde4b122ca4367f0"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "c5ac0ee899f64a026af356b14409b600",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp310",
+        "requires_python": ">=3.7",
+        "size": 152258,
+        "upload_time": "2022-04-23T15:55:01",
+        "upload_time_iso_8601": "2022-04-23T15:55:01.833355Z",
+        "url": "https://files.pythonhosted.org/packages/9d/71/dc352d7238dab91a4f7b81e671fa1d51938173274bc6320b65f4eb0ec8c4/psfmodels-0.3.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "120d3c5990212d1427bdde78c98ad63c",
+          "sha256": "eb35a690ecdde7c8a1e1a156de2360099e8c813a8a7d24f438bd23aa1096497b"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.2-cp310-cp310-musllinux_1_1_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "120d3c5990212d1427bdde78c98ad63c",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp310",
+        "requires_python": ">=3.7",
+        "size": 667291,
+        "upload_time": "2022-04-23T15:55:03",
+        "upload_time_iso_8601": "2022-04-23T15:55:03.384183Z",
+        "url": "https://files.pythonhosted.org/packages/a8/97/fbf3047832203df8d7aad3576acda3edbebabc162d0bffe5c75b10ac491a/psfmodels-0.3.2-cp310-cp310-musllinux_1_1_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "e8634d7aa681ea00b23cf8d6bbe44d5c",
+          "sha256": "cb30fd39fbae56f8e1dad9607ab7b1c739013ae3175e76f7a1e1c9c22e5d7016"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.2-cp310-cp310-win_amd64.whl",
+        "has_sig": false,
+        "md5_digest": "e8634d7aa681ea00b23cf8d6bbe44d5c",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp310",
+        "requires_python": ">=3.7",
+        "size": 108758,
+        "upload_time": "2022-04-23T15:55:04",
+        "upload_time_iso_8601": "2022-04-23T15:55:04.829653Z",
+        "url": "https://files.pythonhosted.org/packages/0d/64/0a6b6c0b6c449063559214fd017c8990cea8e006f5bd60ac18cd28b158e4/psfmodels-0.3.2-cp310-cp310-win_amd64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "9aa105d188cbd2cf17c48c2feab1cb12",
+          "sha256": "52f79b3591886b2f77a0c6f79e7bcd64c809859e26686c575b4943603c44ccc9"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.2-cp37-cp37m-macosx_10_9_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "9aa105d188cbd2cf17c48c2feab1cb12",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp37",
+        "requires_python": ">=3.7",
+        "size": 112106,
+        "upload_time": "2022-04-23T15:55:05",
+        "upload_time_iso_8601": "2022-04-23T15:55:05.938767Z",
+        "url": "https://files.pythonhosted.org/packages/de/e0/be9385b197b87d39a3eb58d0c94da748d25a362404a1c28d09bc7f5f472a/psfmodels-0.3.2-cp37-cp37m-macosx_10_9_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "a691a18cd26ef8aa89a3557383933c9b",
+          "sha256": "51a516edbfaf1754e7b3c01da83e3d801412523175133fa8556cf709b052b5c9"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.2-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "a691a18cd26ef8aa89a3557383933c9b",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp37",
+        "requires_python": ">=3.7",
+        "size": 152594,
+        "upload_time": "2022-04-23T15:55:07",
+        "upload_time_iso_8601": "2022-04-23T15:55:07.273435Z",
+        "url": "https://files.pythonhosted.org/packages/02/b3/2c3e016f2a07e2ec350c4ba84a7570edbe2dbca0a7b70f4c707bf789db4e/psfmodels-0.3.2-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "94bdb2b026ef4a0dfd332e9932bd9b98",
+          "sha256": "9cf708a2c2a922a87d90f8f3535e3b81e7444f83f4e9650eb91ed9da3516ba7e"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.2-cp37-cp37m-musllinux_1_1_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "94bdb2b026ef4a0dfd332e9932bd9b98",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp37",
+        "requires_python": ">=3.7",
+        "size": 669081,
+        "upload_time": "2022-04-23T15:55:08",
+        "upload_time_iso_8601": "2022-04-23T15:55:08.212088Z",
+        "url": "https://files.pythonhosted.org/packages/a0/a3/f80a5bdc1b84e195fada65e9d3517e3bff260c3dce83c2942e923a6e7f4f/psfmodels-0.3.2-cp37-cp37m-musllinux_1_1_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "d7b09b6b1bc444dc45b75821a989d7da",
+          "sha256": "aefc0323fd284eb3ff3de17c33f740301fffb28ad7a9102a356c3546bba1ab24"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.2-cp37-cp37m-win_amd64.whl",
+        "has_sig": false,
+        "md5_digest": "d7b09b6b1bc444dc45b75821a989d7da",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp37",
+        "requires_python": ">=3.7",
+        "size": 109461,
+        "upload_time": "2022-04-23T15:55:09",
+        "upload_time_iso_8601": "2022-04-23T15:55:09.474479Z",
+        "url": "https://files.pythonhosted.org/packages/61/da/b6de94bb038cad5d2639ef2717026427c9892fd97e851a1ff8be32c11169/psfmodels-0.3.2-cp37-cp37m-win_amd64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "9dc20b5d49e34c0beae48b830c120e55",
+          "sha256": "5c025907e9d888a49761c3328b0c36e57c2484525c92514f9df73753af1f1ef5"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.2-cp38-cp38-macosx_10_9_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "9dc20b5d49e34c0beae48b830c120e55",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp38",
+        "requires_python": ">=3.7",
+        "size": 112557,
+        "upload_time": "2022-04-23T15:55:10",
+        "upload_time_iso_8601": "2022-04-23T15:55:10.755371Z",
+        "url": "https://files.pythonhosted.org/packages/3c/d0/c2f3ccaf48f2525bd26f24c2ab33aaa7ffd9f966a4b625ff94d673e427ba/psfmodels-0.3.2-cp38-cp38-macosx_10_9_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "e2bdf42de0b80537b00a471122dc5524",
+          "sha256": "9a60faf1055e72c123eb7fe26173276d45b7aa60e28ea96652170edc1bad4c12"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.2-cp38-cp38-macosx_11_0_arm64.whl",
+        "has_sig": false,
+        "md5_digest": "e2bdf42de0b80537b00a471122dc5524",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp38",
+        "requires_python": ">=3.7",
+        "size": 103649,
+        "upload_time": "2022-04-23T15:55:12",
+        "upload_time_iso_8601": "2022-04-23T15:55:12.000650Z",
+        "url": "https://files.pythonhosted.org/packages/70/f7/1c1f9a356d5708c122e7f182f8b3316a133c054826ed8e45b83f79305d09/psfmodels-0.3.2-cp38-cp38-macosx_11_0_arm64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "46867d89491940d5234de08259f48263",
+          "sha256": "af32f1a5fc0aed2b29b735bdb4458ff3ae958ac072285b8e6e5c0e357bec3f2c"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.2-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "46867d89491940d5234de08259f48263",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp38",
+        "requires_python": ">=3.7",
+        "size": 152172,
+        "upload_time": "2022-04-23T15:55:13",
+        "upload_time_iso_8601": "2022-04-23T15:55:13.063617Z",
+        "url": "https://files.pythonhosted.org/packages/89/65/aea7c6bb1100809d35358e52f0ec3ba7eaa099af05bcdea1d6d1d24c86ae/psfmodels-0.3.2-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "d89b6953a709f196e19830e3bb016021",
+          "sha256": "7d88cce1288d749662bc52e70f1428bea106f33d2629355c9b5a03349e580b17"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.2-cp38-cp38-musllinux_1_1_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "d89b6953a709f196e19830e3bb016021",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp38",
+        "requires_python": ">=3.7",
+        "size": 667220,
+        "upload_time": "2022-04-23T15:55:14",
+        "upload_time_iso_8601": "2022-04-23T15:55:14.499854Z",
+        "url": "https://files.pythonhosted.org/packages/81/93/2168af65b8da1b63175f77ddf41f05735f4351c9255cb6168910a3b5fb4f/psfmodels-0.3.2-cp38-cp38-musllinux_1_1_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "baec8f826423e8bd23e8f116f12c7802",
+          "sha256": "819ec445fa29694c4ec75d22d8b753370041043bc68c8dc5ec351f9fc988e7b7"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.2-cp38-cp38-win_amd64.whl",
+        "has_sig": false,
+        "md5_digest": "baec8f826423e8bd23e8f116f12c7802",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp38",
+        "requires_python": ">=3.7",
+        "size": 108743,
+        "upload_time": "2022-04-23T15:55:15",
+        "upload_time_iso_8601": "2022-04-23T15:55:15.889069Z",
+        "url": "https://files.pythonhosted.org/packages/21/82/6f28ec261ea55dba2f9fff4cf0d9ba3554aafcdee135ba31ee22ac21dbf2/psfmodels-0.3.2-cp38-cp38-win_amd64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "beb72827f1947d0b4cf1f832b9e40784",
+          "sha256": "184da7aee0f0ae8a4dddc61e3ecb512985a02a82055935e4f1a2addc5337129b"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.2-cp39-cp39-macosx_10_9_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "beb72827f1947d0b4cf1f832b9e40784",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp39",
+        "requires_python": ">=3.7",
+        "size": 112806,
+        "upload_time": "2022-04-23T15:55:17",
+        "upload_time_iso_8601": "2022-04-23T15:55:17.129171Z",
+        "url": "https://files.pythonhosted.org/packages/ff/3e/f7210604ad829992568f207ef5186c6b7031ac4806747fbd11e035bd8c9e/psfmodels-0.3.2-cp39-cp39-macosx_10_9_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "3540b023401181e7b59f0f7beef8260b",
+          "sha256": "5faeee2fc093f9a108b7a35a075f417bd7d693d94fcd1aba67c234b9ff63b720"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.2-cp39-cp39-macosx_11_0_arm64.whl",
+        "has_sig": false,
+        "md5_digest": "3540b023401181e7b59f0f7beef8260b",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp39",
+        "requires_python": ">=3.7",
+        "size": 103833,
+        "upload_time": "2022-04-23T15:55:18",
+        "upload_time_iso_8601": "2022-04-23T15:55:18.188409Z",
+        "url": "https://files.pythonhosted.org/packages/5c/b3/f4607b939735430da21e207c194770b264105929e4d07792a264773bdca7/psfmodels-0.3.2-cp39-cp39-macosx_11_0_arm64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "1471263bc68f2df3a6047b03804b15af",
+          "sha256": "778654a69e5c2b605856766c8b4360aa2f7af680a04b753ca19e15f761ecd920"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "1471263bc68f2df3a6047b03804b15af",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp39",
+        "requires_python": ">=3.7",
+        "size": 152499,
+        "upload_time": "2022-04-23T15:55:19",
+        "upload_time_iso_8601": "2022-04-23T15:55:19.172375Z",
+        "url": "https://files.pythonhosted.org/packages/da/10/ce763d5a1b7cb8de0bc17e769748b32203964a3bce7e4f0a9d2e8d0f358b/psfmodels-0.3.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "db7ab6f3c1b0114d7e63a534b63bc261",
+          "sha256": "41237dc44e8197ed00021dde9627ceb16739ac656b96c5b18b5bbf028a438547"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.2-cp39-cp39-musllinux_1_1_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "db7ab6f3c1b0114d7e63a534b63bc261",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp39",
+        "requires_python": ">=3.7",
+        "size": 668330,
+        "upload_time": "2022-04-23T15:55:20",
+        "upload_time_iso_8601": "2022-04-23T15:55:20.171500Z",
+        "url": "https://files.pythonhosted.org/packages/7d/b3/2c1549ca9048202ce4d3cbc362cca8768077fb91626a58ea3f2b4c31d2b7/psfmodels-0.3.2-cp39-cp39-musllinux_1_1_x86_64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "7e070b1c2de31865107e112f1b719d2c",
+          "sha256": "09aab52fed4de659e69026b543e9cba8a0e2a10d3730c770064a75c06be40355"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.2-cp39-cp39-win_amd64.whl",
+        "has_sig": false,
+        "md5_digest": "7e070b1c2de31865107e112f1b719d2c",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp39",
+        "requires_python": ">=3.7",
+        "size": 108721,
+        "upload_time": "2022-04-23T15:55:21",
+        "upload_time_iso_8601": "2022-04-23T15:55:21.147893Z",
+        "url": "https://files.pythonhosted.org/packages/aa/29/539ed176436612cf672f621f1c04192114cb14789d618a307ac657b59ab4/psfmodels-0.3.2-cp39-cp39-win_amd64.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "dfdad8531714d5c6f2a323f9d23e4a1f",
+          "sha256": "ca5adb4f6c015c71822fac23e7b9a8bdf25104df31c194a58bbdcf00df6d89f7"
+        },
+        "downloads": -1,
+        "filename": "psfmodels-0.3.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "dfdad8531714d5c6f2a323f9d23e4a1f",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 577534,
+        "upload_time": "2022-04-23T15:55:22",
+        "upload_time_iso_8601": "2022-04-23T15:55:22.107611Z",
+        "url": "https://files.pythonhosted.org/packages/a1/1c/8e81e4a494673bc6a8cbbcad46e0f47a32ab498fb5a96cecc51c289c351a/psfmodels-0.3.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "77c3ce7a9579dffbf53465eaff72f159",
+        "sha256": "c39ea7d5324dc61938a3113cebc1b8e9b9ab3e666bf6fe5d0fed785f9f8a3324"
+      },
+      "downloads": -1,
+      "filename": "psfmodels-0.3.2-cp310-cp310-macosx_10_9_x86_64.whl",
+      "has_sig": false,
+      "md5_digest": "77c3ce7a9579dffbf53465eaff72f159",
+      "packagetype": "bdist_wheel",
+      "python_version": "cp310",
+      "requires_python": ">=3.7",
+      "size": 112714,
+      "upload_time": "2022-04-23T15:54:59",
+      "upload_time_iso_8601": "2022-04-23T15:54:59.302073Z",
+      "url": "https://files.pythonhosted.org/packages/e6/95/1514bdc3a7a668b7be28cb9599f877fe03c8006754202a04157a0ec049d3/psfmodels-0.3.2-cp310-cp310-macosx_10_9_x86_64.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "5547b27f37366d02ac55e006f2af3449",
+        "sha256": "2ad376719f990a3e2deebac6d94bfd6272aec47d57dfeeb915931d91c17c805d"
+      },
+      "downloads": -1,
+      "filename": "psfmodels-0.3.2-cp310-cp310-macosx_11_0_arm64.whl",
+      "has_sig": false,
+      "md5_digest": "5547b27f37366d02ac55e006f2af3449",
+      "packagetype": "bdist_wheel",
+      "python_version": "cp310",
+      "requires_python": ">=3.7",
+      "size": 103647,
+      "upload_time": "2022-04-23T15:55:00",
+      "upload_time_iso_8601": "2022-04-23T15:55:00.794635Z",
+      "url": "https://files.pythonhosted.org/packages/38/fb/edf4db4aba169372d1304e71e9ff8ff530bfabdf5fc98de5ce816adc3a8c/psfmodels-0.3.2-cp310-cp310-macosx_11_0_arm64.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "c5ac0ee899f64a026af356b14409b600",
+        "sha256": "9245668a217a11a1b4f63d50a5a5e62d1fe375a9fa327c21bde4b122ca4367f0"
+      },
+      "downloads": -1,
+      "filename": "psfmodels-0.3.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "has_sig": false,
+      "md5_digest": "c5ac0ee899f64a026af356b14409b600",
+      "packagetype": "bdist_wheel",
+      "python_version": "cp310",
+      "requires_python": ">=3.7",
+      "size": 152258,
+      "upload_time": "2022-04-23T15:55:01",
+      "upload_time_iso_8601": "2022-04-23T15:55:01.833355Z",
+      "url": "https://files.pythonhosted.org/packages/9d/71/dc352d7238dab91a4f7b81e671fa1d51938173274bc6320b65f4eb0ec8c4/psfmodels-0.3.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "120d3c5990212d1427bdde78c98ad63c",
+        "sha256": "eb35a690ecdde7c8a1e1a156de2360099e8c813a8a7d24f438bd23aa1096497b"
+      },
+      "downloads": -1,
+      "filename": "psfmodels-0.3.2-cp310-cp310-musllinux_1_1_x86_64.whl",
+      "has_sig": false,
+      "md5_digest": "120d3c5990212d1427bdde78c98ad63c",
+      "packagetype": "bdist_wheel",
+      "python_version": "cp310",
+      "requires_python": ">=3.7",
+      "size": 667291,
+      "upload_time": "2022-04-23T15:55:03",
+      "upload_time_iso_8601": "2022-04-23T15:55:03.384183Z",
+      "url": "https://files.pythonhosted.org/packages/a8/97/fbf3047832203df8d7aad3576acda3edbebabc162d0bffe5c75b10ac491a/psfmodels-0.3.2-cp310-cp310-musllinux_1_1_x86_64.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "e8634d7aa681ea00b23cf8d6bbe44d5c",
+        "sha256": "cb30fd39fbae56f8e1dad9607ab7b1c739013ae3175e76f7a1e1c9c22e5d7016"
+      },
+      "downloads": -1,
+      "filename": "psfmodels-0.3.2-cp310-cp310-win_amd64.whl",
+      "has_sig": false,
+      "md5_digest": "e8634d7aa681ea00b23cf8d6bbe44d5c",
+      "packagetype": "bdist_wheel",
+      "python_version": "cp310",
+      "requires_python": ">=3.7",
+      "size": 108758,
+      "upload_time": "2022-04-23T15:55:04",
+      "upload_time_iso_8601": "2022-04-23T15:55:04.829653Z",
+      "url": "https://files.pythonhosted.org/packages/0d/64/0a6b6c0b6c449063559214fd017c8990cea8e006f5bd60ac18cd28b158e4/psfmodels-0.3.2-cp310-cp310-win_amd64.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "9aa105d188cbd2cf17c48c2feab1cb12",
+        "sha256": "52f79b3591886b2f77a0c6f79e7bcd64c809859e26686c575b4943603c44ccc9"
+      },
+      "downloads": -1,
+      "filename": "psfmodels-0.3.2-cp37-cp37m-macosx_10_9_x86_64.whl",
+      "has_sig": false,
+      "md5_digest": "9aa105d188cbd2cf17c48c2feab1cb12",
+      "packagetype": "bdist_wheel",
+      "python_version": "cp37",
+      "requires_python": ">=3.7",
+      "size": 112106,
+      "upload_time": "2022-04-23T15:55:05",
+      "upload_time_iso_8601": "2022-04-23T15:55:05.938767Z",
+      "url": "https://files.pythonhosted.org/packages/de/e0/be9385b197b87d39a3eb58d0c94da748d25a362404a1c28d09bc7f5f472a/psfmodels-0.3.2-cp37-cp37m-macosx_10_9_x86_64.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "a691a18cd26ef8aa89a3557383933c9b",
+        "sha256": "51a516edbfaf1754e7b3c01da83e3d801412523175133fa8556cf709b052b5c9"
+      },
+      "downloads": -1,
+      "filename": "psfmodels-0.3.2-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "has_sig": false,
+      "md5_digest": "a691a18cd26ef8aa89a3557383933c9b",
+      "packagetype": "bdist_wheel",
+      "python_version": "cp37",
+      "requires_python": ">=3.7",
+      "size": 152594,
+      "upload_time": "2022-04-23T15:55:07",
+      "upload_time_iso_8601": "2022-04-23T15:55:07.273435Z",
+      "url": "https://files.pythonhosted.org/packages/02/b3/2c3e016f2a07e2ec350c4ba84a7570edbe2dbca0a7b70f4c707bf789db4e/psfmodels-0.3.2-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "94bdb2b026ef4a0dfd332e9932bd9b98",
+        "sha256": "9cf708a2c2a922a87d90f8f3535e3b81e7444f83f4e9650eb91ed9da3516ba7e"
+      },
+      "downloads": -1,
+      "filename": "psfmodels-0.3.2-cp37-cp37m-musllinux_1_1_x86_64.whl",
+      "has_sig": false,
+      "md5_digest": "94bdb2b026ef4a0dfd332e9932bd9b98",
+      "packagetype": "bdist_wheel",
+      "python_version": "cp37",
+      "requires_python": ">=3.7",
+      "size": 669081,
+      "upload_time": "2022-04-23T15:55:08",
+      "upload_time_iso_8601": "2022-04-23T15:55:08.212088Z",
+      "url": "https://files.pythonhosted.org/packages/a0/a3/f80a5bdc1b84e195fada65e9d3517e3bff260c3dce83c2942e923a6e7f4f/psfmodels-0.3.2-cp37-cp37m-musllinux_1_1_x86_64.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "d7b09b6b1bc444dc45b75821a989d7da",
+        "sha256": "aefc0323fd284eb3ff3de17c33f740301fffb28ad7a9102a356c3546bba1ab24"
+      },
+      "downloads": -1,
+      "filename": "psfmodels-0.3.2-cp37-cp37m-win_amd64.whl",
+      "has_sig": false,
+      "md5_digest": "d7b09b6b1bc444dc45b75821a989d7da",
+      "packagetype": "bdist_wheel",
+      "python_version": "cp37",
+      "requires_python": ">=3.7",
+      "size": 109461,
+      "upload_time": "2022-04-23T15:55:09",
+      "upload_time_iso_8601": "2022-04-23T15:55:09.474479Z",
+      "url": "https://files.pythonhosted.org/packages/61/da/b6de94bb038cad5d2639ef2717026427c9892fd97e851a1ff8be32c11169/psfmodels-0.3.2-cp37-cp37m-win_amd64.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "9dc20b5d49e34c0beae48b830c120e55",
+        "sha256": "5c025907e9d888a49761c3328b0c36e57c2484525c92514f9df73753af1f1ef5"
+      },
+      "downloads": -1,
+      "filename": "psfmodels-0.3.2-cp38-cp38-macosx_10_9_x86_64.whl",
+      "has_sig": false,
+      "md5_digest": "9dc20b5d49e34c0beae48b830c120e55",
+      "packagetype": "bdist_wheel",
+      "python_version": "cp38",
+      "requires_python": ">=3.7",
+      "size": 112557,
+      "upload_time": "2022-04-23T15:55:10",
+      "upload_time_iso_8601": "2022-04-23T15:55:10.755371Z",
+      "url": "https://files.pythonhosted.org/packages/3c/d0/c2f3ccaf48f2525bd26f24c2ab33aaa7ffd9f966a4b625ff94d673e427ba/psfmodels-0.3.2-cp38-cp38-macosx_10_9_x86_64.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "e2bdf42de0b80537b00a471122dc5524",
+        "sha256": "9a60faf1055e72c123eb7fe26173276d45b7aa60e28ea96652170edc1bad4c12"
+      },
+      "downloads": -1,
+      "filename": "psfmodels-0.3.2-cp38-cp38-macosx_11_0_arm64.whl",
+      "has_sig": false,
+      "md5_digest": "e2bdf42de0b80537b00a471122dc5524",
+      "packagetype": "bdist_wheel",
+      "python_version": "cp38",
+      "requires_python": ">=3.7",
+      "size": 103649,
+      "upload_time": "2022-04-23T15:55:12",
+      "upload_time_iso_8601": "2022-04-23T15:55:12.000650Z",
+      "url": "https://files.pythonhosted.org/packages/70/f7/1c1f9a356d5708c122e7f182f8b3316a133c054826ed8e45b83f79305d09/psfmodels-0.3.2-cp38-cp38-macosx_11_0_arm64.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "46867d89491940d5234de08259f48263",
+        "sha256": "af32f1a5fc0aed2b29b735bdb4458ff3ae958ac072285b8e6e5c0e357bec3f2c"
+      },
+      "downloads": -1,
+      "filename": "psfmodels-0.3.2-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "has_sig": false,
+      "md5_digest": "46867d89491940d5234de08259f48263",
+      "packagetype": "bdist_wheel",
+      "python_version": "cp38",
+      "requires_python": ">=3.7",
+      "size": 152172,
+      "upload_time": "2022-04-23T15:55:13",
+      "upload_time_iso_8601": "2022-04-23T15:55:13.063617Z",
+      "url": "https://files.pythonhosted.org/packages/89/65/aea7c6bb1100809d35358e52f0ec3ba7eaa099af05bcdea1d6d1d24c86ae/psfmodels-0.3.2-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "d89b6953a709f196e19830e3bb016021",
+        "sha256": "7d88cce1288d749662bc52e70f1428bea106f33d2629355c9b5a03349e580b17"
+      },
+      "downloads": -1,
+      "filename": "psfmodels-0.3.2-cp38-cp38-musllinux_1_1_x86_64.whl",
+      "has_sig": false,
+      "md5_digest": "d89b6953a709f196e19830e3bb016021",
+      "packagetype": "bdist_wheel",
+      "python_version": "cp38",
+      "requires_python": ">=3.7",
+      "size": 667220,
+      "upload_time": "2022-04-23T15:55:14",
+      "upload_time_iso_8601": "2022-04-23T15:55:14.499854Z",
+      "url": "https://files.pythonhosted.org/packages/81/93/2168af65b8da1b63175f77ddf41f05735f4351c9255cb6168910a3b5fb4f/psfmodels-0.3.2-cp38-cp38-musllinux_1_1_x86_64.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "baec8f826423e8bd23e8f116f12c7802",
+        "sha256": "819ec445fa29694c4ec75d22d8b753370041043bc68c8dc5ec351f9fc988e7b7"
+      },
+      "downloads": -1,
+      "filename": "psfmodels-0.3.2-cp38-cp38-win_amd64.whl",
+      "has_sig": false,
+      "md5_digest": "baec8f826423e8bd23e8f116f12c7802",
+      "packagetype": "bdist_wheel",
+      "python_version": "cp38",
+      "requires_python": ">=3.7",
+      "size": 108743,
+      "upload_time": "2022-04-23T15:55:15",
+      "upload_time_iso_8601": "2022-04-23T15:55:15.889069Z",
+      "url": "https://files.pythonhosted.org/packages/21/82/6f28ec261ea55dba2f9fff4cf0d9ba3554aafcdee135ba31ee22ac21dbf2/psfmodels-0.3.2-cp38-cp38-win_amd64.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "beb72827f1947d0b4cf1f832b9e40784",
+        "sha256": "184da7aee0f0ae8a4dddc61e3ecb512985a02a82055935e4f1a2addc5337129b"
+      },
+      "downloads": -1,
+      "filename": "psfmodels-0.3.2-cp39-cp39-macosx_10_9_x86_64.whl",
+      "has_sig": false,
+      "md5_digest": "beb72827f1947d0b4cf1f832b9e40784",
+      "packagetype": "bdist_wheel",
+      "python_version": "cp39",
+      "requires_python": ">=3.7",
+      "size": 112806,
+      "upload_time": "2022-04-23T15:55:17",
+      "upload_time_iso_8601": "2022-04-23T15:55:17.129171Z",
+      "url": "https://files.pythonhosted.org/packages/ff/3e/f7210604ad829992568f207ef5186c6b7031ac4806747fbd11e035bd8c9e/psfmodels-0.3.2-cp39-cp39-macosx_10_9_x86_64.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "3540b023401181e7b59f0f7beef8260b",
+        "sha256": "5faeee2fc093f9a108b7a35a075f417bd7d693d94fcd1aba67c234b9ff63b720"
+      },
+      "downloads": -1,
+      "filename": "psfmodels-0.3.2-cp39-cp39-macosx_11_0_arm64.whl",
+      "has_sig": false,
+      "md5_digest": "3540b023401181e7b59f0f7beef8260b",
+      "packagetype": "bdist_wheel",
+      "python_version": "cp39",
+      "requires_python": ">=3.7",
+      "size": 103833,
+      "upload_time": "2022-04-23T15:55:18",
+      "upload_time_iso_8601": "2022-04-23T15:55:18.188409Z",
+      "url": "https://files.pythonhosted.org/packages/5c/b3/f4607b939735430da21e207c194770b264105929e4d07792a264773bdca7/psfmodels-0.3.2-cp39-cp39-macosx_11_0_arm64.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "1471263bc68f2df3a6047b03804b15af",
+        "sha256": "778654a69e5c2b605856766c8b4360aa2f7af680a04b753ca19e15f761ecd920"
+      },
+      "downloads": -1,
+      "filename": "psfmodels-0.3.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "has_sig": false,
+      "md5_digest": "1471263bc68f2df3a6047b03804b15af",
+      "packagetype": "bdist_wheel",
+      "python_version": "cp39",
+      "requires_python": ">=3.7",
+      "size": 152499,
+      "upload_time": "2022-04-23T15:55:19",
+      "upload_time_iso_8601": "2022-04-23T15:55:19.172375Z",
+      "url": "https://files.pythonhosted.org/packages/da/10/ce763d5a1b7cb8de0bc17e769748b32203964a3bce7e4f0a9d2e8d0f358b/psfmodels-0.3.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "db7ab6f3c1b0114d7e63a534b63bc261",
+        "sha256": "41237dc44e8197ed00021dde9627ceb16739ac656b96c5b18b5bbf028a438547"
+      },
+      "downloads": -1,
+      "filename": "psfmodels-0.3.2-cp39-cp39-musllinux_1_1_x86_64.whl",
+      "has_sig": false,
+      "md5_digest": "db7ab6f3c1b0114d7e63a534b63bc261",
+      "packagetype": "bdist_wheel",
+      "python_version": "cp39",
+      "requires_python": ">=3.7",
+      "size": 668330,
+      "upload_time": "2022-04-23T15:55:20",
+      "upload_time_iso_8601": "2022-04-23T15:55:20.171500Z",
+      "url": "https://files.pythonhosted.org/packages/7d/b3/2c1549ca9048202ce4d3cbc362cca8768077fb91626a58ea3f2b4c31d2b7/psfmodels-0.3.2-cp39-cp39-musllinux_1_1_x86_64.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "7e070b1c2de31865107e112f1b719d2c",
+        "sha256": "09aab52fed4de659e69026b543e9cba8a0e2a10d3730c770064a75c06be40355"
+      },
+      "downloads": -1,
+      "filename": "psfmodels-0.3.2-cp39-cp39-win_amd64.whl",
+      "has_sig": false,
+      "md5_digest": "7e070b1c2de31865107e112f1b719d2c",
+      "packagetype": "bdist_wheel",
+      "python_version": "cp39",
+      "requires_python": ">=3.7",
+      "size": 108721,
+      "upload_time": "2022-04-23T15:55:21",
+      "upload_time_iso_8601": "2022-04-23T15:55:21.147893Z",
+      "url": "https://files.pythonhosted.org/packages/aa/29/539ed176436612cf672f621f1c04192114cb14789d618a307ac657b59ab4/psfmodels-0.3.2-cp39-cp39-win_amd64.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "dfdad8531714d5c6f2a323f9d23e4a1f",
+        "sha256": "ca5adb4f6c015c71822fac23e7b9a8bdf25104df31c194a58bbdcf00df6d89f7"
+      },
+      "downloads": -1,
+      "filename": "psfmodels-0.3.2.tar.gz",
+      "has_sig": false,
+      "md5_digest": "dfdad8531714d5c6f2a323f9d23e4a1f",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.7",
+      "size": 577534,
+      "upload_time": "2022-04-23T15:55:22",
+      "upload_time_iso_8601": "2022-04-23T15:55:22.107611Z",
+      "url": "https://files.pythonhosted.org/packages/a1/1c/8e81e4a494673bc6a8cbbcad46e0f47a32ab498fb5a96cecc51c289c351a/psfmodels-0.3.2.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

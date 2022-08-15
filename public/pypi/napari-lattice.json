@@ -1,0 +1,241 @@
+{
+  "info": {
+    "author": "Pradeep Rajasekhar, Lachlan Whitehead, Robert Haase",
+    "author_email": "bioimageanalysis@wehi.edu.au",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Software Development :: Testing"
+    ],
+    "description": "# napari-lattice\n\n[![License](https://img.shields.io/pypi/l/napari-lattice.svg?color=green)](https://github.com/githubuser/napari-lattice/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-lattice.svg?color=green)](https://pypi.org/project/napari-lattice)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-lattice.svg?color=green)](https://python.org)\n[![tests](https://github.com/githubuser/napari-lattice/workflows/tests/badge.svg)](https://github.com/githubuser/napari-lattice/actions)\n[![codecov](https://codecov.io/gh/githubuser/napari-lattice/branch/main/graph/badge.svg)](https://codecov.io/gh/githubuser/napari-lattice)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-lattice)](https://napari-hub.org/plugins/napari-lattice)\n\nThis napari plugin allows deskewing, cropping, visualisation and analysis of lattice lightsheet data skewed in the Y plane (Zeiss Lattice Lightsheet). Support will eventually be for other types of data.\n\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/plugins/index.html\n-->\n\n## **Installation**\n\n\n1. Use a conda environment for installation. You will need [Anaconda Navigator](https://www.anaconda.com/products/individual) or a lighter version [Miniconda](https://docs.conda.io/en/latest/miniconda.html) installed. Click on the Anaconda prompt or terminal and create an environment first:\n\n    conda create -n napari-lattice python=3.9\n\n2. You can use any name instead of \"llsz\". Once an environment is created, activate it by typing with the name you used:\n\n        conda activate napari-lattice\n\n3. Start with installing [pyopencl](https://documen.tician.de/pyopencl/)\n\n        conda install -c conda-forge pyopencl\n\n    If you have trouble installing pyopencl on Windows, use a precompiled wheel from [here](https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyopencl). As we use python 3.9, you have to download and try the wheels which have cp39 in their name. For example, if we download `pyopencl\u20112022.1\u2011cp39\u2011cp39\u2011win_amd64.whl`, then we navigate to the download folder and run:\n\n        pip install pyopencl\u20112022.1\u2011cp39\u2011cp39\u2011win_amd64.whl\n\n    If this version doesn't work, try `pyopencl\u20112021.2.9+cl12\u2011cp39\u2011cp39\u2011win_amd64.whl`\n\n4. You need to install [napari](https://pypi.org/project/napari/) first. Once napari is installed, to install latest version of the napari_lattice plugin, by typing the following command in the terminal :\n\n        pip install git+https://github.com/BioimageAnalysisCoreWEHI/napari_lattice.git\n\nThe plugin will be made available by napari-> Install/Uninstall Plugins soon.\n\n*************\n## **Features**\n\n<p align=\"left\">\n<img src=\"https://raw.githubusercontent.com/BioimageAnalysisCoreWEHI/napari_lattice/master/resources/LLSZ_window.png\" alt=\"LLSZ_overview\" width=\"500\" >\n</p>\nAll transformations are now powered by clesperanto.\n\nFunctions:\n* Deskewing of Zeiss lattice lightsheet images\n  * Ability to preview deskewed image at channel or timepoint of interest\n* Crop and deskew only a small portion of the image \n* You can import ROIs created in ImageJ into the plugin for cropping\n* Create image processing workflows using napari-workflows and apply them to lattice data\n* Run napari_lattice from the terminal\n\n### Deconvolution not implemented yet!\n\n*****\n## **Usage**\n\nOnce installed, just [start napari](https://napari-staging-site.github.io/tutorials/fundamentals/getting_started.html#command-line-usage) and the plugin should be under \"Plugins\" tab\n\nNote that channels and timepoints start from 0.\n\n### ****File compatibility**\n\n* You can directly open a Zeiss lattice file by dragging the file into napari. \n* You will get a prompt to `Choose Reader`. Select `aicsimageio-out-of-memory` for large datasets that don't fit in memory. \n* If the channels are split into different layers, press `Shift` and select all the channels. Right click on the highlighted layers and then click `Merge to stack`. \n* Once image has loaded, click `Initialize Plugin`. If its a czi file, it will load voxel size from the metadata. Once the button turns green, it means the plugin is initialized\n\n### **Deskewing**\n\nTo preview the deskewed output of a single timepoint and channel, choose the layer under the box `img data`, enter the timepoint and channel of interest and click  `Preview`. You can see the status of the processing in the terminal. \nOnce finished, you will see a deskewed image and the corresponding maximum intensity projection as two layers.\n\n<p align=\"left\">\n<img src=\"https://raw.githubusercontent.com/BioimageAnalysisCoreWEHI/napari_lattice/master/resources/preview_deskew.png\" alt=\"Deskew Preview\" width=\"500\" >\n</p>\n\nTo deskew and save a range of timepoints and channels, select the `Deskew` tab. Choose the channel and time ranges, save directory and click `Save`.\n\n\n### **Cropping**\n\n* Click on the `Crop & Deskew` tab. \n* Clicking on `Click to activate Cropping Preview` will activate the `Import ImageJ ROI` and `Crop Preview` buttons. This will also add a shapes layer for the ROIs or shapes. \n\nCrop & Deskew (initial)            |  Crop & Deskew (Activated) \n:-------------------------:|:-------------------------:\n![initial](https://raw.githubusercontent.com/BioimageAnalysisCoreWEHI/napari_lattice/master/resources/crop%26deskew_initial.png)  |  ![active](https://raw.githubusercontent.com/BioimageAnalysisCoreWEHI/napari_lattice/master/resources/crop%26deskew_active.png)\n\n* For cropping regions of interest on the deskewed image, you can either:\n  * draw the regions using shapes layer in napari AND/OR\n  * import ImageJ ROIs an ImageJ ROI file (.zip). \n* You can use a combination of shapes and ImageJ ROIs if needed.\n* To preview the cropped image, select the ROI and then click `Crop Preview`.\n\nNote: The cropping functionality works by finding the inverse transform of the ROI from the deskewed image and extracting the corresponding data from the skewed or raw image. Only the extracted portion will be deskewed. This saves time and is low on memory compared to deskewing the entire image and then cropping. You can select the range of channels and time poitns you'd like to crop and save under `Crop and Save Data` section.\n\n### **Workflow**\n\nThis section uses [napari-workflows](https://github.com/haesleinhuepf/napari-workflows) to implement custom image processing routines on lattice lightsheet datasets. You can create a custom workflow using [napari-assistant](https://www.napari-hub.org/plugins/napari-assistant) and save it. This can then be loaded into the napari_lattice plugin under the `Workflow` tab which can then be applied to the deskewed output.\n\n![workflow](https://raw.githubusercontent.com/BioimageAnalysisCoreWEHI/napari_lattice/master/resources/workflow.png) \n\nIf you'd like to use the shapes layer for cropping and applying a workflow, tick `Crop Data` checkbox. This will crop the data and then apply the workflow. \n\nYou can also use custom python functions with workflows. The function needs to be called within the workflow yml file and the custom function should be a `.py` file in the same directory as the workflow file. An example will be added soon. \n\n### More details will be added soon.\n\n*******\n\n## **Batch processing (No GUI)**\n\nThe software can also be used to batch process data in a folder. To run the program, you will have to open a terminal and make sure your environment is activated using `conda activate`. To see a list of options, you type `napari_lattice -h` . The `-h` means help and will print out a list of options on how to run the program. Currently, the available options are:\n\n    usage: napari_lattice [-h] [--input INPUT] [--output OUTPUT] [--skew_direction SKEW_DIRECTION] [--deskew_angle DESKEW_ANGLE] [--processing PROCESSING] [--roi_file ROI_FILE] [--channel CHANNEL]\n                        [--voxel_sizes VOXEL_SIZES] [--file_extension FILE_EXTENSION] [--time_range TIME_RANGE TIME_RANGE] [--channel_range CHANNEL_RANGE CHANNEL_RANGE][--workflow_path WORKFLOW_PATH]\n\n    Lattice Data processing\n\n    optional arguments:\n    -h, --help            show this help message and exit\n    --input INPUT         Enter input file or folder of files\n    --output OUTPUT       Enter save folder\n    --skew_direction SKEW_DIRECTION\n                            Enter the direction of skew (default is Y)\n    --deskew_angle DESKEW_ANGLE\n                            Enter the angle of deskew (default is 30)\n    --processing PROCESSING\n                            Enter the processing option: deskew, crop, workflow or workflow_crop\n    --roi_file ROI_FILE   Enter the path to the ROI file or a folder of ROI files for cropping\n    --channel CHANNEL     If input is a tiff file and there are channel dimensions but no time dimensions, choose as True\n    --voxel_sizes VOXEL_SIZES\n                            Enter the voxel sizes as (dz,dy,dx). Make sure they are in brackets. If its a czi file, will read it from metadata.\n    --file_extension FILE_EXTENSION\n                            If choosing a folder, enter the extension of the files (make sure you enter it with the dot at the start, i.e., .czi or .tif), else .czi and .tif files will be used\n    --time_range TIME_RANGE TIME_RANGE\n                            Enter time range to extract ,example 0 10 will extract first 10 timepoints> default is to extract entire timeseries if no range is specified\n    --channel_range CHANNEL_RANGE CHANNEL_RANGE\n                            Enter channel range to extract, default will be all channels if no range is specified. Example 0 1 will extract first two channels.\n    --workflow_path WORKFLOW_PATH\n                            If using workflow or workflow_crop, enter the path to the workflow file (*.yml)\n\nAs an example, if you would like to deskew a bunch of files in a folder, you would need to define the `input folder`, `save location` and `processing` option (deskew). The skew direction by default is `Y` and `deskew angle` is 30.\n\nIf the input folder is:\n\n    C:\\source\n\nand output or save location is:\n\n    C:\\deskewed\n\nthen you run the command, \n\n    napari_lattice --input \"C:\\source\" --output \"C:\\deskewed\" --processing deskew\n\nNote that the folder locations are in quotes. This is useful especially if you have spaces in the folder names. \n\nIf you'd like to run cropping and deskew and have a list of ImageJ ROI files (.zip) files which are located at, say `D:\\rois` and the folder locations are the same as above, then we can use the command:\n\n    napari_lattice --input \"C:\\source\" --output \"C:\\deskewed\" --roi_file \"D:\\rois\" --processing crop\n\n***Note: The ROI files need to have the same name as the image files.***\n\nYou can also replace the `input`, `output`, and `roi_file` arguments with file locations instead of folders.\n\nPlease find sample data for testing in the `sample_data` folder above\n\n***Data Credit: Cindy Evelyn & Niall Geoghegan, Walter and Eliza Hall Institute of Medical Research, Melbourne, Australia***\n\n\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\n\n=======\nDistributed under the terms of the [GPL-3.0 License] license,\n\"napari_lattice\" is free and open source software\n\n## Acknowledgment\n\n This project was supported by funding from the [Rogers Lab at the Centre for Dynamic Imaging at the Walter and Eliza Hall Institute of Medical Research](https://imaging.wehi.edu.au/). This project has been made possible in part by [Napari plugin accelerator grant](https://chanzuckerberg.com/science/programs-resources/imaging/napari/lattice-light-sheet-data-analysis-toolset/) from the Chan Zuckerberg Initiative DAF, an advised fund of the Silicon Valley Community Foundation.\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GGPL-3.0 License]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "https://github.com/BioimageAnalysisCoreWEHI/napari_lattice",
+    "keywords": "",
+    "license": "GPL-3.0-only",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "napari-lattice",
+    "package_url": "https://pypi.org/project/napari-lattice/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-lattice/",
+    "project_urls": {
+      "Homepage": "https://github.com/BioimageAnalysisCoreWEHI/napari_lattice"
+    },
+    "release_url": "https://pypi.org/project/napari-lattice/0.1.5/",
+    "requires_dist": [
+      "numpy",
+      "napari[all]",
+      "aicspylibczi (>=3.0.5)",
+      "aicsimageio[all]",
+      "dask",
+      "dask-image",
+      "dask[distributed]",
+      "magic-class (>=0.6.7)",
+      "magicgui",
+      "pyopencl",
+      "read-roi",
+      "gputools",
+      "pyclesperanto-prototype (>=0.17.3)",
+      "napari-aicsimageio (>=0.6.0)",
+      "napari-workflows",
+      "napari-workflow-inspector",
+      "RedLionfish",
+      "tox ; extra == 'testing'",
+      "pytest ; extra == 'testing'",
+      "pytest-cov ; extra == 'testing'"
+    ],
+    "requires_python": ">=3.8",
+    "summary": "Napari plugin to process and analyze lattice lightsheet data especially from the Zeiss lattice lightsheet. It can also be used for lattice lightsheet data acquired at different angles. The plugin can be used in batchmode without napari.",
+    "version": "0.1.5",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 14490008,
+  "releases": {
+    "0.1.4a0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "35320f1346d0704b712d8fc5d3b63db5",
+          "sha256": "82c033c212b20b34173ed8871fe5f685a0dcb3d3415a94eddd53cf0b689428fd"
+        },
+        "downloads": -1,
+        "filename": "napari_lattice-0.1.4a0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "35320f1346d0704b712d8fc5d3b63db5",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 49910,
+        "upload_time": "2022-07-19T06:02:29",
+        "upload_time_iso_8601": "2022-07-19T06:02:29.231754Z",
+        "url": "https://files.pythonhosted.org/packages/ac/4c/b22d98f1b463266c6152eed2f1a6476489337fe26bd9f234aba4f94ad373/napari_lattice-0.1.4a0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "a9bc068d243ddafe52d33ca910565bff",
+          "sha256": "e13f68773df5753ad29dfc73fca0b8fd88ac304afba42da4a63b09f88c5b2b4c"
+        },
+        "downloads": -1,
+        "filename": "napari-lattice-0.1.4a0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "a9bc068d243ddafe52d33ca910565bff",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 50700,
+        "upload_time": "2022-07-19T06:02:31",
+        "upload_time_iso_8601": "2022-07-19T06:02:31.152059Z",
+        "url": "https://files.pythonhosted.org/packages/35/71/667182e05da6d6f0ebff8cb8410c37e4ed9c3ab9ca6b1f2c795fe2cf40ec/napari-lattice-0.1.4a0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.4b0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "fafe1317af47a46fd8c11ef315db287d",
+          "sha256": "1d9e23e6e8bc5f3398d7a547cbb1d1a74c74693017880556c8cd3b86ced74d75"
+        },
+        "downloads": -1,
+        "filename": "napari_lattice-0.1.4b0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "fafe1317af47a46fd8c11ef315db287d",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 49948,
+        "upload_time": "2022-07-20T00:52:18",
+        "upload_time_iso_8601": "2022-07-20T00:52:18.883445Z",
+        "url": "https://files.pythonhosted.org/packages/05/22/571c4bb27ba6e4d1398c9607dea6ec7acb6829d66f3a72dacc82713c4764/napari_lattice-0.1.4b0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "9bb0fba9581b4559308a657b027b7f18",
+          "sha256": "355db2667c640d6321166e493bd25b365db85a94371e1a1d072d31eb7d43a700"
+        },
+        "downloads": -1,
+        "filename": "napari-lattice-0.1.4b0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "9bb0fba9581b4559308a657b027b7f18",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 50757,
+        "upload_time": "2022-07-20T00:52:20",
+        "upload_time_iso_8601": "2022-07-20T00:52:20.243001Z",
+        "url": "https://files.pythonhosted.org/packages/b8/c6/1d117f3b637fa7c396c8ff3d60895d949a73f15d7954bcb2049bc505e1c3/napari-lattice-0.1.4b0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.5": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "54d81f8962276ef5af04a515b77d9120",
+          "sha256": "766cf61ce11e7cbe00ab32d59245a5159cd1d143f0db9cfacffcd1ac6aeb52b3"
+        },
+        "downloads": -1,
+        "filename": "napari_lattice-0.1.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "54d81f8962276ef5af04a515b77d9120",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 50043,
+        "upload_time": "2022-07-20T04:05:24",
+        "upload_time_iso_8601": "2022-07-20T04:05:24.124670Z",
+        "url": "https://files.pythonhosted.org/packages/10/06/0f4f641905112d3b5236d89e3abdaf2abb5d4e8515383b325c76ad5d514f/napari_lattice-0.1.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "8e9f198ff95a418939cc1e351da99ebf",
+          "sha256": "73847ed2918f80bc538e2df5402e46faf8f5532f3d53bccbb21bd86df1f88808"
+        },
+        "downloads": -1,
+        "filename": "napari-lattice-0.1.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "8e9f198ff95a418939cc1e351da99ebf",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 50989,
+        "upload_time": "2022-07-20T04:05:25",
+        "upload_time_iso_8601": "2022-07-20T04:05:25.797825Z",
+        "url": "https://files.pythonhosted.org/packages/33/55/0734a4f318d200a2b0b113abbb289a603e88f0b2878f3e83ed17046aea84/napari-lattice-0.1.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "54d81f8962276ef5af04a515b77d9120",
+        "sha256": "766cf61ce11e7cbe00ab32d59245a5159cd1d143f0db9cfacffcd1ac6aeb52b3"
+      },
+      "downloads": -1,
+      "filename": "napari_lattice-0.1.5-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "54d81f8962276ef5af04a515b77d9120",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.8",
+      "size": 50043,
+      "upload_time": "2022-07-20T04:05:24",
+      "upload_time_iso_8601": "2022-07-20T04:05:24.124670Z",
+      "url": "https://files.pythonhosted.org/packages/10/06/0f4f641905112d3b5236d89e3abdaf2abb5d4e8515383b325c76ad5d514f/napari_lattice-0.1.5-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "8e9f198ff95a418939cc1e351da99ebf",
+        "sha256": "73847ed2918f80bc538e2df5402e46faf8f5532f3d53bccbb21bd86df1f88808"
+      },
+      "downloads": -1,
+      "filename": "napari-lattice-0.1.5.tar.gz",
+      "has_sig": false,
+      "md5_digest": "8e9f198ff95a418939cc1e351da99ebf",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.8",
+      "size": 50989,
+      "upload_time": "2022-07-20T04:05:25",
+      "upload_time_iso_8601": "2022-07-20T04:05:25.797825Z",
+      "url": "https://files.pythonhosted.org/packages/33/55/0734a4f318d200a2b0b113abbb289a603e88f0b2878f3e83ed17046aea84/napari-lattice-0.1.5.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

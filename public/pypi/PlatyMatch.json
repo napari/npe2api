@@ -1,0 +1,230 @@
+{
+  "info": {
+    "author": "Manan Lalit",
+    "author_email": "lalit@mpi-cbg.de",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 4 - Beta",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.7",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Software Development :: Testing"
+    ],
+    "description": "[![DOI:10.1007/978-3-030-66415-2_30](https://zenodo.org/badge/DOI/10.1007/978-3-030-66415-2_30.svg)](https://link.springer.com/chapter/10.1007/978-3-030-66415-2_30)\n[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)\n[![PyPI](https://img.shields.io/pypi/v/PlatyMatch.svg?color=green)](https://pypi.org/project/PlatyMatch)\n[![Python Version](https://img.shields.io/pypi/pyversions/PlatyMatch.svg?color=green)](https://python.org)\n[![tests](https://github.com/juglab/PlatyMatch/workflows/tests/badge.svg)](https://github.com/juglab/PlatyMatch/actions)\n[![codecov](https://codecov.io/gh/juglab/PlatyMatch/branch/master/graph/badge.svg)](https://codecov.io/gh/juglab/PlatyMatch)\n\n\n<p align=\"center\">\n  <img src=\"https://user-images.githubusercontent.com/34229641/117537510-b26ee500-b001-11eb-9642-3baa461bfc94.png\" width=400 />\n</p>\n<h2 align=\"center\">Registration of Multi-modal Volumetric Images by Establishing Cell Correspondence</h2>\n\n## Table of Contents\n\n- **[Introduction](#introduction)**\n- **[Dependencies](#dependencies)**\n- **[Getting Started](#getting-started)**\n- **[Datasets](#datasets)**\n- **[Registering your data](#registering-your-data)**\n- **[Contributing](#contributing)**\n- **[Issues](#issues)**\n- **[Citation](#citation)**\n\n### Introduction\nThis repository hosts the version of the code used for the **[publication](https://link.springer.com/chapter/10.1007/978-3-030-66415-2_30)** **Registration of Multi-modal Volumetric Images by Establishing Cell Correspondence**. \n\nWe refer to the techniques elaborated in the publication, here as **PlatyMatch**. `PlatyMatch` performs a linear registration of volumetric, microscopy images of embryos by establishing correspondences between cells. \n\n`PlatyMatch` first detects nuclei in the two images being considered, next calculates unique `shape context` features for each nucleus detection which encapsulates the neighborhood as seen by that nucleus, and finally identifies pairs of matching nuclei through maximum bipartite matching applied to the pairwise distance matrix generated from these features. \n\n### Dependencies \n\nYou can install `PlatyMatch` via **[pip]**:\n\n```\nconda create -y -n PlatyMatchEnv python==3.8\nconda activate PlatyMatchEnv\npython3 -m pip install PlatyMatch\n```\n\n### Getting Started\n\nType in the following commands in a new terminal window.\n\n```\nconda activate PlatyMatchEnv\nnapari\n```\n\nNext, select `PlatyMatch` from `Plugins> Add Dock Widget`.\n\n### Datasets\n\nDatasets are available in **`bic_eccv_data.zip`** as release assets **[here](https://github.com/juglab/PlatyMatch/releases/tag/v0.0.1)**.\nThese comprise of images, nuclei detections and keypoint locations for confocal images of 12 individual specimens under the `01-insitus` directory and static snapshots of a live embryo imaged through Light Sheet Microscopy under the `02-live` directory. \nFolders with the same name in these two directories correspond in their developmental age, for example, `01-insitus/02` corresponds to `02-live/02`, `01-insitus/03` corresponds to `02-live/03` and so on.   \n\n\n### Registering your data\n\n- **Detect Nuclei** \n\t- Drag and drop your images in the viewer \n\t- Click on `Sync with Viewer` button to refresh the drop-down menus \n\t- Select the appropriate image in the drop down menu (for which nuclei detections are desired)\n\t- Select **`Detect Nuclei`** from the drop-down menu\n\t- Specify the anisotropy factor (`Anisotropy (Z)`) (i.e. the ratio of the size of the z pixel with respect to the x or y pixel. This factor is typically more than 1.0 because the z dimension is often undersampled)\n\t- Ideally min scales and max scales should be estimated from your data (`min_scale` should be set as `min_radius/sqrt(3)` and `max_scale` should be set as `max_radius/sqrt(3)`. The default values of `min_scale=5` and `max_scale=9` generally works well).  \n\t- Click `Run Scale Space Log` button. Please note that this step takes a few minutes.\n\t- Wait until a confirmation message suggesting that nuclei detection is over shows up on the terminal\n\t- Export the nuclei locations (`Export detections to csv`) to a csv file\n\t- Repeat this step for all images which need to be matched\n\n\n\n\nhttps://user-images.githubusercontent.com/34229641/120660618-cd5d3980-c487-11eb-8996-326264a4df87.mp4\n\n\n- **Estimate Transform**\n\t- In case, nuclei were exported to a csv in the `Detect Nuclei` panel, tick `csv` checkbox\n\t- If the nuclei detected were specified in the order id, z, y and x in the csv file, then tick `IZYXR` checkbox\n\t- Additionally if there is a header in the csv file, tick `Header` checkbox\n\t- Load the detections for the `Moving Image`, which is defined as the image which will be transformed to later match another `fixed` image\n\t- Load the detections for the `Fixed Image`\n\t- Click on `Run` pushbutton. Once the calculation is complete, a confirmation message shows up in the terminal. Export the transform matrix to a csv (Note that this step can take a few minutes)\n\t- It is also possible to estimate the transform in a `supervised` fashion. For this, upload the locations of a few matching keypoints in both images. These locations serve to provide a good starting point for the transform calculation. Once the keypoint files have been uploaded for both the images, then click `Run` and then export the transform matrix to a csv file \n\n\nhttps://user-images.githubusercontent.com/34229641/120685628-53857a00-c4a0-11eb-8f92-7ffac730e28a.mp4\n\n\n\n- **Evaluate Metrics**\n\t- Drag images which need to be transformed, in the viewer\n\t- Click on `Sync with Viewer` button to refresh the drop-down menus\n\t- Specify the anisotropy factor (`Moving Image Anisotropy (Z)` and `Fixed Image Anisotropy (Z)`) (i.e. the ratio of the size of the z pixel with respect to the x or y pixel. This factor is typically more than 1.0 because the z dimension is often undersampled)\n\t- Load the transform which was calculated in the previous steps\n\t- If you simply wish to export a transformed version of the moving image, click on `Export Transformed Image`\n\t- Additionally, one could quantify metrics such as average registration error evaluated on a few keypoints. To do so, tick the `csv` checkbox, if keypoints and detections are available as a csv file. Then load the keypoints for the moving image (`Moving Kepoints`) and the fixed image (`Fixed Keypoints`)\n\t- Also, upload the detections calculated in the previous steps (`Detect Nuclei`)  by uploading the `Moving Detections` and the `Fixed Detections`\n\t- Click on the `Run` push button\n\t- The text fields such as `Matching Accuracy`(0 to 1, with 1 being the best) and `Average Registration Error` (the lower the better) should become populated once the results are available\n\n\n\nhttps://user-images.githubusercontent.com/34229641/120685654-5b451e80-c4a0-11eb-8d7d-de58b8b8304d.mp4\n\n\n### Contributing\n\nContributions are very welcome. Tests can be run with **[tox]**.\n\n### Issues\n\nIf you encounter any problems, please **[file an issue]** along with a detailed description.\n\n[file an issue]: https://github.com/juglab/PlatyMatch/issues\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/EmbedSeg/\n\n\n### Citation\nIf you find our work useful in your research, please consider citing:\n\n```bibtex\n@InProceedings{10.1007/978-3-030-66415-2_30,\nauthor=\"Lalit, Manan and Handberg-Thorsager, Mette and Hsieh, Yu-Wen and Jug, Florian and Tomancak, Pavel\",\neditor=\"Bartoli, Adrien\nand Fusiello, Andrea\",\ntitle=\"Registration of Multi-modal Volumetric Images by Establishing Cell Correspondence\",\nbooktitle=\"Computer Vision -- ECCV 2020 Workshops\",\nyear=\"2020\",\npublisher=\"Springer International Publishing\",\naddress=\"Cham\",\npages=\"458--473\",\nisbn=\"978-3-030-66415-2\"\n}\n```\n\n`PlatyMatch` plugin was generated with [Cookiecutter] using with [@napari]'s [cookiecutter-napari-plugin] template.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n[file an issue]: https://github.com/juglab/PlatyMatch/issues\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n\n\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "https://github.com/juglab/PlatyMatch",
+    "keywords": "",
+    "license": "BSD-3",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "PlatyMatch",
+    "package_url": "https://pypi.org/project/PlatyMatch/",
+    "platform": "",
+    "project_url": "https://pypi.org/project/PlatyMatch/",
+    "project_urls": {
+      "Homepage": "https://github.com/juglab/PlatyMatch"
+    },
+    "release_url": "https://pypi.org/project/PlatyMatch/0.0.3/",
+    "requires_dist": [
+      "napari-plugin-engine (>=0.1.4)",
+      "numpy",
+      "scikit-image",
+      "scikit-learn",
+      "tqdm",
+      "simpleitk",
+      "napari[all]",
+      "pandas",
+      "pytest"
+    ],
+    "requires_python": ">=3.6",
+    "summary": "PlatyMatch allows registration of volumetric images of embryos by establishing correspondences between cells",
+    "version": "0.0.3",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 10589132,
+  "releases": {
+    "0.0.2a0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "b1632d30188b15151a48d81a5cf21c76",
+          "sha256": "9c3a91c8b716027e82955fe6d5a692bdefff188f4ace099a7557a2377106b761"
+        },
+        "downloads": -1,
+        "filename": "PlatyMatch-0.0.2a0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "b1632d30188b15151a48d81a5cf21c76",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.6",
+        "size": 28649,
+        "upload_time": "2021-05-28T20:21:08",
+        "upload_time_iso_8601": "2021-05-28T20:21:08.816113Z",
+        "url": "https://files.pythonhosted.org/packages/89/27/adf3e93f543452db76e3e97bd46f68493e0d7b02e6bcd8973acccebe3cd5/PlatyMatch-0.0.2a0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "846ee990cc3b4f1cfedd693d7faaf083",
+          "sha256": "16d64953bcd581566a17b478968deaebcc13a671db52553acf15566ca213e4aa"
+        },
+        "downloads": -1,
+        "filename": "PlatyMatch-0.0.2a0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "846ee990cc3b4f1cfedd693d7faaf083",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.6",
+        "size": 34568,
+        "upload_time": "2021-05-28T20:21:10",
+        "upload_time_iso_8601": "2021-05-28T20:21:10.670307Z",
+        "url": "https://files.pythonhosted.org/packages/f2/ff/1fc0d8e5315b984fdcf1392b0a1bc00718d80f24a5f47e47cc497dd929c3/PlatyMatch-0.0.2a0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.2b0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "bfc94d8c4b38c511beecb50593aabfd1",
+          "sha256": "ff0f4beb7b5bc6b5343199a077e45ad28a4ed8fcadd47a48421452057384fc08"
+        },
+        "downloads": -1,
+        "filename": "PlatyMatch-0.0.2b0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "bfc94d8c4b38c511beecb50593aabfd1",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.6",
+        "size": 28909,
+        "upload_time": "2021-05-30T16:07:04",
+        "upload_time_iso_8601": "2021-05-30T16:07:04.251756Z",
+        "url": "https://files.pythonhosted.org/packages/51/a3/eff97af58e6311956b33eab51ccab93a0a2c26edf3bbd3dbdad5f196bbb0/PlatyMatch-0.0.2b0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "7ad40f96d771874e79cff54c4269d3e7",
+          "sha256": "983b730a73af50e318273701b97b7fecd36f23f8f6c5535a06094dc810180c04"
+        },
+        "downloads": -1,
+        "filename": "PlatyMatch-0.0.2b0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "7ad40f96d771874e79cff54c4269d3e7",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.6",
+        "size": 35132,
+        "upload_time": "2021-05-30T16:07:05",
+        "upload_time_iso_8601": "2021-05-30T16:07:05.726802Z",
+        "url": "https://files.pythonhosted.org/packages/83/a3/d31120ed4f84106a8ad9715ed5357b820205c8ed896c2e69ac89335166d6/PlatyMatch-0.0.2b0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.3": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "a2586922fd2eaaefbf670d4da591a1fb",
+          "sha256": "4e650086f96c97d73dabf1d2d93d296f99a5742165e1ce1136015dfff34f1663"
+        },
+        "downloads": -1,
+        "filename": "PlatyMatch-0.0.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "a2586922fd2eaaefbf670d4da591a1fb",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.6",
+        "size": 29669,
+        "upload_time": "2021-06-08T12:34:42",
+        "upload_time_iso_8601": "2021-06-08T12:34:42.356971Z",
+        "url": "https://files.pythonhosted.org/packages/d6/a8/e4db2aba3707f61275ca935d2cd98e131f7f7507692ca63cca6321770286/PlatyMatch-0.0.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "970704bd1c9da99b7fe6dc54947e2e62",
+          "sha256": "8fc7c437c1565c51744320ef09a91de72366beebdaa44780eaac2598eb3d810b"
+        },
+        "downloads": -1,
+        "filename": "PlatyMatch-0.0.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "970704bd1c9da99b7fe6dc54947e2e62",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.6",
+        "size": 35946,
+        "upload_time": "2021-06-08T12:34:44",
+        "upload_time_iso_8601": "2021-06-08T12:34:44.214801Z",
+        "url": "https://files.pythonhosted.org/packages/ae/1e/b02e010ae28abe0ec271357ee33112280f61e41024982930e8a61000f531/PlatyMatch-0.0.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "a2586922fd2eaaefbf670d4da591a1fb",
+        "sha256": "4e650086f96c97d73dabf1d2d93d296f99a5742165e1ce1136015dfff34f1663"
+      },
+      "downloads": -1,
+      "filename": "PlatyMatch-0.0.3-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "a2586922fd2eaaefbf670d4da591a1fb",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.6",
+      "size": 29669,
+      "upload_time": "2021-06-08T12:34:42",
+      "upload_time_iso_8601": "2021-06-08T12:34:42.356971Z",
+      "url": "https://files.pythonhosted.org/packages/d6/a8/e4db2aba3707f61275ca935d2cd98e131f7f7507692ca63cca6321770286/PlatyMatch-0.0.3-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "970704bd1c9da99b7fe6dc54947e2e62",
+        "sha256": "8fc7c437c1565c51744320ef09a91de72366beebdaa44780eaac2598eb3d810b"
+      },
+      "downloads": -1,
+      "filename": "PlatyMatch-0.0.3.tar.gz",
+      "has_sig": false,
+      "md5_digest": "970704bd1c9da99b7fe6dc54947e2e62",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.6",
+      "size": 35946,
+      "upload_time": "2021-06-08T12:34:44",
+      "upload_time_iso_8601": "2021-06-08T12:34:44.214801Z",
+      "url": "https://files.pythonhosted.org/packages/ae/1e/b02e010ae28abe0ec271357ee33112280f61e41024982930e8a61000f531/PlatyMatch-0.0.3.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

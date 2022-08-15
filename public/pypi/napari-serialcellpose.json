@@ -1,0 +1,279 @@
+{
+  "info": {
+    "author": "Guillaume Witz",
+    "author_email": "guillaume.witz@unibe.ch",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Software Development :: Testing"
+    ],
+    "description": "# napari-serialcellpose\n\n[![License](https://img.shields.io/pypi/l/napari-serialcellpose.svg?color=green)](https://github.com/guiwitz/napari-serialcellpose/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-serialcellpose.svg?color=green)](https://pypi.org/project/napari-serialcellpose)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-serialcellpose.svg?color=green)](https://python.org)\n[![tests](https://github.com/guiwitz/napari-serialcellpose/workflows/tests/badge.svg)](https://github.com/guiwitz/napari-serialcellpose/actions)\n[![codecov](https://codecov.io/gh/guiwitz/napari-serialcellpose/branch/main/graph/badge.svg)](https://codecov.io/gh/guiwitz/napari-serialcellpose)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-serialcellpose)](https://napari-hub.org/plugins/napari-serialcellpose)\n\nThis napari plugin allows you to segment single images or series of images using built-in or custom Cellpose models as well as to analyze the properties of these segmented regions (\"region properties\"). Properties can be visualized for a single image or a complete experiment in the form of histograms that can also be filtered (e.g. based on area size, mean intensity etc.) Thanks to the [napari-skimage-regionprops](https://github.com/haesleinhuepf/napari-skimage-regionprops) plugin, properties of segmented objects can be interactively explored at a single object level.\n\n## Main goal\n\nThe main goal of this plugin is to simplify the classical image processing pipeline of image segmentation followed by region analysis via Cellpose. It allows to quickly get a quantification of a set of images without the need for any scripting.\n\n## Installation\n\nIn order to use this plugin, whe highly recommend to create a specific environment and to install the required software in it. You can create a conda environment using:\n\n    conda create -n serialcellpose python=3.8.5 napari -c conda-forge\n\nThen activate it and install the plugin:\n    \n    conda activate serialcellpose\n    pip install napari-serialcellpose\n\n### Potential issue with PyTorch\n\nCellpose and therefore the plugin and napari can crash without warning in some cases with ```torch==1.12.0```. This can be fixed by reverting to an earlier version using:\n    \n    pip install torch==1.11.0\n\n### GPU\n\nIn order to use a GPU:\n\n1. Uninstall the PyTorch version that gets installed by default with Cellpose:\n\n        pip uninstall torch\n\n2. Make sure your have up-to-date drivers for your NVIDIA card installed.\n\n3. Re-install a GPU version of PyTorch via conda using a command that you can find [here](https://pytorch.org/get-started/locally/) (this takes care of the cuda toolkit, cudnn etc. so **no need to install manually anything more than the driver**). The command will look like this:\n\n        conda install pytorch torchvision cudatoolkit=11.3 -c pytorch\n\n### Plugin Updates\n\nTo update the plugin, you only need to activate the existing environment and install the new version:\n\n    conda activate serialcellpose\n    pip install napari-serialcellpose -U\n\n## Usage: segmentation\n\nThe main interface is shown below. The sequence of events should be the following:\n\n1. Select a folder containing images. The list of files within that folder will appear in the area above. You can also just drag and drop a folder or an image in that area. When selecting an image, it gets displayed in the viewer. Images are opened via [aicsimageio](https://allencellmodeling.github.io/aicsimageio/). You can use grayscale images, RGB images or multi-channel images. In the latter case, **make sure each channel opens as a separate layer when you open them using the napari-aicsimagio importer**.\n2. If you want to save the segmentation and tables with properties, select a folder that will contain the output.\n3. Select the type of cellpose model.\n4. If you use a custom model, select its location.\n5. Run the analysis on the currently selected image or on all files in the folder.\n### Options\n\n6. Select if you want to use a GPU or not.\n7. If you are using multi-channel images, you can specify which channel to segment and optionally which to use as \"nuclei\" channel to help cell segmentation.\n8. In case you are using one of the built-in models, you can set the estimated diameter of your objects.\n9. In the Options tab you will find a few more options for segmentation, including the two thresholds ```flow_threshold``` and ```cellprob_threshold```. You can also decide to discard objects touching the border. Using the ```Select options yml file``` you can select a ```.yml``` file which contains a list of additional options to pass to the ```eval``` method of the Cellpose model. **Note that options specified in the yml file will override options set in the GUI**. The file [my_options.yml](https://raw.githubusercontent.com/guiwitz/napari-serialcellpose/main/src/napari_serialcellpose/_tests/my_options.yml) is an example of such a file where for example the ```diameter``` (also available in the GUI) and ```resample``` (not available in the GUI) options are set. \n\n<img src=\"https://github.com/guiwitz/napari-serialcellpose/raw/main/illustrations/napari_serialcellpose_gui1.png\" alt=\"image\" width=\"500\">\n<img src=\"https://github.com/guiwitz/napari-serialcellpose/raw/main/illustrations/napari_serialcellpose_gui1b.png\" alt=\"image\" width=\"500\">\n\n### Properties\n\n10. After segmentation, properties of the objects can automatically be computed. You can select which properties should be computed in the Options tab. As defined in ```napari-skimage-regionprops``` properties are grouped by types. If you want to measure intensity properties such as mean intensity, you have to specify which channel (```Analysis channel```) you want to perform the measurement on.\n\n### Output\n\nThe results of the analysis are saved in the folder chosen in #2. The segmentation mask is saved with the same name as the original image with the suffix ```_mask.tif```. A table with properties is saved in the subfolder ```tables``` also with the same name as the image with the suffix ```props.csv```. If you run the plugin on multiple files in a folder, a ```summary.csv``` file is also generated which compiles all the data.\n## Usage: post-processing\n\nAfter the analysis is done, when you select an image, the corresponding segmentation mask is shown on top of the image as shown below. This also works for saved segmentations: in that case you just select a folder with data and the corresponding output folder.\n\n<img src=\"https://github.com/guiwitz/napari-serialcellpose/raw/main/illustrations/napari_serialcellpose_gui2.png\" alt=\"image\" width=\"500\">\n\n### Properties\n\nIf you head to the **Properties** tab, you will find there two histograms showing the distribution of two properties that you can choose from a list at the top of the window. Below the plot you find the table containing information for each cell (each line is a cell).\n\nAs shown below, if you select the box ```show selected```, you can select items in the properties table and it will highlight the corresponding cell in the viewer. If you select the pipet tool, you can also select a cell and see the corresponding line in the table highlighted.\n\n<img src=\"https://github.com/guiwitz/napari-serialcellpose/raw/main/illustrations/napari_serialcellpose_gui3.png\" alt=\"image\" width=\"500\">\n\n### Summary\n\nFinally if you select the **Summary** tab, and click on ```Load summary```, it will load all data of the current output folder and create histograms of two properties that can be selected. An additional property can be used for filtering the data. Using the sliders, one can set a minimum and maximum threshold on the \"filtering property\", which will create a sub-selection of the data.\n\n<img src=\"https://github.com/guiwitz/napari-serialcellpose/raw/main/illustrations/napari_serialcellpose_gui4.png\" alt=\"image\" width=\"500\">\n\n## Data\n\nSample data were acquired by Fabian Blank at the DBMR, University of Bern.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-serialcellpose\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[file an issue]: https://github.com/guiwitz/napari-serialcellpose/issues\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "https://github.com/guiwitz/napari-serialcellpose",
+    "keywords": "",
+    "license": "BSD-3-Clause",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "napari-serialcellpose",
+    "package_url": "https://pypi.org/project/napari-serialcellpose/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-serialcellpose/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/guiwitz/napari-serialcellpose/issues",
+      "Documentation": "https://github.com/guiwitz/napari-serialcellpose#README.md",
+      "Homepage": "https://github.com/guiwitz/napari-serialcellpose",
+      "Source Code": "https://github.com/guiwitz/napari-serialcellpose",
+      "User Support": "https://github.com/guiwitz/napari-serialcellpose/issues"
+    },
+    "release_url": "https://pypi.org/project/napari-serialcellpose/0.2.2/",
+    "requires_dist": [
+      "cellpose",
+      "numpy",
+      "magicgui",
+      "qtpy",
+      "matplotlib",
+      "napari-skimage-regionprops",
+      "napari-aicsimageio",
+      "tox ; extra == 'testing'",
+      "pytest ; extra == 'testing'",
+      "pytest-cov ; extra == 'testing'",
+      "pytest-qt ; extra == 'testing'",
+      "napari ; extra == 'testing'",
+      "pyqt5 ; extra == 'testing'"
+    ],
+    "requires_python": ">=3.8",
+    "summary": "A simple plugin to batch segment cells with cellpose",
+    "version": "0.2.2",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 14693942,
+  "releases": {
+    "0.1.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "9fa6367be7e2076b432bc50baf6cbebb",
+          "sha256": "c14f95e34ff8d73cdccd5752bcad2bb565263ec96151ca36889f94b130ad9033"
+        },
+        "downloads": -1,
+        "filename": "napari_serialcellpose-0.1.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "9fa6367be7e2076b432bc50baf6cbebb",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 12942,
+        "upload_time": "2022-07-28T14:16:35",
+        "upload_time_iso_8601": "2022-07-28T14:16:35.456233Z",
+        "url": "https://files.pythonhosted.org/packages/98/5a/ef704177a1b0ca501460057dcf95d2b6b8814a99da976904d91b8cac4955/napari_serialcellpose-0.1.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "e20adfa99c6bc629a1e13cdfe48b8a14",
+          "sha256": "39bea9757694fbff73730b3191ab1e213d06ae3ed1284ca32911b01cd50ca51f"
+        },
+        "downloads": -1,
+        "filename": "napari-serialcellpose-0.1.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e20adfa99c6bc629a1e13cdfe48b8a14",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 2132731,
+        "upload_time": "2022-07-28T14:16:37",
+        "upload_time_iso_8601": "2022-07-28T14:16:37.420634Z",
+        "url": "https://files.pythonhosted.org/packages/1e/cf/41ec756833a998bad16e93bcac3df4d78481910274f621b855be9222b300/napari-serialcellpose-0.1.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "ae4d83ac1b9d25f486927a0da05e0f46",
+          "sha256": "d6eb0866403ee9b6178c5c9d9ff026233cef8cd19b10a480ccc3c5b7f143fc75"
+        },
+        "downloads": -1,
+        "filename": "napari_serialcellpose-0.2.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "ae4d83ac1b9d25f486927a0da05e0f46",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 1003922,
+        "upload_time": "2022-07-28T15:35:15",
+        "upload_time_iso_8601": "2022-07-28T15:35:15.723920Z",
+        "url": "https://files.pythonhosted.org/packages/e1/c3/bc0e486eb176a0c99df3cd8980cebaa74ba0f8ff920cc51239e38a84318a/napari_serialcellpose-0.2.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "f0f643ae78cd311f69d0a32192caec33",
+          "sha256": "bf7c437d9084b564d3a76b56c1470c3278dbc48424a0ffc7c952d4baec2189fa"
+        },
+        "downloads": -1,
+        "filename": "napari-serialcellpose-0.2.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "f0f643ae78cd311f69d0a32192caec33",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 4369680,
+        "upload_time": "2022-07-28T15:35:17",
+        "upload_time_iso_8601": "2022-07-28T15:35:17.590211Z",
+        "url": "https://files.pythonhosted.org/packages/5f/75/48c685afec123d3dee2d9646e454ae3010ae697023e4c2c7567747e5c813/napari-serialcellpose-0.2.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "db690b26bb6f32e748a1c2fa4f95b796",
+          "sha256": "d3cc8b2f5aa491aae4ad85763ba4f9ccc0eca0013dbe6f81fa358eff45e2c686"
+        },
+        "downloads": -1,
+        "filename": "napari_serialcellpose-0.2.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "db690b26bb6f32e748a1c2fa4f95b796",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 1004177,
+        "upload_time": "2022-08-02T19:58:48",
+        "upload_time_iso_8601": "2022-08-02T19:58:48.392369Z",
+        "url": "https://files.pythonhosted.org/packages/df/60/140a160ecc7e4fdfc0454db39b3b56e1d32506e305e065451a2df021db79/napari_serialcellpose-0.2.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "9596aeb752fdd4d50ca72c9086abf6fc",
+          "sha256": "52a18e6128ac34267d6cc1a956b80b7bd9f89453959c2243245450b5bdd23ed9"
+        },
+        "downloads": -1,
+        "filename": "napari-serialcellpose-0.2.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "9596aeb752fdd4d50ca72c9086abf6fc",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 4369941,
+        "upload_time": "2022-08-02T19:58:49",
+        "upload_time_iso_8601": "2022-08-02T19:58:49.948888Z",
+        "url": "https://files.pythonhosted.org/packages/be/5f/f78f3dfe32534a0394caa960c62033d4c455467f0d442f9fe05904e861f9/napari-serialcellpose-0.2.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "86f086e991699b2ea015957b4b59ed88",
+          "sha256": "885c13efaff74c6ec7bb980c1e78749cc30d3c6d46067ab7f29cab6e33fcea03"
+        },
+        "downloads": -1,
+        "filename": "napari_serialcellpose-0.2.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "86f086e991699b2ea015957b4b59ed88",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 1004200,
+        "upload_time": "2022-08-08T20:39:23",
+        "upload_time_iso_8601": "2022-08-08T20:39:23.176539Z",
+        "url": "https://files.pythonhosted.org/packages/23/d6/712c504f04a2d1b7de1fedd354d2889427e8dc3a74beca4769a67a4e3aae/napari_serialcellpose-0.2.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "f09ec616952ee873206836a8e9aaa55a",
+          "sha256": "717afe4627282dfd72a794c07527c01b9697c3c70330031e0b5a01dc600316fc"
+        },
+        "downloads": -1,
+        "filename": "napari-serialcellpose-0.2.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "f09ec616952ee873206836a8e9aaa55a",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 4369890,
+        "upload_time": "2022-08-08T20:39:25",
+        "upload_time_iso_8601": "2022-08-08T20:39:25.217750Z",
+        "url": "https://files.pythonhosted.org/packages/c2/0d/6f7657c906edd5d032cdc7a5bfe756ca248ae1885772a8ac20791a15dedd/napari-serialcellpose-0.2.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "86f086e991699b2ea015957b4b59ed88",
+        "sha256": "885c13efaff74c6ec7bb980c1e78749cc30d3c6d46067ab7f29cab6e33fcea03"
+      },
+      "downloads": -1,
+      "filename": "napari_serialcellpose-0.2.2-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "86f086e991699b2ea015957b4b59ed88",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.8",
+      "size": 1004200,
+      "upload_time": "2022-08-08T20:39:23",
+      "upload_time_iso_8601": "2022-08-08T20:39:23.176539Z",
+      "url": "https://files.pythonhosted.org/packages/23/d6/712c504f04a2d1b7de1fedd354d2889427e8dc3a74beca4769a67a4e3aae/napari_serialcellpose-0.2.2-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "f09ec616952ee873206836a8e9aaa55a",
+        "sha256": "717afe4627282dfd72a794c07527c01b9697c3c70330031e0b5a01dc600316fc"
+      },
+      "downloads": -1,
+      "filename": "napari-serialcellpose-0.2.2.tar.gz",
+      "has_sig": false,
+      "md5_digest": "f09ec616952ee873206836a8e9aaa55a",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.8",
+      "size": 4369890,
+      "upload_time": "2022-08-08T20:39:25",
+      "upload_time_iso_8601": "2022-08-08T20:39:25.217750Z",
+      "url": "https://files.pythonhosted.org/packages/c2/0d/6f7657c906edd5d032cdc7a5bfe756ca248ae1885772a8ac20791a15dedd/napari-serialcellpose-0.2.2.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

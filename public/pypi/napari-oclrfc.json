@@ -1,0 +1,647 @@
+{
+  "info": {
+    "author": "Robert Haase",
+    "author_email": "robert.haase@tu-dresden.de",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Intended Audience :: Science/Research",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.7",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Software Development :: Testing"
+    ],
+    "description": "\n# Note: This is a decommissioned napari plugin \n\nThis project is discontinued. You can still install and use it (last tested with napari 0.4.11) but this project is \nno longer maintained and supported. \n\nCheck out [napari-accelerated-pixel-and-object-classification (APOC)](https://github.com/haesleinhuepf/napari-accelerated-pixel-and-object-classification)\nto learn more about this plugin's successor.\n\n---\n\n# napari-oclrfc\n\n[![License](https://img.shields.io/pypi/l/napari-oclrfc.svg?color=green)](https://github.com/haesleinhuepf/napari-oclrfc/raw/master/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-oclrfc.svg?color=green)](https://pypi.org/project/napari-oclrfc)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-oclrfc.svg?color=green)](https://python.org)\n[![tests](https://github.com/haesleinhuepf/napari-oclrfc/workflows/tests/badge.svg)](https://github.com/haesleinhuepf/napari-oclrfc/actions)\n[![codecov](https://codecov.io/gh/haesleinhuepf/napari-oclrfc/branch/master/graph/badge.svg)](https://codecov.io/gh/haesleinhuepf/napari-oclrfc)\n\n[py-clEsperanto](https://github.com/clEsperanto/pyclesperanto_prototype) meets [scikit-learn](https://scikit-learn.org/stable/)\n\nA yet experimental OpenCL-based Random Forest Classifier for pixel and labeled object classification in [napari].\n\n![](https://github.com/haesleinhuepf/napari-oclrfc/raw/master/images/screenshot.png)\nThe processed example image [maize_clsm.tif](https://github.com/dlegland/mathematical_morphology_with_MorphoLibJ/blob/master/sampleImages/maize_clsm.tif)\nis licensed by David Legland under \n[CC-BY 4.0 license](https://github.com/dlegland/mathematical_morphology_with_MorphoLibJ/blob/master/LICENSE)\n\nFor using OpenCL-based Random Forest Classifiers for pixel classification in python, check out [oclrfc](https://github.com/haesleinhuepf/oclrfc).\n\n\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using with [@napari]'s [cookiecutter-napari-plugin] template.\n\n## Installation\n\nYou can install `napari-oclrfc` via [pip]. Note: you also need [pyopencl](https://documen.tician.de/pyopencl/).\n\n    conda install pyopencl\n    pip install napari-oclrfc\n    \nIn case of issues in napari, make sure these dependencies are installed properly:\n    \n    pip install pyclesperanto_prototype\n    pip install oclrfc\n\n## Usage\n\nOpen an image in napari and add a labels layer. Annotate foreground and background with two different label identifiers. You can also add a third, e.g. a membrane-like region in between to improve segmentation quality.\n![img.png](https://github.com/haesleinhuepf/napari-oclrfc/raw/master/images/img.png)\n\nClick the menu `Plugins > OpenCL Random Forest Classifiers > Train pixel classifier`. \nConsider changing the `featureset`. There are three options for selecting \nsmall (about 1 pixel sized) objects, \nmedium (about 5 pixel sized) object and \nlarge (about 25 pixel sized) objects.\nMake sure the right image and annotation layers are selected and click on `Run`.\n\n![img_1.png](https://github.com/haesleinhuepf/napari-oclrfc/raw/master/images/img_1.png)\n\nThe classifier was saved as `temp.cl` to disc. You can later re-use it by clicking the menu `Plugins > OpenCL Random Forest Classifiers > Predict pixel classifier`\n\nOptional: Hide the annotation layer.\n\nClick the menu `Plugins > OpenCL Random Forest Classifiers > Connected Component Labeling`.\nMake sure the right labels layer is selected. It is supposed to be the result layer from the pixel classification.\nSelect the `object class identifier` you used for annotating objects, that's the intensity you drew on objects in the annotation layer.\nHint: If you want to analyse touching neigbors afterwards, activate the `fill gaps between labels` checkbox.\nClick on the `Run` button.\n![img_2.png](https://github.com/haesleinhuepf/napari-oclrfc/raw/master/images/img_2.png)\n\nOptional: Hide the pixel classification result layer. Change the opacity of the connected component labels layer.\n\nAdd a new labels layer and annotate different object classes by drawing lines through them. \nIn the following example objects with different size and shape were annotated in three classes:\n* round, small\n* round, large\n* elongated\n![img_3.png](https://github.com/haesleinhuepf/napari-oclrfc/raw/master/images/img_3.png)\n  \nClick the menu `Plugins > OpenCL Random Forest Classifiers > Train label classifier`. Select the right layers for training.\nThe labels layer should be the result from connected components labeling.\nThe annotation layer should be the just annotated object classes layer.\nSelect the right features for training. Click on the `Run` button. \nAfter training, the classifier will be stored to disc in the file you specified.\nYou can later re-use it by clicking the menu `Plugins > OpenCL Random Forest Classifiers > Predict label classifier`\n\n![img_5.png](https://github.com/haesleinhuepf/napari-oclrfc/raw/master/images/img_5.png)\n\nThis is an experimental napari plugin. Feedback is very welcome!\n\n## Contributing\n \nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-oclrfc\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [open a thread on image.sc](https://image.sc) along with a detailed description and tag [@haesleinhuepf](https://github.com/haesleinhuepf).\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n[file an issue]: https://github.com/haesleinhuepf/napari-oclrfc/issues\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n\n\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "https://github.com/haesleinhuepf/napari-oclrfc",
+    "keywords": "",
+    "license": "BSD-3",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "napari-oclrfc",
+    "package_url": "https://pypi.org/project/napari-oclrfc/",
+    "platform": "",
+    "project_url": "https://pypi.org/project/napari-oclrfc/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/haesleinhuepf/napari-oclrfc/issues",
+      "Documentation": "https://github.com/haesleinhuepf/napari-oclrfc",
+      "Homepage": "https://github.com/haesleinhuepf/napari-oclrfc",
+      "Source Code": "https://github.com/haesleinhuepf/napari-oclrfc",
+      "User Support": "https://forum.image.sc/tag/clij"
+    },
+    "release_url": "https://pypi.org/project/napari-oclrfc/0.4.6/",
+    "requires_dist": [
+      "napari-plugin-engine (>=0.1.4)",
+      "numpy",
+      "oclrfc"
+    ],
+    "requires_python": ">=3.7",
+    "summary": "Pixel and label classification using OpenCL-based Random Forest Classifiers",
+    "version": "0.4.6",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 11605718,
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "9ef8e2eff299f5722de5da4bd53ba3e4",
+          "sha256": "84ed95fe09c563036d7df1bacfbba51fb019aa0f19f4ffe5e2e2efe7be5c8cd9"
+        },
+        "downloads": -1,
+        "filename": "napari_oclrfc-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "9ef8e2eff299f5722de5da4bd53ba3e4",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 5230,
+        "upload_time": "2021-05-16T12:33:20",
+        "upload_time_iso_8601": "2021-05-16T12:33:20.454632Z",
+        "url": "https://files.pythonhosted.org/packages/24/38/c95ee610d94a4f4fb283ff8c266293101914e8f5d7e5037f5dcfd4bedf9e/napari_oclrfc-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "17f6a401f8578bdeb40e92a1d4e4459a",
+          "sha256": "447c370deb76b78b820ac1d8bdea6ba3918ef04035aba4a06b5d76d8492bcef2"
+        },
+        "downloads": -1,
+        "filename": "napari-oclrfc-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "17f6a401f8578bdeb40e92a1d4e4459a",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 235758,
+        "upload_time": "2021-05-16T12:33:22",
+        "upload_time_iso_8601": "2021-05-16T12:33:22.183202Z",
+        "url": "https://files.pythonhosted.org/packages/98/b0/e48c4faac24e9d695d465a17b2b08c8ff1e11bbb29f8e1f692ba8ce06fbc/napari-oclrfc-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "ab7ab91163a08ac9a566c666e83e184c",
+          "sha256": "c3aacb910d70a83922b064a3c26ede416185848bcfc2603cd02f03e0fdee2164"
+        },
+        "downloads": -1,
+        "filename": "napari_oclrfc-0.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "ab7ab91163a08ac9a566c666e83e184c",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 5149,
+        "upload_time": "2021-06-26T22:00:14",
+        "upload_time_iso_8601": "2021-06-26T22:00:14.186785Z",
+        "url": "https://files.pythonhosted.org/packages/31/27/2e5b370a7279ae6b8ad6bd7872133be84f4fe15abf78002a940e497b56d9/napari_oclrfc-0.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "8613faa178072f20e2cdca84e3afebef",
+          "sha256": "ec2cd1e3a28cdc040e6e97f594281eb4ec9b040fa24ea79ef9cc39a4d8dad476"
+        },
+        "downloads": -1,
+        "filename": "napari-oclrfc-0.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "8613faa178072f20e2cdca84e3afebef",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 4525,
+        "upload_time": "2021-06-26T22:00:15",
+        "upload_time_iso_8601": "2021-06-26T22:00:15.730929Z",
+        "url": "https://files.pythonhosted.org/packages/6f/b3/f21d2c761cfe14cc43490f9ec84e77accf210f88881f95d139b636cacfb9/napari-oclrfc-0.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "a6c7f8c2ab40fe00d868d2794d5a425c",
+          "sha256": "6ba44b771af2275837cf88feb9c17cebebf13ad8e7d5111875f45bd66fddad31"
+        },
+        "downloads": -1,
+        "filename": "napari_oclrfc-0.2.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "a6c7f8c2ab40fe00d868d2794d5a425c",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 6319,
+        "upload_time": "2021-06-27T11:01:02",
+        "upload_time_iso_8601": "2021-06-27T11:01:02.140587Z",
+        "url": "https://files.pythonhosted.org/packages/f3/a0/e06490bd47bed4d0989deda564a10fe9a13f6c7cf4319df28470b358bec3/napari_oclrfc-0.2.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "72fbae2bce3d367febbb9f30f8880715",
+          "sha256": "df8020ac167b440d8bb6a037d31d93ed5327650fb27957248fa562d43180d091"
+        },
+        "downloads": -1,
+        "filename": "napari-oclrfc-0.2.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "72fbae2bce3d367febbb9f30f8880715",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 5741,
+        "upload_time": "2021-06-27T11:01:03",
+        "upload_time_iso_8601": "2021-06-27T11:01:03.219643Z",
+        "url": "https://files.pythonhosted.org/packages/b9/6d/7b0fd1668dd5f05ab6ee80fcbbff1d34aa1e47906de1c5cdb530a5991e6f/napari-oclrfc-0.2.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "affad542d4d2cbc36760f91d5a97fd4c",
+          "sha256": "c1976b0a09f8e16312e5dfe153ec67e59b7104559f9a7d1f2894578f350a8ed9"
+        },
+        "downloads": -1,
+        "filename": "napari_oclrfc-0.2.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "affad542d4d2cbc36760f91d5a97fd4c",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 6316,
+        "upload_time": "2021-06-27T11:04:38",
+        "upload_time_iso_8601": "2021-06-27T11:04:38.574847Z",
+        "url": "https://files.pythonhosted.org/packages/0b/35/dd67723ea668f5d880f16bf62eddcc8651dfabd29bb3326e78ec2ef48c1f/napari_oclrfc-0.2.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "98a8f813209b552d0106b2c4758c2800",
+          "sha256": "0645c31c398b99e6d58e863c7fc77d9e629db6bf8edbbeb384393f97bb4394c0"
+        },
+        "downloads": -1,
+        "filename": "napari-oclrfc-0.2.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "98a8f813209b552d0106b2c4758c2800",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 5737,
+        "upload_time": "2021-06-27T11:04:40",
+        "upload_time_iso_8601": "2021-06-27T11:04:40.431884Z",
+        "url": "https://files.pythonhosted.org/packages/0e/91/1004a21475a44b0a8200a0c6da60c474dde03f5d567e89af3fbffb79ab84/napari-oclrfc-0.2.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "f43e139351031cfb2bf83bfea25d0d3f",
+          "sha256": "dcfb04045384a2bbef0e26db4e9e669a2392388513b81e9ff3200f06ccdb5183"
+        },
+        "downloads": -1,
+        "filename": "napari_oclrfc-0.3.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "f43e139351031cfb2bf83bfea25d0d3f",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 6680,
+        "upload_time": "2021-06-27T18:07:10",
+        "upload_time_iso_8601": "2021-06-27T18:07:10.104621Z",
+        "url": "https://files.pythonhosted.org/packages/fb/e0/f7df71ab792276439b1f49de5a7673e2c7854e2b372ca51e9cf6790a6ced/napari_oclrfc-0.3.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "92b00cbf191a1d12b6d60c44f991dfec",
+          "sha256": "476f8d634401af1662c5128d54414bed82a6c19206539fa2368944a9ae2f8b1b"
+        },
+        "downloads": -1,
+        "filename": "napari-oclrfc-0.3.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "92b00cbf191a1d12b6d60c44f991dfec",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 6542,
+        "upload_time": "2021-06-27T18:07:11",
+        "upload_time_iso_8601": "2021-06-27T18:07:11.693546Z",
+        "url": "https://files.pythonhosted.org/packages/84/34/996200ee0547c7334b8e0f6a02516f3a1b3ec920878d74d702dac0ff566c/napari-oclrfc-0.3.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "abb7cd532e3d87fab81ce06d7ebfe7bf",
+          "sha256": "f9b213650305a9f5e63cf2bfdb7966e5fb7eb66c9a074b1363406cbacac0ba90"
+        },
+        "downloads": -1,
+        "filename": "napari_oclrfc-0.3.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "abb7cd532e3d87fab81ce06d7ebfe7bf",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 6672,
+        "upload_time": "2021-07-02T07:17:28",
+        "upload_time_iso_8601": "2021-07-02T07:17:28.075825Z",
+        "url": "https://files.pythonhosted.org/packages/24/74/92d1957ed08d873e3e137859a701493dddad93ce22565bad5c0bfc8f91d6/napari_oclrfc-0.3.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "bcaa3cbe46385d0803cf4e14b835a848",
+          "sha256": "7261ce74040a9151a66dddc9438e90951fa0e0adec252bee8f74571c987d898f"
+        },
+        "downloads": -1,
+        "filename": "napari-oclrfc-0.3.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "bcaa3cbe46385d0803cf4e14b835a848",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 6527,
+        "upload_time": "2021-07-02T07:17:29",
+        "upload_time_iso_8601": "2021-07-02T07:17:29.484720Z",
+        "url": "https://files.pythonhosted.org/packages/02/5a/1da7b3133995f6c9462368e926b2b30e73fa70182531eb829303d4437f84/napari-oclrfc-0.3.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.4.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "4893b30a1b0de9074e7e5405a2e40e4b",
+          "sha256": "9112918f55348f48c8d901b4ce61f5fcaa2c2c647f3b1d53af559a39d158c51a"
+        },
+        "downloads": -1,
+        "filename": "napari_oclrfc-0.4.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "4893b30a1b0de9074e7e5405a2e40e4b",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 6652,
+        "upload_time": "2021-07-17T10:39:36",
+        "upload_time_iso_8601": "2021-07-17T10:39:36.479402Z",
+        "url": "https://files.pythonhosted.org/packages/91/4c/fcd98e4b0355c090926cf1f45da60e9e47bb4d0d7689b327c701229ce652/napari_oclrfc-0.4.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "c0c3c136257821579649d7a900253d57",
+          "sha256": "5bf0bc17ba0ce5e6eb14d1a769ea627fb1c031b69c8ee7c0a9d4f2833d80a5dc"
+        },
+        "downloads": -1,
+        "filename": "napari-oclrfc-0.4.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "c0c3c136257821579649d7a900253d57",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 2201379,
+        "upload_time": "2021-07-17T10:39:39",
+        "upload_time_iso_8601": "2021-07-17T10:39:39.838203Z",
+        "url": "https://files.pythonhosted.org/packages/23/d0/01ed2de0a70dbf4cfaef1faf5f55e37c9acffa860ab3171506ba5badf8b0/napari-oclrfc-0.4.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.4.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "97226581623292b0c9af8c781727b9ac",
+          "sha256": "6ef6ec890f498a3a3cb22ba0b1e6b747526bd48dd1f30d669c0fcd4e9deed91e"
+        },
+        "downloads": -1,
+        "filename": "napari_oclrfc-0.4.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "97226581623292b0c9af8c781727b9ac",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 6655,
+        "upload_time": "2021-08-01T09:44:13",
+        "upload_time_iso_8601": "2021-08-01T09:44:13.247115Z",
+        "url": "https://files.pythonhosted.org/packages/43/35/9c8df9b16c43c63f93aa42e9f1d4dfc1c5713c24702f6f9937ec58e57fb2/napari_oclrfc-0.4.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "99968956a717e6cabf600e92be2c8f38",
+          "sha256": "a7a692c442d9eaacd43e5f32eedfc1dc2ea1de2484225baf616ca797a7ebed2f"
+        },
+        "downloads": -1,
+        "filename": "napari-oclrfc-0.4.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "99968956a717e6cabf600e92be2c8f38",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 2201374,
+        "upload_time": "2021-08-01T09:44:18",
+        "upload_time_iso_8601": "2021-08-01T09:44:18.283074Z",
+        "url": "https://files.pythonhosted.org/packages/9a/58/216716faf2eb5a9bd66e0ab24040f9f4f89382a91743bfcf4a9d28492cf8/napari-oclrfc-0.4.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.4.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "04a6030ec5c54557d754700e2c7e59cb",
+          "sha256": "9f4c24caa3a7e96e6274b700fbb79cccf194cfaba4c0e99ecdfa065a7813bdea"
+        },
+        "downloads": -1,
+        "filename": "napari_oclrfc-0.4.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "04a6030ec5c54557d754700e2c7e59cb",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 6637,
+        "upload_time": "2021-08-01T20:31:25",
+        "upload_time_iso_8601": "2021-08-01T20:31:25.660454Z",
+        "url": "https://files.pythonhosted.org/packages/f2/2d/29b1011ec4ba198d48e79c045a158fce243627b1a00789bc6704c2b19f10/napari_oclrfc-0.4.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "e21d7a199dd04307a7df8d168386fe81",
+          "sha256": "a94cd16b31d1bf2bcedb67e7a16e667518738ea4f619895a30781c64f3c49b21"
+        },
+        "downloads": -1,
+        "filename": "napari-oclrfc-0.4.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e21d7a199dd04307a7df8d168386fe81",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 2201363,
+        "upload_time": "2021-08-01T20:31:29",
+        "upload_time_iso_8601": "2021-08-01T20:31:29.440084Z",
+        "url": "https://files.pythonhosted.org/packages/92/52/8577544c4fad4e34820504a841322eecaec4b2a05ce9c457a2416a568e3c/napari-oclrfc-0.4.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.4.3": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "7de0bc5fc1bb8a704410e378bc490286",
+          "sha256": "43dd1d951be125aed411933bcf631e3984739ce59045af3cbfe113064ebc79ac"
+        },
+        "downloads": -1,
+        "filename": "napari_oclrfc-0.4.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "7de0bc5fc1bb8a704410e378bc490286",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 6644,
+        "upload_time": "2021-08-01T20:49:21",
+        "upload_time_iso_8601": "2021-08-01T20:49:21.241184Z",
+        "url": "https://files.pythonhosted.org/packages/b5/8b/185fae2168a9eb03bf832674b68cccc87220a326bdd70deaaa5347ed1f39/napari_oclrfc-0.4.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "56be17c9ba83dc50d9b4574f3ba5547a",
+          "sha256": "416eac1026d9fd9cd958eeb1c3ee2dbaf5e5ee37da7c86d5e345660cd5915582"
+        },
+        "downloads": -1,
+        "filename": "napari-oclrfc-0.4.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "56be17c9ba83dc50d9b4574f3ba5547a",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 2201374,
+        "upload_time": "2021-08-01T20:49:24",
+        "upload_time_iso_8601": "2021-08-01T20:49:24.626784Z",
+        "url": "https://files.pythonhosted.org/packages/88/2c/8441028f5b8774ec595d04a627e89118cf932308924bbb45dc68081cd635/napari-oclrfc-0.4.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.4.4": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "9b90a9479061e254ff4b6eddc74edbe0",
+          "sha256": "38c126706ce01a34703e1788bdf9725ecb0099d0ff4572aaa2acab3abc9b23ca"
+        },
+        "downloads": -1,
+        "filename": "napari_oclrfc-0.4.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "9b90a9479061e254ff4b6eddc74edbe0",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 6643,
+        "upload_time": "2021-08-15T19:07:17",
+        "upload_time_iso_8601": "2021-08-15T19:07:17.345895Z",
+        "url": "https://files.pythonhosted.org/packages/0b/f4/e2add80de9c89e9d9929b9fa659afe0ad4a235ae6431c6070eb92b303a59/napari_oclrfc-0.4.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "73d4dcefc98cccdd198920963606e8d9",
+          "sha256": "83ec3a9b5ade6b04b757ad2428e3bcde117b0d47617f7418f733c70f39a39afb"
+        },
+        "downloads": -1,
+        "filename": "napari-oclrfc-0.4.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "73d4dcefc98cccdd198920963606e8d9",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 2201367,
+        "upload_time": "2021-08-15T19:07:23",
+        "upload_time_iso_8601": "2021-08-15T19:07:23.200782Z",
+        "url": "https://files.pythonhosted.org/packages/f5/5c/70509489c2c351ccbfa7d222a2371cbcecc6976e0ea8743cf98bbc0df9b1/napari-oclrfc-0.4.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.4.5": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "8f38eb56e6b30e79a6ae97a1699f2c2e",
+          "sha256": "043af390830ee13ab856dbe656b99666531f408c764dd0372ed1560fb50f4fc9"
+        },
+        "downloads": -1,
+        "filename": "napari_oclrfc-0.4.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "8f38eb56e6b30e79a6ae97a1699f2c2e",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 6799,
+        "upload_time": "2021-10-01T16:23:52",
+        "upload_time_iso_8601": "2021-10-01T16:23:52.024790Z",
+        "url": "https://files.pythonhosted.org/packages/e3/67/51202fc31b9139ef49a81de0b7477b15264cca6f3a4b887b0ad02ab5b1b5/napari_oclrfc-0.4.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "1b740d38aca876a4d8d78c01904eb0c8",
+          "sha256": "3624a1f6106bab7fdb03f82a668eaf13b68d64266bfc1f1d1bfab90f54c62df0"
+        },
+        "downloads": -1,
+        "filename": "napari-oclrfc-0.4.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "1b740d38aca876a4d8d78c01904eb0c8",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 2201692,
+        "upload_time": "2021-10-01T16:23:55",
+        "upload_time_iso_8601": "2021-10-01T16:23:55.764908Z",
+        "url": "https://files.pythonhosted.org/packages/86/dc/9c4f41eb7998a08c7feb858c1c015e8a7faf096e1a29d0fb0356685c3fb7/napari-oclrfc-0.4.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.4.6": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "12d63844cb500f57442a355528e3eeac",
+          "sha256": "b624bc6f5ad597c77d94afd368da00d5a77c49fa2ba205f03fd8067eb44622c4"
+        },
+        "downloads": -1,
+        "filename": "napari_oclrfc-0.4.6-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "12d63844cb500f57442a355528e3eeac",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 6789,
+        "upload_time": "2021-10-01T16:30:50",
+        "upload_time_iso_8601": "2021-10-01T16:30:50.750356Z",
+        "url": "https://files.pythonhosted.org/packages/59/d0/3f332b6a50e2bd5b1d81ec5733436485151171a7838ed7354b99f918c895/napari_oclrfc-0.4.6-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "5ba6c07de999b1fad534fa8e8e557d85",
+          "sha256": "7a6842002420a8db2e283e6f74ec18830363ea032221f54c4496ed8c97e72499"
+        },
+        "downloads": -1,
+        "filename": "napari-oclrfc-0.4.6.tar.gz",
+        "has_sig": false,
+        "md5_digest": "5ba6c07de999b1fad534fa8e8e557d85",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 2201641,
+        "upload_time": "2021-10-01T16:30:54",
+        "upload_time_iso_8601": "2021-10-01T16:30:54.216654Z",
+        "url": "https://files.pythonhosted.org/packages/d1/9e/05827880faf84995ca3dc26fafe2cdca754057f4143ae657d7b8cff6372e/napari-oclrfc-0.4.6.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "12d63844cb500f57442a355528e3eeac",
+        "sha256": "b624bc6f5ad597c77d94afd368da00d5a77c49fa2ba205f03fd8067eb44622c4"
+      },
+      "downloads": -1,
+      "filename": "napari_oclrfc-0.4.6-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "12d63844cb500f57442a355528e3eeac",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.7",
+      "size": 6789,
+      "upload_time": "2021-10-01T16:30:50",
+      "upload_time_iso_8601": "2021-10-01T16:30:50.750356Z",
+      "url": "https://files.pythonhosted.org/packages/59/d0/3f332b6a50e2bd5b1d81ec5733436485151171a7838ed7354b99f918c895/napari_oclrfc-0.4.6-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "5ba6c07de999b1fad534fa8e8e557d85",
+        "sha256": "7a6842002420a8db2e283e6f74ec18830363ea032221f54c4496ed8c97e72499"
+      },
+      "downloads": -1,
+      "filename": "napari-oclrfc-0.4.6.tar.gz",
+      "has_sig": false,
+      "md5_digest": "5ba6c07de999b1fad534fa8e8e557d85",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.7",
+      "size": 2201641,
+      "upload_time": "2021-10-01T16:30:54",
+      "upload_time_iso_8601": "2021-10-01T16:30:54.216654Z",
+      "url": "https://files.pythonhosted.org/packages/d1/9e/05827880faf84995ca3dc26fafe2cdca754057f4143ae657d7b8cff6372e/napari-oclrfc-0.4.6.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

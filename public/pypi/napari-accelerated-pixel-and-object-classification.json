@@ -1,0 +1,1114 @@
+{
+  "info": {
+    "author": "Robert Haase",
+    "author_email": "robert.haase@tu-dresden.de",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 3 - Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.7",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Scientific/Engineering :: Image Processing",
+      "Topic :: Scientific/Engineering :: Information Analysis"
+    ],
+    "description": "# napari-accelerated-pixel-and-object-classification (APOC)\n\n[![License](https://img.shields.io/pypi/l/napari-accelerated-pixel-and-object-classification.svg?color=green)](https://github.com/haesleinhuepf/napari-accelerated-pixel-and-object-classification/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-accelerated-pixel-and-object-classification.svg?color=green)](https://pypi.org/project/napari-accelerated-pixel-and-object-classification)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-accelerated-pixel-and-object-classification.svg?color=green)](https://python.org)\n[![tests](https://github.com/haesleinhuepf/napari-accelerated-pixel-and-object-classification/workflows/tests/badge.svg)](https://github.com/haesleinhuepf/napari-accelerated-pixel-and-object-classification/actions)\n[![codecov](https://codecov.io/gh/haesleinhuepf/napari-accelerated-pixel-and-object-classification/branch/main/graph/badge.svg)](https://codecov.io/gh/haesleinhuepf/napari-accelerated-pixel-and-object-classification)\n[![Development Status](https://img.shields.io/pypi/status/napari-accelerated-pixel-and-object-classification.svg)](https://en.wikipedia.org/wiki/Software_release_life_cycle#Alpha)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-accelerated-pixel-and-object-classification)](https://napari-hub.org/plugins/napari-accelerated-pixel-and-object-classification)\n[![DOI](https://zenodo.org/badge/412525441.svg)](https://zenodo.org/badge/latestdoi/412525441)\n\n[clesperanto](https://github.com/clEsperanto/pyclesperanto_prototype) meets [scikit-learn](https://scikit-learn.org/stable/) to classify pixels and objects in images, on a [GPU](https://en.wikipedia.org/wiki/Graphics_processing_unit) using [OpenCL](https://www.khronos.org/opencl/) in [napari].\n\n![](https://github.com/haesleinhuepf/napari-accelerated-pixel-and-object-classification/raw/main/images/screencast.gif)\nThe processed example image was kindly acquired by Daniela Vorkel, Myers lab, MPI-CBG / CSBD ([Download full video](https://github.com/haesleinhuepf/napari-accelerated-pixel-and-object-classification/raw/main/images/demo_lund.mp4))\n\nFor using the accelerated pixel and object classifiers in python, check out [apoc](https://github.com/haesleinhuepf/apoc).\nTraining classifiers from pairs of image and label-mask folders is explained in \n[this notebook](https://github.com/haesleinhuepf/apoc/blob/main/demo/train_on_folders.ipynb).\nFor executing APOC classifiers in [Fiji](https://fiji.sc) using [clij2](https://clij.github.io) please read the documentation of the [corresponding Fiji plugin](https://github.com/clij/clijx-accelerated-pixel-and-object-classification).\n\n![](https://github.com/clij/clijx-accelerated-pixel-and-object-classification/raw/main/docs/screenshot.png)\n\n\n\n## Usage\n\n### Object and Semantic Segmentation\n\nStarting point is napari with at least one image layer and one labels layer (your annotation).\n\n![img.png](https://github.com/haesleinhuepf/napari-accelerated-pixel-and-object-classification/raw/main/images/object_segmentation_starting_point.png)\n\nYou find Object and Semantic Segmentation in the `Tools > Segmentation / labeling`. When starting those, the following graphical user interface will show up.\n\n![img.png](https://github.com/haesleinhuepf/napari-accelerated-pixel-and-object-classification/raw/main/images/object_and_semantic_segmentation.png)\n\n1. Choose one or multiple images to train on. These images will be considered as multiple channels. Thus, they need to be spatially correlated. \n   Training from multiple images showing different scenes is not (yet) supported from the graphical user interface. Check out [this notebook](https://github.com/haesleinhuepf/apoc/blob/main/demo/demp_pixel_classifier_continue_training.ipynb) if you want to train from multiple image-annotation pairs.\n2. Select a file where the classifier should be saved. If the file exists already, it will be overwritten.\n3. Select the ground-truth annotation labels layer. \n4. Select which label corresponds to foreground (not available in Semantic Segmentation)\n5. Select the feature images that should be considered for segmentation. If segmentation appears pixelated, try increasing the selected sigma values and untick `Consider original image`.\n6. Tree depth and number of trees allow you to fine-tune how to deal with manifold regions of different characteristics. The higher these numbers, the longer segmentation will take. In case you use many images and many features, high depth and number of trees might be necessary. (See also `max_depth` and `n_estimators` in the [scikit-learn documentation of the Random Forest Classifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html).\n7. The estimation of memory consumption allows you to tune the configuration to your GPU-hardware. Also consider the GPU-hardware of others who want to use your classifier.\n8. Click on Run when you're done with configuring. If the segmentation doesn't fit after the first execution, consider fine-tuning the ground-truth annotation and try again.\n\nA successful segmentation can for example look like this:\n\n![img.png](https://github.com/haesleinhuepf/napari-accelerated-pixel-and-object-classification/raw/main/images/object_segmentation_result.png)\n\nAfter your classifier has been trained successfully, click on the \"Application / Prediction\" tab. If you apply the classifier again, python code will be generated. \nYou can use this code for example to apply the same classifier to a folder of images. If you're new to this, check out [this notebook](https://github.com/BiAPoL/Bio-image_Analysis_with_Python/blob/main/image_processing/12_process_folders.ipynb).\n\n![img.png](https://github.com/haesleinhuepf/napari-accelerated-pixel-and-object-classification/raw/main/images/code_generation.png)\n\nA pre-trained classifier can be [applied from scripts as shown in the example notebook](https://github.com/haesleinhuepf/apoc/blob/main/demo/demo_object_segmenter.ipynb) or from the `Tools > Segmentation / labeling > Object segmentation (apply pretrained, APOC)`.\n\n### Integration with the napari-assistant\n\nPre-trained models can also be assembled to workflows using the [napari-assistant](https://www.napari-hub.org/plugins/napari-assistant). You find APOC-operations in the categories `Filter`, `Label` and `Label Filters`:\n\n![img.png](https://github.com/haesleinhuepf/napari-accelerated-pixel-and-object-classification/raw/main/images/assistant.png)\n\n### Semantic segmentation\n\nUsers can also generate semantic segmentation label images where the label identifier corresponds to a class the pixel has been allocated to. \nThe tool can be found in the menu `Tools > Segmentation / labeling > Semantic segmentation (APOC)`.\nIt works analogously like the Object Segmenter, just without the need to specify the class identifier that objects correspond to.\n\n![img.png](https://github.com/haesleinhuepf/napari-accelerated-pixel-and-object-classification/raw/main/images/semantic_segmentation.png)\n\n### Probability maps\n\nThe tool for generating probability maps (`Tools > Filtering > Probability Mapper (APOC)` menu) works analogously to the Object Segmenter as well. \nThe only difference is that the result image is not a label image but an intensity image where the intensity represents the probability (between 0 and 1)\nthat a pixel belongs to a given class. In this example: The raw image (grey) has been annotated with three classes: background (black, label 1), foreground (white, label 2) and edges (grey, label 3).\nThe probability mapper was configured to create probability image (shown in green) for edges (label 3):\n\n![img.png](https://github.com/haesleinhuepf/napari-accelerated-pixel-and-object-classification/raw/main/images/probability_mapper.png)\n\n### Classifier statistics\n\nWhile training, you can also activate the `Show classifier statistics` checkbox. \nWhen doing so, it is recommended to increase the number of trees so that the measurements are more reliable, especially when selecting many features.\nThis will open a small table after training where you can see how large the share of decision trees are for each analysed feature image.\n\n![img.png](https://github.com/haesleinhuepf/napari-accelerated-pixel-and-object-classification/raw/main/images/classifier_statistics.png)\n\nIt is recommended to turn on/off the features that hold a very large share (green) or a very small share (magenta) of trees in the random forest. \nRetrain the classifier to see how the features influence the decision making.\n\nNote: Multiple of these parameters may be correlated. \nIf you select 11 feature images, which all allow to make the pixel classification similarly, but 10 of those are correlated, these 10 may appear with a share of about 0.05 while the 11th parameter has a share of 0.5. \nThus, study these values with care.\n\n### Object classification\n\nClick the menu `Tools > Segmentation post-processing > Object classification (APOC)`. \n\n![img.png](https://github.com/haesleinhuepf/napari-accelerated-pixel-and-object-classification/raw/main/images/menu.png)\n\nThis user interface will be shown:\n\n![img.png](https://github.com/haesleinhuepf/napari-accelerated-pixel-and-object-classification/raw/main/images/object_classifier_gui.png)\n\n1. The image layer will be used for intensity based feature extraction (see below).\n2. The labels layer should be contain the segmentation of objects that should be classified. \n   You can use the Object Segmenter explained above to create this layer.\n3. The annotation layer should contain manual annotations of object classes. \n   You can draw lines crossing single and multiple objects of the same kind. \n   For example draw a line through some elongated objects with label \"1\" and another line through some rather roundish objects with label \"2\".\n   If these lines touch the background, that will be ignored.\n4. Tree depth and number of trees allow you to fine-tune how to deal with manifold objects of different characteristics. The higher these numbers, the longer classification will take. In case you use many features, high depth and number of trees might be necessary. (See also `max_depth` and `n_estimators` in the [scikit-learn documentation of the Random Forest Classifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html).\n5. Select the right features for training. For example, for differentiating objects according to their shape as suggested above, select \"shape\".\n   The features are extracted using clEsperanto and are shown by example in [this notebook](https://github.com/clEsperanto/pyclesperanto_prototype/blob/master/demo/tissues/parametric_maps.ipynb).\n6. Click on the `Run` button. If classification doesn't perform well in the first attempt, try changing selected features.  \n\nIf classification worked well, it may for example look like this. Note the two thick lines which were drawn to annotate elongated and roundish objects with brown and cyan:\n\n![img.png](https://github.com/haesleinhuepf/napari-accelerated-pixel-and-object-classification/raw/main/images/object_classification_result.png)\n\nA pre-trained model can later be applied [from scripts as shown in the example notebook](https://github.com/haesleinhuepf/apoc/blob/main/demo/cell_classification.ipynb) or using the menu `Tools > Segmentation post-processing > Object classification (apply pretrained, APOC)`.\n\n### Feature correlation matrix\n\nWhen training object classifiers it is crucial to investigate to which degree features are correlated and select the right, ideally uncorrelated features to classify objects robustly.\nAfter measuring features with any compatible napari plugin listed below, you can visualize the feature correlation matrix using the menu `Tools > Measurement > Show feature correlation matrix (pandas, APOC)` and by selecting the labels layer which has been analyzed.\nBefore computing the correlation matrix, all rows containing [NaN](https://en.wikipedia.org/wiki/NaN) values are removed.\nFor further details, please refer to the [documentation of the underlying function in pandas](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.corr.html).\n\n![img.png](https://github.com/haesleinhuepf/napari-accelerated-pixel-and-object-classification/raw/main/images/feature_correlation_matrix.png)\n\n### Classifier statistics\nAfter classifier training, you can study the share of the individual features/measurements and how they are correlated by activating the checkboxes `Show classifier statistics` and `Show feature correlation matrix`.\n\n![img.png](https://github.com/haesleinhuepf/napari-accelerated-pixel-and-object-classification/raw/main/images/correlation_matrix2.png)\n\nThis can help understanding how the classifier works. Furthermore, you can accelerate the classifier by reducing the number of correlated features.\n\n### Object classification from custom measurements\n\nYou can also classify labeled objects according to custom measurements. For deriving those measurements, you can use these napari plugins:\n\n* [morphometrics](https://www.napari-hub.org/plugins/morphometrics)\n* [PartSeg](https://www.napari-hub.org/plugins/PartSeg)\n* [napari-simpleitk-image-processing](https://www.napari-hub.org/plugins/napari-simpleitk-image-processing)\n* [napari-cupy-image-processing](https://www.napari-hub.org/plugins/napari-cupy-image-processing)\n* [napari-pyclesperanto-assistant](https://www.napari-hub.org/plugins/napari-pyclesperanto-assistant)\n* [napari-skimage-regionprops](https://www.napari-hub.org/plugins/napari-skimage-regionprops)\n\nFurthermore, if you use napari from Python, you can also create a dictionary or pandas DataFrame with measurements and store it in the `labels_layer.features` to make them available in the object classifier.\n\nAfter labels have been measured, you can start the `Object Classifier (custom properties, APOC)` from the `Tools > Segmentation post-processing` menu:\n\n![img.png](https://github.com/haesleinhuepf/napari-accelerated-pixel-and-object-classification/raw/main/images/table_row_classifier_gui.png)\n\n1. Select the labels layers that has been measured.\n2. The annotation layer should contain manual annotations of object classes. \n   You can draw lines crossing single and multiple objects of the same kind. \n   For example draw a line through some elongated objects with label \"1\" and another line through some rather roundish objects with label \"2\".\n   If these lines touch the background, that will be ignored.\n3. Select the measurements / features that should be used for object classification.\n4. Use the `Update Measurements` button in case you did new measurements after Object classifier dialog was opened.\n5. Enter the filename of the classifier to be trained here. This file will be overwritten in case it existed already.\n6. Tree depth and number of trees allow you to fine-tune how to deal with manifold objects of different characteristics. The higher these numbers, the longer classification will take. In case you use many features, high depth and number of trees might be necessary. (See also `max_depth` and `n_estimators` in the [scikit-learn documentation of the Random Forest Classifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html).\n7. The classification result will be stored under this name in the labels-layer's properties.\n8. Choose if the results table should be shown. Choose if classifier statistics should be shown. [Read more about classifier statistics](https://haesleinhuepf.github.io/BioImageAnalysisNotebooks/27_cell_classification/forest_statistics.html).\n9. Click on `Run` to start training and prediction.\n\nYou can also train those classifiers from Python and reuse them: [Read more about using the TableRowClassifier from python](https://haesleinhuepf.github.io/BioImageAnalysisNotebooks/27_cell_classification/apoc_simpleitk_object_classification.html)\n\n### Classifier statistics and correlation matrix\nAfter classifier training, you can study the share of the individual features/measurements and how they are correlated by activating the checkboxes `Show classifier statistics` and `Show correlation matrix`.\n![img.png](https://github.com/haesleinhuepf/napari-accelerated-pixel-and-object-classification/raw/main/images/correlation_matrix.png)\n\nThis can help understanding how the classifier works. Furthermore, you can accelerate the classifier by reducing the number of correlated features.\n\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using with [@napari]'s [cookiecutter-napari-plugin] template.\n\n## Installation\n\nIt is recommended to install the plugin in a conda environment. Therefore install conda first, e.g. [mini-conda](https://docs.conda.io/en/latest/miniconda.html).\nIf you never worked with conda before, reading this [short introduction](https://github.com/BiAPoL/Bio-image_Analysis_with_Python/blob/main/conda_basics/01_conda_environments.md) might be helpful.\n\nOptional: Setup a fresh conda environment, activate it and install napari:\n\n```\nconda create --name napari_apoc python=3.9\nconda activate napari_apoc\nconda install napari\n```\n\nIf your conda environment is set up, you can install `napari-accelerated-pixel-and-object-classification` using [pip]. Note: you need [pyopencl](https://documen.tician.de/pyopencl/) first.\n\n```\nconda install -c conda-forge pyopencl\npip install napari-accelerated-pixel-and-object-classification\n```\n\nMac-users please also install this:\n\n    conda install -c conda-forge ocl_icd_wrapper_apple\n    \nLinux users please also install this:\n    \n    conda install -c conda-forge ocl-icd-system\n\n\n## Contributing\n \nContributions, feedback and suggestions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## Similar napari plugins\nThere are other plugins with similar functionality for interactive classification of pixels and objects.\n\n* [napari-feature-classifier](https://github.com/fractal-napari-plugins-collection/napari-feature-classifier)\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-accelerated-pixel-and-object-classification\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [open a thread on image.sc](https://image.sc) along with a detailed description and tag [@haesleinhuepf](https://github.com/haesleinhuepf).\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n[file an issue]: https://github.com/haesleinhuepf/napari-accelerated-pixel-and-object-classification/issues\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "https://github.com/haesleinhuepf/napari-accelerated-pixel-and-object-classification",
+    "keywords": "",
+    "license": "BSD-3",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "napari-accelerated-pixel-and-object-classification",
+    "package_url": "https://pypi.org/project/napari-accelerated-pixel-and-object-classification/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-accelerated-pixel-and-object-classification/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/haesleinhuepf/napari-accelerated-pixel-and-object-classification/issues",
+      "Documentation": "https://github.com/haesleinhuepf/napari-accelerated-pixel-and-object-classification",
+      "Homepage": "https://github.com/haesleinhuepf/napari-accelerated-pixel-and-object-classification",
+      "Source Code": "https://github.com/haesleinhuepf/napari-accelerated-pixel-and-object-classification",
+      "User Support": "https://forum.image.sc/tag/clij"
+    },
+    "release_url": "https://pypi.org/project/napari-accelerated-pixel-and-object-classification/0.8.2/",
+    "requires_dist": [
+      "napari-plugin-engine (>=0.1.4)",
+      "numpy",
+      "apoc (>=0.8.1)",
+      "napari-tools-menu (>=0.1.16)",
+      "napari-time-slicer",
+      "superqt"
+    ],
+    "requires_python": ">=3.7",
+    "summary": "Pixel and label classification using OpenCL-based Random Forest Classifiers",
+    "version": "0.8.2",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 14567536,
+  "releases": {
+    "0.5.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "a9235b1e1132cd9fb99253d982e5427c",
+          "sha256": "fca7d843c740559a902c6d2d4c0afa28afd5f1ac5e4f872d2592c7a819d20d6d"
+        },
+        "downloads": -1,
+        "filename": "napari_accelerated_pixel_and_object_classification-0.5.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "a9235b1e1132cd9fb99253d982e5427c",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 11502,
+        "upload_time": "2021-10-02T19:44:17",
+        "upload_time_iso_8601": "2021-10-02T19:44:17.676429Z",
+        "url": "https://files.pythonhosted.org/packages/03/2f/0bd2c3f4f9ad335db5deff0dd23e201769934c1f0bd9ce054a05990e39a0/napari_accelerated_pixel_and_object_classification-0.5.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "8c5c7c6d8703ff768d88198d5bdb5a83",
+          "sha256": "7b6f65038af856388fd430d88ee6b42a7d8895891f97cbb3710f2ef8831e3aff"
+        },
+        "downloads": -1,
+        "filename": "napari-accelerated-pixel-and-object-classification-0.5.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "8c5c7c6d8703ff768d88198d5bdb5a83",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 2105688,
+        "upload_time": "2021-10-02T19:44:22",
+        "upload_time_iso_8601": "2021-10-02T19:44:22.792888Z",
+        "url": "https://files.pythonhosted.org/packages/01/d8/c3f1c22c1e19c9191988672ff0d6c8ba05ce6311a0a3fc1431ee818978c5/napari-accelerated-pixel-and-object-classification-0.5.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.5.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "e1fdc8a5ad6d5096e36e5b58932fbe01",
+          "sha256": "9f2f1873750fe28e0113fb0d31a76c58b7624fa8a9ad82e2240dc96907e72ce0"
+        },
+        "downloads": -1,
+        "filename": "napari_accelerated_pixel_and_object_classification-0.5.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "e1fdc8a5ad6d5096e36e5b58932fbe01",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 11497,
+        "upload_time": "2021-10-14T07:24:10",
+        "upload_time_iso_8601": "2021-10-14T07:24:10.338110Z",
+        "url": "https://files.pythonhosted.org/packages/f8/21/7a89fefda002c9ed0cef9ef26897f1830e2de50caae0398bc411dc8d9f73/napari_accelerated_pixel_and_object_classification-0.5.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "110844a1a3d85684dfbf01bbdf2ec57e",
+          "sha256": "cd3c811d08db7cb795163ba65dea4aad3317516d26e013ac3ef90fcc1629659f"
+        },
+        "downloads": -1,
+        "filename": "napari-accelerated-pixel-and-object-classification-0.5.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "110844a1a3d85684dfbf01bbdf2ec57e",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 2105667,
+        "upload_time": "2021-10-14T07:24:13",
+        "upload_time_iso_8601": "2021-10-14T07:24:13.479808Z",
+        "url": "https://files.pythonhosted.org/packages/be/b0/f543ad4f9e3de4e449cf19bb3b531dfb7181c2f2f87085444b1eff9ee3b2/napari-accelerated-pixel-and-object-classification-0.5.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.5.3": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "0b9859aeb55c8402100ae7fd95f4fd0a",
+          "sha256": "865fff0e70d613e54c9cf720d87910bfd0b9402e4f8469e41a7d8ef77e2aeaf8"
+        },
+        "downloads": -1,
+        "filename": "napari_accelerated_pixel_and_object_classification-0.5.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "0b9859aeb55c8402100ae7fd95f4fd0a",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 13214,
+        "upload_time": "2021-10-15T08:26:25",
+        "upload_time_iso_8601": "2021-10-15T08:26:25.745947Z",
+        "url": "https://files.pythonhosted.org/packages/9d/7e/48935f3b4f66b83b57d0040d750a93ac133e7006bc1f862242e7c2f5ef02/napari_accelerated_pixel_and_object_classification-0.5.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "52ce5a264d3ef99c0d4e4777a2d72a7c",
+          "sha256": "082375f88ab1a61f6845f3aec024220796cff02886e88fb54c50f0c13398ac8d"
+        },
+        "downloads": -1,
+        "filename": "napari-accelerated-pixel-and-object-classification-0.5.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "52ce5a264d3ef99c0d4e4777a2d72a7c",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 2703242,
+        "upload_time": "2021-10-15T08:26:34",
+        "upload_time_iso_8601": "2021-10-15T08:26:34.098938Z",
+        "url": "https://files.pythonhosted.org/packages/38/95/6fcb9e62d0130c4ec1d874a25f1ac110a534aeea771c3017baf59975570e/napari-accelerated-pixel-and-object-classification-0.5.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.5.4": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "16cca42371d80359c1d9ec15b271d80c",
+          "sha256": "daf72b949ccd93737f5dbea958c54d2469572cadab7fd0d3a11b0c61dcef203a"
+        },
+        "downloads": -1,
+        "filename": "napari_accelerated_pixel_and_object_classification-0.5.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "16cca42371d80359c1d9ec15b271d80c",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 13287,
+        "upload_time": "2021-10-15T20:55:20",
+        "upload_time_iso_8601": "2021-10-15T20:55:20.084886Z",
+        "url": "https://files.pythonhosted.org/packages/e8/11/513181f823e97ae5bedac47b2dd245820e16a9257a0c322360b4757897c0/napari_accelerated_pixel_and_object_classification-0.5.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "52fe1d54d44417b377e179f6f2807fe8",
+          "sha256": "64840395f87ca9b2252d313b3fe1478ab1d7f608b821745a5d6397856a8fb2aa"
+        },
+        "downloads": -1,
+        "filename": "napari-accelerated-pixel-and-object-classification-0.5.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "52fe1d54d44417b377e179f6f2807fe8",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 2703333,
+        "upload_time": "2021-10-15T20:55:25",
+        "upload_time_iso_8601": "2021-10-15T20:55:25.004211Z",
+        "url": "https://files.pythonhosted.org/packages/8f/95/60315f188063aa0c2fbc01127cab7de857a797a6825e7c0907dd8e016af2/napari-accelerated-pixel-and-object-classification-0.5.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.5.5": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "57b90afc205fe2b6f5ea7f8986299ceb",
+          "sha256": "49898250870cbe38bba8e1dfbd1d3f1f6a0220c0f0c36a78b57d8a6ae9c043b3"
+        },
+        "downloads": -1,
+        "filename": "napari_accelerated_pixel_and_object_classification-0.5.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "57b90afc205fe2b6f5ea7f8986299ceb",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 13572,
+        "upload_time": "2021-11-13T09:53:32",
+        "upload_time_iso_8601": "2021-11-13T09:53:32.151318Z",
+        "url": "https://files.pythonhosted.org/packages/02/6e/2228c9a7ebbef2de817433ad1e4ff4001c3d496222b089a70145a1f8707f/napari_accelerated_pixel_and_object_classification-0.5.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "98b153678d23e1bcb3ce50a2a4863ef4",
+          "sha256": "c28245105de6c3527bbfb1523429fe4b121ac6006c95d4e0717500f4cdc37676"
+        },
+        "downloads": -1,
+        "filename": "napari-accelerated-pixel-and-object-classification-0.5.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "98b153678d23e1bcb3ce50a2a4863ef4",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 2703628,
+        "upload_time": "2021-11-13T09:53:37",
+        "upload_time_iso_8601": "2021-11-13T09:53:37.990848Z",
+        "url": "https://files.pythonhosted.org/packages/5d/3a/ac33c2b3d5633e0881f68934682b78e7159abafb8f0245a987394838b1ac/napari-accelerated-pixel-and-object-classification-0.5.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.5.6": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "e1cee160509bdea6d785a180d04a1ca5",
+          "sha256": "63b7d8de8f0c0ca14bd1d7768f1ca812beb591be541c91c37c5de03370e159cd"
+        },
+        "downloads": -1,
+        "filename": "napari_accelerated_pixel_and_object_classification-0.5.6-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "e1cee160509bdea6d785a180d04a1ca5",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 13668,
+        "upload_time": "2021-12-01T20:05:17",
+        "upload_time_iso_8601": "2021-12-01T20:05:17.036089Z",
+        "url": "https://files.pythonhosted.org/packages/01/6a/50d95749e353317963cf4c12ef45dae7cce2be374b4d30b410fac35862f2/napari_accelerated_pixel_and_object_classification-0.5.6-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "996efaf5d157269a9616cc30cfdb2b1f",
+          "sha256": "adc399d4de06fafa2cde891597affd1269689bd5e7bbe3360fb51583b0b57f73"
+        },
+        "downloads": -1,
+        "filename": "napari-accelerated-pixel-and-object-classification-0.5.6.tar.gz",
+        "has_sig": false,
+        "md5_digest": "996efaf5d157269a9616cc30cfdb2b1f",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 2703715,
+        "upload_time": "2021-12-01T20:05:23",
+        "upload_time_iso_8601": "2021-12-01T20:05:23.897737Z",
+        "url": "https://files.pythonhosted.org/packages/9c/5f/fb141553643653269bf80feca90c7be239d5253e63f8534eb99e91a7ca16/napari-accelerated-pixel-and-object-classification-0.5.6.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.5.7": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "55a91ec2903b89f33027eed4a7f96ce6",
+          "sha256": "8bd779eaecfef497bf645782c9353489c45b08bff0402a1c536193ce3aa9800d"
+        },
+        "downloads": -1,
+        "filename": "napari_accelerated_pixel_and_object_classification-0.5.7-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "55a91ec2903b89f33027eed4a7f96ce6",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 13843,
+        "upload_time": "2021-12-03T18:01:23",
+        "upload_time_iso_8601": "2021-12-03T18:01:23.571977Z",
+        "url": "https://files.pythonhosted.org/packages/6d/63/f22b09313440cb5eafff33e5795f2d3ace94c5f8abd1f6113dbd13364aa0/napari_accelerated_pixel_and_object_classification-0.5.7-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "17ab93b6ed3f04bc806c4fec5416e206",
+          "sha256": "a6abfd3c114e596645db3884ab9d031a0b699fd498defc3a32d2871822e8a65e"
+        },
+        "downloads": -1,
+        "filename": "napari-accelerated-pixel-and-object-classification-0.5.7.tar.gz",
+        "has_sig": false,
+        "md5_digest": "17ab93b6ed3f04bc806c4fec5416e206",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 2703876,
+        "upload_time": "2021-12-03T18:01:28",
+        "upload_time_iso_8601": "2021-12-03T18:01:28.004305Z",
+        "url": "https://files.pythonhosted.org/packages/01/50/b4983ce393f95a8dd24d3059918b47de27c671ec9db340b932be580e0f31/napari-accelerated-pixel-and-object-classification-0.5.7.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.5.8": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "c8fc8ef673560141e7df4bfa5cfa600f",
+          "sha256": "67a07d69985842e18c0fb2849d349489535236784c6b3cccc59170afd6d2d276"
+        },
+        "downloads": -1,
+        "filename": "napari_accelerated_pixel_and_object_classification-0.5.8-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "c8fc8ef673560141e7df4bfa5cfa600f",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 13872,
+        "upload_time": "2021-12-04T14:13:32",
+        "upload_time_iso_8601": "2021-12-04T14:13:32.877674Z",
+        "url": "https://files.pythonhosted.org/packages/7c/7e/a9937f00730fdfe22608ea5a8aa1366988cb7ac06aeed8e13d8f2811ba63/napari_accelerated_pixel_and_object_classification-0.5.8-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "cf3e73a1d6efc3f66d3a3835cd796568",
+          "sha256": "54b0a859e22ae9cef55041144dd2eba99f8e7bd7543babbfe41b6105b8139234"
+        },
+        "downloads": -1,
+        "filename": "napari-accelerated-pixel-and-object-classification-0.5.8.tar.gz",
+        "has_sig": false,
+        "md5_digest": "cf3e73a1d6efc3f66d3a3835cd796568",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 2703887,
+        "upload_time": "2021-12-04T14:13:37",
+        "upload_time_iso_8601": "2021-12-04T14:13:37.559444Z",
+        "url": "https://files.pythonhosted.org/packages/18/b5/c3395955d91223a10a752103b2f896d97aaaadf036e592bb15ddc8430871/napari-accelerated-pixel-and-object-classification-0.5.8.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.5.9": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "b34d2d0bde5ab647d3bd460130959469",
+          "sha256": "ca03e58bfd599d7b5ff194b81592df4c0c5edb1e890fadc09d09b262d49c1d85"
+        },
+        "downloads": -1,
+        "filename": "napari_accelerated_pixel_and_object_classification-0.5.9-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "b34d2d0bde5ab647d3bd460130959469",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 15323,
+        "upload_time": "2022-01-02T13:25:32",
+        "upload_time_iso_8601": "2022-01-02T13:25:32.494635Z",
+        "url": "https://files.pythonhosted.org/packages/68/47/f546e4f4bc198ad10f7f5d045dea2d692140c1ddf218312b9fc9d5f60a46/napari_accelerated_pixel_and_object_classification-0.5.9-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "57fbdc03e57f3466cb9482775a2d98c3",
+          "sha256": "8b7b7851c0010f339e6193de4230b99db63606dcf91e9b7f6dea33d2c0dcd1d1"
+        },
+        "downloads": -1,
+        "filename": "napari-accelerated-pixel-and-object-classification-0.5.9.tar.gz",
+        "has_sig": false,
+        "md5_digest": "57fbdc03e57f3466cb9482775a2d98c3",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 2705545,
+        "upload_time": "2022-01-02T13:25:38",
+        "upload_time_iso_8601": "2022-01-02T13:25:38.937895Z",
+        "url": "https://files.pythonhosted.org/packages/f5/c2/95aad6efa7cf099d5211f399a00805528b48460cf1af4313fa189729e308/napari-accelerated-pixel-and-object-classification-0.5.9.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.6.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "7f1f90f1808e8c26f20fbc5d8754f02f",
+          "sha256": "be47860aefd12da645bc24987eba95e6c31838113b5354e69c6a92fc4d38a354"
+        },
+        "downloads": -1,
+        "filename": "napari_accelerated_pixel_and_object_classification-0.6.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "7f1f90f1808e8c26f20fbc5d8754f02f",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 15325,
+        "upload_time": "2022-01-08T16:14:10",
+        "upload_time_iso_8601": "2022-01-08T16:14:10.427383Z",
+        "url": "https://files.pythonhosted.org/packages/55/2f/8ac53fff922d3269f1fb821220f8bc81e15384cb40d0c154e8c93091aa0e/napari_accelerated_pixel_and_object_classification-0.6.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "1b9be5906f863d19a01b7fe42fa731d6",
+          "sha256": "dbe7a094edbdf720438f01d5c54792d1b6efdbae7a9824673b4493051f0d7ed3"
+        },
+        "downloads": -1,
+        "filename": "napari-accelerated-pixel-and-object-classification-0.6.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "1b9be5906f863d19a01b7fe42fa731d6",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 2705726,
+        "upload_time": "2022-01-08T16:14:20",
+        "upload_time_iso_8601": "2022-01-08T16:14:20.016678Z",
+        "url": "https://files.pythonhosted.org/packages/2d/dc/7c749842c5eb6a164a2e5bb729bf6341c27219e3cc9c413deaae0e8b8bd6/napari-accelerated-pixel-and-object-classification-0.6.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.6.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "92fc82bf25cd7615405d3fb8cf2ea810",
+          "sha256": "361f7541fb545e101fe0ba51e42c3e7bea2c70824efbcc8976a15cd147e4a744"
+        },
+        "downloads": -1,
+        "filename": "napari_accelerated_pixel_and_object_classification-0.6.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "92fc82bf25cd7615405d3fb8cf2ea810",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 15322,
+        "upload_time": "2022-01-08T17:27:49",
+        "upload_time_iso_8601": "2022-01-08T17:27:49.886934Z",
+        "url": "https://files.pythonhosted.org/packages/a7/8f/d37a19b581c607a98bf86d83be8ef4c47b6cff28ddf930bdc5ce1a5ef92c/napari_accelerated_pixel_and_object_classification-0.6.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "c8e34524eb6b7d088347f4a02e0c9934",
+          "sha256": "03e2e16838e24ec6fe381c45fe2ad4427444a20a8d9b09132dc121515fc83826"
+        },
+        "downloads": -1,
+        "filename": "napari-accelerated-pixel-and-object-classification-0.6.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "c8e34524eb6b7d088347f4a02e0c9934",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 2705733,
+        "upload_time": "2022-01-08T17:27:57",
+        "upload_time_iso_8601": "2022-01-08T17:27:57.944182Z",
+        "url": "https://files.pythonhosted.org/packages/2a/af/0fd652c4a698803e29747dd1dce8684be7868259e81f06f9b01321aa93b0/napari-accelerated-pixel-and-object-classification-0.6.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.6.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "81af9c379583704f618ae5283c32ad04",
+          "sha256": "33723ed04515b3661e5cc6a7aef6e26ece0c7eb76da3b467ec56c17c96136619"
+        },
+        "downloads": -1,
+        "filename": "napari_accelerated_pixel_and_object_classification-0.6.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "81af9c379583704f618ae5283c32ad04",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 16313,
+        "upload_time": "2022-01-09T15:07:30",
+        "upload_time_iso_8601": "2022-01-09T15:07:30.868628Z",
+        "url": "https://files.pythonhosted.org/packages/93/0e/609d26635ef24674dd2fd41b06dc3238bda2f0607cf1b3ef280511429a39/napari_accelerated_pixel_and_object_classification-0.6.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "61c75f0ea41b3a1a521a9f22a815152e",
+          "sha256": "60496628fc86dac8e6916feaf71f625f98520b2084a94fcac8f50b39acd1cb7f"
+        },
+        "downloads": -1,
+        "filename": "napari-accelerated-pixel-and-object-classification-0.6.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "61c75f0ea41b3a1a521a9f22a815152e",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 2696907,
+        "upload_time": "2022-01-09T15:07:40",
+        "upload_time_iso_8601": "2022-01-09T15:07:40.210045Z",
+        "url": "https://files.pythonhosted.org/packages/63/65/0ba26d926a764758197ed35278d5e0631d3272b3e7384c201cc3f9150212/napari-accelerated-pixel-and-object-classification-0.6.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.6.3": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "d1d7004cdef870535610d73b47d31118",
+          "sha256": "fcefc0498005dff81980fd4074341ac80de156777e4526e03ac6b4f96071cd3a"
+        },
+        "downloads": -1,
+        "filename": "napari_accelerated_pixel_and_object_classification-0.6.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "d1d7004cdef870535610d73b47d31118",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 16437,
+        "upload_time": "2022-02-06T14:57:18",
+        "upload_time_iso_8601": "2022-02-06T14:57:18.124970Z",
+        "url": "https://files.pythonhosted.org/packages/e3/22/da491654c8125277bf05fb462160819d0dae8a34b1641306b93d2e22364e/napari_accelerated_pixel_and_object_classification-0.6.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "7104937bb34945183922cdcf9ca755f1",
+          "sha256": "205213475a403ab011db6e39df373d5b1ba47c31681762ba7d47f3e5d75625eb"
+        },
+        "downloads": -1,
+        "filename": "napari-accelerated-pixel-and-object-classification-0.6.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "7104937bb34945183922cdcf9ca755f1",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 17488,
+        "upload_time": "2022-02-06T14:57:19",
+        "upload_time_iso_8601": "2022-02-06T14:57:19.679793Z",
+        "url": "https://files.pythonhosted.org/packages/2c/68/a24014864fa161fcfb4a10b46d9e4c4509d2e6362f5ccf0e9b5fd5f43f0e/napari-accelerated-pixel-and-object-classification-0.6.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.6.5": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "b6c03b7ac08f0be3a2491557e8a08029",
+          "sha256": "b49f124f1ef2d38c9e116b3a3c2be8264061257ef40a06290c89c6f2460db5dc"
+        },
+        "downloads": -1,
+        "filename": "napari_accelerated_pixel_and_object_classification-0.6.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "b6c03b7ac08f0be3a2491557e8a08029",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 16442,
+        "upload_time": "2022-02-10T11:24:08",
+        "upload_time_iso_8601": "2022-02-10T11:24:08.353323Z",
+        "url": "https://files.pythonhosted.org/packages/ed/72/d602d47e5f7275d963c1fc26ae222836c0f78555a30221d6d18a7fbd7179/napari_accelerated_pixel_and_object_classification-0.6.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "e71ee28a8aac224c8a46ca5ca31018dd",
+          "sha256": "56231faaf0f8ce6d6e5d89f65c684d73dd9e40c04c1cfc2d8f2a8d2eec2a4902"
+        },
+        "downloads": -1,
+        "filename": "napari-accelerated-pixel-and-object-classification-0.6.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e71ee28a8aac224c8a46ca5ca31018dd",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 2697008,
+        "upload_time": "2022-02-10T11:24:13",
+        "upload_time_iso_8601": "2022-02-10T11:24:13.161532Z",
+        "url": "https://files.pythonhosted.org/packages/0e/69/2bc05ce98f73b8248f9837d68d0e6e808249670efbec4b5d2b9a5084bd64/napari-accelerated-pixel-and-object-classification-0.6.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.6.6": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "d2c46ce47fdf8da2915ad1e57b8216cd",
+          "sha256": "31b50cc1fc46bc66965f7422a4241b0beae20f2fa1f1155a26a5d0d40a110a15"
+        },
+        "downloads": -1,
+        "filename": "napari_accelerated_pixel_and_object_classification-0.6.6-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "d2c46ce47fdf8da2915ad1e57b8216cd",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 17096,
+        "upload_time": "2022-02-20T13:57:25",
+        "upload_time_iso_8601": "2022-02-20T13:57:25.289613Z",
+        "url": "https://files.pythonhosted.org/packages/a8/b9/e22cd1301f3262f025ffd5fec3643dc092542dbd47af8489c74788b2191d/napari_accelerated_pixel_and_object_classification-0.6.6-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "74603a063f29bbea12d49cd4881589ed",
+          "sha256": "053924fef4b7b973113f9b60766e2869c7c2c58a501d1bed1b920256f13a80d8"
+        },
+        "downloads": -1,
+        "filename": "napari-accelerated-pixel-and-object-classification-0.6.6.tar.gz",
+        "has_sig": false,
+        "md5_digest": "74603a063f29bbea12d49cd4881589ed",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 2697730,
+        "upload_time": "2022-02-20T13:57:29",
+        "upload_time_iso_8601": "2022-02-20T13:57:29.313817Z",
+        "url": "https://files.pythonhosted.org/packages/27/4d/57a32cea49f9974321960aa52243dcbe7462697a0b7b01601ec128b43c60/napari-accelerated-pixel-and-object-classification-0.6.6.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.6.8": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "0db3ae5d8be241023f8d34877fec9088",
+          "sha256": "af33bceed8e5028db1e30531332ae3914ea5ecc5a0249b6bf545083d70d4f7b2"
+        },
+        "downloads": -1,
+        "filename": "napari_accelerated_pixel_and_object_classification-0.6.8-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "0db3ae5d8be241023f8d34877fec9088",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 17236,
+        "upload_time": "2022-03-26T14:59:47",
+        "upload_time_iso_8601": "2022-03-26T14:59:47.718085Z",
+        "url": "https://files.pythonhosted.org/packages/4f/c9/932a5fb36ed6fac84a4b02770d9483b386c2268cbdd5dbced5a06a5116ba/napari_accelerated_pixel_and_object_classification-0.6.8-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "6bd9fde3979538badb26159a5446eb72",
+          "sha256": "8b024f00f98f431b6111eed08416eace03f37636ad29554104c6dac1ed903693"
+        },
+        "downloads": -1,
+        "filename": "napari-accelerated-pixel-and-object-classification-0.6.8.tar.gz",
+        "has_sig": false,
+        "md5_digest": "6bd9fde3979538badb26159a5446eb72",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 2697925,
+        "upload_time": "2022-03-26T14:59:56",
+        "upload_time_iso_8601": "2022-03-26T14:59:56.717770Z",
+        "url": "https://files.pythonhosted.org/packages/47/62/edff479e87001ecfc6813d3858610293d64033271152b50040b0f6a9a398/napari-accelerated-pixel-and-object-classification-0.6.8.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.7.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "a2e6843f20cea127252e54bb506a7a66",
+          "sha256": "4ef85772b2ab97cc3af6c175416e995c327fe27ab28f2d82652b9ba2b4727082"
+        },
+        "downloads": -1,
+        "filename": "napari_accelerated_pixel_and_object_classification-0.7.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "a2e6843f20cea127252e54bb506a7a66",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 21544,
+        "upload_time": "2022-04-23T09:32:03",
+        "upload_time_iso_8601": "2022-04-23T09:32:03.374340Z",
+        "url": "https://files.pythonhosted.org/packages/bf/f6/d2c74f7d35435d33e00ff66e403e4b88b23e303e5bfd3bfa7344df30ae13/napari_accelerated_pixel_and_object_classification-0.7.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "bb4685d86f15a3a233b35fdce19ff9fd",
+          "sha256": "b6b012b59b261750723909d9b37e38ab67e6283fb67ea8920ca8cba974e089b9"
+        },
+        "downloads": -1,
+        "filename": "napari-accelerated-pixel-and-object-classification-0.7.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "bb4685d86f15a3a233b35fdce19ff9fd",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 14779243,
+        "upload_time": "2022-04-23T09:32:21",
+        "upload_time_iso_8601": "2022-04-23T09:32:21.832325Z",
+        "url": "https://files.pythonhosted.org/packages/6a/d3/7cb55777a0a1d5a63817483d9ec4c6d79aea6c0bde5e136a5c1140704ddd/napari-accelerated-pixel-and-object-classification-0.7.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.7.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "a9da68ed50cd4a832273178b205d699b",
+          "sha256": "498f143608773c9220970c50543db0afb7dfddf66f2c7fbdaf9a51481a724e2a"
+        },
+        "downloads": -1,
+        "filename": "napari_accelerated_pixel_and_object_classification-0.7.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "a9da68ed50cd4a832273178b205d699b",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 22011,
+        "upload_time": "2022-04-23T14:58:07",
+        "upload_time_iso_8601": "2022-04-23T14:58:07.682818Z",
+        "url": "https://files.pythonhosted.org/packages/dc/83/1ef66e1f8e5dca6e194d14c0056807abb633dc69b26d5527dc7bf2332a64/napari_accelerated_pixel_and_object_classification-0.7.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "f0861c8c2d03fd0451d24f9bdcb5ca11",
+          "sha256": "03667f0dfdb80ba3e96d288baf7c97da4a22f44250b529c780718112b25ea339"
+        },
+        "downloads": -1,
+        "filename": "napari-accelerated-pixel-and-object-classification-0.7.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "f0861c8c2d03fd0451d24f9bdcb5ca11",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 23089,
+        "upload_time": "2022-04-23T14:58:09",
+        "upload_time_iso_8601": "2022-04-23T14:58:09.398431Z",
+        "url": "https://files.pythonhosted.org/packages/00/07/6ef126b9477d5a98b08a93b11df1c314b750ddb1028e5f0de6bd47804311/napari-accelerated-pixel-and-object-classification-0.7.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.7.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "0d42561785cce4f09581007e845210c9",
+          "sha256": "f05fa1ea1d2a199b83fb359694f06da2b19f25686f637907dd0dbfbc04000ca1"
+        },
+        "downloads": -1,
+        "filename": "napari_accelerated_pixel_and_object_classification-0.7.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "0d42561785cce4f09581007e845210c9",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 22067,
+        "upload_time": "2022-04-24T13:04:00",
+        "upload_time_iso_8601": "2022-04-24T13:04:00.913695Z",
+        "url": "https://files.pythonhosted.org/packages/11/d5/044dedb6ea8e53b72f1823d5209f91a9a54f9d6d65fb99edff1d2d0cbe95/napari_accelerated_pixel_and_object_classification-0.7.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "9e1e1ff78282b71a8045a0083b2f54de",
+          "sha256": "5cc82abde4b9f1a2e4369a8c351d3bdae2a8589defd56c6b815b6e2edcd71dce"
+        },
+        "downloads": -1,
+        "filename": "napari-accelerated-pixel-and-object-classification-0.7.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "9e1e1ff78282b71a8045a0083b2f54de",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 23306,
+        "upload_time": "2022-04-24T13:04:02",
+        "upload_time_iso_8601": "2022-04-24T13:04:02.577201Z",
+        "url": "https://files.pythonhosted.org/packages/3f/67/64251b6c8b85b8d8130faeb5f30404dcfc66f299c6df3e38c5dfdb505a5f/napari-accelerated-pixel-and-object-classification-0.7.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.7.3": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "0e3c82588ac822c05008e74342b69545",
+          "sha256": "9ab4ee6ca566ec9cb27b51fd59b04605f463f8ccf3342dd6b6387dddf280ceec"
+        },
+        "downloads": -1,
+        "filename": "napari_accelerated_pixel_and_object_classification-0.7.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "0e3c82588ac822c05008e74342b69545",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 22314,
+        "upload_time": "2022-05-05T09:22:25",
+        "upload_time_iso_8601": "2022-05-05T09:22:25.583711Z",
+        "url": "https://files.pythonhosted.org/packages/a4/74/57f337ff332ff74d4fb93cf1ec16cf6de078be563cf0e888ffd79040c291/napari_accelerated_pixel_and_object_classification-0.7.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "67f5c910247d5f43f037fc60f46e73db",
+          "sha256": "2c06dbd9323da48c861fa5222b7f300fba537fba186e39bc314c4aa006054b24"
+        },
+        "downloads": -1,
+        "filename": "napari-accelerated-pixel-and-object-classification-0.7.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "67f5c910247d5f43f037fc60f46e73db",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 15331452,
+        "upload_time": "2022-05-05T09:22:29",
+        "upload_time_iso_8601": "2022-05-05T09:22:29.409237Z",
+        "url": "https://files.pythonhosted.org/packages/04/46/946994dce9b1826b7af5b1bfaddd0f73de644c309592535ad5414be04a23/napari-accelerated-pixel-and-object-classification-0.7.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.7.4": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "06611bc086a3de54ac7f3a6493432246",
+          "sha256": "38cef8303925aafc85a66d4429de6dc57216b65e917fbf187dd77d1a23cf5be1"
+        },
+        "downloads": -1,
+        "filename": "napari_accelerated_pixel_and_object_classification-0.7.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "06611bc086a3de54ac7f3a6493432246",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 22635,
+        "upload_time": "2022-05-19T05:35:07",
+        "upload_time_iso_8601": "2022-05-19T05:35:07.507630Z",
+        "url": "https://files.pythonhosted.org/packages/ba/b4/852620bdaba166786b2e44ddecc5c5b77f2b27feec397089b6da5d9ae426/napari_accelerated_pixel_and_object_classification-0.7.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "42eb25250f3fc8f3acc2b8614857f329",
+          "sha256": "cc4690066cda929329e94ad78d24d7a47a129ba7e18fb929f851a0180596cecf"
+        },
+        "downloads": -1,
+        "filename": "napari-accelerated-pixel-and-object-classification-0.7.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "42eb25250f3fc8f3acc2b8614857f329",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 24335,
+        "upload_time": "2022-05-19T05:35:09",
+        "upload_time_iso_8601": "2022-05-19T05:35:09.366202Z",
+        "url": "https://files.pythonhosted.org/packages/70/f5/96a7229275c019fa16e38eb1e9a278f2ee7c0991f3b2f49a6d47c803232a/napari-accelerated-pixel-and-object-classification-0.7.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.8.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "947f87c3481487c2ab1d0953f8142514",
+          "sha256": "50c8caee2c04ff94889adcd29f852c614266b26c679e4e84bb2b99dd81022f29"
+        },
+        "downloads": -1,
+        "filename": "napari_accelerated_pixel_and_object_classification-0.8.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "947f87c3481487c2ab1d0953f8142514",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 22759,
+        "upload_time": "2022-06-01T18:23:56",
+        "upload_time_iso_8601": "2022-06-01T18:23:56.555659Z",
+        "url": "https://files.pythonhosted.org/packages/96/fe/b64af0b442ce8a05a40955a4be2348310501bd0c3fbb1eda4a7bfe5a31de/napari_accelerated_pixel_and_object_classification-0.8.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "198e603afb8d0e352d7460c972efa1b2",
+          "sha256": "d25373c676e97def459bede9eca2f6de555d73a3779d9bc62eadec148e7dee78"
+        },
+        "downloads": -1,
+        "filename": "napari-accelerated-pixel-and-object-classification-0.8.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "198e603afb8d0e352d7460c972efa1b2",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 15562989,
+        "upload_time": "2022-06-01T18:24:12",
+        "upload_time_iso_8601": "2022-06-01T18:24:12.829856Z",
+        "url": "https://files.pythonhosted.org/packages/7d/92/385f102f06a3e25efa063da705fb60b40749efeaa3981d10aff1250bd898/napari-accelerated-pixel-and-object-classification-0.8.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.8.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "4058806534a6ebb4ddd5213e55e97f95",
+          "sha256": "c9c08d3848599f2770e3e6ee5d1563cc6fd911c15723edc4bb97f7c956cab8bc"
+        },
+        "downloads": -1,
+        "filename": "napari_accelerated_pixel_and_object_classification-0.8.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "4058806534a6ebb4ddd5213e55e97f95",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 22854,
+        "upload_time": "2022-06-04T18:58:48",
+        "upload_time_iso_8601": "2022-06-04T18:58:48.291710Z",
+        "url": "https://files.pythonhosted.org/packages/53/6b/9d1aa4ce0a45e4ad619a45759e6cc36e1075d6bfc8925ec467b252e66668/napari_accelerated_pixel_and_object_classification-0.8.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "181eda018e90cad908a29e132d25f9f4",
+          "sha256": "cabcfb0712ef9ab054f8ae626d92e30e6b9dcc16efcea10e0b008a937d2da75d"
+        },
+        "downloads": -1,
+        "filename": "napari-accelerated-pixel-and-object-classification-0.8.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "181eda018e90cad908a29e132d25f9f4",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 15607485,
+        "upload_time": "2022-06-04T18:59:04",
+        "upload_time_iso_8601": "2022-06-04T18:59:04.742791Z",
+        "url": "https://files.pythonhosted.org/packages/b7/e5/4438af5ab460a485cf5d27f233df194d914d87e957fa50622dfe897538a6/napari-accelerated-pixel-and-object-classification-0.8.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.8.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "86e5c8bf54d44059d8dc8e542ca4ecc5",
+          "sha256": "9716927a2d093969ad43285ffbc440e1bd9ff5910ac0f565e9b8a5fb57a35233"
+        },
+        "downloads": -1,
+        "filename": "napari_accelerated_pixel_and_object_classification-0.8.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "86e5c8bf54d44059d8dc8e542ca4ecc5",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 22907,
+        "upload_time": "2022-07-27T16:00:38",
+        "upload_time_iso_8601": "2022-07-27T16:00:38.380487Z",
+        "url": "https://files.pythonhosted.org/packages/8b/10/8724ef31c10382740cc970219812fcd571e04f41f3653d0236679b1320e0/napari_accelerated_pixel_and_object_classification-0.8.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "83ac250441ba18c7dd05738199586522",
+          "sha256": "985203f570e2bb6f7e89a1546eddadd935751e4f9d09fb07d052d9f2f916cd79"
+        },
+        "downloads": -1,
+        "filename": "napari-accelerated-pixel-and-object-classification-0.8.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "83ac250441ba18c7dd05738199586522",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 15607644,
+        "upload_time": "2022-07-27T16:00:43",
+        "upload_time_iso_8601": "2022-07-27T16:00:43.338189Z",
+        "url": "https://files.pythonhosted.org/packages/1b/f8/986c4dc3cf5cd2c132aed02f8e6e4f31458d516082a756ab4c43392ad892/napari-accelerated-pixel-and-object-classification-0.8.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "86e5c8bf54d44059d8dc8e542ca4ecc5",
+        "sha256": "9716927a2d093969ad43285ffbc440e1bd9ff5910ac0f565e9b8a5fb57a35233"
+      },
+      "downloads": -1,
+      "filename": "napari_accelerated_pixel_and_object_classification-0.8.2-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "86e5c8bf54d44059d8dc8e542ca4ecc5",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.7",
+      "size": 22907,
+      "upload_time": "2022-07-27T16:00:38",
+      "upload_time_iso_8601": "2022-07-27T16:00:38.380487Z",
+      "url": "https://files.pythonhosted.org/packages/8b/10/8724ef31c10382740cc970219812fcd571e04f41f3653d0236679b1320e0/napari_accelerated_pixel_and_object_classification-0.8.2-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "83ac250441ba18c7dd05738199586522",
+        "sha256": "985203f570e2bb6f7e89a1546eddadd935751e4f9d09fb07d052d9f2f916cd79"
+      },
+      "downloads": -1,
+      "filename": "napari-accelerated-pixel-and-object-classification-0.8.2.tar.gz",
+      "has_sig": false,
+      "md5_digest": "83ac250441ba18c7dd05738199586522",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.7",
+      "size": 15607644,
+      "upload_time": "2022-07-27T16:00:43",
+      "upload_time_iso_8601": "2022-07-27T16:00:43.338189Z",
+      "url": "https://files.pythonhosted.org/packages/1b/f8/986c4dc3cf5cd2c132aed02f8e6e4f31458d516082a756ab4c43392ad892/napari-accelerated-pixel-and-object-classification-0.8.2.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

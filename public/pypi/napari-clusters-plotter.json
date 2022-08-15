@@ -1,0 +1,571 @@
+{
+  "info": {
+    "author": "Laura Zigutyte, Ryan Savill, Johannes M\u00fcller, Marcelo Zoccoler, Robert Haase",
+    "author_email": "zigutyte@gmail.com, robert.haase@tu-dresden.de",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.7",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Software Development :: Testing"
+    ],
+    "description": "# napari-clusters-plotter\n\n[![License](https://img.shields.io/pypi/l/napari-clusters-plotter.svg?color=green)](https://github.com/lazigu/napari-clusters-plotter/raw/master/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-clusters-plotter.svg?color=green)](https://pypi.org/project/napari-clusters-plotter)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-clusters-plotter.svg?color=green)](https://python.org)\n[![Anaconda-Server Badge](https://anaconda.org/conda-forge/napari-clusters-plotter/badges/version.svg)](https://anaconda.org/conda-forge/napari-clusters-plotter)\n[![tests](https://github.com/lazigu/napari-clusters-plotter/workflows/tests/badge.svg)](https://github.com/lazigu/napari-clusters-plotter/actions)\n[![codecov](https://codecov.io/gh/BiAPoL/napari-clusters-plotter/branch/main/graph/badge.svg?token=R6W2KO1NJ8)](https://codecov.io/gh/BiAPoL/napari-clusters-plotter)\n[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)\n[![PyPI - Downloads](https://img.shields.io/pypi/dm/napari-clusters-plotter.svg)](https://pypistats.org/packages/napari-clusters-plotter)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-clusters-plotter)](https://www.napari-hub.org/plugins/napari-clusters-plotter)\n[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5884658.svg)](https://doi.org/10.5281/zenodo.5884658)\n\nA plugin to use with napari for clustering objects according to their properties.\n\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using with [@napari]'s [cookiecutter-napari-plugin] template.\n\n![](https://github.com/BiAPoL/napari-clusters-plotter/raw/main/images/screencast.gif)\n\n----------------------------------\n\nJump to:\n- [Usage](#usage)\n  - [Starting point](#starting-point)\n  - [Measurements](#measurements)\n  - [Time-Lapse Measurements](#time-lapse-measurements)\n  - [Plotting](#plotting)\n  - [Time-Lapse Plotting](#time-lapse-plotting)\n  - [Dimensionality reduction: UMAP, t-SNE or PCA](#dimensionality-reduction-umap-t-sne-or-pca)\n  - [Clustering](#clustering)\n  - [Plotting clustering results](#plotting-clustering-results)\n- [Installation](#installation)\n- [Troubleshooting installation](#troubleshooting-installation)\n- [Contributing](#contributing)\n- [License](#license)\n- [Acknowledgements](#acknowledgements)\n\n\n## Usage\n\n### Starting point\nFor clustering objects according to their properties, the starting point is a [grey-value image](example_data/blobs.tif) and a label image\nrepresenting a segmentation of objects. For segmenting objects, you can for example use the\n[Voronoi-Otsu-labelling approach](https://github.com/haesleinhuepf/napari-segment-blobs-and-things-with-membranes#voronoi-otsu-labelling)\nin the napari plugin [napari-segment-blobs-and-things-with-membranes](https://www.napari-hub.org/plugins/napari-segment-blobs-and-things-with-membranes).\n\n![](https://github.com/BiAPoL/napari-clusters-plotter/raw/main/images/starting_point.png)\n\n### Measurements\nThe first step is deriving measurements from the labelled image and the corresponding pixels in the grey-value image.\nYou can use the menu `Tools > Measurement > Measure intensity, shape and neighbor counts (ncp)` for that.\nJust select the image, the corresponding label image and the measurements to analyse and click on `Run`.\nA table with the measurements will open:\n\n![](https://github.com/BiAPoL/napari-clusters-plotter/raw/main/images/measure.png)\n\nAfterwards, you can save and/or close the measurement table. Also, close the Measure widget.\nIf you are uploading your own measurements make sure that there is a column that specifies the which measurement belongs to which label\nby adding a column with the name \"label\". If you don't specify this column it will be assumed that measurements start at 1 and each \ncolumn describes the next label.\n\n#### Time-Lapse Measurements\nIf you have 3D time-lapse data this will automatically be detected. In case you have 2D time-lapse data you need to\nconvert it into a suitable shape using the function: `Tools > Utilities > Convert 3D stack to 2D time-lapse (time-slicer)`,\nwhich can be found in the [napari time slicer](https://www.napari-hub.org/plugins/napari-time-slicer).\nNote that tables for time-lapse data will include an additional column named \"frame\", which indicates which slice in\ntime the given row refers to. If you want to import your own csv files for time-lapse data make sure to include this column!\nIf you have tracking data where each column specifies measurements for a track instead of a label at a specific time point, \nthis column must not be added.\n\n### Plotting\n\nOnce measurements were made, these measurements were saved in the `properties` of the labels layer which was analysed.\nYou can then plot these measurements using the menu `Tools > Measurement > Plot measurement (ncp)`.\n\nIn this widget, you can select the labels layer which was analysed and the measurements which should be plotted\non the X- and Y-axis. If you cannot see any options in axes selection boxes, but you have performed measurements, click\non `Update Axes/Clustering Selection Boxes` to refresh them. Click on `Run` to draw the data points in the plot area.\n\n![](https://github.com/BiAPoL/napari-clusters-plotter/raw/main/images/plot_plain.png)\n\nYou can also manually select a region in the plot. To use lasso (freehand) tool use left mouse click, and to use a\nrectangle - right click. The resulting manual clustering will also be visualized in the original image. To optimize\nvisualization in the image, turn off the visibility of the analysed labels layer.\n\n![](https://github.com/BiAPoL/napari-clusters-plotter/raw/main/images/plot_interactive.png)\n\nHold down the SHIFT key while annotating regions in the plot to manually select multiple clusters.\n\n![](https://github.com/BiAPoL/napari-clusters-plotter/raw/main/images/multi-select-manual-clustering.gif)\n\n#### Time-Lapse Plotting\nWhen you plot your time-lapse datasets you will notice that the plots look slightly different.\nDatapoints of the current time frame are highlighted in white and you can see the datapoints move through the plot if you press play:\n\n![](https://github.com/BiAPoL/napari-clusters-plotter/raw/main/images/plotting_time-lapse_data_as_movie.gif)\n\nYou can also manually select groups using the lasso tool and plot a measurement per frame and see how the group behaves in time.\nFurthermore, you could also select a group in time and see where the datapoints lie in a different feature space:\n\n![](https://github.com/BiAPoL/napari-clusters-plotter/raw/main/images/timelapse_manual_clustering_tips.gif)\n\n### Dimensionality reduction: UMAP, t-SNE or PCA\n\nFor getting more insights into your data, you can reduce the dimensionality of the measurements, e.g.\nusing the [UMAP algorithm](https://umap-learn.readthedocs.io/en/latest/), [t-SNE](https://scikit-learn.org/stable/modules/generated/sklearn.manifold.TSNE.html)\nor [PCA](https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html).\nTo apply it to your data use the menu `Tools > Measurement > Dimensionality reduction (ncp)`.\nSelect the label image that was analysed and in the list below, select all measurements that should be\ndimensionality reduced. By default, all measurements are selected in the box. If you cannot see any measurements, but\nyou have performed them, click on `Update Measurements` to refresh the box. You can read more about parameters of both\nalgorithms by hovering over question marks or by clicking on them. When you are done with the selection, click on `Run`\nand after a moment, the table of measurements will re-appear with two additional columns representing the reduced\ndimensions of the dataset. These columns are automatically saved in the `properties` of the labels layer so there is no\nneed to save them for usage in other widgets unless you wish to do so.\n\n![](https://github.com/BiAPoL/napari-clusters-plotter/raw/main/images/umap.png)\n\nAfterwards, you can again save and/or close the table. Also, close the Dimensionality Reduction widget.\n\n### Clustering\nIf manual clustering, as shown above, is not an option, you can automatically cluster your data, using these implemented algorithms:\n* [k-means clustering (KMEANS)](https://towardsdatascience.com/k-means-clustering-algorithm-applications-evaluation-methods-and-drawbacks-aa03e644b48a)\n* [Hierarchical Density-Based Spatial Clustering of Applications with Noise (HDBSCAN)](https://hdbscan.readthedocs.io/en/latest/how_hdbscan_works.html)\n* [Gaussian Mixture Model (GMM)](https://scikit-learn.org/stable/modules/mixture.html)\n* [Mean Shift (MS)](https://scikit-learn.org/stable/auto_examples/cluster/plot_mean_shift.html#sphx-glr-auto-examples-cluster-plot-mean-shift-py)\n* [Agglomerative clustering (AC)](https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AgglomerativeClustering.html)\n\nTherefore, click the menu `Tools > Measurement > Clustering (ncp)`,\nagain, select the analysed labels layer.\nThis time select the measurements for clustering, e.g. select _only_ the `UMAP` measurements.\nSelect the clustering method `KMeans` and click on `Run`.\nThe table of measurements will reappear with an additional column `ALGORITHM_NAME_CLUSTERING_ID` containing the cluster\nID of each datapoint.\n\n![](https://github.com/BiAPoL/napari-clusters-plotter/raw/main/images/clustering.png)\n\nAfterwards, you can again save and/or close the table. Also, close the clustering widget.\n\n### Plotting clustering results\nReturn to the Plotter widget using the menu `Tools > Measurement > Plot measurement (ncp)`.\nSelect `UMAP_0` and `UMAP_1` as X- and Y-axis and the `ALGORITHM_NAME_CLUSTERING_ID` as `Clustering`, and click on `Run`.\n\n![](https://github.com/BiAPoL/napari-clusters-plotter/raw/main/images/hdbscan_clusters_plot.png)\n\nExample of k-means clustering results:\n\n![](https://github.com/BiAPoL/napari-clusters-plotter/raw/main/images/kmeans_clusters_plot.png)\n\n## Installation\n\n* Get a python environment, e.g. via [mini-conda](https://docs.conda.io/en/latest/miniconda.html).\n  If you never used python/conda environments before, please follow the instructions\n  [here](https://mpicbg-scicomp.github.io/ipf_howtoguides/guides/Python_Conda_Environments) first. It is recommended to\n  install python 3.9 to your new conda environment from the start. The plugin is not yet supported with Python 3.10.\n  Create a new environment, for example, like this:\n\n```\nconda create --name ncp-env python=3.9\n```\n\n* Activate the new environment via conda:\n\n```\nconda activate ncp-env\n```\n\n* Install [pyopencl](https://documen.tician.de/pyopencl/), e.g. via conda:\n\n```\nconda install -c conda-forge pyopencl\n```\n\n* Install [napari], e.g. via [pip]:\n\n```\npython -m pip install \"napari[all]\"\n```\n\nAfterwards, you can install `napari-clusters-plotter` via [pip]:\n\n```\npip install napari-clusters-plotter\n```\n\n## Troubleshooting installation\n\n- If the plugin does not appear in napari 'Plugins' menu, and in 'Plugin errors...' you can see such an error:\n\n```\nImportError: DLL load failed while importing _cl\n```\n\nTry downloading and installing a pyopencl with a lower cl version, e.g. cl12 : pyopencl=2020.1. However, in this case,\nyou will need an environment with a lower python version (python=3.8).\n\n- `Error: Could not build wheels for hdbscan which use PEP 517 and cannot be installed directly`\n\nInstall hdbscan via conda before installing the plugin:\n\n```\nconda install -c conda-forge hdbscan\n```\n\n- `ValueError: numpy.ndarray size changed, may indicate binary incompatibility. Expected 96 from C header, got 88 from PyObject`\n\nSimilar to the above-described error, this error can occur when importing hdbscan through pip or in the wrong order. This can be fixed by installing packages separately through conda and in the following order:\n```bash\nconda install -c conda-forge napari pyopencl hdbscan\npip install napari-clusters-plotter\n```\n\n- `WARNING: No ICDs were found` or `LogicError: clGetPlatformIDs failed: PLATFORM_NOT_FOUND_KHR`\n\nMake your system-wide implementation visible by installing either of the following conda packages:\n\n```\nconda install -c conda-forge ocl-icd-system\nconda install -c conda-forge ocl_icd_wrapper_apple\n```\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [pytest], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-clusters-plotter\" is free and open source software\n\n## Acknowledgements\nThis project was supported by the Deutsche Forschungsgemeinschaft under Germany\u2019s Excellence Strategy \u2013 EXC2068 - Cluster of Excellence \"Physics of Life\" of TU Dresden.\nThis project has been made possible in part by grant number [2021-240341 (Napari plugin accelerator grant)](https://chanzuckerberg.com/science/programs-resources/imaging/napari/improving-image-processing/) from the Chan Zuckerberg Initiative DAF, an advised fund of the Silicon Valley Community Foundation.\n\n## Issues\n\nIf you encounter any problems, please [file an issue](https://github.com/BiAPoL/napari-clusters-plotter/issues) along\nwith a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[napari]: https://github.com/napari/napari\n[pytest]: https://docs.pytest.org/en/7.0.x/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "https://github.com/BiAPoL/napari-clusters-plotter",
+    "keywords": "",
+    "license": "BSD-3-Clause",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "napari-clusters-plotter",
+    "package_url": "https://pypi.org/project/napari-clusters-plotter/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-clusters-plotter/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/BiAPoL/napari-clusters-plotter/issues",
+      "Documentation": "https://github.com/BiAPoL/napari-clusters-plotter",
+      "Homepage": "https://github.com/BiAPoL/napari-clusters-plotter",
+      "Source Code": "https://github.com/BiAPoL/napari-clusters-plotter",
+      "User Support": "https://github.com/BiAPoL/napari-clusters-plotter/issues"
+    },
+    "release_url": "https://pypi.org/project/napari-clusters-plotter/0.5.1/",
+    "requires_dist": [
+      "napari-plugin-engine (>=0.1.4)",
+      "numpy (>=1.21)",
+      "pyopencl",
+      "pyclesperanto-prototype",
+      "scikit-learn",
+      "pandas",
+      "umap-learn",
+      "napari-tools-menu",
+      "napari-skimage-regionprops (>=0.3.1)",
+      "hdbscan"
+    ],
+    "requires_python": "<3.10,>=3.7",
+    "summary": "A plugin to use with napari for clustering objects according to their properties",
+    "version": "0.5.1",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 14057944,
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "4f19b8232a9bed614c0438f81aaf8cc3",
+          "sha256": "cc9734d25f6eaa0d00df72d6548acfbd3a6673d1595aa858035b73b55c2390a0"
+        },
+        "downloads": -1,
+        "filename": "napari_clusters_plotter-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "4f19b8232a9bed614c0438f81aaf8cc3",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 20776,
+        "upload_time": "2021-11-15T13:51:45",
+        "upload_time_iso_8601": "2021-11-15T13:51:45.035968Z",
+        "url": "https://files.pythonhosted.org/packages/16/75/9a02a6043af599488f743096ae35d12bc4123c258dc83c4e9bffbb31aa70/napari_clusters_plotter-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "6d6d0e604f9534c7bd9c6e04d3c1847e",
+          "sha256": "35e4b95e62d269705068b14c5bd001a6d1fec6a6a5c3e5fe7c7ee688f4a48f6a"
+        },
+        "downloads": -1,
+        "filename": "napari-clusters-plotter-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "6d6d0e604f9534c7bd9c6e04d3c1847e",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 18792,
+        "upload_time": "2021-11-15T13:51:46",
+        "upload_time_iso_8601": "2021-11-15T13:51:46.400685Z",
+        "url": "https://files.pythonhosted.org/packages/ff/ac/053278ba8bc1ef268c1b3abfc9421b5ed7aa299991c9efcd6e46473c31d4/napari-clusters-plotter-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "2f2a30e915e96a5e193e932ec5a29a21",
+          "sha256": "2f64de2914dc6ca6495d05f4517c05025128d087990882522519ffc44c361137"
+        },
+        "downloads": -1,
+        "filename": "napari_clusters_plotter-0.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "2f2a30e915e96a5e193e932ec5a29a21",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 20838,
+        "upload_time": "2021-11-15T14:04:39",
+        "upload_time_iso_8601": "2021-11-15T14:04:39.481857Z",
+        "url": "https://files.pythonhosted.org/packages/4f/27/49b8f4b487906a3ffd19e5dfbcd94a26ceaf1f864f75e9c6f689dc5903db/napari_clusters_plotter-0.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "f56b19e6d552b7c3c249c15aab72901a",
+          "sha256": "a0624045773004b46b501f192ba0516b36d9c3889d8cd7bdeae1ab3f142ecc05"
+        },
+        "downloads": -1,
+        "filename": "napari-clusters-plotter-0.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "f56b19e6d552b7c3c249c15aab72901a",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 18968,
+        "upload_time": "2021-11-15T14:04:40",
+        "upload_time_iso_8601": "2021-11-15T14:04:40.628925Z",
+        "url": "https://files.pythonhosted.org/packages/9d/f5/a926f572add868a4ed1fcc60b69addbbfae4dd2ae2a50a23a366bfbbc119/napari-clusters-plotter-0.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "4c2e30486feaeb49a0aee555634380aa",
+          "sha256": "d2045af8391dcf5ca757a92c026dc12d284c10aa8161a28a63025628d065908e"
+        },
+        "downloads": -1,
+        "filename": "napari_clusters_plotter-0.1.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "4c2e30486feaeb49a0aee555634380aa",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 20046,
+        "upload_time": "2021-11-29T17:51:40",
+        "upload_time_iso_8601": "2021-11-29T17:51:40.927983Z",
+        "url": "https://files.pythonhosted.org/packages/fc/e3/66957cf4c31c636ca7da884d011fc1541e3d84aa57c3764e8ae148c56e86/napari_clusters_plotter-0.1.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "fb2b2cf4ff6ccf8cd633c40281bfc9a2",
+          "sha256": "f4bad66cb582b9ce1fe13f7f64e2260e6f4fa0399f6427ecf08f0b316d1f9bf7"
+        },
+        "downloads": -1,
+        "filename": "napari-clusters-plotter-0.1.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "fb2b2cf4ff6ccf8cd633c40281bfc9a2",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 18345,
+        "upload_time": "2021-11-29T17:51:42",
+        "upload_time_iso_8601": "2021-11-29T17:51:42.226211Z",
+        "url": "https://files.pythonhosted.org/packages/0a/e0/2cd2fef7a4ba6c8f1921d5241a4a40264f455b75851a41376f7dd9511d88/napari-clusters-plotter-0.1.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.3": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "ced151a6e5097b5fe77a8330eccf01e4",
+          "sha256": "ac9e71ca90b71844132601ac10b94e7962395cf7affe10e419099bb0a51699b3"
+        },
+        "downloads": -1,
+        "filename": "napari_clusters_plotter-0.1.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "ced151a6e5097b5fe77a8330eccf01e4",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 20548,
+        "upload_time": "2021-12-01T22:42:59",
+        "upload_time_iso_8601": "2021-12-01T22:42:59.964406Z",
+        "url": "https://files.pythonhosted.org/packages/2c/61/d5a617651b2aea2803e3f4e3015a9213e651ceaf6ce17bb3df4ec75fa78a/napari_clusters_plotter-0.1.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "d0dd7277364e6fb5ba178674023aea97",
+          "sha256": "ef67ce9a6f52435d847b257913eeea96068f3a68b15110e249b964d03c4990fc"
+        },
+        "downloads": -1,
+        "filename": "napari-clusters-plotter-0.1.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d0dd7277364e6fb5ba178674023aea97",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 18251,
+        "upload_time": "2021-12-01T22:43:01",
+        "upload_time_iso_8601": "2021-12-01T22:43:01.805311Z",
+        "url": "https://files.pythonhosted.org/packages/54/dc/cb05c89b9a4d6f5e20115dbc44330e6a3b2d73862a031526a2a431d45c89/napari-clusters-plotter-0.1.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "75445bf06585094bf4c3d2c14e3dd539",
+          "sha256": "d6f731519c82d789cc54d83040edb611ed21bf98991f58a657d631a1be469501"
+        },
+        "downloads": -1,
+        "filename": "napari_clusters_plotter-0.2.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "75445bf06585094bf4c3d2c14e3dd539",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.10,>=3.7",
+        "size": 24964,
+        "upload_time": "2021-12-21T20:14:49",
+        "upload_time_iso_8601": "2021-12-21T20:14:49.501926Z",
+        "url": "https://files.pythonhosted.org/packages/75/dd/c171b5557989df8bfd72bbd10f9301d98cf9fdf0a1962ff1d410443c1635/napari_clusters_plotter-0.2.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "0d454343ac53a8eac44264e9a59ca32e",
+          "sha256": "7af539c5e2227bacfa19df5be26381c3c96579b91e3639079ece6351caadd2ff"
+        },
+        "downloads": -1,
+        "filename": "napari-clusters-plotter-0.2.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "0d454343ac53a8eac44264e9a59ca32e",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.10,>=3.7",
+        "size": 10878013,
+        "upload_time": "2021-12-21T20:14:59",
+        "upload_time_iso_8601": "2021-12-21T20:14:59.530851Z",
+        "url": "https://files.pythonhosted.org/packages/7b/34/67e92c0920286a4ae9370eef859233aaa753be474e4dbd1101fdac6efded/napari-clusters-plotter-0.2.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "b21470f92cb5f358929993c31cd96dd1",
+          "sha256": "8294f044672d20e87fb9210381f67c4eecac8e4dc00122f9a3367de9c9f4e4ba"
+        },
+        "downloads": -1,
+        "filename": "napari_clusters_plotter-0.2.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "b21470f92cb5f358929993c31cd96dd1",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.10,>=3.7",
+        "size": 82922,
+        "upload_time": "2021-12-21T21:52:47",
+        "upload_time_iso_8601": "2021-12-21T21:52:47.634178Z",
+        "url": "https://files.pythonhosted.org/packages/49/e5/65d2418080c6de155b9809e4b79613503b490d548d23a9d8374c1d39bef0/napari_clusters_plotter-0.2.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "8c76f4bdaea26ee6d8164ff2ad672539",
+          "sha256": "4e492701c38a2df9300537e24467ba86cb970eab196abcd02c2db8a97538e57e"
+        },
+        "downloads": -1,
+        "filename": "napari-clusters-plotter-0.2.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "8c76f4bdaea26ee6d8164ff2ad672539",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.10,>=3.7",
+        "size": 10925645,
+        "upload_time": "2021-12-21T21:52:56",
+        "upload_time_iso_8601": "2021-12-21T21:52:56.057342Z",
+        "url": "https://files.pythonhosted.org/packages/73/d2/7e115b0e3d02bc6dbe23108b16676344c925e019c68b643386ce44575156/napari-clusters-plotter-0.2.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "4f3cedda6bc1272975909275458dfd02",
+          "sha256": "3a040211724c69b8844638e6674ca89daf4ee1e5237f92be65ea0b300f8a6a99"
+        },
+        "downloads": -1,
+        "filename": "napari_clusters_plotter-0.2.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "4f3cedda6bc1272975909275458dfd02",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.10,>=3.7",
+        "size": 83106,
+        "upload_time": "2022-01-20T17:06:00",
+        "upload_time_iso_8601": "2022-01-20T17:06:00.191863Z",
+        "url": "https://files.pythonhosted.org/packages/0a/df/c5536019bb1775e88f6b91b99a9b4956c28bcf833ed1d40a576e125ff749/napari_clusters_plotter-0.2.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "c9f307de2187cda0e169d76095ea52da",
+          "sha256": "74f517a90e49cb59b6c8ad301760f10edca0237b89dcaead71dc28caabdc28c5"
+        },
+        "downloads": -1,
+        "filename": "napari-clusters-plotter-0.2.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "c9f307de2187cda0e169d76095ea52da",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.10,>=3.7",
+        "size": 72283,
+        "upload_time": "2022-01-20T17:06:01",
+        "upload_time_iso_8601": "2022-01-20T17:06:01.883117Z",
+        "url": "https://files.pythonhosted.org/packages/82/9c/16aa7432f0024c5583cbd5e9afa82c9dfa520da5b0c6e3182ef8ea62e4b8/napari-clusters-plotter-0.2.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "148bd924df101b93639e939001369227",
+          "sha256": "d2d3c9317e291f2971cf56a9461132d50681fd105a38b16aea9e6f5d6838f5e6"
+        },
+        "downloads": -1,
+        "filename": "napari_clusters_plotter-0.3.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "148bd924df101b93639e939001369227",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.10,>=3.7",
+        "size": 92442,
+        "upload_time": "2022-04-04T13:03:25",
+        "upload_time_iso_8601": "2022-04-04T13:03:25.166195Z",
+        "url": "https://files.pythonhosted.org/packages/c1/03/3c307223f4eea564c15c1654385f28dae24e047b21d72800415ab73db32b/napari_clusters_plotter-0.3.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "460a8221cee6724d76783515b8f96f94",
+          "sha256": "2398808975dd0a33222b26303d56f34a483693710d7ae1644786670576764e41"
+        },
+        "downloads": -1,
+        "filename": "napari-clusters-plotter-0.3.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "460a8221cee6724d76783515b8f96f94",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.10,>=3.7",
+        "size": 79641,
+        "upload_time": "2022-04-04T13:03:26",
+        "upload_time_iso_8601": "2022-04-04T13:03:26.928301Z",
+        "url": "https://files.pythonhosted.org/packages/62/78/d687e68434de083bbb5e2f4263372a204f0bd5d58e36bf4a9ebf05e53831/napari-clusters-plotter-0.3.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.4.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "641ad628606fb38787bfb3c01b2ab35c",
+          "sha256": "b9e7f599dc4411d10fcf08c73181ecdc3a15b089b5430db8f85341c07e0c5dc9"
+        },
+        "downloads": -1,
+        "filename": "napari_clusters_plotter-0.4.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "641ad628606fb38787bfb3c01b2ab35c",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.10,>=3.7",
+        "size": 93475,
+        "upload_time": "2022-04-25T14:31:46",
+        "upload_time_iso_8601": "2022-04-25T14:31:46.460582Z",
+        "url": "https://files.pythonhosted.org/packages/8a/f0/b5212c597296764e736f3f278033dc368a792a6d924905a736a80d05dee2/napari_clusters_plotter-0.4.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "3c79140cb1a554181e7382c412d81877",
+          "sha256": "28576821d82d3f42f5e9230fe60e8efc02a62492e6c7abc5568bbcc31c5e4c58"
+        },
+        "downloads": -1,
+        "filename": "napari-clusters-plotter-0.4.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "3c79140cb1a554181e7382c412d81877",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.10,>=3.7",
+        "size": 80171,
+        "upload_time": "2022-04-25T14:31:48",
+        "upload_time_iso_8601": "2022-04-25T14:31:48.318922Z",
+        "url": "https://files.pythonhosted.org/packages/f3/d4/3e3d3a0c290c5d0bead2f794d3fbde97e624df8ee90b605bb748d4edf675/napari-clusters-plotter-0.4.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.5.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "60780ac948c59ca6eb741965085fc306",
+          "sha256": "6eded530e75697f03b8ec2382b9d10f51a0f4a99e010ca387d677711deeaf331"
+        },
+        "downloads": -1,
+        "filename": "napari_clusters_plotter-0.5.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "60780ac948c59ca6eb741965085fc306",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.10,>=3.7",
+        "size": 96586,
+        "upload_time": "2022-05-05T10:53:43",
+        "upload_time_iso_8601": "2022-05-05T10:53:43.834761Z",
+        "url": "https://files.pythonhosted.org/packages/35/25/ce0fd604e59fc01f276248e00645fca5716bca7ae3a432edbcf194560063/napari_clusters_plotter-0.5.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "967416a331313c404f9a90dd2bf65328",
+          "sha256": "e76018d65b4f23906623c319a7174838241b7f116cf17fff9666910ccc8d05a5"
+        },
+        "downloads": -1,
+        "filename": "napari-clusters-plotter-0.5.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "967416a331313c404f9a90dd2bf65328",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.10,>=3.7",
+        "size": 83539,
+        "upload_time": "2022-05-05T10:53:46",
+        "upload_time_iso_8601": "2022-05-05T10:53:46.157152Z",
+        "url": "https://files.pythonhosted.org/packages/99/38/b900ce2c588e00fcc032caaf5baf3c15afe52ac739681ae8c39fcbb5cd19/napari-clusters-plotter-0.5.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.5.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "28766288aa6a9892ed43f1f18c12ce2f",
+          "sha256": "04c6834ee80bcec697eb5f77a4fee6c4af997570b7f96b9bbe1051f423e85fd6"
+        },
+        "downloads": -1,
+        "filename": "napari_clusters_plotter-0.5.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "28766288aa6a9892ed43f1f18c12ce2f",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.10,>=3.7",
+        "size": 98025,
+        "upload_time": "2022-06-07T13:58:17",
+        "upload_time_iso_8601": "2022-06-07T13:58:17.993311Z",
+        "url": "https://files.pythonhosted.org/packages/3c/46/4ca10162ae15184da5f6ac9215d7c93b04d2e6d8e4ce96feaa0ed7ff3b27/napari_clusters_plotter-0.5.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "6e05a8806bfca49b10c867ea1c1431f5",
+          "sha256": "78e42f5f2471535ece89951f88e5387774a596f2a5315f50944374422a04768f"
+        },
+        "downloads": -1,
+        "filename": "napari-clusters-plotter-0.5.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "6e05a8806bfca49b10c867ea1c1431f5",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.10,>=3.7",
+        "size": 85029,
+        "upload_time": "2022-06-07T13:58:20",
+        "upload_time_iso_8601": "2022-06-07T13:58:20.276885Z",
+        "url": "https://files.pythonhosted.org/packages/11/90/b7644767807899902b70f905db4f9f0e819e38b73cd73702961de1ac815b/napari-clusters-plotter-0.5.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "28766288aa6a9892ed43f1f18c12ce2f",
+        "sha256": "04c6834ee80bcec697eb5f77a4fee6c4af997570b7f96b9bbe1051f423e85fd6"
+      },
+      "downloads": -1,
+      "filename": "napari_clusters_plotter-0.5.1-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "28766288aa6a9892ed43f1f18c12ce2f",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": "<3.10,>=3.7",
+      "size": 98025,
+      "upload_time": "2022-06-07T13:58:17",
+      "upload_time_iso_8601": "2022-06-07T13:58:17.993311Z",
+      "url": "https://files.pythonhosted.org/packages/3c/46/4ca10162ae15184da5f6ac9215d7c93b04d2e6d8e4ce96feaa0ed7ff3b27/napari_clusters_plotter-0.5.1-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "6e05a8806bfca49b10c867ea1c1431f5",
+        "sha256": "78e42f5f2471535ece89951f88e5387774a596f2a5315f50944374422a04768f"
+      },
+      "downloads": -1,
+      "filename": "napari-clusters-plotter-0.5.1.tar.gz",
+      "has_sig": false,
+      "md5_digest": "6e05a8806bfca49b10c867ea1c1431f5",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": "<3.10,>=3.7",
+      "size": 85029,
+      "upload_time": "2022-06-07T13:58:20",
+      "upload_time_iso_8601": "2022-06-07T13:58:20.276885Z",
+      "url": "https://files.pythonhosted.org/packages/11/90/b7644767807899902b70f905db4f9f0e819e38b73cd73702961de1ac815b/napari-clusters-plotter-0.5.1.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
