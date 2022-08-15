@@ -1,0 +1,235 @@
+{
+  "info": {
+    "author": "John Fozard",
+    "author_email": "john.fozard@gmail.com",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 3 - Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# skimage-sift-registration\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-sift-registration.svg?color=green)](https://github.com/jfozard/napari-sift-registration/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-sift-registration.svg?color=green)](https://pypi.org/project/napari-sift-registration)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-sift-registration.svg?color=green)](https://python.org)\n[![tests](https://github.com/jfozard/napari-sift-registration/workflows/tests/badge.svg)](https://github.com/jfozard/napari-sift-registration/actions)\n[![codecov](https://codecov.io/gh/jfozard/napari-sift-registration/branch/main/graph/badge.svg)](https://codecov.io/gh/jfozard/napari-sift-registration)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-sift-registration)](https://napari-hub.org/plugins/napari-sift-registration)\n\nSimple plugin for 2D keypoint detection and affine registration with RANSAC.\n\n----------------------------------\n\n![moving image](test_data/test1.png)\n![fixed image](test_data/test2.png)\n\nArtificial data \n\n![moving image with inlier keypoints](doc/moving_keypoints.png)\n![fixed image with inlier keypoints](doc/fixed_keypoints.png)\n\nMoving and fixed images showing inlier keypoints after RANSAC\n\n\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\nIt uses the [scikit-image] SIFT keypoint detection routines to find distinctive image points and generate local descriptions of the image around them.\nCorrespondences between the two images are then found by looking for pairs of keypoints, one in each of the two images, with closely matching descriptors.\n\n\n\nFor typical images, many of these correspondences will be wrong. To reduce these false correspondences, the plugin applies the RANSAC algorithm. This randomly selects a small subset of the matching pairs of keypoints, estimates the affine transformation between this subset of keypoints, and then evaluates how many of the other pairs of keypoints also closely agree with this affine transformation (\"inliers\"). A large number of random samples are tested, and the transformation with the most inliers retained.\n\nThe plugin outputs two points layers, one for each image, containing all the corresponding (inlier) SIFT keypoints. It also uses the estimated affine transformation between the two images to deform the \"moving\" image layer onto the \"fixed\" image layer.\n\nThis approach is an attempt to provide similar functionality to the Stephan Saalfeld's Fiji \"Extract SIFT Correspondences\" plugin [extract], and more-or-less\njust provides a napari interface to the existing routines in scikit-image. There are great examples in the scikit-image documentation (e.g. [SIFT-example] and [RANSAC-example]) that can be used if you would like to use these routines in your own analysis scripts.\n\n\n## Installation\n\nYou can install `napari-sift-registration` via [pip]:\n\n    pip install napari-sift-registration\n\nTo install the latest development version :\n\n    pip install git+https://github.com/jfozard/napari-sift-registration.git\n\n## Usage\n\n### Basic usage\n\n- Load two 2D single channel images in Napari.\n- Select the menu item Plugins > napari-sift-registration\n- Select these two images as the \"Moving image layer\" and the \"Fixed image layer\". The moving image will be deformed by the transformation to look like the fixed image.\n- The remaining parameters are the default settings from scikit-image; try these default values first.\n\n### Advanced usage\n\nThe parameter values for SIFT feature detection, keypoint matching and RANSAC are accessible from the plugin gui. For further information about their use, see the appropriate scikit-image documentation:\n\nUpsampling before feature detection, maximum number of octaves, maximum number of scales in every octave, blur level of seed image, feature descriptor size, feature descriptor orientation bins: see [scikit-image-SIFT].\n\nClosest/next closest ratio: see [scikit-image-match_descriptors]\n\nMinimum number of points sampled for each RANSAC model, distance for points to be inliers in RANSAC model, maximum number of trials in RANSAC model: see [scikit-image-RANSAC]\n\nOnly show inlier keypoints: If checked, only show corresponding keypoints that are inliers after RANSAC. If unchecked, show all corresponding keypoints.\n\n### Limitations\n\nOnly 2D, single channel images (for now).\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-sift-registration\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[extract]: https://imagej.net/plugins/feature-extraction\n[scikit-image]: https://scikit-image.org/\n[SIFT-example]: https://scikit-image.org/docs/stable/auto_examples/features_detection/plot_sift.html\n[RANSAC-example]: https://scikit-image.org/docs/stable/auto_examples/transform/plot_matching.html\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[scikit-image-SIFT]: https://scikit-image.org/docs/stable/api/skimage.feature.html#skimage.feature.SIFT\n[scikit-image-match_descriptors]: https://scikit-image.org/docs/stable/api/skimage.feature.html#skimage.feature.match_descriptors\n[scikit-image-RANSAC]: https://scikit-image.org/docs/stable/api/skimage.measure.html#skimage.measure.ransac\n\n[file an issue]: https://github.com/jfozard/napari-sift-registration/issues\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "https://github.com/jfozard/napari-sift-registration",
+    "keywords": "",
+    "license": "BSD-3-Clause",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "napari-sift-registration",
+    "package_url": "https://pypi.org/project/napari-sift-registration/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-sift-registration/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/jfozard/napari-sift-registration/issues",
+      "Documentation": "https://github.com/jfozard/napari-sift-registration#README.md",
+      "Homepage": "https://github.com/jfozard/napari-sift-registration",
+      "Source Code": "https://github.com/jfozard/napari-sift-registration",
+      "User Support": "https://github.com/jfozard/napari-sift-registration/issues"
+    },
+    "release_url": "https://pypi.org/project/napari-sift-registration/0.1.2/",
+    "requires_dist": [
+      "numpy",
+      "magicgui",
+      "qtpy",
+      "scikit-image",
+      "tox ; extra == 'testing'",
+      "pytest ; extra == 'testing'",
+      "pytest-cov ; extra == 'testing'",
+      "pytest-qt ; extra == 'testing'",
+      "napari ; extra == 'testing'",
+      "pyqt5 ; extra == 'testing'"
+    ],
+    "requires_python": ">=3.8",
+    "summary": "Simple plugin for SIFT keypoint detection, and affine registration with RANSAC, based on scikit-image",
+    "version": "0.1.2",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 14568491,
+  "releases": {
+    "0.0.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "02729ba96e5bf5e7983c3906644a120b",
+          "sha256": "7cd49997096fc21d6dfa05af28b8c698bb7b9fc6cc8d4aeed5ee8e0b1b00fca4"
+        },
+        "downloads": -1,
+        "filename": "napari_sift_registration-0.0.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "02729ba96e5bf5e7983c3906644a120b",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 7524,
+        "upload_time": "2022-07-27T09:51:31",
+        "upload_time_iso_8601": "2022-07-27T09:51:31.420762Z",
+        "url": "https://files.pythonhosted.org/packages/eb/80/49b3f72327cd32780acda0cd2b55443c93ca6a20368604b5b8d5488dc88a/napari_sift_registration-0.0.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "b1165bb7a130d91f95facafca62e373d",
+          "sha256": "4a3d301c35a3a2d2c589912376de8db8bfdfa13501abb002682e7f35ea2f12fc"
+        },
+        "downloads": -1,
+        "filename": "napari-sift-registration-0.0.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "b1165bb7a130d91f95facafca62e373d",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 7054,
+        "upload_time": "2022-07-27T09:51:32",
+        "upload_time_iso_8601": "2022-07-27T09:51:32.694874Z",
+        "url": "https://files.pythonhosted.org/packages/f9/62/77d850fa1a7286d0e1db7a09087976bff6f63fa1f3d65567e19e76acc4c4/napari-sift-registration-0.0.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "e3ea6cb4780106aef76ca0de8e3bca96",
+          "sha256": "8f76d2bb0a51dff36b90cc062c956aa86c6b6fcf4bddd8c37bdddc68df5eac13"
+        },
+        "downloads": -1,
+        "filename": "napari_sift_registration-0.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "e3ea6cb4780106aef76ca0de8e3bca96",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 7516,
+        "upload_time": "2022-07-27T10:03:11",
+        "upload_time_iso_8601": "2022-07-27T10:03:11.152347Z",
+        "url": "https://files.pythonhosted.org/packages/dd/2e/3c329380ef629b2094bd4832d820b50599519e44822a6db641990054d61e/napari_sift_registration-0.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "47b666c585ef1495aa22db121bddbeca",
+          "sha256": "ab0063a92cf6c18bf68ed42eeb7d6fb84333978101123ff4c01d1d12f92c420d"
+        },
+        "downloads": -1,
+        "filename": "napari-sift-registration-0.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "47b666c585ef1495aa22db121bddbeca",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 7047,
+        "upload_time": "2022-07-27T10:03:12",
+        "upload_time_iso_8601": "2022-07-27T10:03:12.684947Z",
+        "url": "https://files.pythonhosted.org/packages/51/69/271fb967230fafbb489b1b9dc620570f8bf88a3f06173fffca70911a87d6/napari-sift-registration-0.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "7f185f837feee5b48da2cf5d59b7d988",
+          "sha256": "3bdc6903c7d2050a462480f236ece59c1722204fda81da459b160ae00ebdbd99"
+        },
+        "downloads": -1,
+        "filename": "napari_sift_registration-0.1.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "7f185f837feee5b48da2cf5d59b7d988",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 7720,
+        "upload_time": "2022-07-27T17:59:06",
+        "upload_time_iso_8601": "2022-07-27T17:59:06.719331Z",
+        "url": "https://files.pythonhosted.org/packages/fe/c8/be92f25ade066d1235aa3c035e0f93f3eb5139dc11a81c738092cf54d60c/napari_sift_registration-0.1.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "0c3ae0615c2897424a14e90b27e8cf94",
+          "sha256": "349cf97344e920f816b6896e1f21b5cdd1ca695506fd8a132576d0bfad51e5f9"
+        },
+        "downloads": -1,
+        "filename": "napari-sift-registration-0.1.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "0c3ae0615c2897424a14e90b27e8cf94",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 8890,
+        "upload_time": "2022-07-27T17:59:08",
+        "upload_time_iso_8601": "2022-07-27T17:59:08.304462Z",
+        "url": "https://files.pythonhosted.org/packages/84/c2/d937ca9b1bf7ad2b78b4a2cec2fd62d6737f52de6c326ac31d5ce2a26e5a/napari-sift-registration-0.1.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "7f185f837feee5b48da2cf5d59b7d988",
+        "sha256": "3bdc6903c7d2050a462480f236ece59c1722204fda81da459b160ae00ebdbd99"
+      },
+      "downloads": -1,
+      "filename": "napari_sift_registration-0.1.2-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "7f185f837feee5b48da2cf5d59b7d988",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.8",
+      "size": 7720,
+      "upload_time": "2022-07-27T17:59:06",
+      "upload_time_iso_8601": "2022-07-27T17:59:06.719331Z",
+      "url": "https://files.pythonhosted.org/packages/fe/c8/be92f25ade066d1235aa3c035e0f93f3eb5139dc11a81c738092cf54d60c/napari_sift_registration-0.1.2-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "0c3ae0615c2897424a14e90b27e8cf94",
+        "sha256": "349cf97344e920f816b6896e1f21b5cdd1ca695506fd8a132576d0bfad51e5f9"
+      },
+      "downloads": -1,
+      "filename": "napari-sift-registration-0.1.2.tar.gz",
+      "has_sig": false,
+      "md5_digest": "0c3ae0615c2897424a14e90b27e8cf94",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.8",
+      "size": 8890,
+      "upload_time": "2022-07-27T17:59:08",
+      "upload_time_iso_8601": "2022-07-27T17:59:08.304462Z",
+      "url": "https://files.pythonhosted.org/packages/84/c2/d937ca9b1bf7ad2b78b4a2cec2fd62d6737f52de6c326ac31d5ce2a26e5a/napari-sift-registration-0.1.2.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

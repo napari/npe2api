@@ -1,0 +1,180 @@
+{
+  "info": {
+    "author": "Richard De Mets",
+    "author_email": "demets.richard@gmail.com",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.7",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Software Development :: Testing"
+    ],
+    "description": "# napari-yolov5\r\n\r\n[![License](https://img.shields.io/pypi/l/napari-yolov5.svg?color=green)](https://github.com/rdemets/napari-yolov5/raw/main/LICENSE)\r\n[![PyPI](https://img.shields.io/pypi/v/napari-yolov5.svg?color=green)](https://pypi.org/project/napari-yolov5)\r\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-yolov5.svg?color=green)](https://python.org)\r\n[![tests](https://github.com/rdemets/napari-yolov5/workflows/tests/badge.svg)](https://github.com/rdemets/napari-yolov5/actions)\r\n[![codecov](https://codecov.io/gh/rdemets/napari-yolov5/branch/main/graph/badge.svg)](https://codecov.io/gh/rdemets/napari-yolov5)\r\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-yolov5)](https://napari-hub.org/plugins/napari-yolov5)\r\n\r\nPlugin adapted from Ultralytics to bring YOLOv5 into Napari. \r\n\r\nTraining and detection can be done using the GUI. Training dataset must be prepared prior to using this plugin. Further development will allow users to use Napari to prepare the dataset. Follow instructions stated on [Ultralytics Github](https://github.com/ultralytics/yolov5) to prepare the dataset.\r\n\r\nThe plugin includes 3 pre-trained networks that are able to identify mitosis stages or apoptosis on soSPIM images. More details can be found on the [pre-print](https://www.biorxiv.org/content/10.1101/2021.03.26.437121v1.full).\r\n\r\n----------------------------------\r\n\r\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\r\n\r\n<!--\r\nDon't miss the full getting started guide to set up your new package:\r\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\r\n\r\nand review the napari docs for plugin developers:\r\nhttps://napari.org/plugins/stable/index.html\r\n-->\r\n\r\n## Installation\r\n\r\nFirst install conda and create an environment for the plugin\r\n```\r\nconda create --prefix env-napari-yolov5 python=3.9\r\nconda activate env-napari-yolov5\r\n```\r\nYou can install `napari-yolov5` and `napari` via [pip]:\r\n\r\n    pip install napari-yolov5 \r\n    pip install napari[all]\r\n\r\nFor GPU support :\r\n```\r\npip uninstall torch\r\npip install torchvision==0.10.0+cu111 -f https://download.pytorch.org/whl/torch_stable.html\r\n```\r\n\r\n## Usage\r\n\r\nFirst select if you would like to train a new network or detect objects.\r\n\r\n![alt text](https://github.com/rdemets/napari-yolov5/blob/main/src/napari_yolov5/resources/Readme/1.jpg?raw=true)\r\n\r\n\r\n***For `Training` :***\r\n\r\nData preparation should be done following [Ultralytics'](https://github.com/ultralytics/yolov5) instructions.\r\n\r\nSelect the size of the network, the number of epochs, the number of images per batch to load on the GPU, the size of the images (must be a stride of 32), and the name of the network.\r\n\r\n![alt text](https://github.com/rdemets/napari-yolov5/blob/main/src/napari_yolov5/resources/Readme/2.jpg?raw=true)\r\n\r\nAn example of the YAML config file is provided in `src/napari_yolov5/resources` folder.\r\n\r\n![alt text](https://github.com/rdemets/napari-yolov5/blob/main/src/napari_yolov5/resources/Readme/3.jpg?raw=true)\r\n\r\n\r\nProgress can be seen on the Terminal. The viewer will switch to `Detection` mode automatically when the network is finished being trained.\r\n\r\n![alt text](https://github.com/rdemets/napari-yolov5/blob/main/src/napari_yolov5/resources/Readme/4.jpg?raw=true)\r\n\r\n\r\n***For `Detection` :***\r\n\r\nIt is possible to perform the detection on a single layer chosen in the list, all the layers opened, or by giving a folder path. For folder detection, all the images will be loaded as a single stack.\r\n\r\n![alt text](https://github.com/rdemets/napari-yolov5/blob/main/src/napari_yolov5/resources/Readme/5.jpg?raw=true)\r\n\r\nNucleus size of the prediction layer has te be filled to resize the image to the training dataset. Nucleus size of the training dataset will be asked in case of a custom network.\r\n\r\nConfidence threshold defines the minimum value for a detected object to be considered positive. \r\niou nms threshold (intersection-over-union non-max-suppression) defines the overlapping area of two boxes as a single object. Only the box with the maximum confidence is kept.\r\nProgress can be seen on the Terminal.\r\n\r\n![alt text](https://github.com/rdemets/napari-yolov5/blob/main/src/napari_yolov5/resources/Readme/6.jpg?raw=true)\r\n\r\nFew options allow for modification on how the boxes are being displayed (default : box + class + confidence score ; box + class ; box only) and if the box coordinates and the image overlay will be exported.\r\nPost-processing option will perform a simple 3D assignment based on 3D connected component analysis. A median filter (1x1x3 XYZ) is applied prior to the assignment. \r\nThe centroid of each object is then saved into a new point layer as a 3D point with a random color for each class. \r\n\r\n![alt text](https://github.com/rdemets/napari-yolov5/blob/main/src/napari_yolov5/resources/Readme/7.jpg?raw=true)\r\n\r\nThe localisation of each centroid is saved and the path is shown in the Terminal at the end of the detection.\r\n\r\n![alt text](https://github.com/rdemets/napari-yolov5/blob/main/src/napari_yolov5/resources/Readme/8.jpg?raw=true)\r\n\r\n\r\n## Contributing\r\n\r\nContributions are very welcome. Tests can be run with [tox], please ensure\r\nthe coverage at least stays the same before you submit a pull request.\r\n\r\n## License\r\n\r\nDistributed under the terms of the [GNU GPL v3.0] license,\r\n\"napari-yolov5\" is free and open source software\r\n\r\n## Issues\r\n\r\nIf you encounter any problems, please [file an issue] along with a detailed description.\r\n\r\n[napari]: https://github.com/napari/napari\r\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\r\n[@napari]: https://github.com/napari\r\n[MIT]: http://opensource.org/licenses/MIT\r\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\r\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\r\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\r\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\r\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\r\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\r\n\r\n[napari]: https://github.com/napari/napari\r\n[tox]: https://tox.readthedocs.io/en/latest/\r\n[pip]: https://pypi.org/project/pip/\r\n[PyPI]: https://pypi.org/\r\n\r\n\r\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "https://github.com/rdemets/napari-yolov5",
+    "keywords": "",
+    "license": "GPL-3.0-only",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "napari-yolov5",
+    "package_url": "https://pypi.org/project/napari-yolov5/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-yolov5/",
+    "project_urls": {
+      "Homepage": "https://github.com/rdemets/napari-yolov5"
+    },
+    "release_url": "https://pypi.org/project/napari-yolov5/0.2.12/",
+    "requires_dist": null,
+    "requires_python": ">=3.7",
+    "summary": "Plugin adapted from Ultralytics to bring YOLOv5 into Napari",
+    "version": "0.2.12",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 13718229,
+  "releases": {
+    "0.2.11": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "5e70c64fb037b6246c73b97ed14b25be",
+          "sha256": "1ba96b9ec0a1e1cdb82bb0d153f213cce05fe8a7d43c35c10eb523cc86170fef"
+        },
+        "downloads": -1,
+        "filename": "napari_yolov5-0.2.11-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "5e70c64fb037b6246c73b97ed14b25be",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 94057371,
+        "upload_time": "2022-01-10T03:55:23",
+        "upload_time_iso_8601": "2022-01-10T03:55:23.783979Z",
+        "url": "https://files.pythonhosted.org/packages/a9/bf/50076d3ed143d5a9ec8654c5474fb498f716479cb41cba04b5961b9389f4/napari_yolov5-0.2.11-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "bf7253bb05c2478c1866281dee3f9e20",
+          "sha256": "ec13e9a6c3e0148d77a9f5b4b08798a6b82f190b280a29316da770df195a7ec1"
+        },
+        "downloads": -1,
+        "filename": "napari-yolov5-0.2.11.tar.gz",
+        "has_sig": false,
+        "md5_digest": "bf7253bb05c2478c1866281dee3f9e20",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 101217514,
+        "upload_time": "2022-01-10T03:55:35",
+        "upload_time_iso_8601": "2022-01-10T03:55:35.863669Z",
+        "url": "https://files.pythonhosted.org/packages/58/b5/af80e0faf33e6ea9c21bdc72ea2cb33ddf3089d5747631ea7e9c0aba643e/napari-yolov5-0.2.11.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.12": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "2736573b3f44fcb98e80d6a0e45db2a6",
+          "sha256": "4b44aacf5b351906009d6bb047178e53a2ba2ca8a083577b179816b0a08641f0"
+        },
+        "downloads": -1,
+        "filename": "napari-yolov5-0.2.12.tar.gz",
+        "has_sig": false,
+        "md5_digest": "2736573b3f44fcb98e80d6a0e45db2a6",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 94028913,
+        "upload_time": "2022-05-05T08:16:00",
+        "upload_time_iso_8601": "2022-05-05T08:16:00.793774Z",
+        "url": "https://files.pythonhosted.org/packages/f2/d8/a4d45232b6a745fc4e50771082cb2eda85afcec2c24c16a25f4285f53c37/napari-yolov5-0.2.12.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.9": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "601d6c3d145e12ccf9a4b903c526d495",
+          "sha256": "d59e0ac808e5d91cee16285380f961fa80a352e552b424960768a0741d2caa36"
+        },
+        "downloads": -1,
+        "filename": "napari_yolov5-0.2.9-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "601d6c3d145e12ccf9a4b903c526d495",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 93964650,
+        "upload_time": "2021-12-29T06:54:55",
+        "upload_time_iso_8601": "2021-12-29T06:54:55.003736Z",
+        "url": "https://files.pythonhosted.org/packages/88/f4/9491abeb71e4da93db0abc85fddd36543f5f2e0a4bbd7c75606aee2e48d1/napari_yolov5-0.2.9-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "cd88893d0fe357435c0978c20ffd0f79",
+          "sha256": "ede6d8d54e1d5954f6130d88e346e99b0bb8a91cd164fc2bfb56f89ce78c108c"
+        },
+        "downloads": -1,
+        "filename": "napari-yolov5-0.2.9.tar.gz",
+        "has_sig": false,
+        "md5_digest": "cd88893d0fe357435c0978c20ffd0f79",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 101126591,
+        "upload_time": "2021-12-29T06:55:06",
+        "upload_time_iso_8601": "2021-12-29T06:55:06.774947Z",
+        "url": "https://files.pythonhosted.org/packages/69/9f/1f8b46c5febaba21b78f8a9ea5d64e14824c57390f7d40acaf75829eb36b/napari-yolov5-0.2.9.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "2736573b3f44fcb98e80d6a0e45db2a6",
+        "sha256": "4b44aacf5b351906009d6bb047178e53a2ba2ca8a083577b179816b0a08641f0"
+      },
+      "downloads": -1,
+      "filename": "napari-yolov5-0.2.12.tar.gz",
+      "has_sig": false,
+      "md5_digest": "2736573b3f44fcb98e80d6a0e45db2a6",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.7",
+      "size": 94028913,
+      "upload_time": "2022-05-05T08:16:00",
+      "upload_time_iso_8601": "2022-05-05T08:16:00.793774Z",
+      "url": "https://files.pythonhosted.org/packages/f2/d8/a4d45232b6a745fc4e50771082cb2eda85afcec2c24c16a25f4285f53c37/napari-yolov5-0.2.12.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

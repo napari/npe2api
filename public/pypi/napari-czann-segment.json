@@ -1,0 +1,367 @@
+{
+  "info": {
+    "author": "Sebastian Rhode",
+    "author_email": "sebrhode@gmail.com",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 3 - Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "Intended Audience :: Science/Research",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: Microsoft :: Windows",
+      "Operating System :: Unix",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-czann-segment\n\n[![License](https://img.shields.io/pypi/l/napari-czann-segment.svg?color=green)](https://github.com/sebi06/napari-czann-segment/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-czann-segment.svg?color=green)](https://pypi.org/project/napari-czann-segment)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-czann-segment.svg?color=green)](https://python.org)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-czann-segment)](https://napari-hub.org/plugins/napari-czann-segment)\n\nSemantic Segmentation of multi-dimensional images using Deep Learning ONNX models packaged as *.czann files.\n\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n\n![Train on APEER and use model in Napari](https://github.com/sebi06/napari-czann-segment/raw/main/readme_images/Train_APEER_run_Napari_CZANN_no_highlights_small.gif)\n\n## Installation\n\nBefore installing, please setup a conda environment. If you have never worked with conda environments, go through [this tutorial](https://biapol.github.io/blog/johannes_mueller/anaconda_getting_started/) first.\n\nYou can then install `napari-czann-segment` via [pip]:\n\n    pip install napari-czann-segment\n\n## What does the plugin do\n\nThe plugin allows you to:\n\n- Use a *.czann file containing the Deep Neural Network (ONNX) for semantic segmentation and metadata\n- Segmentation will be applied per 2D plane for all dimensions\n- Processing larger multi-dimensional images it uses the [cztile] package to chunk the individual 2d arrays using a specific overlap.\n- multi-dimensional images will be processed plane-by-plane\n\n## What does the plugin NOT do\n\n**Before one can actually use a model it needs to be trained, which is NOT done by this plugin**.\n\nTherer two main ways hwo such a model can be created:\n\n- Train the segmentation model fully automated on [APEER] and download the *.czann file\n- Train your model in a Jupyter notebook etc. and package it using the [czmodel] python package as an *.czann\n\n## Using this plugin\n\n### Sample Data\n\nA test image and a *.czann model file can be downloaded [here](https://github.com/sebi06/napari-czann-segment/tree/main/src/napari_czann_segment/_data).\n\n- `PGC_20X.ome.tiff` --> use `PGC_20X_nucleus_detector.czann` to segment\n\nIn order to use this plugin the user has to do the following things:\n\n- Open the image using \"File - Open Files(s)\" (requires [napari-aicsimageio] plugin).\n- Click **napari-czann-segment: Segment with CZANN model** in the \"Plugins\" menu.\n- **Select a *.czann file** to use the model for segmentation.\n- metadata of the model will be shown (see example below)\n\n| Parameter    | Value                                        | Explanation                                             |\n| :----------- | :------------------------------------------- | ------------------------------------------------------- |\n| model_type   | ModelType.SINGLE_CLASS_SEMANTIC_SEGMENTATION | see: [czmodel] for details                              |\n| input_shape  | [1024, 1024, 1]                              | tile dimensions of model input                          |\n| output_shape | [1024, 1024, 3]                              | tile dimensions of model output                         |\n| model_id     | ba32bc6d-6bc9-4774-8b47-20646c7cb838         | unique GUID for that model                              |\n| min_overlap  | [128, 128]                                   | tile overlap used during training (for this model)      |\n| classes      | ['background', 'grains', 'inclusions']       | availbale classes                                       |\n| model_name   | APEER-trained model                          | name of the model                                       |\n\n![Napari - Image loaded and czann selected](https://github.com/sebi06/napari-czann-segment/raw/main/readme_images/napari_czann1.png)\n\n- Adjust the **minimum overlap** for the tiling (optional, see [cztile] for details).\n- Select the **layer** to be segmented.\n- Press **Segment Selected Image Layer** to run the segmentation.\n\n![Napari - Image successfully segmented](https://github.com/sebi06/napari-czann-segment/raw/main/readme_images/napari_czann2.png)\n\nA successful is obviously only the starting point for further image analysis steps to extract the desired numbers from the segmented image. Another example is shown below demonstrating a simple \"Grain Size Analysis\" using a deep-learning model trained on [APEER] used in [napari]\n\n![Napari - Simple Grain Size Analysis](https://github.com/sebi06/napari-czann-segment/raw/main/readme_images/grainsize_czann_napari.png)\n\n### Remarks\n\n> **IMPORTANT**: Currently the plugin only supports using models trained on a **single channel** image. Therefore make sure that during the training on [APEER] or somewhere else the correct inputs images are used.\n> It is quite simple to train an single RGB image, which actually has three channels, load this image in [napari] and notice only then that the model will not work, because the image will 3 channels inside [napari].\n\n- Only the CPU will be used for the inference using the ONNX runtime for the [ONNX-CPU] runtime\n- GPUs are not supported yet and will require [ONNX-GPU] runtime\n\n## For developers\n\n- **Please clone this repository first using your favorite tool.**\n\n- **Ideally one creates a new [conda] environment or use an existing environment that already contains [Napari].**\n\nFeel free to create a new environment using the [YAML](env_napari_czann_segment.yml) file at your own risk:\n\n    cd the-github-repo-with-YAML-file\n    conda env create --file conda_env_napari_czann_segment.yml\n    conda activate napari_czmodel\n\n- **Install the plugin locally**\n\nPlease run the the following command:\n\n    pip install -e .\n\nTo install latest development version:\n\n    pip install git+https://github.com/sebi06/napari_czann_segment.git\n\n## Contributing\n\nContributions and Feedback are very welcome.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-czann-segment\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n[file an issue]: https://github.com/sebi06/napari-czann-segment/issues\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n[czmodel]: https://pypi.org/project/czmodel/\n[cztile]: https://pypi.org/project/cztile/\n[APEER]: https://www.apeer.com\n[napari-aicsimageio]: https://github.com/AllenCellModeling/napari-aicsimageio\n[ONNX-GPU]: https://pypi.org/project/onnxruntime-gpu/\n[ONNX-CPU]: https://pypi.org/project/onnxruntime/\n[conda]: https://docs.conda.io/projects/conda/en/latest/user-guide/getting-started.html\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "https://github.com/sebi06/napari-czann-segment",
+    "keywords": "",
+    "license": "BSD-3-Clause",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "napari-czann-segment",
+    "package_url": "https://pypi.org/project/napari-czann-segment/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-czann-segment/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/sebi06/napari-czann-segment/issues",
+      "Documentation": "https://github.com/sebi06/napari-czann-segment#README.md",
+      "Homepage": "https://github.com/sebi06/napari-czann-segment",
+      "Source Code": "https://github.com/sebi06/napari-czann-segment",
+      "User Support": "https://github.com/sebi06/napari-czann-segment/issues"
+    },
+    "release_url": "https://pypi.org/project/napari-czann-segment/0.0.15/",
+    "requires_dist": [
+      "numpy",
+      "magicgui",
+      "qtpy",
+      "napari",
+      "cztile",
+      "czmodel",
+      "onnxruntime",
+      "aicsimageio",
+      "tox ; extra == 'testing'",
+      "pytest ; extra == 'testing'",
+      "pytest-cov ; extra == 'testing'",
+      "pytest-qt ; extra == 'testing'",
+      "napari ; extra == 'testing'",
+      "pyqt5 ; extra == 'testing'"
+    ],
+    "requires_python": ">=3.8",
+    "summary": "Semantic Segmention using Deep Learning ONNX models packaged as *.czann files",
+    "version": "0.0.15",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 14514134,
+  "releases": {
+    "0.0.10": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "d44cb2a0d35eb43c9823b90f3b80c7f0",
+          "sha256": "d0a9aca818b9f4bd32677858278d8b02ef1541226c13f488b05c27d6222b631d"
+        },
+        "downloads": -1,
+        "filename": "napari_czann_segment-0.0.10-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "d44cb2a0d35eb43c9823b90f3b80c7f0",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 28824,
+        "upload_time": "2022-07-11T12:10:58",
+        "upload_time_iso_8601": "2022-07-11T12:10:58.248435Z",
+        "url": "https://files.pythonhosted.org/packages/21/2e/8d22208b4719cb6f8571c185cadbcdc38211e3c40121a7d6471c6db62b23/napari_czann_segment-0.0.10-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "4d808c3a178cb2574f9f42876dac144b",
+          "sha256": "d6a53c5399a9fcfb3fbe0495aabc21d895829202de4d7106c74ca634e4d373fa"
+        },
+        "downloads": -1,
+        "filename": "napari-czann-segment-0.0.10.tar.gz",
+        "has_sig": false,
+        "md5_digest": "4d808c3a178cb2574f9f42876dac144b",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 28850030,
+        "upload_time": "2022-07-11T12:11:00",
+        "upload_time_iso_8601": "2022-07-11T12:11:00.879877Z",
+        "url": "https://files.pythonhosted.org/packages/1e/03/cb734eb69c7a6d057ffe6bf2e62b8bcf7c4764e6391507ed16b0d9bfcce9/napari-czann-segment-0.0.10.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.11": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "5e53ba14cb550021f0257ce092bd3edf",
+          "sha256": "837edc12e7f142456d10aa2bda386138e0ac050fee3b192ef186fad49aa2ec43"
+        },
+        "downloads": -1,
+        "filename": "napari_czann_segment-0.0.11-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "5e53ba14cb550021f0257ce092bd3edf",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 28829,
+        "upload_time": "2022-07-11T12:57:21",
+        "upload_time_iso_8601": "2022-07-11T12:57:21.963604Z",
+        "url": "https://files.pythonhosted.org/packages/45/cc/8bbf3d5b86cb7b04b63b820ff7f66f792733a9fda4382156e843ef6a3f77/napari_czann_segment-0.0.11-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "d9e3a55e1255e9af4ca65386c00d84d3",
+          "sha256": "ad9d1eeb36e7b581db367e4311188e3a0a381e2a8899b9c54fd6f473b4ee0404"
+        },
+        "downloads": -1,
+        "filename": "napari-czann-segment-0.0.11.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d9e3a55e1255e9af4ca65386c00d84d3",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 12364240,
+        "upload_time": "2022-07-11T12:57:25",
+        "upload_time_iso_8601": "2022-07-11T12:57:25.169630Z",
+        "url": "https://files.pythonhosted.org/packages/81/11/e4e862556745464fa04eeaf2219086554a6b96ddba857f0ff5ddff4bec00/napari-czann-segment-0.0.11.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.12": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "a2a8af4028f0d48664209020803c3577",
+          "sha256": "bd8ca4f1295d2db4ac48a6075a94a18751f5426761f0bbff43f5bed1ea441496"
+        },
+        "downloads": -1,
+        "filename": "napari_czann_segment-0.0.12-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "a2a8af4028f0d48664209020803c3577",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 28460,
+        "upload_time": "2022-07-13T10:46:41",
+        "upload_time_iso_8601": "2022-07-13T10:46:41.531854Z",
+        "url": "https://files.pythonhosted.org/packages/22/93/ab1c24d395b72709546c1a8e342d00975726e40b8f3ff56271a4bd5cd4bb/napari_czann_segment-0.0.12-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "25e3e438380c26088d57a61a609b9a8d",
+          "sha256": "045dc661916a5f2159f93f443baff2787d270a823e6fbbe7f60a8db4dde44321"
+        },
+        "downloads": -1,
+        "filename": "napari-czann-segment-0.0.12.tar.gz",
+        "has_sig": false,
+        "md5_digest": "25e3e438380c26088d57a61a609b9a8d",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 12363847,
+        "upload_time": "2022-07-13T10:46:43",
+        "upload_time_iso_8601": "2022-07-13T10:46:43.605590Z",
+        "url": "https://files.pythonhosted.org/packages/0d/ec/5e6532d74a908795a192baab5df5429070f061a478e3646dce8bd5eb2531/napari-czann-segment-0.0.12.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.13": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "112f74a5f070d42c5da91d219b12abcf",
+          "sha256": "084bec965bba639f39a77aae03438af4123ff659dd3774cf381ec9bc57633a28"
+        },
+        "downloads": -1,
+        "filename": "napari_czann_segment-0.0.13-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "112f74a5f070d42c5da91d219b12abcf",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 28640,
+        "upload_time": "2022-07-18T11:25:02",
+        "upload_time_iso_8601": "2022-07-18T11:25:02.192150Z",
+        "url": "https://files.pythonhosted.org/packages/36/dd/b37605f6d2dbcbbddd63cbf1e6b74b307c47ae619e59c137e6418131d06d/napari_czann_segment-0.0.13-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "99d5e8b554b9ca0f4b8dcffa07ec95cd",
+          "sha256": "bc56dd7d7c82ec281f89b6bc563500909b7ccbd8e9bd37c23c2f1ed2cb979a5f"
+        },
+        "downloads": -1,
+        "filename": "napari-czann-segment-0.0.13.tar.gz",
+        "has_sig": false,
+        "md5_digest": "99d5e8b554b9ca0f4b8dcffa07ec95cd",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 12364194,
+        "upload_time": "2022-07-18T11:25:04",
+        "upload_time_iso_8601": "2022-07-18T11:25:04.059937Z",
+        "url": "https://files.pythonhosted.org/packages/23/f9/691aa2d3483142beaff236c0004f6ae125765c5487d6d592d3fffaef5d3f/napari-czann-segment-0.0.13.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.14": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "ae7172982aa76b4b867ba9df580de648",
+          "sha256": "a8fcb3f80c37d9c28e4174534d6bc9d54cec576be1568869828761e1fb783895"
+        },
+        "downloads": -1,
+        "filename": "napari_czann_segment-0.0.14-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "ae7172982aa76b4b867ba9df580de648",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 27634,
+        "upload_time": "2022-07-22T08:30:48",
+        "upload_time_iso_8601": "2022-07-22T08:30:48.132142Z",
+        "url": "https://files.pythonhosted.org/packages/d3/2b/059d432022505cec22f1fd78e41b50a899a8d2af52e4f8410452bcd8fcaa/napari_czann_segment-0.0.14-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "5744e1fb1063c446db09deaf0e43f70b",
+          "sha256": "7f60a64d4b13d38fd6d71f581969f23d9b1347110eaa2c8430f5463dbc566dae"
+        },
+        "downloads": -1,
+        "filename": "napari-czann-segment-0.0.14.tar.gz",
+        "has_sig": false,
+        "md5_digest": "5744e1fb1063c446db09deaf0e43f70b",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 10305197,
+        "upload_time": "2022-07-22T08:30:50",
+        "upload_time_iso_8601": "2022-07-22T08:30:50.049567Z",
+        "url": "https://files.pythonhosted.org/packages/9a/7b/d2f28344922f35dda028325eabf4ec201d9cdb961931682edde3f1c88762/napari-czann-segment-0.0.14.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.15": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "b7afc8803f9eb8b143564f8044fc89ee",
+          "sha256": "c71207e925141c3eecaee7f3d4e88b493f8c38e133be70ebdcce67b14db9d3d4"
+        },
+        "downloads": -1,
+        "filename": "napari_czann_segment-0.0.15-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "b7afc8803f9eb8b143564f8044fc89ee",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 27668,
+        "upload_time": "2022-07-22T09:06:31",
+        "upload_time_iso_8601": "2022-07-22T09:06:31.400387Z",
+        "url": "https://files.pythonhosted.org/packages/e8/9f/667e3ee32f6dc13547addad67cf29ae3dc2c5cd9855996cd77f36cf1f713/napari_czann_segment-0.0.15-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "addf6997eaf1fca4634c1152df56ede2",
+          "sha256": "5f3df6a3376ae9e085fad19e707a8c1fe6eccbce6273f3845ff6f9dc6971d457"
+        },
+        "downloads": -1,
+        "filename": "napari-czann-segment-0.0.15.tar.gz",
+        "has_sig": false,
+        "md5_digest": "addf6997eaf1fca4634c1152df56ede2",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 10305303,
+        "upload_time": "2022-07-22T09:06:33",
+        "upload_time_iso_8601": "2022-07-22T09:06:33.825468Z",
+        "url": "https://files.pythonhosted.org/packages/c8/60/464a68081434b3cd3c4903985d8e4f3baf04ad002041c76cf018dae4f837/napari-czann-segment-0.0.15.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "b7afc8803f9eb8b143564f8044fc89ee",
+        "sha256": "c71207e925141c3eecaee7f3d4e88b493f8c38e133be70ebdcce67b14db9d3d4"
+      },
+      "downloads": -1,
+      "filename": "napari_czann_segment-0.0.15-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "b7afc8803f9eb8b143564f8044fc89ee",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.8",
+      "size": 27668,
+      "upload_time": "2022-07-22T09:06:31",
+      "upload_time_iso_8601": "2022-07-22T09:06:31.400387Z",
+      "url": "https://files.pythonhosted.org/packages/e8/9f/667e3ee32f6dc13547addad67cf29ae3dc2c5cd9855996cd77f36cf1f713/napari_czann_segment-0.0.15-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "addf6997eaf1fca4634c1152df56ede2",
+        "sha256": "5f3df6a3376ae9e085fad19e707a8c1fe6eccbce6273f3845ff6f9dc6971d457"
+      },
+      "downloads": -1,
+      "filename": "napari-czann-segment-0.0.15.tar.gz",
+      "has_sig": false,
+      "md5_digest": "addf6997eaf1fca4634c1152df56ede2",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.8",
+      "size": 10305303,
+      "upload_time": "2022-07-22T09:06:33",
+      "upload_time_iso_8601": "2022-07-22T09:06:33.825468Z",
+      "url": "https://files.pythonhosted.org/packages/c8/60/464a68081434b3cd3c4903985d8e4f3baf04ad002041c76cf018dae4f837/napari-czann-segment-0.0.15.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

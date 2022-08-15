@@ -1,0 +1,242 @@
+{
+  "info": {
+    "author": "Jessy Lauer",
+    "author_email": "jessy.lauer@epfl.ch",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Scientific/Engineering :: Artificial Intelligence",
+      "Topic :: Scientific/Engineering :: Image Processing",
+      "Topic :: Scientific/Engineering :: Visualization"
+    ],
+    "description": "# napari-deeplabcut\n\n\n<img src=\"https://images.squarespace-cdn.com/content/v1/57f6d51c9f74566f55ecf271/1d409ffe-c9f4-47e1-bde2-3010c1c40455/naparidlc.png?format=750w\" width=\"250\" title=\"napari-deeplabcut\" alt=\"napari+deeplabcut\" align=\"right\" vspace = \"80\">\n\n[![License: BSD-3](https://img.shields.io/badge/License-BSD3-blue.svg)](https://www.gnu.org/licenses/bsd3)\n[![PyPI](https://img.shields.io/pypi/v/napari-deeplabcut.svg?color=green)](https://pypi.org/project/napari-deeplabcut)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-deeplabcut.svg?color=green)](https://python.org)\n[![tests](https://github.com/DeepLabCut/napari-deeplabcut/workflows/tests/badge.svg)](https://github.com/DeepLabCut/napari-deeplabcut/actions)\n[![codecov](https://codecov.io/gh/DeepLabCut/napari-deeplabcut/branch/main/graph/badge.svg)](https://codecov.io/gh/DeepLabCut/napari-deeplabcut)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-deeplabcut)](https://napari-hub.org/plugins/napari-deeplabcut)\n\nA napari plugin for keypoint annotation with DeepLabCut\n\n\n## Installation\n\nYou can install `napari-deeplabcut` via [pip]:\n\n    pip install napari-deeplabcut\n\n\n\nTo install latest development version :\n\n    pip install git+https://github.com/DeepLabCut/napari-deeplabcut.git\n\n\n## Usage\n\nTo use the plugin, please run:\n\n    napari\n\nThen, activate the plugin in Plugins > napari-deeplabcut: Keypoint controls.\n\nAll accepted files (config.yaml, images, h5 data files) can be loaded\neither by dropping them directly onto the canvas or via the File menu.\n\nThe easiest way to get started is to drop a folder (typically a folder from within a DeepLabCut's `labeled-data` directory), and, if labeling from scratch, drop the corresponding `config.yaml` to automatically add a `Points layer` and populate the dropdown menus.\n\n**Tools & shortcuts are:**\n\n- `2` and `3`, to easily switch between labeling and selection mode\n- `4`, to enable pan & zoom (which is achieved using the mouse wheel or finger scrolling on the Trackpad)\n- `M`, to cycle through regular (sequential), quick, and cycle annotation mode (see the description [here](https://github.com/DeepLabCut/DeepLabCut-label/blob/ee71b0e15018228c98db3b88769e8a8f4e2c0454/dlclabel/layers.py#L9-L19))\n- `E`, to enable edge coloring (by default, if using this in refinement GUI mode, points with a confidence lower than 0.6 are marked\nin red)\n- `F`, to toggle between animal and body part color scheme.\n- `backspace` to delete a point.\n- Check the box \"display text\" to show the label names on the canvas.\n- To move to another folder, be sure to save (Ctrl+S), then delete the layers, and re-drag/drop the next folder.\n\n\n### Save Layers\n\nAnnotations and segmentations are saved with `File > Save Selected Layer(s)...` (or its shortcut `Ctrl+S`).\nOnly when saving segmentation masks does a save file dialog pop up to name the destination folder;\nkeypoint annotations are otherwise automatically saved in the corresponding folder as `CollectedData_<ScorerName>.h5`.\n- As a reminder, DLC will only use the H5 file; so be sure if you open already labeled images you save/overwrite the H5.\n- Note, before saving a layer, make sure the points layer is selected. If the user clicked on the image(s) layer first, does `Save As`, then closes the window, any labeling work during that session will be lost!\n\n\n## Workflow\n\nSuggested workflows, depending on the image folder contents:\n\n1. **Labeling from scratch** \u2013 the image folder does not contain `CollectedData_<ScorerName>.h5` file.\n\n    Open *napari* as described in [Usage](#usage) and open an image folder together with the DeepLabCut project's `config.yaml`.\n    The image folder creates an *image layer* with the images to label.\n    Supported image formats are: `jpg`, `jpeg`, `png`.\n    The `config.yaml` file creates a *Points layer*, which holds metadata (such as keypoints read from the config file) necessary for labeling.\n    Select the *Points layer* in the layer list (lower left pane on the GUI) and click on the *+*-symbol in the layer controls menu (upper left pane) to start labeling.\n    The current keypoint can be viewed/selected in the keypoints dropdown menu (right pane).\n    The slider below the displayed image (or the left/right arrow keys) allows selecting the image to label.\n\n    To save the labeling progress refer to [Save Layers](#save-layers).\n    `Data successfully saved` should be shown in the status bar, and the image folder should now contain a `CollectedData_<ScorerName>.h5` file.\n    (Note: For convenience, a CSV file with the same name is also saved.)\n\n2. **Resuming labeling** \u2013 the image folder contains a `CollectedData_<ScorerName>.h5` file.\n\n    Open *napari* and open an image folder (which needs to contain a `CollectedData_<ScorerName>.h5` file).\n    In this case, it is not necessary to open the DLC project's `config.yaml` file, as all necessary metadata is read from the `h5` data file.\n\n    Saving works as described in *1*.\n\n3. **Refining labels** \u2013 the image folder contains a `machinelabels-iter<#>.h5` file.\n\n    The process is analog to *2*.\n\n4. **Drawing segmentation masks**\n\n    Drop an image folder as in *1*, manually add a *shapes layer*. Then select the *rectangle* in the layer controls (top left pane),\n    and start drawing rectangles over the images. Masks and rectangle vertices are saved as described in [Save Layers](#save-layers).\n    Note that masks can be reloaded and edited at a later stage by dropping the `vertices.csv` file onto the canvas. \n\n\n### Labeling multiple image folders\n\nLabeling multiple image folders has to be done in sequence; i.e., only one image folder can be opened at a time.\nAfter labeling the images of a particular folder is done and the associated *Points layer* has been saved, *all* layers should be removed from the layers list (lower left pane on the GUI) by selecting them and clicking on the trashcan icon.\nNow, another image folder can be labeled, following the process described in *1*, *2*, or *3*, depending on the particular image folder.\n\n\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\nTo locally install the code, please git clone the repo and then run `pip install -e .`\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-deeplabcut\" is free and open source software.\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[file an issue]: https://github.com/DeepLabCut/napari-deeplabcut/issues\n\n\n## Acknowledgements\n\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template. We thank the Chan Zuckerberg Initiative (CZI) for funding this work!\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/plugins/stable/index.html\n-->\n\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "https://github.com/DeepLabCut/napari-deeplabcut",
+    "keywords": "",
+    "license": "BSD-3-Clause",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "napari-deeplabcut",
+    "package_url": "https://pypi.org/project/napari-deeplabcut/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-deeplabcut/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/DeepLabCut/napari-deeplabcut/issues",
+      "Documentation": "https://github.com/DeepLabCut/napari-deeplabcut#README.md",
+      "Homepage": "https://github.com/DeepLabCut/napari-deeplabcut",
+      "Source Code": "https://github.com/DeepLabCut/napari-deeplabcut",
+      "User Support": "https://github.com/DeepLabCut/napari-deeplabcut/issues"
+    },
+    "release_url": "https://pypi.org/project/napari-deeplabcut/0.0.4/",
+    "requires_dist": [
+      "dask-image",
+      "napari (<0.5.0)",
+      "numpy",
+      "opencv-python-headless",
+      "pandas",
+      "pyyaml",
+      "qtpy",
+      "scikit-image",
+      "tables",
+      "napari ; extra == 'testing'",
+      "pyqt5 ; extra == 'testing'",
+      "pytest ; extra == 'testing'",
+      "pytest-cov ; extra == 'testing'",
+      "pytest-qt ; extra == 'testing'",
+      "tox ; extra == 'testing'"
+    ],
+    "requires_python": ">=3.8",
+    "summary": "napari + DeepLabCut annotation tool",
+    "version": "0.0.4",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 14727358,
+  "releases": {
+    "0.0.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "5ba4aebd22c80b5cf6082539d4de439d",
+          "sha256": "d3afe183dc3e51bc4225e3182d5e59a6ecfb3c3df5e931f3459f436844eb4af1"
+        },
+        "downloads": -1,
+        "filename": "napari_deeplabcut-0.0.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "5ba4aebd22c80b5cf6082539d4de439d",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 18344,
+        "upload_time": "2022-06-03T18:54:47",
+        "upload_time_iso_8601": "2022-06-03T18:54:47.600892Z",
+        "url": "https://files.pythonhosted.org/packages/d2/08/c6fa4afe6e3cf54f12ead0c39abbcf5ab0863d6caa70c8d1ac699568f482/napari_deeplabcut-0.0.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "85be507dcd274d47429178c71d286e63",
+          "sha256": "e14b5022bd85429f042bc08b6d3a2500862a43cac514d1287bd1e30676adff1f"
+        },
+        "downloads": -1,
+        "filename": "napari_deeplabcut-0.0.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "85be507dcd274d47429178c71d286e63",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 24185,
+        "upload_time": "2022-06-03T18:54:49",
+        "upload_time_iso_8601": "2022-06-03T18:54:49.175860Z",
+        "url": "https://files.pythonhosted.org/packages/35/aa/229ff9cad4776a5f63d23abde9e29793a733c8e88d5188bd09b74a1cece9/napari_deeplabcut-0.0.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.3": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "1069e60ff6d87c8e386a33eb2906fb00",
+          "sha256": "4c0382bd72a08ec2bae0af782469d605173620461c0b08f5e87fd92333a5e0f3"
+        },
+        "downloads": -1,
+        "filename": "napari_deeplabcut-0.0.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "1069e60ff6d87c8e386a33eb2906fb00",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 19094,
+        "upload_time": "2022-06-28T15:40:42",
+        "upload_time_iso_8601": "2022-06-28T15:40:42.958524Z",
+        "url": "https://files.pythonhosted.org/packages/64/fe/7bfe1b1b3ede1209a33b6e87cc86a460263ac55b5a098eec3bbb9ef767ad/napari_deeplabcut-0.0.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "c7ec8c86716eaaf8d87d6dd1f37a9996",
+          "sha256": "294e2c69bf8ef5d4567c414281c20c1a8d2c1f0473e7eb8f076448cedb51c0c4"
+        },
+        "downloads": -1,
+        "filename": "napari_deeplabcut-0.0.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "c7ec8c86716eaaf8d87d6dd1f37a9996",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 24879,
+        "upload_time": "2022-06-28T15:40:44",
+        "upload_time_iso_8601": "2022-06-28T15:40:44.696496Z",
+        "url": "https://files.pythonhosted.org/packages/c7/c6/df8473a7a61721abce854413719194cf7ed06d3b2a9ba834be9de86b0a29/napari_deeplabcut-0.0.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.4": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "42308fc5d14e313518193599180e8ce9",
+          "sha256": "70fe6470143d1f279260384314e8f872c0c872d52a24d7e13eaa2340b8602479"
+        },
+        "downloads": -1,
+        "filename": "napari_deeplabcut-0.0.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "42308fc5d14e313518193599180e8ce9",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 20838,
+        "upload_time": "2022-08-11T09:38:53",
+        "upload_time_iso_8601": "2022-08-11T09:38:53.789123Z",
+        "url": "https://files.pythonhosted.org/packages/f0/b8/36fe861f16752703527d940a7b2fe18c0238ff17c191df135555e637a989/napari_deeplabcut-0.0.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "03ed157f0446a459918e0d492503d2bd",
+          "sha256": "22a25559f67881d4322be329bd9f8bd3f2dad3d30f514da13d68217d6c3b9aeb"
+        },
+        "downloads": -1,
+        "filename": "napari_deeplabcut-0.0.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "03ed157f0446a459918e0d492503d2bd",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 28003,
+        "upload_time": "2022-08-11T09:38:55",
+        "upload_time_iso_8601": "2022-08-11T09:38:55.169472Z",
+        "url": "https://files.pythonhosted.org/packages/56/fb/2865cdc3f278c9c369d1ec014b6fba0aec6aa7d53b4ec338366046644932/napari_deeplabcut-0.0.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "42308fc5d14e313518193599180e8ce9",
+        "sha256": "70fe6470143d1f279260384314e8f872c0c872d52a24d7e13eaa2340b8602479"
+      },
+      "downloads": -1,
+      "filename": "napari_deeplabcut-0.0.4-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "42308fc5d14e313518193599180e8ce9",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.8",
+      "size": 20838,
+      "upload_time": "2022-08-11T09:38:53",
+      "upload_time_iso_8601": "2022-08-11T09:38:53.789123Z",
+      "url": "https://files.pythonhosted.org/packages/f0/b8/36fe861f16752703527d940a7b2fe18c0238ff17c191df135555e637a989/napari_deeplabcut-0.0.4-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "03ed157f0446a459918e0d492503d2bd",
+        "sha256": "22a25559f67881d4322be329bd9f8bd3f2dad3d30f514da13d68217d6c3b9aeb"
+      },
+      "downloads": -1,
+      "filename": "napari_deeplabcut-0.0.4.tar.gz",
+      "has_sig": false,
+      "md5_digest": "03ed157f0446a459918e0d492503d2bd",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.8",
+      "size": 28003,
+      "upload_time": "2022-08-11T09:38:55",
+      "upload_time_iso_8601": "2022-08-11T09:38:55.169472Z",
+      "url": "https://files.pythonhosted.org/packages/56/fb/2865cdc3f278c9c369d1ec014b6fba0aec6aa7d53b4ec338366046644932/napari_deeplabcut-0.0.4.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

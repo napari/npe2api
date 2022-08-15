@@ -1,0 +1,528 @@
+{
+  "info": {
+    "author": "Uwe Schmidt, Martin Weigert",
+    "author_email": "research@uweschmidt.org, martin.weigert@epfl.ch",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 4 - Beta",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.7",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Scientific/Engineering"
+    ],
+    "description": "# StarDist Napari Plugin\n\n[![PyPI version](https://img.shields.io/pypi/v/stardist-napari.svg)](https://pypi.org/project/stardist-napari)\n[![Anaconda-Server Badge](https://anaconda.org/conda-forge/stardist-napari/badges/version.svg)](https://anaconda.org/conda-forge/stardist-napari)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/stardist-napari)](https://napari-hub.org/plugins/stardist-napari)\n[![Image.sc forum](https://img.shields.io/badge/dynamic/json.svg?label=forum&url=https%3A%2F%2Fforum.image.sc%2Ftags%2Fstardist.json&query=%24.topic_list.tags.0.topic_count&colorB=brightgreen&suffix=%20topics&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAYAAAAfSC3RAAABPklEQVR42m3SyyqFURTA8Y2BER0TDyExZ+aSPIKUlPIITFzKeQWXwhBlQrmFgUzMMFLKZeguBu5y+//17dP3nc5vuPdee6299gohUYYaDGOyyACq4JmQVoFujOMR77hNfOAGM+hBOQqB9TjHD36xhAa04RCuuXeKOvwHVWIKL9jCK2bRiV284QgL8MwEjAneeo9VNOEaBhzALGtoRy02cIcWhE34jj5YxgW+E5Z4iTPkMYpPLCNY3hdOYEfNbKYdmNngZ1jyEzw7h7AIb3fRTQ95OAZ6yQpGYHMMtOTgouktYwxuXsHgWLLl+4x++Kx1FJrjLTagA77bTPvYgw1rRqY56e+w7GNYsqX6JfPwi7aR+Y5SA+BXtKIRfkfJAYgj14tpOF6+I46c4/cAM3UhM3JxyKsxiOIhH0IO6SH/A1Kb1WBeUjbkAAAAAElFTkSuQmCC)](https://forum.image.sc/tags/stardist)\n\nThis project provides the [napari](https://napari.org/) plugin for [StarDist](https://github.com/stardist/stardist), a deep learning based 2D and 3D object detection method with star-convex shapes. StarDist has originally been developed (see [papers](https://github.com/stardist/stardist#stardist---object-detection-with-star-convex-shapes)) for the segmentation of densely packed cell nuclei in challenging images with low signal-to-noise ratios. The plugin allows to apply pretrained and custom trained models from within napari.\n\nIf you use this plugin for your research, please [cite us](https://github.com/stardist/stardist#how-to-cite).\n\n![Screenshot](https://github.com/stardist/stardist-napari/raw/main/images/stardist_napari_screenshot_small.png)\n\n\n## Installation\n\nInstall the plugin with `pip install stardist-napari` or from within napari via `Plugins > Install/Uninstall Plugins\u2026`. If you want GPU-accelerated prediction, please read the more detailed [installation instructions](https://github.com/stardist/stardist#installation) for StarDist.\n\n- You can activate the plugin in napari via `Plugins > stardist-napari: StarDist`.\n- Example images for testing are provided via `File > Open Sample > stardist-napari`.\n\n\n## Documentation\n\nThe two main buttons at the bottom of the plugin are (see right side of screenshot above):\n\n**Restore Defaults**: Restore default values for [inputs](#inputs) (exceptions: *Input Image*, *Image Axes*, *Custom Model*).\n\n**Run**: Start the prediction with the selected inputs and create the [outputs](#outputs) when done.\n\nAll plugin activity is shown in the napari *activity dock*, which can be shown/hidden by clicking on the word `activity` next to the little arrow at the bottom right of the napari window.\n\n### Inputs\n\nThe plugin does perform input validation, i.e. it will disable the `Run` button if it detects a problem with the selected inputs. Problematic input fields are highlighted with a \"lightcoral\" background color ![](https://via.placeholder.com/15/f08080/f08080.png), and their [*tooltips*](https://en.wikipedia.org/wiki/Tooltip) typically explain what the problem is. Some error messages are shown at the bottom in napari's status bar, such as for incompatibilities between multiple input fields. Input fields with warnings (also explained via tooltips) are highlighted with an orange background color ![](https://via.placeholder.com/15/ffa500/ffa500.png).\n\n**Input Image**: Select a napari layer of type `Image` as the input.  \n*Tooltip:* Shows the shape of the image.\n\n**Image Axes**: String that describes the semantic image axes and their order, e.g. `YX` for a 2D image. This parameter is automatically chosen (i.e. guessed) when a new input image is selected and should work in most cases. Permissible axis values are: `X` (width/columns), `Y` (height/rows), `Z` (depth/planes), `C` (channels), `T` (frames/time).  \n*Tooltip:* Shows the mapping of semantic axes to the shape of the selected input image.\n\n**Predict on field of view (only for 2D models in 2D view)**: If enabled, the StarDist prediction is only applied to the current field of view of the napari viewer. As the name of this checkbox indicates, this only works for 2D StarDist models and when the napari viewer is in 2D viewing mode. The checkbox is not even shown if those conditions are not met.\n\n#### *Neural Network Prediction*\n\n**Model Type**: Choice whether to use registered pre-trained models (`2D`, `3D`) or provide a path to a model folder (`Custom 2D/3D`). Based on this choice, either the input for *Pre-trained Model* or *Custom Model* is shown below.  \n(Further information regarding pre-trained models: [how to register your own model](https://nbviewer.org/github/CSBDeep/CSBDeep/blob/master/examples/other/technical.ipynb#Registry-for-pretrained-models), [model registration in StarDist](https://github.com/stardist/stardist/blob/f73cdc44f718d36844b38c1f1662dbb66d157182/stardist/models/__init__.py#L17-L29).)\n\n**Pre-trained Model**: Select a registered pre-trained model from a list. The first time a model is selected, it is downloaded and cached locally.\n\n**Custom Model**: Provide a path to a StarDist model folder, containing at least `config.json` and a compatible neural network weights file (with suffix `.h5` or `.hdf5`). If present, `thresholds.json` is also loaded and its values can be used via the button *Set optimized postprocessing thresholds (for selected model)*.\n\n**Model Axes**: A read-only text field that shows the semantic axes that the currently selected model expects as input. Additionally, we show the number of expected input channels, e.g. `YXC[2]` to indicate that the model expects a 2D input image with 2 channels. Seeing the model axes is helpful to understand whether the axes of the input image are compatible or not.\n\n**Normalize Image**: A checkbox to indicate whether to perform [percentile-based input image normalization](https://forum.image.sc/t/normalization-in-stardist/41696/2) or not. This should be checked if the input image wasn't [manually normalized](https://forum.image.sc/t/stardist-extension/37696/7) such that most pixel values are in the range 0 to 1. If unchecked, inputs *Percentile low* and *Percentile high* are hidden.\n\n**Percentile low**: Percentile value of input pixel distribution that is mapped to 0 (~min value). If there aren't any outlier pixels in your image, you may use percentile `0` to do a standard [min-max image normalization](https://www.codecademy.com/article/normalization).\n\n**Percentile high**: Percentile value of input pixel distribution that is mapped to 1 (~max value). If there aren't any outlier pixels in your image, you may use percentile `100` to do a standard [min-max image normalization](https://www.codecademy.com/article/normalization).\n\n**Input image scaling**: Number or list of numbers (one per input axis) to scale the input image before prediction and rescale the output accordingly. For example, a value of `0.5` indicates that all spatial axes are downscaled to half their size before prediction, and that the outputs are scaled to double their size. This is useful to adapt to different object sizes in the input image.  \n*Tooltip:* Shows the mapping of scale values to the semantic axes of the selected input image.\n\n#### *NMS Postprocessing*\n\n**Probability/Score Threshold**: Determine the number of object candidates to enter non-maximum suppression. Higher values lead to fewer segmented objects, but will likely avoid false positives. The selected model may have an associated threshold value, which can be loaded via the *Set optimized postprocessing thresholds (for selected model)* button.\n\n**Overlap Threshold**: Determine when two objects are considered the same during non-maximum suppression. Higher values allow segmented objects to overlap substantially. The selected model may have an associated threshold value, which can be loaded via the *Set optimized postprocessing thresholds (for selected model)* button.\n\n**Output Type**: Choose format of [outputs](#outputs) (see below for details). Selecting `Label Image` will create the outputs *StarDist labels* and *StarDist class labels* (for multi-class models only) as napari `Labels` layers. Selecting `Polygons / Polyhedra` will instead return the output *StarDist polygons* as a napari `Shapes` layer for a 2D model, or *StarDist polyhedra* as a napari `Surface` layer for a 3D model. Selecting `Both` will return both types of outputs.\n\n#### *Advanced Options*\n\n**Number of Tiles**: String `None` (to disable tiling) or list of integer numbers (one per axis of input image) to determine how the input image is tiled before the CNN prediction is computed on each tile individually. This is needed to avoid (GPU) memory issues that can occur for large input images. Note that the NMS postprocessing is still run only once with candidates from the predictions of all image tiles.  \n*Tooltip:* Shows the mapping of tile values to the semantic axes of the selected input image.\n\n**Normalization Axes**: String of semantic axes which are jointly normalized (if they are present in the input image). For example, the default value `ZYX` indicates that all spatial axes are always normalized together; if an image has multiple channels, the pixels will be normalized separately per channel (e.g. this is what typically makes sense for fluorescence microscopy where channels are independent). On the other hand, the channels in RGB color images typically need to be normalized jointly, hence using `ZYXC` makes sense in this case. Note: if an image is explicitly opened with `rgb=True` in napari, the channels are automatically normalized together.  \n*Tooltip:* Shows a brief explanation.\n\n**Time-lapse Labels**: If the input is a time-lapse/movie, each frame is first independently processed by StarDist. If `Separate per frame (no processing)` is chosen, the object ids in the label images of each frame are not modified, i.e. they are consecutive integers that always start at 1. Selecting `Unique through time` will cause object ids to be unique over time, i.e. the smallest object id in a given frame is larger than the largest object id of the previous frame. Finally, choosing `Match to previous frame (via overlap)` will perform a simple form of [greedy](https://en.wikipedia.org/wiki/Greedy_algorithm) matching/tracking, where object ids are propagated from one frame to the next based on object overlap.\n\n**Show CNN Output**: Create additional [outputs](#outputs) (see below for details) *StarDist probability* and *StarDist distances* that show the direct results of the CNN prediction which are the inputs to the NMS postprocessing. Additionally, *StarDist class probabilities* is created for multi-class models.\n\n**Set optimized postprocessing thresholds (for selected model)**: Button to set *Probability/Score Threshold* and *Overlap Threshold* to the values provided by the selected model. Nothing is changed if the model does not provide threshold values.\n\n### Outputs\n\n**StarDist polygons**: The detected/segmented 2D objects as polygons (napari `Shapes` layer).\n\n**StarDist polyhedra**: The detected/segmented 3D objects as surfaces (napari `Surface` layer).\n\n**StarDist labels**: The detected/segmented 2D/3D objects as a *label image* (napari `Labels` layer). In an integer-valued label image, the value of a given pixel denotes the id of the object that it belongs to. For example, all pixels with value 5 belong to the object with id 5. All background pixels (that don't belong to any object) have value 0.\n\n**StarDist class labels** ([multi-class models](https://nbviewer.org/github/stardist/stardist/blob/master/examples/other2D/multiclass.ipynb) only): The classes of detected/segmented 2D/3D objects as a *semantic segmentation labeling* (napari `Labels` layer). The integer value of a given pixel denotes the class id of the object that it belongs to. For example, all pixels with value 3 belong to the object class 3. Note that all pixels that belong to a specific object instance (as returned by *StarDist labels*) do have the same object class here. All background pixels (that don't belong to an object class) have value 0.\n\n**StarDist probability**: The object probabilities predicted by the neural network as a single-channel image (napari `Image` layer).\n\n**StarDist distances**: The radial distances predicted by the neural network as a multi-channel image (napari `Image` layer).\n\n**StarDist class probabilities** ([multi-class models](https://nbviewer.org/github/stardist/stardist/blob/master/examples/other2D/multiclass.ipynb) only): The object class probabilities predicted by the neural network as a multi-channel image (napari `Image` layer).\n\n\n## Troubleshooting & Support\n\n- The [image.sc forum](https://forum.image.sc/tag/stardist) is the best place to start getting help and support. Make sure to use the tag `stardist`, since we are monitoring all questions with this tag.\n- For general questions about StarDist, it's worth taking a look at the [frequently asked questions (FAQ)]( https://stardist.net/docs/faq.html).\n- If you have technical questions or found a bug, feel free to [open an issue](https://github.com/stardist/stardist-napari/issues).\n\n\n## Other resources\n\nA demonstration of an earlier version of the plugin is shown in [this video](https://www.youtube.com/watch?v=Km1_TnUQ4FM&list=PLilvrWT8aLuZCaOkjucLjvDu2YRtCS-JT&index=5).\n\nMany of the parameters are identical to those of our [StarDist ImageJ/Fiji plugin](https://github.com/stardist/stardist-imagej), which are documented [here](https://imagej.net/plugins/stardist#usage).\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "https://github.com/stardist/stardist",
+    "keywords": "",
+    "license": "BSD 3-Clause License",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "stardist-napari",
+    "package_url": "https://pypi.org/project/stardist-napari/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/stardist-napari/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/stardist/stardist-napari/issues",
+      "Documentation": "https://github.com/stardist/stardist-napari",
+      "Homepage": "https://github.com/stardist/stardist",
+      "Source Code": "https://github.com/stardist/stardist-napari",
+      "Twitter": "https://twitter.com/martweig",
+      "User Support": "https://forum.image.sc/tag/stardist"
+    },
+    "release_url": "https://pypi.org/project/stardist-napari/2022.7.5/",
+    "requires_dist": [
+      "stardist (>=0.8.3)",
+      "napari (>=0.4.13)",
+      "magicgui (>=0.4.0)",
+      "tensorflow ; platform_system != \"Darwin\" or platform_machine != \"arm64\"",
+      "tensorflow-macos ; platform_system == \"Darwin\" and platform_machine == \"arm64\"",
+      "tensorflow-metal ; platform_system == \"Darwin\" and platform_machine == \"arm64\"",
+      "pytest ; extra == 'test'",
+      "pytest-qt ; extra == 'test'",
+      "napari[pyqt] (>=0.4.13) ; extra == 'test'"
+    ],
+    "requires_python": ">=3.7",
+    "summary": "Object Detection with Star-convex Shapes",
+    "version": "2022.7.5",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 14343896,
+  "releases": {
+    "2021.10.25": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "63185e49c4741ce3239074be7c697dcf",
+          "sha256": "e0bf8385f27b2ceefa03fd9ee702735de919d5d2f434189012a53a8ec3be602a"
+        },
+        "downloads": -1,
+        "filename": "stardist_napari-2021.10.25-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "63185e49c4741ce3239074be7c697dcf",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 28196,
+        "upload_time": "2021-10-25T10:28:43",
+        "upload_time_iso_8601": "2021-10-25T10:28:43.093082Z",
+        "url": "https://files.pythonhosted.org/packages/4f/b7/0bdb675ebd0ecb93ae15e131d00b001f32bd2e788a94cd1b8eb7772879a2/stardist_napari-2021.10.25-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "5748acd47fea97b306c08048f30ad49e",
+          "sha256": "91fafda56ab66e0743151f523024262992c7399b65c96a047c5d77013d7c3844"
+        },
+        "downloads": -1,
+        "filename": "stardist-napari-2021.10.25.tar.gz",
+        "has_sig": false,
+        "md5_digest": "5748acd47fea97b306c08048f30ad49e",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 31150,
+        "upload_time": "2021-10-25T10:28:45",
+        "upload_time_iso_8601": "2021-10-25T10:28:45.027644Z",
+        "url": "https://files.pythonhosted.org/packages/f8/53/309249a4bafb33ecac668ac18fb433fa24d504c118a7a84763f8b84c923b/stardist-napari-2021.10.25.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "2021.6.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "22dfa57f15f0a69562877ebece1152a2",
+          "sha256": "f1d9927787bec376c124bf86733b1dee09878a894b9cdf587fc3909abe7ee822"
+        },
+        "downloads": -1,
+        "filename": "stardist_napari-2021.6.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "22dfa57f15f0a69562877ebece1152a2",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 26309,
+        "upload_time": "2021-06-01T13:33:52",
+        "upload_time_iso_8601": "2021-06-01T13:33:52.440542Z",
+        "url": "https://files.pythonhosted.org/packages/ee/7a/6b57bcd48e4c547ddfa4a9435a8656640b4cdada13bbc6e3f0f169c17945/stardist_napari-2021.6.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "8dcd84906bfc54a2a6cc291297cfb5fd",
+          "sha256": "171d2ebdbd748d1666c35f8e609ed48461776d050f3a009ae83f9f5f0415f77e"
+        },
+        "downloads": -1,
+        "filename": "stardist-napari-2021.6.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "8dcd84906bfc54a2a6cc291297cfb5fd",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 27362,
+        "upload_time": "2021-06-01T13:33:53",
+        "upload_time_iso_8601": "2021-06-01T13:33:53.957085Z",
+        "url": "https://files.pythonhosted.org/packages/17/f2/88d6a7ca2e521845b7508d5288856b46862f86b370baabcca067d2fd6395/stardist-napari-2021.6.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "2021.6.26": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "31a663a898167e41978f69ec5ec45000",
+          "sha256": "3ea5b5c6fc5984d63897a8b146275e19f0961642c621f23acf150fb206df9c61"
+        },
+        "downloads": -1,
+        "filename": "stardist_napari-2021.6.26-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "31a663a898167e41978f69ec5ec45000",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 28038,
+        "upload_time": "2021-06-26T00:00:39",
+        "upload_time_iso_8601": "2021-06-26T00:00:39.886409Z",
+        "url": "https://files.pythonhosted.org/packages/b5/6d/b5fe4fb90e1a4bbe83c7fd9d8e5c123481c6a4e40ca8d0843f5a28fc9558/stardist_napari-2021.6.26-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "90751b9b9fa13f90968fd5f15a5cdaf1",
+          "sha256": "1eba5052ebce1c6a27087049bc05d8c6e3a072cb89f794ba53869f64b0f5ed7f"
+        },
+        "downloads": -1,
+        "filename": "stardist-napari-2021.6.26.tar.gz",
+        "has_sig": false,
+        "md5_digest": "90751b9b9fa13f90968fd5f15a5cdaf1",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 30899,
+        "upload_time": "2021-06-26T00:00:41",
+        "upload_time_iso_8601": "2021-06-26T00:00:41.662445Z",
+        "url": "https://files.pythonhosted.org/packages/43/5b/0eb82d9fa842dd1808de0af4bc1f7f156490a1ba3892995755e4b3ae990b/stardist-napari-2021.6.26.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "2021.6.28": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "313b7a164e6d67b4018ac97f202d4fff",
+          "sha256": "ffd3fc2f4d0f139abd657d5abf0af5556b90a2269118821a0503757ac4bf5d4e"
+        },
+        "downloads": -1,
+        "filename": "stardist_napari-2021.6.28-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "313b7a164e6d67b4018ac97f202d4fff",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 28141,
+        "upload_time": "2021-06-28T21:00:19",
+        "upload_time_iso_8601": "2021-06-28T21:00:19.414832Z",
+        "url": "https://files.pythonhosted.org/packages/f7/b5/2448479cdb3513e1d6e71c34d69f9a92355a5a466e9f3367b0e08f0803b0/stardist_napari-2021.6.28-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "d19bebce2aaf5291583d997ab5193ab7",
+          "sha256": "5f52af73314a8d0e8d3289a49b8cb3b8cfa3ea897359a8478b6659fe3fd8edef"
+        },
+        "downloads": -1,
+        "filename": "stardist-napari-2021.6.28.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d19bebce2aaf5291583d997ab5193ab7",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 30730,
+        "upload_time": "2021-06-28T21:00:21",
+        "upload_time_iso_8601": "2021-06-28T21:00:21.160695Z",
+        "url": "https://files.pythonhosted.org/packages/13/82/049468489b63a71da0c97396bb4dfe26d391788d29d8be9c3721ef8ea9f0/stardist-napari-2021.6.28.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "2022.3.30": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "5e2136bc3746b50447f252df9c067bf0",
+          "sha256": "23b1edc03430b2b4bf66e45934cdacff7c88dcbb74432318e1de26bc7b1b1936"
+        },
+        "downloads": -1,
+        "filename": "stardist_napari-2022.3.30-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "5e2136bc3746b50447f252df9c067bf0",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 32211,
+        "upload_time": "2022-03-30T09:44:06",
+        "upload_time_iso_8601": "2022-03-30T09:44:06.175939Z",
+        "url": "https://files.pythonhosted.org/packages/13/6a/bad529d0672357b2918bd928572d2de7fe6869ac664d54b25c479b6bba35/stardist_napari-2022.3.30-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "45d05b40d9bbf452be5acc0ea4f42340",
+          "sha256": "24a54d0974535d4f2d36138533812432c979f6af4026d8b7c3c280378e08d9ad"
+        },
+        "downloads": -1,
+        "filename": "stardist-napari-2022.3.30.tar.gz",
+        "has_sig": false,
+        "md5_digest": "45d05b40d9bbf452be5acc0ea4f42340",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 35252,
+        "upload_time": "2022-03-30T09:44:07",
+        "upload_time_iso_8601": "2022-03-30T09:44:07.988291Z",
+        "url": "https://files.pythonhosted.org/packages/75/4f/839f4080ba4212da1864e0b33114b7684294565e6c5170bfc64c546b09df/stardist-napari-2022.3.30.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "2022.4.4": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "5a2216abfaba9da544ede531fdf4d090",
+          "sha256": "d38b6fdfe09e43ec8d9706fb78b5bbb074566548fe4421a18f188175a4dc81f8"
+        },
+        "downloads": -1,
+        "filename": "stardist_napari-2022.4.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "5a2216abfaba9da544ede531fdf4d090",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 32274,
+        "upload_time": "2022-04-04T21:34:00",
+        "upload_time_iso_8601": "2022-04-04T21:34:00.576560Z",
+        "url": "https://files.pythonhosted.org/packages/59/15/4cb7c845f8ad3f20bca44a702a96b24308d56e504fce2f219309034e9dae/stardist_napari-2022.4.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "bb753d337e2eda1e20df9f8b4fe0813b",
+          "sha256": "1e91724162b98513e9565ac9d6aade56fca2941ef38b91d05d26a58b71b119e5"
+        },
+        "downloads": -1,
+        "filename": "stardist-napari-2022.4.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "bb753d337e2eda1e20df9f8b4fe0813b",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 35226,
+        "upload_time": "2022-04-04T21:34:01",
+        "upload_time_iso_8601": "2022-04-04T21:34:01.889263Z",
+        "url": "https://files.pythonhosted.org/packages/19/bc/96524ce1de75a6ca2e1b344887ec557ce0250d83a031155a54a22a66607a/stardist-napari-2022.4.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "2022.4.8": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "b29cfea648bafaf612d2da7a8e1bead1",
+          "sha256": "be2415ae8db622d87558aaafe529ca85b1dd68a67670a2e62c8f7389933c7cd3"
+        },
+        "downloads": -1,
+        "filename": "stardist_napari-2022.4.8-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "b29cfea648bafaf612d2da7a8e1bead1",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 34528,
+        "upload_time": "2022-04-08T17:23:16",
+        "upload_time_iso_8601": "2022-04-08T17:23:16.037514Z",
+        "url": "https://files.pythonhosted.org/packages/bb/6a/069fcb01942d4b369e0f3238ebaf179f0873d19338b921c2b39de3379766/stardist_napari-2022.4.8-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "2dbefaaeef5d47ff253b12d62cc1770c",
+          "sha256": "292e2855ccfb3a5c66f81bd3453a1f0d48147c605b5eb66d1c00bb175d47f9fe"
+        },
+        "downloads": -1,
+        "filename": "stardist-napari-2022.4.8.tar.gz",
+        "has_sig": false,
+        "md5_digest": "2dbefaaeef5d47ff253b12d62cc1770c",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 36667,
+        "upload_time": "2022-04-08T17:23:17",
+        "upload_time_iso_8601": "2022-04-08T17:23:17.424186Z",
+        "url": "https://files.pythonhosted.org/packages/19/0d/ee9d43d8b0a04f8cf3e8485e35eb77a9b0068502d10415bcffebf5a30aee/stardist-napari-2022.4.8.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "2022.6.4": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "32f0b61273d6e45c784213c8e8d4c831",
+          "sha256": "e76bb469e320e6a7293ecc905e282b175cb376f5197f6b39498c0f4eafcfbce7"
+        },
+        "downloads": -1,
+        "filename": "stardist_napari-2022.6.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "32f0b61273d6e45c784213c8e8d4c831",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 39866,
+        "upload_time": "2022-06-04T15:52:43",
+        "upload_time_iso_8601": "2022-06-04T15:52:43.960343Z",
+        "url": "https://files.pythonhosted.org/packages/a2/20/ad281af5eb1faa5d21320dbf2abd4eac970876e17a9dac6232fb308d1aed/stardist_napari-2022.6.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "c0da8f01cefedbd9017fb9e4f802f81b",
+          "sha256": "4d30d12e46eab2db1d7258c0ea0292925905e1efa033b2702b3341ad38f9ead5"
+        },
+        "downloads": -1,
+        "filename": "stardist-napari-2022.6.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "c0da8f01cefedbd9017fb9e4f802f81b",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 41335,
+        "upload_time": "2022-06-04T15:52:45",
+        "upload_time_iso_8601": "2022-06-04T15:52:45.460839Z",
+        "url": "https://files.pythonhosted.org/packages/93/4e/50384bb31839847c00874d9875b755cfe0e000a854c375a39bb69079a375/stardist-napari-2022.6.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "2022.6.7": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "450cfbc53d09a55ab21e936e2b7e1d38",
+          "sha256": "c043c928970ccaf612eaac00126f5d5227cd92b921f58a98a324f245d259d53b"
+        },
+        "downloads": -1,
+        "filename": "stardist_napari-2022.6.7-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "450cfbc53d09a55ab21e936e2b7e1d38",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 39874,
+        "upload_time": "2022-06-07T20:11:04",
+        "upload_time_iso_8601": "2022-06-07T20:11:04.761420Z",
+        "url": "https://files.pythonhosted.org/packages/66/7b/b4c1641a7ecdfc1d6fe731b425421b0232fcad3d9c73c3d4eebc3ba325cb/stardist_napari-2022.6.7-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "3ed3cedfda6105bf1f162b648ae0c83f",
+          "sha256": "e20cde08c42bb91f088398111d8649f90081ddb83c4acb267d0c73945e6a753d"
+        },
+        "downloads": -1,
+        "filename": "stardist-napari-2022.6.7.tar.gz",
+        "has_sig": false,
+        "md5_digest": "3ed3cedfda6105bf1f162b648ae0c83f",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 41317,
+        "upload_time": "2022-06-07T20:11:06",
+        "upload_time_iso_8601": "2022-06-07T20:11:06.270962Z",
+        "url": "https://files.pythonhosted.org/packages/56/4d/870eeb34fb474dee91d76d2d3f2e91b89aa76a3ef8ce063dc9de14816f6b/stardist-napari-2022.6.7.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "2022.7.5": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "bb91cf455ce778f281b5800b7b33ed68",
+          "sha256": "d43d71522f906c37c6f469032491c25c4d327aebfbe4a15cf74486bddb20051e"
+        },
+        "downloads": -1,
+        "filename": "stardist_napari-2022.7.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "bb91cf455ce778f281b5800b7b33ed68",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 43660,
+        "upload_time": "2022-07-05T20:10:53",
+        "upload_time_iso_8601": "2022-07-05T20:10:53.259357Z",
+        "url": "https://files.pythonhosted.org/packages/4c/aa/6f98e19f31cd38d3c1d4355cace4bcf0e16ff62d6b2f65724b34a0155f13/stardist_napari-2022.7.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "a0efbe293f77af0539bd7c7241fbc952",
+          "sha256": "64ce4fa611a6c38965ea493cd52b50d5059dbd66f129a9f65f2be232883ba954"
+        },
+        "downloads": -1,
+        "filename": "stardist-napari-2022.7.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "a0efbe293f77af0539bd7c7241fbc952",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 48330,
+        "upload_time": "2022-07-05T20:10:55",
+        "upload_time_iso_8601": "2022-07-05T20:10:55.116075Z",
+        "url": "https://files.pythonhosted.org/packages/b7/0f/3a68bb5c770a8ce2ef1f0b1fd559c69725d2d42ca01e4d54ab50e7ef6398/stardist-napari-2022.7.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "bb91cf455ce778f281b5800b7b33ed68",
+        "sha256": "d43d71522f906c37c6f469032491c25c4d327aebfbe4a15cf74486bddb20051e"
+      },
+      "downloads": -1,
+      "filename": "stardist_napari-2022.7.5-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "bb91cf455ce778f281b5800b7b33ed68",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.7",
+      "size": 43660,
+      "upload_time": "2022-07-05T20:10:53",
+      "upload_time_iso_8601": "2022-07-05T20:10:53.259357Z",
+      "url": "https://files.pythonhosted.org/packages/4c/aa/6f98e19f31cd38d3c1d4355cace4bcf0e16ff62d6b2f65724b34a0155f13/stardist_napari-2022.7.5-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "a0efbe293f77af0539bd7c7241fbc952",
+        "sha256": "64ce4fa611a6c38965ea493cd52b50d5059dbd66f129a9f65f2be232883ba954"
+      },
+      "downloads": -1,
+      "filename": "stardist-napari-2022.7.5.tar.gz",
+      "has_sig": false,
+      "md5_digest": "a0efbe293f77af0539bd7c7241fbc952",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.7",
+      "size": 48330,
+      "upload_time": "2022-07-05T20:10:55",
+      "upload_time_iso_8601": "2022-07-05T20:10:55.116075Z",
+      "url": "https://files.pythonhosted.org/packages/b7/0f/3a68bb5c770a8ce2ef1f0b1fd559c69725d2d42ca01e4d54ab50e7ef6398/stardist-napari-2022.7.5.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

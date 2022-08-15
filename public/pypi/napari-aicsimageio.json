@@ -1,0 +1,884 @@
+{
+  "info": {
+    "author": "",
+    "author_email": "Eva Maxfield Brown <evamaxfieldbrown@gmail.com>, Talley Lambert <talley.lambert@gmail.com>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 5 - Production/Stable",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Scientific/Engineering",
+      "Topic :: Scientific/Engineering :: Bio-Informatics",
+      "Topic :: Scientific/Engineering :: Image Processing",
+      "Topic :: Scientific/Engineering :: Information Analysis",
+      "Topic :: Scientific/Engineering :: Visualization"
+    ],
+    "description": "# napari-aicsimageio\n\n[![License](https://img.shields.io/pypi/l/napari-aicsimageio.svg?color=green)](https://github.com/AllenCellModeling/napari-aicsimageio/raw/main/LICENSE)\n[![Build Status](https://github.com/AllenCellModeling/napari-aicsimageio/workflows/Build%20Main/badge.svg)](https://github.com/AllenCellModeling/napari-aicsimageio/actions)\n[![Code Coverage](https://codecov.io/gh/AllenCellModeling/napari-aicsimageio/branch/main/graph/badge.svg)](https://codecov.io/gh/AllenCellModeling/napari-aicsimageio)\n\nAICSImageIO bindings for napari\n\n---\n\n## Features\n\n-   Supports reading metadata and imaging data for:\n    -   `OME-TIFF`\n    -   `TIFF`\n    -   `CZI` (Zeiss)\n    -   `LIF` (Leica)\n    -   `ND2` (Nikon)\n    -   `DV` (DeltaVision)\n    -   Any formats supported by [aicsimageio](https://github.com/AllenCellModeling/aicsimageio)\n    -   Any formats supported by [bioformats](https://github.com/tlambert03/bioformats_jar)\n        -   `SLD` (Slidebook)\n        -   `SVS` (Aperio)\n        -   [Full List](https://docs.openmicroscopy.org/bio-formats/6.5.1/supported-formats.html)\n    -   Any additional format supported by [imageio](https://github.com/imageio/imageio)\n        -   `PNG`\n        -   `JPG`\n        -   `GIF`\n        -   `AVI`\n        -   [Full List](https://imageio.readthedocs.io/en/v2.4.1/formats.html)\n\n_While upstream `aicsimageio` is released under BSD-3 license, this plugin is released under GPLv3 license because it installs all format reader dependencies._\n\n## Installation\n\n**Stable Release:** `pip install napari-aicsimageio` or `conda install napari-aicsimageio -c conda-forge`<br>\n**Development Head:** `pip install git+https://github.com/AllenCellModeling/napari-aicsimageio.git`\n\n### Reading Mode Threshold\n\nThis image reading plugin will load the provided image directly into memory if it meets\nthe following two conditions:\n\n1. The filesize is less than 4GB.\n2. The filesize is less than 30% of machine memory available.\n\nIf either of these conditions isn't met, the image is loaded in chunks only as needed.\n\n## Examples of Features\n\n#### General Image Reading\n\nAll image file formats supported by\n[aicsimageio](https://github.com/AllenCellModeling/aicsimageio) will be read and all\nraw data will be available in the napari viewer.\n\nIn addition, when reading an OME-TIFF, you can view all OME metadata directly in the\nnapari viewer thanks to `ome-types`.\n\n![screenshot of an OME-TIFF image view, multi-channel, z-stack, with metadata viewer](https://raw.githubusercontent.com/AllenCellModeling/napari-aicsimageio/main/images/ome-tiff-with-metadata-viewer.png)\n\n#### Multi-Scene Selection\n\nWhen reading a multi-scene file, a widget will be added to the napari viewer to manage\nscene selection (clearing the viewer each time you change scene or adding the\nscene content to the viewer) and a list of all scenes in the file.\n\n![gif of drag and drop file to scene selection and management](https://raw.githubusercontent.com/AllenCellModeling/napari-aicsimageio/main/images/scene-selection.gif)\n\n#### Access to the AICSImage Object and Metadata\n\n![napari viewer with console open showing `viewer.layers[0].metadata`](https://raw.githubusercontent.com/AllenCellModeling/napari-aicsimageio/main/images/console-access.png)\n\nYou can access the `AICSImage` object used to load the image pixel data and\nimage metadata using the built-in napari console:\n\n```python\nimg = viewer.layers[0].metadata[\"aicsimage\"]\nimg.dims.order  # TCZYX\nimg.channel_names  # [\"Bright\", \"Struct\", \"Nuc\", \"Memb\"]\nimg.get_image_dask_data(\"ZYX\")  # dask.array.Array\n```\n\nThe napari layer metadata dictionary also stores a shorthand\nfor the raw image metadata:\n\n```python\nviewer.layers[0].metadata[\"raw_image_metadata\"]\n```\n\nThe metadata is returned in whichever format is used by the underlying\nfile format reader, i.e. for CZI the raw metadata is returned as\nan `xml.etree.ElementTree.Element`, for OME-TIFF the raw metadata is returned\nas an `OME` object from `ome-types`.\n\nLastly, if the underlying file format reader has an OME metadata conversion function,\nyou may additionally see a key in the napari layer metadata dictionary\ncalled `\"ome_types\"`. For example, because the AICSImageIO\n`CZIReader` and `BioformatsReader` both support converting raw image metadata\nto OME metadata, you will see an `\"ome_types\"` key that stores the metadata transformed\ninto the OME metadata model.\n\n```python\nviewer.layers[0].metadata[\"ome_types\"]  # OME object from ome-types\n```\n\n#### Mosaic Reading\n\nWhen reading CZI or LIF images, if the image is a mosaic tiled image, `napari-aicsimageio`\nwill return the reconstructed image:\n\n![screenshot of a reconstructed / restitched mosaic tile LIF](https://raw.githubusercontent.com/AllenCellModeling/napari-aicsimageio/main/images/tiled-lif.png)\n\n## Development\n\nSee [CONTRIBUTING.md](CONTRIBUTING.md) for information related to developing the code.\n\nFor additional file format support, contributed directly to\n[AICSImageIO](https://github.com/AllenCellModeling/aicsimageio).\nNew file format support will become directly available in this\nplugin on new `aicsimageio` releases.\n\n## Citation\n\nIf you find `aicsimageio` _(or `napari-aicsimageio`)_ useful, please cite as:\n\n> AICSImageIO Contributors (2021). AICSImageIO: Image Reading, Metadata Conversion, and Image Writing for Microscopy Images in Pure Python [Computer software]. GitHub. https://github.com/AllenCellModeling/aicsimageio\n\n_Free software: GPLv3_\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "",
+    "keywords": "aicsimageio,CZI,image reading,imageio,LIF,metadata,napari,ND2,TIFF",
+    "license": "GPLv3",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "napari-aicsimageio",
+    "package_url": "https://pypi.org/project/napari-aicsimageio/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-aicsimageio/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/AllenCellModeling/napari-aicsimageio/issues",
+      "Documentation": "https://github.com/AllenCellModeling/napari-aicsimageio#README.md",
+      "Homepage": "https://github.com/AllenCellModeling/napari-aicsimageio",
+      "User Support": "https://github.com/AllenCellModeling/napari-aicsimageio/issues"
+    },
+    "release_url": "https://pypi.org/project/napari-aicsimageio/0.7.1/",
+    "requires_dist": [
+      "aicsimageio[all] (>=4.6.3)",
+      "fsspec[http]",
+      "napari (>=0.4.11)",
+      "psutil (>=5.7.0)",
+      "aicspylibczi (>=3.0.5)",
+      "bioformats-jar",
+      "readlif (>=0.6.4)",
+      "black (>=19.10b0) ; extra == 'dev'",
+      "bump2version (>=1.0.1) ; extra == 'dev'",
+      "coverage (>=5.1) ; extra == 'dev'",
+      "docutils (<0.16,>=0.10) ; extra == 'dev'",
+      "flake8-debugger (>=3.2.1) ; extra == 'dev'",
+      "flake8-pyprojecttoml ; extra == 'dev'",
+      "flake8 (>=3.8.3) ; extra == 'dev'",
+      "ipython (>=7.15.0) ; extra == 'dev'",
+      "isort (>=5.7.0) ; extra == 'dev'",
+      "mypy (>=0.800) ; extra == 'dev'",
+      "pytest-runner (>=5.2) ; extra == 'dev'",
+      "twine (>=3.1.1) ; extra == 'dev'",
+      "wheel (>=0.34.2) ; extra == 'dev'",
+      "PyQt5 ; extra == 'test'",
+      "pytest (>=5.4.3) ; extra == 'test'",
+      "pytest-qt (~=4.0) ; extra == 'test'",
+      "pytest-cov (>=2.9.0) ; extra == 'test'",
+      "pytest-raises (>=0.11) ; extra == 'test'",
+      "pytest-xvfb (~=2.0) ; extra == 'test'",
+      "quilt3 (~=3.4.0) ; extra == 'test'"
+    ],
+    "requires_python": ">=3.8",
+    "summary": "AICSImageIO bindings for napari",
+    "version": "0.7.1",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 14536832,
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "0d557e84dab5589fe4ee7b897d1a32cb",
+          "sha256": "824dfceccc436d3f589ceb77c49df3a9bd04851e62aa3c171901f19401b0a4b3"
+        },
+        "downloads": -1,
+        "filename": "napari_aicsimageio-0.1.0-py2.py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "0d557e84dab5589fe4ee7b897d1a32cb",
+        "packagetype": "bdist_wheel",
+        "python_version": "py2.py3",
+        "requires_python": ">=3.6",
+        "size": 6530,
+        "upload_time": "2020-03-26T20:10:54",
+        "upload_time_iso_8601": "2020-03-26T20:10:54.889461Z",
+        "url": "https://files.pythonhosted.org/packages/d4/66/bf0c7912cc7a6ff099b8a1f98c6ffe0727e79c12bd5f4e389d745862e35d/napari_aicsimageio-0.1.0-py2.py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "22ab10e0b0481352a85f26730b971b59",
+          "sha256": "4374eda8bf6a2a60b3bdd5ca580cff8a747262f1c338e40401a986d6e0e32e05"
+        },
+        "downloads": -1,
+        "filename": "napari-aicsimageio-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "22ab10e0b0481352a85f26730b971b59",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.6",
+        "size": 6257,
+        "upload_time": "2020-03-26T20:10:57",
+        "upload_time_iso_8601": "2020-03-26T20:10:57.858112Z",
+        "url": "https://files.pythonhosted.org/packages/d4/1b/c4f9006396c3935226fe294696e8e72b8e629731f008a5c8b4602bda8f19/napari-aicsimageio-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "93faead6eaf30ea1f5ecb9d64775da5a",
+          "sha256": "72e8a4ac4d3dff569686d39ea6bdcd60158dbe64eab0d83685f799a7999e870e"
+        },
+        "downloads": -1,
+        "filename": "napari_aicsimageio-0.1.1-py2.py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "93faead6eaf30ea1f5ecb9d64775da5a",
+        "packagetype": "bdist_wheel",
+        "python_version": "py2.py3",
+        "requires_python": ">=3.6",
+        "size": 6565,
+        "upload_time": "2020-04-28T19:51:47",
+        "upload_time_iso_8601": "2020-04-28T19:51:47.729723Z",
+        "url": "https://files.pythonhosted.org/packages/c3/8e/12638b457f8a4223bf3c34d0ac9b2d8a36b9dd098e02685c8f0928514155/napari_aicsimageio-0.1.1-py2.py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "1059ee4ce0d85ab9729a80f5e566dd46",
+          "sha256": "66d68a04cb1e5b3758a5cef02e91eaf77019d73f3194d64b11ee810d8f7dd6cc"
+        },
+        "downloads": -1,
+        "filename": "napari-aicsimageio-0.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "1059ee4ce0d85ab9729a80f5e566dd46",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.6",
+        "size": 6408,
+        "upload_time": "2020-04-28T19:51:48",
+        "upload_time_iso_8601": "2020-04-28T19:51:48.692757Z",
+        "url": "https://files.pythonhosted.org/packages/31/6e/f270a5668b74a155dbeb7ee3e4a6c18797714961fd87bce81b40c577ceff/napari-aicsimageio-0.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "4393cbdb7fe6dfb0a7b2697fb2cda1c1",
+          "sha256": "ee60bc3d982583edf7a92abd3c5568c01e33d88d1ffc70d669b88e53868343e9"
+        },
+        "downloads": -1,
+        "filename": "napari_aicsimageio-0.1.2-py2.py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "4393cbdb7fe6dfb0a7b2697fb2cda1c1",
+        "packagetype": "bdist_wheel",
+        "python_version": "py2.py3",
+        "requires_python": ">=3.6",
+        "size": 6664,
+        "upload_time": "2020-06-23T19:52:34",
+        "upload_time_iso_8601": "2020-06-23T19:52:34.211176Z",
+        "url": "https://files.pythonhosted.org/packages/8d/4b/5504d12b937358c321cc66e2268a0aa562b1aa5651f5bcd31d9540f9b29c/napari_aicsimageio-0.1.2-py2.py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "d1dea35874a3bab84e0909005c916aaf",
+          "sha256": "52da28c7c19b3593adec00c8bee1f991f379205586449d30c33fc56b1ed89bae"
+        },
+        "downloads": -1,
+        "filename": "napari-aicsimageio-0.1.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d1dea35874a3bab84e0909005c916aaf",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.6",
+        "size": 6890,
+        "upload_time": "2020-06-23T19:52:37",
+        "upload_time_iso_8601": "2020-06-23T19:52:37.021462Z",
+        "url": "https://files.pythonhosted.org/packages/99/d4/2108f5ffde75e7cf44844c8a751e632d4ceafb3162c14932d1437d3bbd71/napari-aicsimageio-0.1.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.3": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "6fba278a4706d1bc8dbed8e97b623f84",
+          "sha256": "270d5fb9b59b36bb9a52aced90c89ff9369c4c695ef5c8e11208f795bf1d96ab"
+        },
+        "downloads": -1,
+        "filename": "napari_aicsimageio-0.1.3-py2.py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "6fba278a4706d1bc8dbed8e97b623f84",
+        "packagetype": "bdist_wheel",
+        "python_version": "py2.py3",
+        "requires_python": ">=3.6",
+        "size": 6686,
+        "upload_time": "2020-06-24T22:49:20",
+        "upload_time_iso_8601": "2020-06-24T22:49:20.228058Z",
+        "url": "https://files.pythonhosted.org/packages/c4/00/4b1bfa125d0212c2b8f3f3332ebdc3e10435143d541d173b0739866a81a1/napari_aicsimageio-0.1.3-py2.py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "c2c4f25927740ac5b777906fbe41cdc1",
+          "sha256": "92b655170fc9677644be02a4f4933e107cc6a9fcc0ea51976a307a410defba54"
+        },
+        "downloads": -1,
+        "filename": "napari-aicsimageio-0.1.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "c2c4f25927740ac5b777906fbe41cdc1",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.6",
+        "size": 6913,
+        "upload_time": "2020-06-24T22:49:21",
+        "upload_time_iso_8601": "2020-06-24T22:49:21.423297Z",
+        "url": "https://files.pythonhosted.org/packages/8b/c7/14ac84229cf127ee9627d46e4a3645ebb8a530ef7d18e44cd30666b7cdfe/napari-aicsimageio-0.1.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "d2140c4b74f71af45afa46e0defecea7",
+          "sha256": "fa87d611da53daa5051a244db39b49883917990c12f3a8f5e01b8451a01fbf22"
+        },
+        "downloads": -1,
+        "filename": "napari_aicsimageio-0.2.0-py2.py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "d2140c4b74f71af45afa46e0defecea7",
+        "packagetype": "bdist_wheel",
+        "python_version": "py2.py3",
+        "requires_python": ">=3.7",
+        "size": 6015,
+        "upload_time": "2020-12-14T07:30:26",
+        "upload_time_iso_8601": "2020-12-14T07:30:26.366917Z",
+        "url": "https://files.pythonhosted.org/packages/c5/25/86011a70876e75632d17c2525d48d7221c7cff468cf67dcdd320ed58734b/napari_aicsimageio-0.2.0-py2.py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "e0f45c041c0101d63528c42f9564a931",
+          "sha256": "7df8b9756afd92b608f959437814d823d1395242e67ad275b44b105845df2675"
+        },
+        "downloads": -1,
+        "filename": "napari-aicsimageio-0.2.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e0f45c041c0101d63528c42f9564a931",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 6272,
+        "upload_time": "2020-12-14T07:30:27",
+        "upload_time_iso_8601": "2020-12-14T07:30:27.357730Z",
+        "url": "https://files.pythonhosted.org/packages/74/ea/ec991c7a00366e93de3f2333e999a6db67923d68d541704482269c3826e1/napari-aicsimageio-0.2.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "cb8db17fa28f8f6bf83cf37bbd387838",
+          "sha256": "f7537e773b945937da8507efa7616a551667400a516fa1483b89ad6f5392a92e"
+        },
+        "downloads": -1,
+        "filename": "napari_aicsimageio-0.3.0-py2.py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "cb8db17fa28f8f6bf83cf37bbd387838",
+        "packagetype": "bdist_wheel",
+        "python_version": "py2.py3",
+        "requires_python": ">=3.8",
+        "size": 6908,
+        "upload_time": "2021-06-29T18:08:55",
+        "upload_time_iso_8601": "2021-06-29T18:08:55.760460Z",
+        "url": "https://files.pythonhosted.org/packages/eb/2d/df6454618ab21359d5cbd6cb0d3ab6c75fc3ab9d2728d74412fa98910bb8/napari_aicsimageio-0.3.0-py2.py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "934647f44e56593acb5893d88a87b709",
+          "sha256": "a6ef8a5fba516fd7e4a3dcb0d62e675ed6f7e6e498926fcb9724f3917afa72dc"
+        },
+        "downloads": -1,
+        "filename": "napari-aicsimageio-0.3.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "934647f44e56593acb5893d88a87b709",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 7497,
+        "upload_time": "2021-06-29T18:10:27",
+        "upload_time_iso_8601": "2021-06-29T18:10:27.049950Z",
+        "url": "https://files.pythonhosted.org/packages/90/12/c4b1edb33fcb2c7fdf598e295cc4ec9c3770e316eb5f07664a75bb92a329/napari-aicsimageio-0.3.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "52c6aa3ec986ff7418e1c860bd931f98",
+          "sha256": "47dcafc918d9fb109386afd74b279a8af7a7b1c0c3b974a0c21897c3909f1bea"
+        },
+        "downloads": -1,
+        "filename": "napari_aicsimageio-0.3.1-py2.py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "52c6aa3ec986ff7418e1c860bd931f98",
+        "packagetype": "bdist_wheel",
+        "python_version": "py2.py3",
+        "requires_python": ">=3.8",
+        "size": 6929,
+        "upload_time": "2021-06-29T18:21:39",
+        "upload_time_iso_8601": "2021-06-29T18:21:39.643935Z",
+        "url": "https://files.pythonhosted.org/packages/27/c6/3ab2f7c6c599457cfd92d6381a0203aefa6efc180e68662294060de331cf/napari_aicsimageio-0.3.1-py2.py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "fd69ab93c1365b12628c89aa592bdcfa",
+          "sha256": "f00036cfe0bbdcbf8d8f0e25efd0a703c214ae4ff36f5efb16457b2c6b85dcae"
+        },
+        "downloads": -1,
+        "filename": "napari-aicsimageio-0.3.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "fd69ab93c1365b12628c89aa592bdcfa",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 7528,
+        "upload_time": "2021-06-29T18:21:41",
+        "upload_time_iso_8601": "2021-06-29T18:21:41.258744Z",
+        "url": "https://files.pythonhosted.org/packages/ad/31/903bf1ca83a775f2a2ba201cd47622e7592a3c1e8b885b19c69252d147b4/napari-aicsimageio-0.3.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "4e8a5ffe4ec4470b139777bb07f34cba",
+          "sha256": "145ee0b5eda97c7108168d687c9ace9720a4fad0ef16c622b529b502773b843c"
+        },
+        "downloads": -1,
+        "filename": "napari_aicsimageio-0.3.2-py2.py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "4e8a5ffe4ec4470b139777bb07f34cba",
+        "packagetype": "bdist_wheel",
+        "python_version": "py2.py3",
+        "requires_python": ">=3.8",
+        "size": 7025,
+        "upload_time": "2021-06-30T06:55:42",
+        "upload_time_iso_8601": "2021-06-30T06:55:42.865705Z",
+        "url": "https://files.pythonhosted.org/packages/e1/6c/35a19dda3ef916c574ef3caab54164412e510f8eab4fff97b6b2b2c23170/napari_aicsimageio-0.3.2-py2.py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "6290998f3e7a1149999dd84f189c59bd",
+          "sha256": "40feac2a895ee436c9fad07b9fe23f4625fe8fdc57d69aec4512fa7c12474361"
+        },
+        "downloads": -1,
+        "filename": "napari-aicsimageio-0.3.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "6290998f3e7a1149999dd84f189c59bd",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 7658,
+        "upload_time": "2021-06-30T06:55:44",
+        "upload_time_iso_8601": "2021-06-30T06:55:44.956129Z",
+        "url": "https://files.pythonhosted.org/packages/bd/6b/9a17ba898a1c4df6d630aedc1d0bbc1a4576a1f41c4708701bc6fd0e0bd3/napari-aicsimageio-0.3.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.3": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "55a623bf10195eb62d61cc160cdc0ff4",
+          "sha256": "e5f2ed425b9efef45771ba57a2a58cafa63f5c27f8efb911e0a6419bc81824e8"
+        },
+        "downloads": -1,
+        "filename": "napari_aicsimageio-0.3.3-py2.py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "55a623bf10195eb62d61cc160cdc0ff4",
+        "packagetype": "bdist_wheel",
+        "python_version": "py2.py3",
+        "requires_python": ">=3.8",
+        "size": 7030,
+        "upload_time": "2021-07-10T18:14:45",
+        "upload_time_iso_8601": "2021-07-10T18:14:45.621353Z",
+        "url": "https://files.pythonhosted.org/packages/67/fa/9328f3571f4b7a263f15055eab2a6301c45a7ae1ca32caee4d6c2706b4b0/napari_aicsimageio-0.3.3-py2.py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "916835f1a10956cecd85a8455a4c79df",
+          "sha256": "23228fcc3c5523842ccd64270d72cd56c337367bdf34d46208de7fffac87a0fc"
+        },
+        "downloads": -1,
+        "filename": "napari-aicsimageio-0.3.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "916835f1a10956cecd85a8455a4c79df",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 7670,
+        "upload_time": "2021-07-10T18:14:46",
+        "upload_time_iso_8601": "2021-07-10T18:14:46.994240Z",
+        "url": "https://files.pythonhosted.org/packages/5c/0a/f41d9d049c51a3fa441ad85549b48b6fedd066e89a4024c73764bcc60ba8/napari-aicsimageio-0.3.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.4": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "5efdabe045a5a1ee44218c12e55e083f",
+          "sha256": "dfc2fe4405c9f204550511eb03299d79ae46023b2850809b41e36c69ccbeaff7"
+        },
+        "downloads": -1,
+        "filename": "napari_aicsimageio-0.3.4-py2.py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "5efdabe045a5a1ee44218c12e55e083f",
+        "packagetype": "bdist_wheel",
+        "python_version": "py2.py3",
+        "requires_python": ">=3.8",
+        "size": 7151,
+        "upload_time": "2021-07-12T06:23:26",
+        "upload_time_iso_8601": "2021-07-12T06:23:26.002984Z",
+        "url": "https://files.pythonhosted.org/packages/ed/5f/d4e42383c15ce7e4b7378b4d8478ad058cb171ad5dd9c996468cc58c475c/napari_aicsimageio-0.3.4-py2.py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "d665bd5d1f90ead8683cf20f56734009",
+          "sha256": "55acfa67dd8b33c2bf8f321b4e4a2bb873be8f1cb00c56fecee4144cd0ec67ed"
+        },
+        "downloads": -1,
+        "filename": "napari-aicsimageio-0.3.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d665bd5d1f90ead8683cf20f56734009",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 7776,
+        "upload_time": "2021-07-12T06:23:27",
+        "upload_time_iso_8601": "2021-07-12T06:23:27.694570Z",
+        "url": "https://files.pythonhosted.org/packages/44/cf/372c158d309a6a4c9b2b5c77e2e87db0a559173303fe0a7712094a5ffeb8/napari-aicsimageio-0.3.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.5": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "30fc81b7f9969057ca82594cb3ce3637",
+          "sha256": "d306bccce0296f2628f6832a3a2688028af393d218f82b74c63076931169e12f"
+        },
+        "downloads": -1,
+        "filename": "napari_aicsimageio-0.3.5-py2.py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "30fc81b7f9969057ca82594cb3ce3637",
+        "packagetype": "bdist_wheel",
+        "python_version": "py2.py3",
+        "requires_python": ">=3.8",
+        "size": 7219,
+        "upload_time": "2021-07-16T03:33:00",
+        "upload_time_iso_8601": "2021-07-16T03:33:00.862801Z",
+        "url": "https://files.pythonhosted.org/packages/45/cc/257eca31bd08766cbdb3f8bb52c33efbf2f287dbccd6b559134f80c56d89/napari_aicsimageio-0.3.5-py2.py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "8cbb70127eb0e8d2f8d61a2967c8a219",
+          "sha256": "305821a747646d86919500853468273e5c84c244c96e5ac1f9e4849eee83d8cb"
+        },
+        "downloads": -1,
+        "filename": "napari-aicsimageio-0.3.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "8cbb70127eb0e8d2f8d61a2967c8a219",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 7865,
+        "upload_time": "2021-07-16T03:33:02",
+        "upload_time_iso_8601": "2021-07-16T03:33:02.494781Z",
+        "url": "https://files.pythonhosted.org/packages/4f/e2/fdf2804724a7b4a1fd7f60e2088670ef4d86061d28745c35a9b5c0b60964/napari-aicsimageio-0.3.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.4.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "78699668fb76e4a0f14dfb4e3a73c44c",
+          "sha256": "43ccdbd75e715d6a25ae554da52ec0d61b0bd7c76aaf1537241e202c2c2083d1"
+        },
+        "downloads": -1,
+        "filename": "napari_aicsimageio-0.4.0-py2.py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "78699668fb76e4a0f14dfb4e3a73c44c",
+        "packagetype": "bdist_wheel",
+        "python_version": "py2.py3",
+        "requires_python": ">=3.8",
+        "size": 8535,
+        "upload_time": "2021-09-18T16:53:34",
+        "upload_time_iso_8601": "2021-09-18T16:53:34.359570Z",
+        "url": "https://files.pythonhosted.org/packages/c4/36/bb8ff77001bca0ed49797f8b8698c5e5a6d20c5be425082e045ff5c2032d/napari_aicsimageio-0.4.0-py2.py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "203844e507b306ef96ec38899f505b87",
+          "sha256": "60e61a1eb20afbba4f99b6456ee39fccaa389d6e0a8c07784d714546959b8a0c"
+        },
+        "downloads": -1,
+        "filename": "napari-aicsimageio-0.4.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "203844e507b306ef96ec38899f505b87",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 8902,
+        "upload_time": "2021-09-18T16:53:35",
+        "upload_time_iso_8601": "2021-09-18T16:53:35.879818Z",
+        "url": "https://files.pythonhosted.org/packages/ba/09/09d66eee0e417457a66b5438ced6716198ba4cabde8eaf26e3567e40d2de/napari-aicsimageio-0.4.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.4.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "06984165be782baaadb8d3c26e98c098",
+          "sha256": "6d3024d9aaf68f187aff853858028e2240f401095f7091d990e5c833ca46a5b1"
+        },
+        "downloads": -1,
+        "filename": "napari_aicsimageio-0.4.1-py2.py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "06984165be782baaadb8d3c26e98c098",
+        "packagetype": "bdist_wheel",
+        "python_version": "py2.py3",
+        "requires_python": ">=3.8",
+        "size": 8561,
+        "upload_time": "2021-09-19T21:07:31",
+        "upload_time_iso_8601": "2021-09-19T21:07:31.371667Z",
+        "url": "https://files.pythonhosted.org/packages/c8/9c/d92d89360c895faa2e108d87b2c7ea87efa86a7f18aee6eb560b38f4f722/napari_aicsimageio-0.4.1-py2.py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "e02aceb0ff90f30307d4f08a5b230178",
+          "sha256": "40419d15257b2de9e0f6fd84b9cfe18959aaac47e9633ab6407655e8188159ed"
+        },
+        "downloads": -1,
+        "filename": "napari-aicsimageio-0.4.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e02aceb0ff90f30307d4f08a5b230178",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 9074,
+        "upload_time": "2021-09-19T21:07:32",
+        "upload_time_iso_8601": "2021-09-19T21:07:32.795160Z",
+        "url": "https://files.pythonhosted.org/packages/04/fd/909ac97bde509daf90f42c6f8a1ee2a5d826152509629627ab0841644e71/napari-aicsimageio-0.4.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.5.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "78abf2336f75ab43071271273a56dd28",
+          "sha256": "871a8d0a61521a19d67e93aad2aba5c71dee89a31c0759065e91107682e7ffdf"
+        },
+        "downloads": -1,
+        "filename": "napari_aicsimageio-0.5.0-py2.py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "78abf2336f75ab43071271273a56dd28",
+        "packagetype": "bdist_wheel",
+        "python_version": "py2.py3",
+        "requires_python": ">=3.8",
+        "size": 20112,
+        "upload_time": "2022-02-19T17:08:23",
+        "upload_time_iso_8601": "2022-02-19T17:08:23.713572Z",
+        "url": "https://files.pythonhosted.org/packages/4a/b0/45b51952f739be772df4345a4b3db86681eb17e5a0b10e1330f022602f8a/napari_aicsimageio-0.5.0-py2.py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "50a1a4fd860cb0fee9b29e995b045c47",
+          "sha256": "e4a6944d11961d0c2d69c821b6512240998a9714138b65d57f5a0cb1e427bc7d"
+        },
+        "downloads": -1,
+        "filename": "napari-aicsimageio-0.5.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "50a1a4fd860cb0fee9b29e995b045c47",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 20754,
+        "upload_time": "2022-02-19T17:08:25",
+        "upload_time_iso_8601": "2022-02-19T17:08:25.424147Z",
+        "url": "https://files.pythonhosted.org/packages/ba/17/c3ec583f4cd3b0a3c49339322bb16182ecba51f14ae73746327908c49d4e/napari-aicsimageio-0.5.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.6.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "9771477373adb9148e31547a889f0c4a",
+          "sha256": "e7ecd2896e80727dcab301e7e6b6fc5329b10754b90a4cf14dbcb81c0a61ab56"
+        },
+        "downloads": -1,
+        "filename": "napari_aicsimageio-0.6.0-py2.py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "9771477373adb9148e31547a889f0c4a",
+        "packagetype": "bdist_wheel",
+        "python_version": "py2.py3",
+        "requires_python": ">=3.8",
+        "size": 20675,
+        "upload_time": "2022-02-24T00:38:26",
+        "upload_time_iso_8601": "2022-02-24T00:38:26.561179Z",
+        "url": "https://files.pythonhosted.org/packages/7a/61/6b5e8abbfe3974a59b6b47b8fe2f0782540fa951a574f9be97e9413db347/napari_aicsimageio-0.6.0-py2.py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "b65fc059c3ff2d53b36559b38cf53437",
+          "sha256": "cdbae0443cf0fdbac7fbb7ee1b12bb87cd665e527ccb024aea366298abb5e052"
+        },
+        "downloads": -1,
+        "filename": "napari-aicsimageio-0.6.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "b65fc059c3ff2d53b36559b38cf53437",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 21795,
+        "upload_time": "2022-02-24T00:38:28",
+        "upload_time_iso_8601": "2022-02-24T00:38:28.319364Z",
+        "url": "https://files.pythonhosted.org/packages/c7/ba/3f46d1a770c98e2bdb80649a8009eec2c8ca3a4d2ed30f6817fa08a8bb05/napari-aicsimageio-0.6.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.6.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "45da5bc38c70d0eab4eee76989bb11c7",
+          "sha256": "7dac3fcb5df070c4d4ee59605e999d852f28bda2b7ef64a0baaefae3d7924277"
+        },
+        "downloads": -1,
+        "filename": "napari_aicsimageio-0.6.1-py2.py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "45da5bc38c70d0eab4eee76989bb11c7",
+        "packagetype": "bdist_wheel",
+        "python_version": "py2.py3",
+        "requires_python": ">=3.8",
+        "size": 20820,
+        "upload_time": "2022-02-24T20:58:06",
+        "upload_time_iso_8601": "2022-02-24T20:58:06.104028Z",
+        "url": "https://files.pythonhosted.org/packages/3d/4e/dd7ac326441c2ea07166dcc475e0aa5c4838bc60377c9efd81b4fab4da74/napari_aicsimageio-0.6.1-py2.py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "a043e93bdb28b7d28ee11f30e887a848",
+          "sha256": "38052e1cc15ff20b43acf53d54b717b7351a1e62c9b4d4eddc34368214d253e5"
+        },
+        "downloads": -1,
+        "filename": "napari-aicsimageio-0.6.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "a043e93bdb28b7d28ee11f30e887a848",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 21973,
+        "upload_time": "2022-02-24T20:58:08",
+        "upload_time_iso_8601": "2022-02-24T20:58:08.145863Z",
+        "url": "https://files.pythonhosted.org/packages/ad/a2/1f09e2d10c7d27a18bf75a7246e1d21b2284947448cf72d12efab073da97/napari-aicsimageio-0.6.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.7.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "a40e7313cfba757634e26a16c3fe9b80",
+          "sha256": "792b8edc5ea7570a27d38c317ef43432d027149d8b3931c0b237f498752372df"
+        },
+        "downloads": -1,
+        "filename": "napari_aicsimageio-0.7.0-py2.py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "a40e7313cfba757634e26a16c3fe9b80",
+        "packagetype": "bdist_wheel",
+        "python_version": "py2.py3",
+        "requires_python": ">=3.8",
+        "size": 21437,
+        "upload_time": "2022-07-21T21:19:12",
+        "upload_time_iso_8601": "2022-07-21T21:19:12.891067Z",
+        "url": "https://files.pythonhosted.org/packages/14/a1/01fa940c39fca441ef50fba57f48226a1be1f18b22b8764f5ad148c4b1b9/napari_aicsimageio-0.7.0-py2.py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "05dc77888db91a3a849b6cb0ca3927e5",
+          "sha256": "40a683a1e91f20f8d7ebe3b44d250134b4a352ee1d907b5ed0a03d675b81a685"
+        },
+        "downloads": -1,
+        "filename": "napari-aicsimageio-0.7.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "05dc77888db91a3a849b6cb0ca3927e5",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 21576,
+        "upload_time": "2022-07-21T21:19:15",
+        "upload_time_iso_8601": "2022-07-21T21:19:15.273223Z",
+        "url": "https://files.pythonhosted.org/packages/8e/a2/b4c079286603f76ef935ce858418b31bb67fb0b0ca33f66547c54da33484/napari-aicsimageio-0.7.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.7.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "a3c3c66e67fd888aa9d63d09f57962d9",
+          "sha256": "d62b24e93ea4ce75e1a656eecad4fe5f54534d33662dd05d79bc215b7a31fe74"
+        },
+        "downloads": -1,
+        "filename": "napari_aicsimageio-0.7.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "a3c3c66e67fd888aa9d63d09f57962d9",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 23304,
+        "upload_time": "2022-07-25T04:11:38",
+        "upload_time_iso_8601": "2022-07-25T04:11:38.652504Z",
+        "url": "https://files.pythonhosted.org/packages/7c/0a/0373d327e19f55bfe9d5663933c7ab7c1e808b0ac738e6fbf4a60d9bf886/napari_aicsimageio-0.7.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "1f8885dd7c45b5c8a72ebbd931a95e60",
+          "sha256": "e3442618349498e4e4f3a368fc2f0c33e0ba5f5814420ffc7e98309fed9f2f83"
+        },
+        "downloads": -1,
+        "filename": "napari-aicsimageio-0.7.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "1f8885dd7c45b5c8a72ebbd931a95e60",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 25308,
+        "upload_time": "2022-07-25T04:11:40",
+        "upload_time_iso_8601": "2022-07-25T04:11:40.643403Z",
+        "url": "https://files.pythonhosted.org/packages/6d/9c/fa72e3f62d3507cd48af46b06f4c9279597c5d611bf704809f2a35a5e463/napari-aicsimageio-0.7.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "a3c3c66e67fd888aa9d63d09f57962d9",
+        "sha256": "d62b24e93ea4ce75e1a656eecad4fe5f54534d33662dd05d79bc215b7a31fe74"
+      },
+      "downloads": -1,
+      "filename": "napari_aicsimageio-0.7.1-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "a3c3c66e67fd888aa9d63d09f57962d9",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.8",
+      "size": 23304,
+      "upload_time": "2022-07-25T04:11:38",
+      "upload_time_iso_8601": "2022-07-25T04:11:38.652504Z",
+      "url": "https://files.pythonhosted.org/packages/7c/0a/0373d327e19f55bfe9d5663933c7ab7c1e808b0ac738e6fbf4a60d9bf886/napari_aicsimageio-0.7.1-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "1f8885dd7c45b5c8a72ebbd931a95e60",
+        "sha256": "e3442618349498e4e4f3a368fc2f0c33e0ba5f5814420ffc7e98309fed9f2f83"
+      },
+      "downloads": -1,
+      "filename": "napari-aicsimageio-0.7.1.tar.gz",
+      "has_sig": false,
+      "md5_digest": "1f8885dd7c45b5c8a72ebbd931a95e60",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.8",
+      "size": 25308,
+      "upload_time": "2022-07-25T04:11:40",
+      "upload_time_iso_8601": "2022-07-25T04:11:40.643403Z",
+      "url": "https://files.pythonhosted.org/packages/6d/9c/fa72e3f62d3507cd48af46b06f4c9279597c5d611bf704809f2a35a5e463/napari-aicsimageio-0.7.1.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
