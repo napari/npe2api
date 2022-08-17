@@ -1,18 +1,33 @@
+"""This is the main script that runs every 10 minutes (currently).
+
+It processes and validates the data written to public/manifest from npe2 fetch
+Then also searches conda and github for additional info.
+
+See also scripts/bigquery.py, which runs ~every 2 hours, to double check the napari
+classifier from the official public database (rather than parsing pypi.org html).
+"""
 import contextlib
 import json
 from pathlib import Path
-from typing import Any, DefaultDict, Dict, List, Tuple, TypedDict, Optional
+from typing import Any, DefaultDict, Dict, List, Tuple, TypedDict
 import re
 from urllib import request, error
 import os
 import sys
+try:
+    import conda
+except ImportError:
+    conda = None
+
+sys.path.insert(0, str(Path(__file__).parent.parent / 'lib'))
+from pyapi import github
+
 
 PluginName = str
-ANACONDA_ORG = "https://api.anaconda.org/package/{channel}/{package}"
 
 
 class SummaryDict(TypedDict):
-    """available at index.json"""
+    """Structure of dicts in index.json"""
 
     name: str
     version: str
@@ -23,14 +38,15 @@ class SummaryDict(TypedDict):
     home_page: str
 
 
+HERE = Path(__file__)
 # Path to the public directory in this repo
-# Path to the public directory in this repo
-PUBLIC = Path(__file__).parent.parent / "public"
-
+PUBLIC = HERE.parent.parent / "public"
 # index of filename pattern to list of plugin names
 READER_INDEX: DefaultDict[str, List[PluginName]] = DefaultDict(list)
 # summary index, used plugin install widget list items
-PYPI_INDEX: List[SummaryDict] = []
+PYPI_INDEX: List["SummaryDict"] = []
+# anaconda api
+ANACONDA_ORG = "https://api.anaconda.org/package/{channel}/{package}"
 
 
 def _normname(name: str, delim="-") -> str:
@@ -71,8 +87,7 @@ def patch_api_data_with_repodata(data: Dict[str, Any], repodata: Dict):
     for package in data["files"].copy():
         # dependencies are available in a more useful way under `attrs`
         package.pop("dependencies", None)
-        repodata_record = repodata.get(package["basename"])
-        if repodata_record:
+        if repodata_record := repodata.get(package["basename"]):
             package["attrs"]["depends"] = tuple(repodata_record["depends"])
             package["attrs"]["constrains"] = tuple(repodata_record["constrains"])
         patched_files.append(package)
@@ -104,86 +119,90 @@ def conda_data_wrapper(args):
     return conda_data(*args)
 
 
-# load each manifest & build the indices (while verifying the manifest)
-for mf_file in (PUBLIC / "manifest").glob("*.json"):
-    # move the errors file to top /public folder
-    if mf_file.name == "errors.json":
-        mf_file.rename(PUBLIC / "errors.json")
-        continue
+if __name__ == "__main__":
+    # load each manifest & build the indices (while verifying the manifest)
+    for mf_file in (PUBLIC / "manifest").glob("*.json"):
+        # move the errors file to top /public folder
+        if mf_file.name == "errors.json":
+            mf_file.rename(PUBLIC / "errors.json")
+            continue
 
-    with mf_file.open() as f:
-        data = json.load(f)
+        with mf_file.open() as f:
+            data = json.load(f)
 
-    # create the summary index item
-    name = data["name"]
-    meta = data["package_metadata"]
-    PYPI_INDEX.append(
-        {
-            "name": name,
-            "version": meta["version"],
-            "display_name": data["display_name"],
-            "summary": meta["summary"],
-            "author": meta["author"],
-            "license": meta["license"],
-            "home_page": meta["home_page"],
-        }
+        # create the summary index item
+        name = data["name"]
+        meta = data["package_metadata"]
+        PYPI_INDEX.append(
+            {
+                "name": name,
+                "version": meta["version"],
+                "display_name": data["display_name"],
+                "summary": meta["summary"],
+                "author": meta["author"],
+                "license": meta["license"],
+                "home_page": meta["home_page"],
+            }
+        )
+
+        # index contributions
+        for contrib_type, contribs in data.get("contributions", {}).items():
+
+            if not contribs:
+                continue
+
+            if contrib_type == "readers":
+                for contrib in contribs:
+                    for pattern in contrib["filename_patterns"]:
+                        READER_INDEX[pattern].append(name)
+
+    # sort things
+    PYPI_INDEX = sorted(PYPI_INDEX, key=lambda x: x["name"].lower())
+    READER_INDEX = {  # type: ignore
+        k: sorted(v, key=str.lower) for k, v in sorted(READER_INDEX.items())
+    }
+
+    # now check conda for each package and write data to public/conda/{package}.json
+    if not os.getenv("SKIP_CONDA") and (conda is not None):
+        from concurrent.futures import ThreadPoolExecutor
+
+        # output directory for conda info
+        CONDA = PUBLIC / "conda"
+        CONDA.mkdir(exist_ok=True)
+
+        # conda summary, mapping from pypi package name to conda channel/name
+        CONDA_INDEX: Dict[str, str] = {}
+
+        # fetch the index
+        channel = "conda-forge"
+        repodata = repodatas(channel)
+
+        with ThreadPoolExecutor() as pool:
+            data = dict(
+                pool.map(
+                    conda_data_wrapper,
+                    ((i["name"], channel, repodata) for i in PYPI_INDEX),
+                )
+            )
+        for package_name, info in data.items():
+            CONDA_INDEX[package_name] = info.get("full_name")
+            if not info:
+                continue
+
+            # pop ndownloads, since it makes for an unnecessarily noisy git history
+            for file in info.get("files", []):
+                file.pop("ndownloads", None)
+
+            (CONDA / f"{package_name}.json").write_text(json.dumps(info, indent=2))
+
+        # write summary map of pypi package name to conda channel/name
+        (PUBLIC / "conda.json").write_text(json.dumps(CONDA_INDEX, indent=2))
+
+    # write out data to public locations
+    (PUBLIC / "summary.json").write_text(json.dumps(PYPI_INDEX, indent=2))
+    (PUBLIC / "readers.json").write_text(json.dumps(READER_INDEX))
+    (PUBLIC / "index.json").write_text(
+        json.dumps({x["name"]: x["version"] for x in PYPI_INDEX}, indent=2)
     )
 
-    # index contributions
-    for contrib_type, contribs in data.get("contributions", {}).items():
-
-        if not contribs:
-            continue
-
-        if contrib_type == "readers":
-            for contrib in contribs:
-                for pattern in contrib["filename_patterns"]:
-                    READER_INDEX[pattern].append(name)
-
-
-PYPI_INDEX = sorted(PYPI_INDEX, key=lambda x: x["name"].lower())
-READER_INDEX = {k: sorted(v, key=str.lower) for k, v in sorted(READER_INDEX.items())}
-
-
-# now check conda for each package and write data to public/conda/{package}.json
-if not os.getenv("SKIP_CONDA"):
-    from concurrent.futures import ThreadPoolExecutor
-
-    # output directory for conda info
-    CONDA = PUBLIC / "conda"
-    CONDA.mkdir(exist_ok=True)
-
-    # conda summary, mapping from pypi package name to conda channel/name
-    CONDA_INDEX: Dict[str, str] = {}
-
-    # fetch the index
-    channel = "conda-forge"
-    repodata = repodatas(channel)
-
-    with ThreadPoolExecutor() as pool:
-        data = dict(
-            pool.map(
-                conda_data_wrapper,
-                ((i["name"], channel, repodata) for i in PYPI_INDEX),
-            )
-        )
-    for package_name, info in data.items():
-        CONDA_INDEX[package_name] = info.get("full_name")
-        if not info:
-            continue
-
-        # pop ndownloads, since it makes for an unnecessarily noisy git history
-        for file in info.get("files", []):
-            file.pop("ndownloads", None)
-
-        (CONDA / f"{package_name}.json").write_text(json.dumps(info, indent=2))
-
-    # write summary map of pypi package name to conda channel/name
-    (PUBLIC / "conda.json").write_text(json.dumps(CONDA_INDEX, indent=2))
-
-
-(PUBLIC / "summary.json").write_text(json.dumps(PYPI_INDEX, indent=2))
-(PUBLIC / "readers.json").write_text(json.dumps(READER_INDEX))
-(PUBLIC / "index.json").write_text(
-    json.dumps({x["name"]: x["version"] for x in PYPI_INDEX}, indent=2)
-)
+    github.fetch_all_github_info()
