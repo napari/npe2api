@@ -1,4 +1,3 @@
-import datetime as dt
 import json
 import os
 import re
@@ -8,10 +7,8 @@ from pathlib import Path
 from typing import Literal, Optional, Tuple, TypedDict
 
 import requests
-from dateutil.parser import parse
 from gql import Client, gql
 from gql.transport.requests import RequestsHTTPTransport
-from humanize import naturaltime
 
 from .core import active_plugins, pypi_info
 
@@ -24,7 +21,6 @@ class CommitInfo(TypedDict):
     message: str
     author_name: str
     author_login: str
-    human_timedelta: str
 
 
 class GithubActivity(TypedDict):
@@ -105,13 +101,11 @@ def activity(name: PluginName) -> GithubActivity:
     last_commit_node = data["defaultBranchRef"]["target"]["history"]["nodes"][0]
     user = last_commit_node["author"].get("user") or {}
     date = last_commit_node["committedDate"]
-    commit_dt = parse(date)
     last_commit = CommitInfo(
         date=date,
         message=last_commit_node["message"].split("\n")[0],
         author_name=last_commit_node["author"]["name"],
         author_login=user.get("login", ""),
-        human_timedelta=naturaltime(dt.datetime.now(commit_dt.tzinfo) - commit_dt),
     )
 
     return GithubActivity(
