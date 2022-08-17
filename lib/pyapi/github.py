@@ -87,7 +87,7 @@ def activity(name: PluginName) -> GithubActivity:
     """Return github graphql data."""
 
     if not (result := org_repo(name)):
-        return {}
+        raise ValueError(f"No github repo found for {name!r}")
 
     headers = {}
     if GH_API_TOKEN := os.environ.get("GH_API_TOKEN"):
