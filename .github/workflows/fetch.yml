@@ -39,6 +39,7 @@ jobs:
         run: |
           python -m pip install -U pip
           python -m pip install git+https://github.com/napari/npe2.git
+          python -m pip install -r requirements.txt
           npe2 fetch --all -o public/manifest
 
       # validate and index manifests into easily searchable json files
@@ -46,6 +47,9 @@ jobs:
         run: |
           python scripts/reindex.py
           python scripts/validate.py
+        env:
+          GH_API_TOKEN: ${{ secrets.GH_API_TOKEN }}
+          CODECOV_API_TOKEN: ${{ secrets.CODECOV_API_TOKEN }}
 
       # push changes back to the repo, this will trigger a new vercel build
       # https://github.com/stefanzweifel/git-auto-commit-action
