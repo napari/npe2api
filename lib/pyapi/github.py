@@ -31,6 +31,8 @@ class GithubActivity(TypedDict):
     forks: int
     stars: int
     watchers: int
+    is_archived: bool
+    open_runtime_vulnerability_alerts: int
 
 
 class CoverageInfo(TypedDict):
@@ -52,11 +54,15 @@ query_activity = gql(
     """
 query repoActivity($owner: String!, $name: String!) {
   repository(owner: $owner, name: $name) {
+    isArchived
     stargazerCount
     forkCount
     watchers(first: 1) { totalCount }
     pullRequests(states: OPEN, first: 1) { totalCount }
     issues(states: OPEN) { totalCount }
+    vulnerabilityAlerts(states:OPEN, dependencyScopes:RUNTIME){
+      totalCount
+    }
     defaultBranchRef {
       name
       target {
@@ -88,6 +94,10 @@ def activity(name: PluginName) -> GithubActivity:
 
     if not (result := org_repo(name)):
         raise ValueError(f"No github repo found for {name!r}")
+    return _activity(*result)
+
+
+def _activity(owner: str, name: str) -> GithubActivity:
 
     headers = {}
     if GH_API_TOKEN := os.environ.get("GH_API_TOKEN"):
@@ -95,7 +105,6 @@ def activity(name: PluginName) -> GithubActivity:
     transport = RequestsHTTPTransport("https://api.github.com/graphql", headers)
     gql_client = Client(transport=transport, fetch_schema_from_transport=False)
 
-    owner, name = result
     variables = {"owner": owner, "name": name}
     data = gql_client.execute(query_activity, variables)["repository"]
     last_commit_node = data["defaultBranchRef"]["target"]["history"]["nodes"][0]
@@ -115,6 +124,8 @@ def activity(name: PluginName) -> GithubActivity:
         forks=data["forkCount"],
         stars=data["stargazerCount"],
         watchers=data["watchers"]["totalCount"],
+        is_archived=data["isArchived"],
+        open_runtime_vulnerability_alerts=data["vulnerabilityAlerts"]["totalCount"],
         last_commit=last_commit,
     )
 
@@ -192,9 +203,12 @@ def github_info(name: PluginName, endpoint: str = "") -> dict:
     """Fetch information from github api."""
     if not (github_info := org_repo(name)):
         raise ValueError(f"No github repo for {name}")
+    return _github_info(*github_info, endpoint)
 
+
+def _github_info(owner: str, repo: str, endpoint: str = ""):
     endpoint = f"/{endpoint}" if endpoint else ""
-    url = "https://api.github.com/repos/{}/{}{}".format(*github_info, endpoint)
+    url = f"https://api.github.com/repos/{owner}/{repo}{endpoint}"
     headers = {"Accept": "application/vnd.github+json"}
     if GH_API_TOKEN := os.environ.get("GH_API_TOKEN"):
         headers["Authorization"] = f"token {GH_API_TOKEN}"

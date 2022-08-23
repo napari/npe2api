@@ -20,14 +20,15 @@ except ImportError:
     conda = None
 
 sys.path.insert(0, str(Path(__file__).parent.parent / 'lib'))
-from pyapi import github
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from lib.pyapi import github  # noqa
 
 
 PluginName = str
 
 
 class SummaryDict(TypedDict):
-    """Structure of dicts in index.json"""
+    """Structure of dicts in index.json."""
 
     name: str
     version: str
