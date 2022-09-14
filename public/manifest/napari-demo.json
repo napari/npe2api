@@ -1,77 +1,304 @@
 {
   "name": "napari-demo",
-  "display_name": "napari-demo",
+  "display_name": "Demo plugin ported from npe2 example",
   "visibility": "public",
   "icon": "",
   "categories": [],
   "schema_version": "0.2.0",
-  "on_activate": null,
-  "on_deactivate": null,
+  "on_activate": "napari_demo:activate",
+  "on_deactivate": "napari_demo:deactivate",
   "contributions": {
     "commands": [
       {
-        "id": "napari-demo.napari_experimental_provide_function",
-        "title": "image_arithmetic",
-        "python_name": "napari_demo.napari_demo:napari_experimental_provide_function",
+        "id": "napari-demo.about",
+        "title": "About napari demo plugin",
+        "python_name": "napari_demo:about",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-demo.hello_world",
+        "title": "send",
+        "python_name": "napari_demo:hello_world",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-demo.some_reader",
+        "title": "Some Reader",
+        "python_name": "napari_demo:get_reader",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-demo.url_reader",
+        "title": "URL Reader",
+        "python_name": "napari_demo:url_reader",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-demo.my_writer",
+        "title": "My Multi-layer Writer",
+        "python_name": "napari_demo:writer_function",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-demo.my_single_writer",
+        "title": "My single-layer Writer",
+        "python_name": "napari_demo:writer_function_single",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-demo.generate_random_data",
+        "title": "Generate uniform random data",
+        "python_name": "napari_demo:random_data",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-demo.image_arithmetic",
+        "title": "Create widget from my function",
+        "python_name": "napari_demo:image_arithmetic",
         "short_title": null,
         "category": null,
         "icon": null,
         "enablement": null
       }
     ],
-    "readers": null,
-    "writers": null,
+    "readers": [
+      {
+        "command": "napari-demo.some_reader",
+        "filename_patterns": [
+          "*.fzy",
+          "*.fzzy"
+        ],
+        "accepts_directories": true
+      },
+      {
+        "command": "napari-demo.url_reader",
+        "filename_patterns": [
+          "http://*",
+          "https://*"
+        ],
+        "accepts_directories": false
+      }
+    ],
+    "writers": [
+      {
+        "command": "napari-demo.my_writer",
+        "layer_types": [
+          "image{2,4}",
+          "tracks?"
+        ],
+        "filename_extensions": [
+          ".tif",
+          ".tiff"
+        ],
+        "display_name": ""
+      },
+      {
+        "command": "napari-demo.my_writer",
+        "layer_types": [
+          "points{1}",
+          "surface+"
+        ],
+        "filename_extensions": [
+          ".pcd",
+          ".e57"
+        ],
+        "display_name": ""
+      },
+      {
+        "command": "napari-demo.my_single_writer",
+        "layer_types": [
+          "labels"
+        ],
+        "filename_extensions": [
+          ".xyz"
+        ],
+        "display_name": ""
+      }
+    ],
     "widgets": [
       {
-        "command": "napari-demo.napari_experimental_provide_function",
-        "display_name": "image_arithmetic",
+        "command": "napari-demo.image_arithmetic",
+        "display_name": "calculate a new layer arithmetically from two existing layers",
         "autogenerate": true
       }
     ],
-    "sample_data": null,
-    "themes": null,
-    "menus": {},
-    "submenus": null,
-    "configuration": []
+    "sample_data": [
+      {
+        "command": "napari-demo.generate_random_data",
+        "key": "random_data",
+        "display_name": "Some Random Data (10 x 10 x 10)"
+      }
+    ],
+    "themes": [
+      {
+        "id": "sample_theme",
+        "label": "SampleTheme",
+        "type": "dark",
+        "colors": {
+          "canvas": "black",
+          "console": "black",
+          "background": "#272822",
+          "foreground": "#75715e",
+          "primary": "#cfcfc2",
+          "secondary": "#f8f8f2",
+          "highlight": "#e6db74",
+          "text": "#a1ef34",
+          "icon": null,
+          "warning": "#f92672",
+          "current": "#66d9ef"
+        }
+      }
+    ],
+    "menus": {
+      "napari/layers/context": [
+        {
+          "when": null,
+          "group": null,
+          "submenu": "hello_world"
+        },
+        {
+          "command": "napari-demo.about",
+          "when": null,
+          "group": null,
+          "alt": null
+        }
+      ],
+      "hello_world": [
+        {
+          "command": "napari-demo.hello_world",
+          "when": null,
+          "group": null,
+          "alt": null
+        }
+      ]
+    },
+    "submenus": [
+      {
+        "id": "hello_world",
+        "label": "Say hello to the world",
+        "icon": null
+      }
+    ],
+    "configuration": [
+      {
+        "title": "My Plugin",
+        "properties": {
+          "napari_demo.reader.lazy": {
+            "schema_": "http://json-schema.org/draft-07/schema#",
+            "title": "Load lazily",
+            "description": "Whether to load images lazily with dask",
+            "default": false,
+            "multiple_of": null,
+            "maximum": null,
+            "minimum": null,
+            "max_length": null,
+            "min_length": 0,
+            "pattern": null,
+            "max_items": null,
+            "min_items": 0,
+            "unique_items": false,
+            "max_properties": null,
+            "min_properties": 0,
+            "enum": null,
+            "type": "boolean",
+            "format": null,
+            "id": null,
+            "examples": null,
+            "exclusive_maximum": null,
+            "exclusive_minimum": null,
+            "contains": null,
+            "required": null,
+            "dependencies": null,
+            "property_names": null,
+            "const": null,
+            "comment": null,
+            "read_only": false,
+            "write_only": false,
+            "content_media_type": null,
+            "content_encoding": null,
+            "if_": null,
+            "then": null,
+            "else_": null,
+            "additional_items": null,
+            "items": null,
+            "additional_properties": null,
+            "properties": null,
+            "pattern_properties": null,
+            "all_of": null,
+            "any_of": null,
+            "one_of": null,
+            "not_": null,
+            "description_format": "markdown",
+            "enum_descriptions": [],
+            "enum_descriptions_format": "markdown",
+            "deprecation_message": null,
+            "deprecation_message_format": "markdown",
+            "edit_presentation": "singleline",
+            "order": null,
+            "pattern_error_message": null
+          }
+        }
+      }
+    ]
   },
   "package_metadata": {
     "metadata_version": "2.1",
     "name": "napari-demo",
-    "version": "0.1.0",
+    "version": "0.2.3",
     "dynamic": null,
-    "platform": [
-      "UNKNOWN"
-    ],
+    "platform": null,
     "supported_platform": null,
-    "summary": "demo plugin",
+    "summary": "example plugin for napari plugin developers",
     "description": null,
     "description_content_type": "text/markdown",
     "keywords": null,
     "home_page": "https://github.com/chanzuckerberg/napari-demo",
     "download_url": null,
-    "author": "Ziyang Liu",
-    "author_email": "zliu@chanzuckerberg.com",
+    "author": "napari hub team",
+    "author_email": "team@napari-hub.org",
     "maintainer": null,
     "maintainer_email": null,
     "license": "BSD-3",
     "classifier": [
       "Development Status :: 4 - Beta",
       "Intended Audience :: Developers",
-      "Framework :: napari",
-      "Topic :: Software Development :: Testing",
+      "License :: OSI Approved :: BSD License",
       "Programming Language :: Python",
-      "Programming Language :: Python :: 3",
-      "Programming Language :: Python :: 3.7",
+      "Programming Language :: Python :: 3 :: Only",
       "Programming Language :: Python :: 3.8",
       "Programming Language :: Python :: 3.9",
+      "Programming Language :: Python :: 3.10",
+      "Topic :: Software Development :: Testing",
       "Operating System :: OS Independent",
-      "License :: OSI Approved :: BSD License"
+      "Framework :: napari"
     ],
     "requires_dist": [
-      "napari-plugin-engine (>=0.1.4)",
+      "pydantic",
+      "npe2",
       "numpy"
     ],
-    "requires_python": ">=3.6",
+    "requires_python": ">=3.7",
     "requires_external": null,
     "project_url": [
       "Source Code, https://github.com/chanzuckerberg/napari-demo"
@@ -80,5 +307,5 @@
     "provides_dist": null,
     "obsoletes_dist": null
   },
-  "npe1_shim": true
+  "npe1_shim": false
 }
