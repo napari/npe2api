@@ -14,6 +14,8 @@ import re
 from urllib import request, error
 import os
 import sys
+from concurrent.futures import ThreadPoolExecutor
+
 try:
     import conda
 except ImportError:
@@ -37,6 +39,8 @@ class SummaryDict(TypedDict):
     author: str
     license: str
     home_page: str
+    pypi_versions: List[str]
+    conda_versions: List[str]
 
 
 HERE = Path(__file__)
@@ -56,7 +60,6 @@ def _normname(name: str, delim="-") -> str:
 
 
 def repodatas(channel: str = "conda-forge") -> Dict:
-    from concurrent.futures import ThreadPoolExecutor
     from conda.models.channel import Channel
     from conda.core.subdir_data import SubdirData
     from conda.gateways.logging import initialize_logging
@@ -120,6 +123,26 @@ def conda_data_wrapper(args):
     return conda_data(*args)
 
 
+def fetch_pypi_package_versions(package: SummaryDict) -> SummaryDict:
+    """Get available versions of a package on pypi.
+    Parameters
+    ----------
+    package_name : str
+        Name of the package.
+    Returns
+    -------
+    list
+        Versions available on pypi.
+    """
+    name = package["name"]
+    try:
+        with request.urlopen(f"https://pypi.org/pypi/{name}/json") as f:
+            package_data = json.load(f)
+        package["pypi_versions"] = list(package_data["releases"].keys())
+    except Exception as e:
+        print(name, e)
+    return package
+
 if __name__ == "__main__":
     # load each manifest & build the indices (while verifying the manifest)
     for mf_file in (PUBLIC / "manifest").glob("*.json"):
@@ -157,6 +180,15 @@ if __name__ == "__main__":
                     for pattern in contrib["filename_patterns"]:
                         READER_INDEX[pattern].append(name)
 
+    # fetch the available versions for each package
+    with ThreadPoolExecutor() as pool:
+        PYPI_INDEX = list(
+            pool.map(
+                fetch_pypi_package_versions,
+                PYPI_INDEX,
+            )
+        )
+
     # sort things
     PYPI_INDEX = sorted(PYPI_INDEX, key=lambda x: x["name"].lower())
     READER_INDEX = {  # type: ignore
@@ -165,8 +197,6 @@ if __name__ == "__main__":
 
     # now check conda for each package and write data to public/conda/{package}.json
     if not os.getenv("SKIP_CONDA") and (conda is not None):
-        from concurrent.futures import ThreadPoolExecutor
-
         # output directory for conda info
         CONDA = PUBLIC / "conda"
         CONDA.mkdir(exist_ok=True)
@@ -198,6 +228,10 @@ if __name__ == "__main__":
 
         # write summary map of pypi package name to conda channel/name
         (PUBLIC / "conda.json").write_text(json.dumps(CONDA_INDEX, indent=2))
+
+        # update the main index (summary) with the conda versions
+        for pkg in PYPI_INDEX:
+            pkg["conda_versions"] = data.get(pkg["name"], {}).get("versions", [])
 
     # write out data to public locations
     (PUBLIC / "summary.json").write_text(json.dumps(PYPI_INDEX, indent=2))
