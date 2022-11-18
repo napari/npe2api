@@ -16,6 +16,8 @@ import os
 import sys
 from concurrent.futures import ThreadPoolExecutor
 
+from packaging.version import Version
+
 try:
     import conda
 except ImportError:
@@ -211,11 +213,11 @@ if __name__ == "__main__":
         # write summary map of pypi package name to conda channel/name
         (PUBLIC / "conda.json").write_text(json.dumps(CONDA_INDEX, indent=2))
 
-        # update the main index (summary) with the conda versions basic sorting
-        # should match the method used in scripts/bigquery.py for PyPI
-        # versions. If you need fancy sorting downstream use 'pacakging'.
+        # update the main index (summary) with the conda versions
+        # de-dupe and sort as in scripts/bigquery.py
         for pkg in PYPI_INDEX:
-            pkg["conda_versions"] = sorted(data.get(pkg["name"], {}).get("versions", []))
+            versions = data.get(pkg["name"], {}).get("versions", [])
+            pkg["conda_versions"] = sorted(set(versions), key=lambda v: Version(v))
 
     # write out data to public locations
     (PUBLIC / "summary.json").write_text(json.dumps(PYPI_INDEX, indent=2))
