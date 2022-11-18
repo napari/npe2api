@@ -123,27 +123,17 @@ def conda_data_wrapper(args):
     return conda_data(*args)
 
 
-def fetch_pypi_package_versions(package: SummaryDict) -> SummaryDict:
-    """Get available versions of a package on pypi.
-    Parameters
-    ----------
-    package_name : str
-        Name of the package.
-    Returns
-    -------
-    list
-        Versions available on pypi.
-    """
-    name = package["name"]
-    try:
-        with request.urlopen(f"https://pypi.org/pypi/{name}/json") as f:
-            package_data = json.load(f)
-        package["pypi_versions"] = list(package_data["releases"].keys())
-    except Exception as e:
-        print(name, e)
-    return package
-
 if __name__ == "__main__":
+    # the classifiers endpoint is populated by scripts/bigquery.py and it
+    # contains the list of active versions on PyPI with the napari classifier -
+    # we get the available versions from there to include in the summary
+    CLASSIFIERS = PUBLIC / "classifiers.json"
+    try:
+        active_pypi_versions = json.loads(CLASSIFIERS.read_text())["active"]
+    except Exception as e:
+        print(f"failed to retrieve active PyPI versions from  {CLASSIFIERS}")
+        active_pypi_versions = {}
+
     # load each manifest & build the indices (while verifying the manifest)
     for mf_file in (PUBLIC / "manifest").glob("*.json"):
         # move the errors file to top /public folder
@@ -166,6 +156,7 @@ if __name__ == "__main__":
                 "author": meta["author"],
                 "license": meta["license"],
                 "home_page": meta["home_page"],
+                "pypi_versions": active_pypi_versions.get(name, [])
             }
         )
 
@@ -179,15 +170,6 @@ if __name__ == "__main__":
                 for contrib in contribs:
                     for pattern in contrib["filename_patterns"]:
                         READER_INDEX[pattern].append(name)
-
-    # fetch the available versions for each package
-    with ThreadPoolExecutor() as pool:
-        PYPI_INDEX = list(
-            pool.map(
-                fetch_pypi_package_versions,
-                PYPI_INDEX,
-            )
-        )
 
     # sort things
     PYPI_INDEX = sorted(PYPI_INDEX, key=lambda x: x["name"].lower())
@@ -229,9 +211,11 @@ if __name__ == "__main__":
         # write summary map of pypi package name to conda channel/name
         (PUBLIC / "conda.json").write_text(json.dumps(CONDA_INDEX, indent=2))
 
-        # update the main index (summary) with the conda versions
+        # update the main index (summary) with the conda versions basic sorting
+        # should match the method used in scripts/bigquery.py for PyPI
+        # versions. If you need fancy sorting downstream use 'pacakging'.
         for pkg in PYPI_INDEX:
-            pkg["conda_versions"] = data.get(pkg["name"], {}).get("versions", [])
+            pkg["conda_versions"] = sorted(data.get(pkg["name"], {}).get("versions", []))
 
     # write out data to public locations
     (PUBLIC / "summary.json").write_text(json.dumps(PYPI_INDEX, indent=2))
