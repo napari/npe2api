@@ -217,7 +217,7 @@ if __name__ == "__main__":
         # de-dupe and sort as in scripts/bigquery.py
         for pkg in PYPI_INDEX:
             versions = data.get(pkg["name"], {}).get("versions", [])
-            pkg["conda_versions"] = sorted(set(versions), key=lambda v: Version(v))
+            pkg["conda_versions"] = sorted(set(versions), key=Version, reverse=True)
 
     # write out data to public locations
     (PUBLIC / "summary.json").write_text(json.dumps(PYPI_INDEX, indent=2))

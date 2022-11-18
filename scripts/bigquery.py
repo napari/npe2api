@@ -26,7 +26,7 @@ query_job = client.query(QUERY.format(CLASSIFIER))
 withdrawn = {}
 deleted = {}
 active = {
-    k: sorted(set(v.split(",")), key=lambda x: Version(x))  # remove version dupes and sort
+    k: sorted(set(v.split(",")), key=Version, reverse=True)  # remove version dupes and sort in descending order
     for k, v in sorted(query_job.result(), key=lambda x: x[0].lower())
 }
 
