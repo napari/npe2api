@@ -43,13 +43,15 @@ jobs:
           npe2 fetch --all -o public/manifest
 
       # validate and index manifests into easily searchable json files
-      - name: index and validate
+      - name: (re)index
         run: |
           python scripts/reindex.py
-          python scripts/validate.py
         env:
           GH_API_TOKEN: ${{ secrets.GH_API_TOKEN }}
           CODECOV_API_TOKEN: ${{ secrets.CODECOV_API_TOKEN }}
+
+      - name: validate output
+        run: pytest
 
       # push changes back to the repo, this will trigger a new vercel build
       # https://github.com/stefanzweifel/git-auto-commit-action

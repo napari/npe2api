@@ -5,7 +5,6 @@ from typing import Tuple
 from urllib.error import HTTPError
 from urllib.request import urlopen
 
-from packaging.version import Version
 from google.cloud import bigquery
 
 PUBLIC = Path(__file__).parent.parent / "public"
@@ -26,7 +25,7 @@ query_job = client.query(QUERY.format(CLASSIFIER))
 withdrawn = {}
 deleted = {}
 active = {
-    k: sorted(set(v.split(",")), key=Version, reverse=True)  # remove version dupes and sort in descending order
+    k: sorted(set(v.split(",")))  # remove version dupes and sort
     for k, v in sorted(query_job.result(), key=lambda x: x[0].lower())
 }
 
