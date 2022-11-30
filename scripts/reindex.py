@@ -158,7 +158,6 @@ if __name__ == "__main__":
                 "author": meta["author"],
                 "license": meta["license"],
                 "home_page": meta["home_page"],
-                "pypi_versions": active_pypi_versions.get(name, [])
             }
         )
 
@@ -178,6 +177,14 @@ if __name__ == "__main__":
     READER_INDEX = {  # type: ignore
         k: sorted(v, key=str.lower) for k, v in sorted(READER_INDEX.items())
     }
+
+    EXTENDED_SUMMARY = [
+        {
+            **pkg,
+            "pypi_versions": active_pypi_versions.get(pkg["name"], []),
+        }
+        for pkg in PYPI_INDEX
+    ]
 
     # now check conda for each package and write data to public/conda/{package}.json
     if not os.getenv("SKIP_CONDA") and (conda is not None):
@@ -215,12 +222,13 @@ if __name__ == "__main__":
 
         # update the main index (summary) with the conda versions
         # de-dupe and sort as in scripts/bigquery.py
-        for pkg in PYPI_INDEX:
+        for pkg in EXTENDED_SUMMARY:
             versions = data.get(pkg["name"], {}).get("versions", [])
             pkg["conda_versions"] = sorted(set(versions), key=Version, reverse=True)
 
     # write out data to public locations
     (PUBLIC / "summary.json").write_text(json.dumps(PYPI_INDEX, indent=2))
+    (PUBLIC / "extended_summary.json").write_text(json.dumps(EXTENDED_SUMMARY, indent=2))
     (PUBLIC / "readers.json").write_text(json.dumps(READER_INDEX))
     (PUBLIC / "index.json").write_text(
         json.dumps({x["name"]: x["version"] for x in PYPI_INDEX}, indent=2)
