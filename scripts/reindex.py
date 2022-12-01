@@ -23,7 +23,6 @@ try:
 except ImportError:
     conda = None
 
-sys.path.insert(0, str(Path(__file__).parent.parent / "lib"))
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from lib.pyapi import github  # noqa
 
@@ -132,8 +131,12 @@ if __name__ == "__main__":
     CLASSIFIERS = PUBLIC / "classifiers.json"
     try:
         active_pypi_versions = json.loads(CLASSIFIERS.read_text())["active"]
-    except Exception as e:
-        print(f"failed to retrieve active PyPI versions from  {CLASSIFIERS}")
+    except Exception as exc:
+        print(
+            f"failed to retrieve active PyPI versions from {CLASSIFIERS}",
+            file=sys.stderr,
+        )
+        print(f"{type(exc)}: {exc}", file=sys.stderr)
         active_pypi_versions = {}
 
     # load each manifest & build the indices (while verifying the manifest)
