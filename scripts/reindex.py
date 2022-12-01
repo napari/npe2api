@@ -23,7 +23,7 @@ try:
 except ImportError:
     conda = None
 
-sys.path.insert(0, str(Path(__file__).parent.parent / 'lib'))
+sys.path.insert(0, str(Path(__file__).parent.parent / "lib"))
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from lib.pyapi import github  # noqa
 
@@ -181,7 +181,9 @@ if __name__ == "__main__":
     EXTENDED_SUMMARY = [
         {
             **pkg,
-            "pypi_versions": active_pypi_versions.get(pkg["name"], []),
+            "pypi_versions": sorted(
+                active_pypi_versions.get(pkg["name"], []), key=Version, reverse=True
+            ),
         }
         for pkg in PYPI_INDEX
     ]
@@ -228,7 +230,9 @@ if __name__ == "__main__":
 
     # write out data to public locations
     (PUBLIC / "summary.json").write_text(json.dumps(PYPI_INDEX, indent=2))
-    (PUBLIC / "extended_summary.json").write_text(json.dumps(EXTENDED_SUMMARY, indent=2))
+    (PUBLIC / "extended_summary.json").write_text(
+        json.dumps(EXTENDED_SUMMARY, indent=2)
+    )
     (PUBLIC / "readers.json").write_text(json.dumps(READER_INDEX))
     (PUBLIC / "index.json").write_text(
         json.dumps({x["name"]: x["version"] for x in PYPI_INDEX}, indent=2)
