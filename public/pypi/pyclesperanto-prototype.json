@@ -18,7 +18,7 @@
       "Topic :: Scientific/Engineering :: Image Processing",
       "Topic :: Scientific/Engineering :: Information Analysis"
     ],
-    "description": "# py-clesperanto\n[![Image.sc forum](https://img.shields.io/badge/dynamic/json.svg?label=forum&url=https%3A%2F%2Fforum.image.sc%2Ftag%2Fclesperanto.json&query=%24.topic_list.tags.0.topic_count&colorB=brightgreen&suffix=%20topics&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAYAAAAfSC3RAAABPklEQVR42m3SyyqFURTA8Y2BER0TDyExZ+aSPIKUlPIITFzKeQWXwhBlQrmFgUzMMFLKZeguBu5y+//17dP3nc5vuPdee6299gohUYYaDGOyyACq4JmQVoFujOMR77hNfOAGM+hBOQqB9TjHD36xhAa04RCuuXeKOvwHVWIKL9jCK2bRiV284QgL8MwEjAneeo9VNOEaBhzALGtoRy02cIcWhE34jj5YxgW+E5Z4iTPkMYpPLCNY3hdOYEfNbKYdmNngZ1jyEzw7h7AIb3fRTQ95OAZ6yQpGYHMMtOTgouktYwxuXsHgWLLl+4x++Kx1FJrjLTagA77bTPvYgw1rRqY56e+w7GNYsqX6JfPwi7aR+Y5SA+BXtKIRfkfJAYgj14tpOF6+I46c4/cAM3UhM3JxyKsxiOIhH0IO6SH/A1Kb1WBeUjbkAAAAAElFTkSuQmCC)](https://forum.image.sc/tag/clesperanto)\n[![website](https://img.shields.io/website?url=http%3A%2F%2Fclesperanto.net)](http://clesperanto.net)\n[![PyPI](https://img.shields.io/pypi/v/pyclesperanto-prototype.svg?color=green)](https://pypi.org/project/pyclesperanto-prototype)\n[![Contributors](https://img.shields.io/github/contributors-anon/clEsperanto/pyclesperanto_prototype)](https://github.com/clEsperanto/pyclesperanto_prototype/graphs/contributors)\n[![PyPI - Downloads](https://img.shields.io/pypi/dm/pyclesperanto_prototype)](https://pypistats.org/packages/pyclesperanto_prototype)\n[![GitHub stars](https://img.shields.io/github/stars/clEsperanto/pyclesperanto_prototype?style=social)](https://github.com/clEsperanto/pyclesperanto_prototype/)\n[![GitHub forks](https://img.shields.io/github/forks/clEsperanto/pyclesperanto_prototype?style=social)](https://github.com/clEsperanto/pyclesperanto_prototype/)\n[![License](https://img.shields.io/pypi/l/pyclesperanto_prototype.svg?color=green)](https://github.com/haesleinhuepf/pyclesperanto_prototype/raw/master/LICENSE)\n[![Python Version](https://img.shields.io/pypi/pyversions/pyclesperanto-prototype.svg?color=green)](https://python.org)\n[![tests](https://github.com/clesperanto/pyclesperanto_prototype/workflows/tests/badge.svg)](https://github.com/clesperanto/pyclesperanto_prototype/actions)\n[![codecov](https://codecov.io/gh/clesperanto/pyclesperanto_prototype/branch/master/graph/badge.svg)](https://codecov.io/gh/clesperanto/pyclesperanto_prototype)\n[![Development Status](https://img.shields.io/pypi/status/pyclesperanto_prototype.svg)](https://en.wikipedia.org/wiki/Software_release_life_cycle#Alpha)\n[![DOI](https://zenodo.org/badge/248206619.svg)](https://zenodo.org/badge/latestdoi/248206619)\n\npy-clesperanto is a prototype for [clesperanto](http://clesperanto.net) - a multi-platform multi-language framework for GPU-accelerated image processing. \nWe mostly use it in the life sciences for analysing 3/4-dimensional microsopy data, e.g. as we face it developmental biology when segmenting cells and studying\ntheir individual properties as well as properties of compounds of cells forming tissues.\n\n![](https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/banner.png)\n<small>Image data source: Daniela Vorkel, Myers lab, MPI-CBG, rendered using [napari](https://github.com/napari/napari) </small>\n\nclesperanto uses [OpenCL kernels](https://github.com/clEsperanto/clij-opencl-kernels/tree/development/src/main/java/net/haesleinhuepf/clij/kernels) from [CLIJ](http://clij.github.io/).\nSince version 0.11.1 py-clesperanto comes with a yet experimental [cupy](https://cupy.dev)-based [CUDA](https://en.wikipedia.org/wiki/CUDA) backend.\n\nFor users convenience, there are code generators available for [napari](https://clesperanto.github.io/napari_pyclesperanto_assistant/) and [Fiji](https://clij.github.io/assistant/).\nAlso check out the [napari workflow optimizer](https://github.com/haesleinhuepf/napari-workflow-optimizer) for semi-automatic parameter tuning of clesperanto-functions.\n\n## Reference\nThe [full reference](https://clij.github.io/clij2-docs/reference__pyclesperanto) is available as part of the CLIJ2 documentation.\n\n## Installation\n* Get a conda/python environment, e.g. via [mini-conda](https://docs.conda.io/en/latest/miniconda.html). If you never used python/conda environments before, please follow the instructions [here](https://biapol.github.io/blog/johannes_mueller/anaconda_getting_started/) first.\n\n```\nconda create --name cle_39 python=3.9\nconda activate cle_39\n```\n\n* Install pyclesperanto-prototype using conda:\n\n```\nconda install -c conda-forge pyclesperanto-prototype\n```\n\nOR using pip:\n\n```\npip install pyclesperanto-prototype\n```\n\nMac-users please also install this:\n\n    conda install -c conda-forge ocl_icd_wrapper_apple\n    \nLinux users please also install this:\n    \n    conda install -c conda-forge ocl-icd-system\n\n## Example code\nA basic image procressing workflow loads blobs.gif and counts the number of gold particles:\n\n```python\nimport pyclesperanto_prototype as cle\n\nfrom skimage.io import imread, imsave\n\n# initialize GPU\ndevice = cle.select_device(\"GTX\")\nprint(\"Used GPU: \", device)\n\n# load data\nimage = imread('https://imagej.nih.gov/ij/images/blobs.gif')\n\n# process the image\ninverted = cle.subtract_image_from_scalar(image, scalar=255)\nblurred = cle.gaussian_blur(inverted, sigma_x=1, sigma_y=1)\nbinary = cle.threshold_otsu(blurred)\nlabeled = cle.connected_components_labeling_box(binary)\n\n# The maxmium intensity in a label image corresponds to the number of objects\nnum_labels = cle.maximum_of_all_pixels(labeled)\n\n# print out result\nprint(\"Num objects in the image: \" + str(num_labels))\n\n# save image to disc\nimsave(\"result.tif\", labeled)\n```\n\n## Example gallery \n\n<table border=\"0\">\n<tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/screenshot_select_GPU.png\" width=\"300\"/>\n\n</td><td>\n\n[Select GPU](https://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/basics/select_GPU.py)\n\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/jupyter.png\" width=\"300\"/>\n\n</td><td>\n\n[Image processing in Jupyter Notebooks](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/interoperability/jupyter.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/screenshot_count_blobs.png\" width=\"300\"/>\n\n</td><td>\n\n[Counting blobs](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/basics/count_blobs.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/voronoi_otsu_labeling.png\" width=\"300\"/>\n\n</td><td>\n\n[Voronoi-Otsu labeling](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/segmentation/voronoi_otsu_labeling.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/segmentation_3d.png\" width=\"300\"/>\n\n</td><td>\n\n[3D Image segmentation ](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/segmentation/Segmentation_3D.ipynb)\n\n</td></tr>\n\n<tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/segmentation_2d_membranes.png\" width=\"300\"/>\n\n</td><td>\n\n[Cell segmentation based on membranes](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/segmentation/segmentation_2d_membranes.ipynb)\n\n</td></tr>\n\n<tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/counting_nuclei_multichannel.png\" width=\"300\"/>\n\n</td><td>\n\n[Counting nuclei according to expression in multiple channels](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/measurement/counting_nuclei_multichannel.ipynb)\n\n</td></tr>\n\n\n<tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/differentiate_nuclei_intensity.png\" width=\"300\"/>\n\n</td><td>\n\n[Differentiating nuclei according to signal intensity](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/measurement/differentiate_nuclei_intensity.ipynb)\n\n</td></tr>\n\n\n<tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/bead_segmentation.png\" width=\"300\"/>\n\n</td><td>\n\n[Detecting beads and measuring their size](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/segmentation/bead_segmentation.ipynb)\n\n</td></tr>\n\n<tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/label_statistics.png\" width=\"300\"/>\n\n</td><td>\n\n[Label statistics](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/basics/label_statistics.ipynb)\n\n</td></tr>\n\n<tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/parametric_maps.png\" width=\"300\"/>\n\n</td><td>\n\n[Parametric maps](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/tissues/parametric_maps.ipynb)\n\n</td></tr>\n\n\n<tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/screenshot_crop_and_paste_images.png\" width=\"300\"/>\n\n</td><td>\n\n[Crop and paste images](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/basics/crop_and_paste_images.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/screenshot_inspecting_3d_images.png\" width=\"300\"/>\n\n</td><td>\n\n[Inspecting 3D image data](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/basics/inspecting_3d_images.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/screenshot_affine_transforms.png\" width=\"300\"/>\n\n</td><td>\n\n[Rotation, scaling, translation, affine transforms](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/transforms/affine_transforms.ipynb)\n\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/screenshot_deskew.png\" width=\"300\"/>\n\n</td><td>\n\n[Deskewing](https://github.com/clEsperanto/pyclesperanto_prototype/blob/master/demo/transforms/deskew.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/screenshot_multiply_vectors_and_matrices.png\" width=\"300\"/>\n\n</td><td>\n\n[Multiply vectors and matrices](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/basics/multiply_vectors_and_matrices.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/screenshot_multiply_matrices.png\" width=\"300\"/>\n\n</td><td>\n\n[Matrix multiplication](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/basics/multiply_matrices.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/screenshot_spots_pointlists_matrices_tables.png\" width=\"300\"/>\n\n</td><td>\n\n* [Working with spots, pointlist and matrices](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/basics/spots_pointlists_matrices_tables.ipynb)\n* [Lists of nonzero pixel coordinates](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/basics/nonzero.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/mesh_between_centroids.png\" width=\"300\"/>\n\n</td><td>\n\n[Mesh between centroids](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/neighbors/mesh_between_centroids.ipynb)\n\n</td></tr><tr><td>\n\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/mesh_between_touching_neighbors.png\" width=\"300\"/>\n\n</td><td>\n\n[Mesh between touching neighbors](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/neighbors/mesh_between_touching_neighbors.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/mesh_with_distances.png\" width=\"300\"/>\n\n</td><td>\n\n[Mesh with distances](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/neighbors/mesh_with_distances.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/mesh_nearest_neighbors.png\" width=\"300\"/>\n\n</td><td>\n\n[Mesh nearest_neighbors](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/neighbors/mesh_nearest_neighbors.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/ipgraph_networkx.png\" width=\"300\"/>\n\n</td><td>\n\n[Export to igraph and networkx](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/neighbors/ipgraph_networkx.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/neighborhood_definitions.png\" width=\"300\"/>\n\n</td><td>\n\n[Neighborhood definitions](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/neighbors/neighborhood_definitions.ipynb)\n\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/tissue_neighborhood_quantification.png\" width=\"300\"/>\n\n</td><td>\n\n[Tissue neighborhood quantification](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/tissues/tissue_neighborhood_quantification.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/neighbors_of_neighbors.png\" width=\"300\"/>\n\n</td><td>\n\n[Neighbors of neighbors](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/neighbors/neighbors_of_neighbors.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/screenshot_voronoi_diagrams.png\" width=\"300\"/>\n\n</td><td>\n\n[Voronoi diagrams](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/basics/voronoi_diagrams.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/shape_descriptors_based_on_neighborhood_graphs.png\" width=\"300\"/>\n\n</td><td>\n\n[Shape descriptors based on neighborhood graphs](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/neighbors/shape_descriptors_based_on_neighborhood_graphs.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/distance_to_other_labels.png\" width=\"300\"/>\n\n</td><td>\n\n[Measuring distances between labels in two label images](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/neighbors/distance_to_other_labels.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/screenshot_tribolium_napari.png\" width=\"300\"/>\n\n</td><td>\n\n[Tribolium morphometry + Napari](https://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/tribolium_morphometry/tribolium.py)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/screenshot_tribolium_morphometry.png\" width=\"300\"/>\n\n</td><td>\n\n[Tribolium morphometry](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/tribolium_morphometry/tribolium_morphometry2.ipynb)\n[(archived version)](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/tribolium_morphometry/tribolium_morphometry.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/screenshot_napari_dask.png\" width=\"300\"/>\n\n</td><td>\n\n[napari+dask timelapse processing](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/napari_gui/napari_dask.ipynb)\n\n</td></tr>\n</table>\n\n## Technical insights\n\n<table border=\"0\"><tr><td>\n<tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/browse_operations.png\" width=\"300\"/>\n\n</td><td>\n\n[Browsing operations](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/basics/browse_operations.ipynb)\n\n</td></tr>\n<tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/interactive_widgets.gif\" width=\"300\"/>\n\n</td><td>\n\n[Interactive widgets](https://colab.research.google.com/github/clEsperanto/pyclesperanto_prototype/tree/master/demo/basics/browse_operations.ipynb)\n\n</td></tr>\n<tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/optimize_blobs_segmentation.png\" width=\"300\"/>\n\n</td><td>\n\n[Automatic workflow optimization](https://colab.research.google.com/github/clEsperanto/pyclesperanto_prototype/tree/master/demo/optimization/optimize_blobs_segmentation.ipynb)\n\n</td></tr>\n\n<tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/memory_management.png\" width=\"300\"/>\n\n</td><td>\n\n[Tracing memory consumtion on NVidia GPUs](https://github.com/clEsperanto/pyclesperanto_prototype/blob/master/demo/optimization/memory_management.ipynb)\n\n</td></tr>\n\n<tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/switching_gpus.png\" width=\"300\"/>\n\n</td><td>\n\n[Exploring and switching between GPUs](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/basics/switching_gpus.ipynb)\n\n</td></tr>\n<tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/cupy_compatibility.png\" width=\"300\"/>\n\n</td><td>\n\n[Interoperability with cupy](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/basics/interoperability_cupy.ipynb)\n\n[Using the cupy backend](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/basics/select_backend.ipynb)\n\n</td></tr>\n</table>\n\n## Related projects\n\n<table border=\"0\"><tr><td>\n\n<img src=\"https://github.com/clesperanto/napari_pyclesperanto_assistant/raw/master/docs/images/screenshot.png\" width=\"300\"/>\n\n</td><td>\n\n[napari-pyclesperanto-assistant](https://github.com/clesperanto/napari_pyclesperanto_assistant):\nA graphical user interface for general purpose GPU-accelerated image processing and analysis in napari.\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/haesleinhuepf/napari-accelerated-pixel-and-object-classification/raw/main/images/screenshot.png\" width=\"300\"/>\n\n</td><td>\n\n[napari-accelerated-pixel-and-object-classification](https://github.com/haesleinhuepf/napari-accelerated-pixel-and-object-classification):\nGPU-accelerated Random Forest Classifiers for pixel and labeled object classification\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/napari-clusters-plotter.png\" width=\"300\"/>\n\n</td><td>\n\n[napari-clusters-plotter](https://github.com/BiAPoL/napari-clusters-plotter):\nClustering of objects according to their quantitative properties\n\n</td></tr></table>\n\n## Benchmarking\nWe implemented some basic benchmarking notebooks allowing to see performance differences between pyclesperanto and \nsome other image processing libraries, typically using the CPU. Such benchmarking results vary heavily depending on \nimage size, kernel size, used operations, parameters and used hardware. Feel free to use those notebooks, adapt them to \nyour use-case scenario and benchmark on your target hardware. If you have different scenarios or use-cases, you are very \nwelcome to submit your notebook as pull-request!\n\n* [Affine transforms](http://github.com/clEsperanto/pyclesperanto_prototype/blob/master/benchmarks/affine_transforms.ipynb)\n* [Background subtraction](http://github.com/clEsperanto/pyclesperanto_prototype/blob/master/benchmarks/top_hat.ipynb)\n* [Gaussian blur](http://github.com/clEsperanto/pyclesperanto_prototype/blob/master/benchmarks/gaussian_blur.ipynb)\n* [Convolution](http://github.com/clEsperanto/pyclesperanto_prototype/blob/master/benchmarks/convolution.ipynb)\n* [Otsu's thresholding](http://github.com/clEsperanto/pyclesperanto_prototype/blob/master/benchmarks/threshold_otsu.ipynb)\n* [Connected component labeling](http://github.com/clEsperanto/pyclesperanto_prototype/blob/master/benchmarks/connected_component_labeling.ipynb)  \n* [Extend labels](http://github.com/clEsperanto/pyclesperanto_prototype/blob/master/benchmarks/extend_labels.ipynb)\n* [Statistics of labeled pixels / regionprops](http://github.com/clEsperanto/pyclesperanto_prototype/blob/master/benchmarks/statistics_of_labeled_pixels.ipynb)\n* [Histograms](http://github.com/clEsperanto/pyclesperanto_prototype/blob/master/benchmarks/histograms.ipynb)\n* [Matrix multiplication](http://github.com/clEsperanto/pyclesperanto_prototype/blob/master/benchmarks/matrix_multiplication.ipynb)\n* [Pixel-wise comparison](http://github.com/clEsperanto/pyclesperanto_prototype/blob/master/benchmarks/pixelwise_comparison.ipynb)\n* [Intensity projections](http://github.com/clEsperanto/pyclesperanto_prototype/blob/master/benchmarks/intensity_projections.ipynb)\n* [Axis transposition](http://github.com/clEsperanto/pyclesperanto_prototype/blob/master/benchmarks/transpose.ipynb)\n* [Nonzero](http://github.com/clEsperanto/pyclesperanto_prototype/blob/master/benchmarks/nonzero.ipynb)\n\n## See also\nThere are other libraries for code acceleration and GPU-acceleration for image processing.\n* [numba](https://numba.pydata.org/)\n* [cupy](https://cupy.dev)\n* [cucim](https://github.com/rapidsai/cucim)\n* [clij](https://clij.github.io)\n\n## Feedback welcome!\nclesperanto is developed in the open because we believe in the open source community. See our [community guidelines](https://clij.github.io/clij2-docs/community_guidelines). Feel free to drop feedback as [github issue](https://github.com/clEsperanto/pyclesperanto_prototype/issues) or via [image.sc](https://image.sc)\n",
+    "description": "# py-clesperanto\n[![Image.sc forum](https://img.shields.io/badge/dynamic/json.svg?label=forum&url=https%3A%2F%2Fforum.image.sc%2Ftag%2Fclesperanto.json&query=%24.topic_list.tags.0.topic_count&colorB=brightgreen&suffix=%20topics&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAYAAAAfSC3RAAABPklEQVR42m3SyyqFURTA8Y2BER0TDyExZ+aSPIKUlPIITFzKeQWXwhBlQrmFgUzMMFLKZeguBu5y+//17dP3nc5vuPdee6299gohUYYaDGOyyACq4JmQVoFujOMR77hNfOAGM+hBOQqB9TjHD36xhAa04RCuuXeKOvwHVWIKL9jCK2bRiV284QgL8MwEjAneeo9VNOEaBhzALGtoRy02cIcWhE34jj5YxgW+E5Z4iTPkMYpPLCNY3hdOYEfNbKYdmNngZ1jyEzw7h7AIb3fRTQ95OAZ6yQpGYHMMtOTgouktYwxuXsHgWLLl+4x++Kx1FJrjLTagA77bTPvYgw1rRqY56e+w7GNYsqX6JfPwi7aR+Y5SA+BXtKIRfkfJAYgj14tpOF6+I46c4/cAM3UhM3JxyKsxiOIhH0IO6SH/A1Kb1WBeUjbkAAAAAElFTkSuQmCC)](https://forum.image.sc/tag/clesperanto)\n[![website](https://img.shields.io/website?url=http%3A%2F%2Fclesperanto.net)](http://clesperanto.net)\n[![PyPI](https://img.shields.io/pypi/v/pyclesperanto-prototype.svg?color=green)](https://pypi.org/project/pyclesperanto-prototype)\n[![Anaconda-Server Badge](https://anaconda.org/conda-forge/pyclesperanto-prototype/badges/version.svg)](https://anaconda.org/conda-forge/pyclesperanto-prototype)\n[![Contributors](https://img.shields.io/github/contributors-anon/clEsperanto/pyclesperanto_prototype)](https://github.com/clEsperanto/pyclesperanto_prototype/graphs/contributors)\n[![PyPI - Downloads](https://img.shields.io/pypi/dm/pyclesperanto_prototype)](https://pypistats.org/packages/pyclesperanto_prototype)\n[![GitHub stars](https://img.shields.io/github/stars/clEsperanto/pyclesperanto_prototype?style=social)](https://github.com/clEsperanto/pyclesperanto_prototype/)\n[![GitHub forks](https://img.shields.io/github/forks/clEsperanto/pyclesperanto_prototype?style=social)](https://github.com/clEsperanto/pyclesperanto_prototype/)\n[![License](https://img.shields.io/pypi/l/pyclesperanto_prototype.svg?color=green)](https://github.com/haesleinhuepf/pyclesperanto_prototype/raw/master/LICENSE)\n[![Python Version](https://img.shields.io/pypi/pyversions/pyclesperanto-prototype.svg?color=green)](https://python.org)\n[![tests](https://github.com/clesperanto/pyclesperanto_prototype/workflows/tests/badge.svg)](https://github.com/clesperanto/pyclesperanto_prototype/actions)\n[![codecov](https://codecov.io/gh/clesperanto/pyclesperanto_prototype/branch/master/graph/badge.svg)](https://codecov.io/gh/clesperanto/pyclesperanto_prototype)\n[![Development Status](https://img.shields.io/pypi/status/pyclesperanto_prototype.svg)](https://en.wikipedia.org/wiki/Software_release_life_cycle#Alpha)\n[![DOI](https://zenodo.org/badge/248206619.svg)](https://zenodo.org/badge/latestdoi/248206619)\n\npy-clesperanto is a prototype for [clesperanto](http://clesperanto.net) - a multi-platform multi-language framework for GPU-accelerated image processing. \nWe mostly use it in the life sciences for analysing 3- and 4-dimensional microsopy data, e.g. as we face it developmental biology when segmenting cells and studying\ntheir individual properties as well as properties of compounds of cells forming tissues.\n\n![](https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/banner.png)\nImage data source: Daniela Vorkel, Myers lab, MPI-CBG, rendered using [napari](https://github.com/napari/napari)\n\nclesperanto uses [OpenCL kernels](https://github.com/clEsperanto/clij-opencl-kernels/tree/development/src/main/java/net/haesleinhuepf/clij/kernels) from [CLIJ](http://clij.github.io/).\n\nFor users convenience, there are code generators available for [napari](https://clesperanto.github.io/napari_pyclesperanto_assistant/) and [Fiji](https://clij.github.io/assistant/).\nAlso check out the [napari workflow optimizer](https://github.com/haesleinhuepf/napari-workflow-optimizer) for semi-automatic parameter tuning of clesperanto-functions.\n\n## Reference\nThe preliminary API reference is available [here](https://clesperanto.github.io/pyclesperanto_prototype/docs/_build/html/).\nFurthermore, parts of the [reference](https://clij.github.io/clij2-docs/reference__pyclesperanto) are also available within the CLIJ2 documentation.\n\n## Installation\n* Get a conda/python environment, e.g. via [mini-conda](https://docs.conda.io/en/latest/miniconda.html). If you never used python/conda environments before, please follow the instructions [here](https://biapol.github.io/blog/johannes_mueller/anaconda_getting_started/) first.\n\n```\nconda create --name cle_39 python=3.9\nconda activate cle_39\n```\n\n* Install pyclesperanto-prototype using conda:\n\n```\nconda install -c conda-forge pyclesperanto-prototype\n```\n\nOR using pip:\n\n```\npip install pyclesperanto-prototype\n```\n\nMac-users please also install this:\n\n    conda install -c conda-forge ocl_icd_wrapper_apple\n    \nLinux users please also install this:\n    \n    conda install -c conda-forge ocl-icd-system\n\n## Example code\nA basic image procressing workflow loads blobs.gif and counts the number of gold particles:\n\n```python\nimport pyclesperanto_prototype as cle\n\nfrom skimage.io import imread, imsave\n\n# initialize GPU\ndevice = cle.select_device(\"GTX\")\nprint(\"Used GPU: \", device)\n\n# load data\nimage = imread('https://imagej.nih.gov/ij/images/blobs.gif')\n\n# process the image\ninverted = cle.subtract_image_from_scalar(image, scalar=255)\nblurred = cle.gaussian_blur(inverted, sigma_x=1, sigma_y=1)\nbinary = cle.threshold_otsu(blurred)\nlabeled = cle.connected_components_labeling_box(binary)\n\n# The maxmium intensity in a label image corresponds to the number of objects\nnum_labels = cle.maximum_of_all_pixels(labeled)\n\n# print out result\nprint(\"Num objects in the image: \" + str(num_labels))\n\n# save image to disc\nimsave(\"result.tif\", labeled)\n```\n\n## Example gallery \n\n<table border=\"0\">\n<tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/screenshot_select_GPU.png\" width=\"300\"/>\n\n</td><td>\n\n[Select GPU](https://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/basics/select_GPU.py)\n\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/jupyter.png\" width=\"300\"/>\n\n</td><td>\n\n[Image processing in Jupyter Notebooks](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/interoperability/jupyter.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/screenshot_count_blobs.png\" width=\"300\"/>\n\n</td><td>\n\n[Counting blobs](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/basics/count_blobs.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/voronoi_otsu_labeling.png\" width=\"300\"/>\n\n</td><td>\n\n[Voronoi-Otsu labeling](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/segmentation/voronoi_otsu_labeling.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/segmentation_3d.png\" width=\"300\"/>\n\n</td><td>\n\n[3D Image segmentation ](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/segmentation/Segmentation_3D.ipynb)\n\n</td></tr>\n\n<tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/segmentation_2d_membranes.png\" width=\"300\"/>\n\n</td><td>\n\n[Cell segmentation based on membranes](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/segmentation/segmentation_2d_membranes.ipynb)\n\n</td></tr>\n\n<tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/counting_nuclei_multichannel.png\" width=\"300\"/>\n\n</td><td>\n\n[Counting nuclei according to expression in multiple channels](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/measurement/counting_nuclei_multichannel.ipynb)\n\n</td></tr>\n\n\n<tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/differentiate_nuclei_intensity.png\" width=\"300\"/>\n\n</td><td>\n\n[Differentiating nuclei according to signal intensity](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/measurement/differentiate_nuclei_intensity.ipynb)\n\n</td></tr>\n\n\n<tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/bead_segmentation.png\" width=\"300\"/>\n\n</td><td>\n\n[Detecting beads and measuring their size](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/segmentation/bead_segmentation.ipynb)\n\n</td></tr>\n\n<tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/label_statistics.png\" width=\"300\"/>\n\n</td><td>\n\n[Label statistics](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/basics/label_statistics.ipynb)\n\n</td></tr>\n\n<tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/parametric_maps.png\" width=\"300\"/>\n\n</td><td>\n\n[Parametric maps](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/tissues/parametric_maps.ipynb)\n\n</td></tr>\n\n\n<tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/screenshot_crop_and_paste_images.png\" width=\"300\"/>\n\n</td><td>\n\n[Crop and paste images](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/basics/crop_and_paste_images.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/screenshot_inspecting_3d_images.png\" width=\"300\"/>\n\n</td><td>\n\n[Inspecting 3D image data](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/basics/inspecting_3d_images.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/screenshot_affine_transforms.png\" width=\"300\"/>\n\n</td><td>\n\n[Rotation, scaling, translation, affine transforms](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/transforms/affine_transforms.ipynb)\n\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/screenshot_deskew.png\" width=\"300\"/>\n\n</td><td>\n\n[Deskewing](https://github.com/clEsperanto/pyclesperanto_prototype/blob/master/demo/transforms/deskew.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/screenshot_multiply_vectors_and_matrices.png\" width=\"300\"/>\n\n</td><td>\n\n[Multiply vectors and matrices](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/basics/multiply_vectors_and_matrices.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/screenshot_multiply_matrices.png\" width=\"300\"/>\n\n</td><td>\n\n[Matrix multiplication](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/basics/multiply_matrices.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/screenshot_spots_pointlists_matrices_tables.png\" width=\"300\"/>\n\n</td><td>\n\n* [Working with spots, pointlist and matrices](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/basics/spots_pointlists_matrices_tables.ipynb)\n* [Lists of nonzero pixel coordinates](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/basics/nonzero.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/mesh_between_centroids.png\" width=\"300\"/>\n\n</td><td>\n\n[Mesh between centroids](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/neighbors/mesh_between_centroids.ipynb)\n\n</td></tr><tr><td>\n\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/mesh_between_touching_neighbors.png\" width=\"300\"/>\n\n</td><td>\n\n[Mesh between touching neighbors](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/neighbors/mesh_between_touching_neighbors.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/mesh_with_distances.png\" width=\"300\"/>\n\n</td><td>\n\n[Mesh with distances](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/neighbors/mesh_with_distances.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/mesh_nearest_neighbors.png\" width=\"300\"/>\n\n</td><td>\n\n[Mesh nearest_neighbors](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/neighbors/mesh_nearest_neighbors.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/ipgraph_networkx.png\" width=\"300\"/>\n\n</td><td>\n\n[Export to igraph and networkx](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/neighbors/ipgraph_networkx.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/neighborhood_definitions.png\" width=\"300\"/>\n\n</td><td>\n\n[Neighborhood definitions](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/neighbors/neighborhood_definitions.ipynb)\n\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/tissue_neighborhood_quantification.png\" width=\"300\"/>\n\n</td><td>\n\n[Tissue neighborhood quantification](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/tissues/tissue_neighborhood_quantification.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/neighbors_of_neighbors.png\" width=\"300\"/>\n\n</td><td>\n\n[Neighbors of neighbors](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/neighbors/neighbors_of_neighbors.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/screenshot_voronoi_diagrams.png\" width=\"300\"/>\n\n</td><td>\n\n[Voronoi diagrams](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/basics/voronoi_diagrams.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/shape_descriptors_based_on_neighborhood_graphs.png\" width=\"300\"/>\n\n</td><td>\n\n[Shape descriptors based on neighborhood graphs](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/neighbors/shape_descriptors_based_on_neighborhood_graphs.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/distance_to_other_labels.png\" width=\"300\"/>\n\n</td><td>\n\n[Measuring distances between labels in two label images](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/neighbors/distance_to_other_labels.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/screenshot_tribolium_napari.png\" width=\"300\"/>\n\n</td><td>\n\n[Tribolium morphometry + Napari](https://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/tribolium_morphometry/tribolium.py)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/screenshot_tribolium_morphometry.png\" width=\"300\"/>\n\n</td><td>\n\n[Tribolium morphometry](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/tribolium_morphometry/tribolium_morphometry2.ipynb)\n[(archived version)](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/tribolium_morphometry/tribolium_morphometry.ipynb)\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/screenshot_napari_dask.png\" width=\"300\"/>\n\n</td><td>\n\n[napari+dask timelapse processing](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/napari_gui/napari_dask.ipynb)\n\n</td></tr>\n</table>\n\n## Technical insights\n\n<table border=\"0\"><tr><td>\n<tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/browse_operations.png\" width=\"300\"/>\n\n</td><td>\n\n[Browsing operations](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/basics/browse_operations.ipynb)\n\n</td></tr>\n<tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/interactive_widgets.gif\" width=\"300\"/>\n\n</td><td>\n\n[Interactive widgets](https://colab.research.google.com/github/clEsperanto/pyclesperanto_prototype/tree/master/demo/basics/browse_operations.ipynb)\n\n</td></tr>\n<tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/optimize_blobs_segmentation.png\" width=\"300\"/>\n\n</td><td>\n\n[Automatic workflow optimization](https://colab.research.google.com/github/clEsperanto/pyclesperanto_prototype/tree/master/demo/optimization/optimize_blobs_segmentation.ipynb)\n\n</td></tr>\n\n<tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/memory_management.png\" width=\"300\"/>\n\n</td><td>\n\n[Tracing memory consumtion on NVidia GPUs](https://github.com/clEsperanto/pyclesperanto_prototype/blob/master/demo/optimization/memory_management.ipynb)\n\n</td></tr>\n\n<tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/switching_gpus.png\" width=\"300\"/>\n\n</td><td>\n\n[Exploring and switching between GPUs](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/basics/switching_gpus.ipynb)\n\n</td></tr>\n<tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/cupy_compatibility.png\" width=\"300\"/>\n\n</td><td>\n\n[Interoperability with cupy](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/basics/interoperability_cupy.ipynb)\n\n[Using the cupy backend](http://github.com/clEsperanto/pyclesperanto_prototype/tree/master/demo/basics/select_backend.ipynb)\n\n</td></tr>\n</table>\n\n## Related projects\n\n<table border=\"0\"><tr><td>\n\n<img src=\"https://github.com/clesperanto/napari_pyclesperanto_assistant/raw/master/docs/images/screenshot.png\" width=\"300\"/>\n\n</td><td>\n\n[napari-pyclesperanto-assistant](https://github.com/clesperanto/napari_pyclesperanto_assistant):\nA graphical user interface for general purpose GPU-accelerated image processing and analysis in napari.\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/haesleinhuepf/napari-accelerated-pixel-and-object-classification/raw/main/images/screenshot.png\" width=\"300\"/>\n\n</td><td>\n\n[napari-accelerated-pixel-and-object-classification](https://github.com/haesleinhuepf/napari-accelerated-pixel-and-object-classification):\nGPU-accelerated Random Forest Classifiers for pixel and labeled object classification\n\n</td></tr><tr><td>\n\n<img src=\"https://github.com/clEsperanto/pyclesperanto_prototype/raw/master/docs/images/napari-clusters-plotter.png\" width=\"300\"/>\n\n</td><td>\n\n[napari-clusters-plotter](https://github.com/BiAPoL/napari-clusters-plotter):\nClustering of objects according to their quantitative properties\n\n</td></tr></table>\n\n## Benchmarking\nWe implemented some basic benchmarking notebooks allowing to see performance differences between pyclesperanto and \nsome other image processing libraries, typically using the CPU. Such benchmarking results vary heavily depending on \nimage size, kernel size, used operations, parameters and used hardware. Feel free to use those notebooks, adapt them to \nyour use-case scenario and benchmark on your target hardware. If you have different scenarios or use-cases, you are very \nwelcome to submit your notebook as pull-request!\n\n* [Affine transforms](http://github.com/clEsperanto/pyclesperanto_prototype/blob/master/benchmarks/affine_transforms.ipynb)\n* [Background subtraction](http://github.com/clEsperanto/pyclesperanto_prototype/blob/master/benchmarks/top_hat.ipynb)\n* [Gaussian blur](http://github.com/clEsperanto/pyclesperanto_prototype/blob/master/benchmarks/gaussian_blur.ipynb)\n* [Convolution](http://github.com/clEsperanto/pyclesperanto_prototype/blob/master/benchmarks/convolution.ipynb)\n* [Otsu's thresholding](http://github.com/clEsperanto/pyclesperanto_prototype/blob/master/benchmarks/threshold_otsu.ipynb)\n* [Connected component labeling](http://github.com/clEsperanto/pyclesperanto_prototype/blob/master/benchmarks/connected_component_labeling.ipynb)  \n* [Extend labels](http://github.com/clEsperanto/pyclesperanto_prototype/blob/master/benchmarks/extend_labels.ipynb)\n* [Statistics of labeled pixels / regionprops](http://github.com/clEsperanto/pyclesperanto_prototype/blob/master/benchmarks/statistics_of_labeled_pixels.ipynb)\n* [Histograms](http://github.com/clEsperanto/pyclesperanto_prototype/blob/master/benchmarks/histograms.ipynb)\n* [Matrix multiplication](http://github.com/clEsperanto/pyclesperanto_prototype/blob/master/benchmarks/matrix_multiplication.ipynb)\n* [Pixel-wise comparison](http://github.com/clEsperanto/pyclesperanto_prototype/blob/master/benchmarks/pixelwise_comparison.ipynb)\n* [Intensity projections](http://github.com/clEsperanto/pyclesperanto_prototype/blob/master/benchmarks/intensity_projections.ipynb)\n* [Axis transposition](http://github.com/clEsperanto/pyclesperanto_prototype/blob/master/benchmarks/transpose.ipynb)\n* [Nonzero](http://github.com/clEsperanto/pyclesperanto_prototype/blob/master/benchmarks/nonzero.ipynb)\n\n## See also\nThere are other libraries for code acceleration and GPU-acceleration for image processing.\n* [numba](https://numba.pydata.org/)\n* [cupy](https://cupy.dev)\n* [cucim](https://github.com/rapidsai/cucim)\n* [clij](https://clij.github.io)\n\n## Feedback welcome!\nclesperanto is developed in the open because we believe in the open source community. See our [community guidelines](https://clij.github.io/clij2-docs/community_guidelines). Feel free to drop feedback as [github issue](https://github.com/clEsperanto/pyclesperanto_prototype/issues) or via [image.sc](https://image.sc)\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": "",
@@ -43,7 +43,7 @@
       "Source Code": "https://github.com/clEsperanto/pyclesperanto_prototypes",
       "User Support": "https://github.com/clEsperanto/pyclesperanto_prototypes/issues"
     },
-    "release_url": "https://pypi.org/project/pyclesperanto-prototype/0.18.0/",
+    "release_url": "https://pypi.org/project/pyclesperanto-prototype/0.20.0/",
     "requires_dist": [
       "numpy (!=1.19.4)",
       "pyopencl",
@@ -54,11 +54,11 @@
     ],
     "requires_python": ">=3.6",
     "summary": "GPU-accelerated image processing in python using OpenCL",
-    "version": "0.18.0",
+    "version": "0.20.0",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 14679661,
+  "last_serial": 15968572,
   "releases": {
     "0.0.3": [
       {
@@ -1110,6 +1110,384 @@
         "yanked_reason": null
       }
     ],
+    "0.18.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "d272b1455cae7cd399402392a4f9b66d",
+          "sha256": "6aef212640735be22742ed19a85dc657fcfd04fa569ee90e5557c027c8013f03"
+        },
+        "downloads": -1,
+        "filename": "pyclesperanto_prototype-0.18.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "d272b1455cae7cd399402392a4f9b66d",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.6",
+        "size": 544966,
+        "upload_time": "2022-08-19T11:27:07",
+        "upload_time_iso_8601": "2022-08-19T11:27:07.794691Z",
+        "url": "https://files.pythonhosted.org/packages/02/3b/a664a36e326bbd9515a811fe13bacff5705bf312e93317ec905219e27e8b/pyclesperanto_prototype-0.18.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "d5a88998081aa39dad2de5b38c8cba41",
+          "sha256": "4beeae32c9d4f36b19ecf74b31d8d3f747e9286aedbde8e6f7237b65189fde98"
+        },
+        "downloads": -1,
+        "filename": "pyclesperanto_prototype-0.18.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d5a88998081aa39dad2de5b38c8cba41",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.6",
+        "size": 179293,
+        "upload_time": "2022-08-19T11:27:09",
+        "upload_time_iso_8601": "2022-08-19T11:27:09.988382Z",
+        "url": "https://files.pythonhosted.org/packages/b4/f9/1650b10042314630720c39b1c19ce25681d3b8e0d5f14aa95ef3b1f6be6d/pyclesperanto_prototype-0.18.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.18.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "ae204f1c9d19a68c7166e323ce5c93e0",
+          "sha256": "a9f97e5c282513d5f0625439248af5ef291cfbf5f69b88f75dbf43ee1d3d3d89"
+        },
+        "downloads": -1,
+        "filename": "pyclesperanto_prototype-0.18.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "ae204f1c9d19a68c7166e323ce5c93e0",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.6",
+        "size": 555702,
+        "upload_time": "2022-08-30T12:48:33",
+        "upload_time_iso_8601": "2022-08-30T12:48:33.354785Z",
+        "url": "https://files.pythonhosted.org/packages/0d/62/f49da6542760f22640baf9643851d77304363f204372c9eb272f3b213de2/pyclesperanto_prototype-0.18.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "037b55e7fc8336aa95ebfd0a91823c9a",
+          "sha256": "d264480b836698fd65da7a1924912ed6ba8860718472fa72c654d329b3f012a9"
+        },
+        "downloads": -1,
+        "filename": "pyclesperanto_prototype-0.18.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "037b55e7fc8336aa95ebfd0a91823c9a",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.6",
+        "size": 183913,
+        "upload_time": "2022-08-30T12:48:35",
+        "upload_time_iso_8601": "2022-08-30T12:48:35.059029Z",
+        "url": "https://files.pythonhosted.org/packages/4b/91/c910b8cb5f664c3f8487a74252383302ccfd1a15a3310fb5b36827ac964b/pyclesperanto_prototype-0.18.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.18.3": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "2181acb7989d148e09155c72c5b7480b",
+          "sha256": "6f88d703f1bd62722253798aae8f6dd29233a9ed6e54ed2feba569f36edc1330"
+        },
+        "downloads": -1,
+        "filename": "pyclesperanto_prototype-0.18.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "2181acb7989d148e09155c72c5b7480b",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.6",
+        "size": 555746,
+        "upload_time": "2022-08-31T19:42:10",
+        "upload_time_iso_8601": "2022-08-31T19:42:10.868307Z",
+        "url": "https://files.pythonhosted.org/packages/7c/de/5a59b2281a7e2522ff1c3aad02d16b5ea59c586664adddeee70b13ffb9be/pyclesperanto_prototype-0.18.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "3cdfab76d6242231d3d965b6813b9a84",
+          "sha256": "559accf3f849bab6260511e14603496cd113ff221e80adb8db27bd9fd5520978"
+        },
+        "downloads": -1,
+        "filename": "pyclesperanto_prototype-0.18.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "3cdfab76d6242231d3d965b6813b9a84",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.6",
+        "size": 183996,
+        "upload_time": "2022-08-31T19:42:15",
+        "upload_time_iso_8601": "2022-08-31T19:42:15.474146Z",
+        "url": "https://files.pythonhosted.org/packages/de/35/eda257be890ecbaf82872a30af5bde2eb9357d272e89d3c15d3fcb55049b/pyclesperanto_prototype-0.18.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.18.4": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "d7e867d5738f03345acf44c2727c51e1",
+          "sha256": "3a65a987961de9233427520619e9070601550530fdc767b0a202b09121e7af03"
+        },
+        "downloads": -1,
+        "filename": "pyclesperanto_prototype-0.18.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "d7e867d5738f03345acf44c2727c51e1",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.6",
+        "size": 555959,
+        "upload_time": "2022-09-04T15:03:29",
+        "upload_time_iso_8601": "2022-09-04T15:03:29.063182Z",
+        "url": "https://files.pythonhosted.org/packages/fa/39/abbb48b1485cbb9aca7b51866ee9336cf34e1d3e6b200d6a552b93056c4a/pyclesperanto_prototype-0.18.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "4a5a39f615317a41c9fe48758c80adf9",
+          "sha256": "0d7bc3c774e5cdf23d3d2234f3b9dae2e0c034700238d52beac328a93c002c58"
+        },
+        "downloads": -1,
+        "filename": "pyclesperanto_prototype-0.18.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "4a5a39f615317a41c9fe48758c80adf9",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.6",
+        "size": 184129,
+        "upload_time": "2022-09-04T15:03:31",
+        "upload_time_iso_8601": "2022-09-04T15:03:31.587306Z",
+        "url": "https://files.pythonhosted.org/packages/6e/ce/36f512a5fe44fc9c42a335fb32ca6103fe45bbd6b506cdba65e649dcdaef/pyclesperanto_prototype-0.18.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.19.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "6cd036f1048c6069f7c2165b07a81751",
+          "sha256": "a6ab9048bbe81f70bf5dfe292ce2fa6065c62382591860503bac56a6e8c61bab"
+        },
+        "downloads": -1,
+        "filename": "pyclesperanto_prototype-0.19.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "6cd036f1048c6069f7c2165b07a81751",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.6",
+        "size": 582871,
+        "upload_time": "2022-09-11T18:26:56",
+        "upload_time_iso_8601": "2022-09-11T18:26:56.302049Z",
+        "url": "https://files.pythonhosted.org/packages/98/a8/40e4f384d50c5e259eda35282511fecc052e98228a3e3ebd46831ac1dbef/pyclesperanto_prototype-0.19.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "537b3fb2731431b167c85bcbf5ede11c",
+          "sha256": "0046469c9cba6c58c7b9865fdd36fe7c1019e83a7fd035c009c77382a0987342"
+        },
+        "downloads": -1,
+        "filename": "pyclesperanto_prototype-0.19.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "537b3fb2731431b167c85bcbf5ede11c",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.6",
+        "size": 191926,
+        "upload_time": "2022-09-11T18:26:58",
+        "upload_time_iso_8601": "2022-09-11T18:26:58.679657Z",
+        "url": "https://files.pythonhosted.org/packages/71/3c/8f490cd3cabf9f6dd2aaf9cf7388338370194b40865c5b144797c3869390/pyclesperanto_prototype-0.19.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.19.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "421d5b31e972b230128410d270566a39",
+          "sha256": "82fe7edbc9d06f380da076ff331e539c4b3b831296ebb7056377a44e94124f2e"
+        },
+        "downloads": -1,
+        "filename": "pyclesperanto_prototype-0.19.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "421d5b31e972b230128410d270566a39",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.6",
+        "size": 583795,
+        "upload_time": "2022-09-17T14:14:30",
+        "upload_time_iso_8601": "2022-09-17T14:14:30.452798Z",
+        "url": "https://files.pythonhosted.org/packages/b4/ba/3649fa8c26558f42ecc021c669946c1b79e2b010257a20602e6519cc3c27/pyclesperanto_prototype-0.19.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "1dc1e962212d242d5b896bf119f70c6a",
+          "sha256": "286f6c88ba90f1ce2c4cd4b6f75f19ac86f1e50818ebed68a871f1b1ee3bb776"
+        },
+        "downloads": -1,
+        "filename": "pyclesperanto_prototype-0.19.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "1dc1e962212d242d5b896bf119f70c6a",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.6",
+        "size": 192435,
+        "upload_time": "2022-09-17T14:14:32",
+        "upload_time_iso_8601": "2022-09-17T14:14:32.940877Z",
+        "url": "https://files.pythonhosted.org/packages/ce/81/4a3a95d69af96887e3c45778759389ba2d2cf5f6fb55d205bfc0d26274b7/pyclesperanto_prototype-0.19.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.19.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "ab605d5675ed671f0da748c9e3091be3",
+          "sha256": "fe29c75d5fdde964a8bcbadd9535c4314ec0699c561999eed3db5344fdc60b7f"
+        },
+        "downloads": -1,
+        "filename": "pyclesperanto_prototype-0.19.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "ab605d5675ed671f0da748c9e3091be3",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.6",
+        "size": 583837,
+        "upload_time": "2022-09-30T11:34:45",
+        "upload_time_iso_8601": "2022-09-30T11:34:45.883041Z",
+        "url": "https://files.pythonhosted.org/packages/2e/36/811fc905de468c7b398726c0e94e7e99d6da1d3362df7715ea44501825e0/pyclesperanto_prototype-0.19.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "5396f4a125fc125b530167949b20e180",
+          "sha256": "9dec23d5bab2a6a4bb0cfab8453f28f1a54fda30cd21a0e72b183df140baaa4a"
+        },
+        "downloads": -1,
+        "filename": "pyclesperanto_prototype-0.19.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "5396f4a125fc125b530167949b20e180",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.6",
+        "size": 192503,
+        "upload_time": "2022-09-30T11:34:47",
+        "upload_time_iso_8601": "2022-09-30T11:34:47.907622Z",
+        "url": "https://files.pythonhosted.org/packages/81/e9/ff496c2d6cf462a314620b28069d50215d6334fad813a5e72be49397d3a7/pyclesperanto_prototype-0.19.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.19.3": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "25084697662338e34b174f707a861138",
+          "sha256": "166fcc01730d970c60fcfce176eca2833a974ea47095cb86e15edf730ea3f21e"
+        },
+        "downloads": -1,
+        "filename": "pyclesperanto_prototype-0.19.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "25084697662338e34b174f707a861138",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.6",
+        "size": 585395,
+        "upload_time": "2022-10-02T18:01:45",
+        "upload_time_iso_8601": "2022-10-02T18:01:45.144125Z",
+        "url": "https://files.pythonhosted.org/packages/d8/c9/8db30eedbae6db0bed39c15af684b293bcf058c575cc7ac1ba6f89e4655b/pyclesperanto_prototype-0.19.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "10a6f0a76a59313d23bda41fc00d2d59",
+          "sha256": "fad69db490a8da5d1df03425f55277e6a921a31ef2c7625f1698ef089735c1f6"
+        },
+        "downloads": -1,
+        "filename": "pyclesperanto_prototype-0.19.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "10a6f0a76a59313d23bda41fc00d2d59",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.6",
+        "size": 193499,
+        "upload_time": "2022-10-02T18:01:47",
+        "upload_time_iso_8601": "2022-10-02T18:01:47.566600Z",
+        "url": "https://files.pythonhosted.org/packages/ef/3f/acf4284ebf63efdc1d8e85b83b32ac8f6a6a3a8a28208182609a9ed703ed/pyclesperanto_prototype-0.19.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.19.4": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "4fd7a7beb58a3d50d6c97d7309ecbbb5",
+          "sha256": "9dadbc8ee090e53f750230d912d48b390789d510fe5c61032403894cd530634a"
+        },
+        "downloads": -1,
+        "filename": "pyclesperanto_prototype-0.19.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "4fd7a7beb58a3d50d6c97d7309ecbbb5",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.6",
+        "size": 585851,
+        "upload_time": "2022-10-07T18:57:13",
+        "upload_time_iso_8601": "2022-10-07T18:57:13.673479Z",
+        "url": "https://files.pythonhosted.org/packages/9b/a0/c6daf27a86918b89c5073876405b16dc212519c9e28d24a7bd482ffe32a3/pyclesperanto_prototype-0.19.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "b930697932761857935e54ebe6e8d709",
+          "sha256": "5dcadd3810a98df2782d473e07cc1cf889e1eb82fb71ce1a14f9b407ef0a3bef"
+        },
+        "downloads": -1,
+        "filename": "pyclesperanto_prototype-0.19.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "b930697932761857935e54ebe6e8d709",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.6",
+        "size": 194164,
+        "upload_time": "2022-10-07T18:57:16",
+        "upload_time_iso_8601": "2022-10-07T18:57:16.046849Z",
+        "url": "https://files.pythonhosted.org/packages/68/d0/be3dd0f5465c23b51899cb5fc6750ed5bb7dbec947e2b35f1da90011ef0d/pyclesperanto_prototype-0.19.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
     "0.2.0": [
       {
         "comment_text": "",
@@ -1190,6 +1568,48 @@
         "upload_time": "2020-07-17T10:19:38",
         "upload_time_iso_8601": "2020-07-17T10:19:38.745136Z",
         "url": "https://files.pythonhosted.org/packages/04/c1/c2fce536f8e535cac3ec689224dd75096aea35fdff18aef378c01c891878/pyclesperanto_prototype-0.2.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.20.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "d0e3d26066b775c163a3a104a34b6e76",
+          "sha256": "02ecade3f2fdd6b40073430215476095b8c7056d2ccf98e614aacc82cdabc108"
+        },
+        "downloads": -1,
+        "filename": "pyclesperanto_prototype-0.20.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "d0e3d26066b775c163a3a104a34b6e76",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.6",
+        "size": 596892,
+        "upload_time": "2022-12-02T10:27:37",
+        "upload_time_iso_8601": "2022-12-02T10:27:37.690151Z",
+        "url": "https://files.pythonhosted.org/packages/82/2d/62c623c4100e6bc114c6446b32c75875b3630433903050fcf0a43b691a61/pyclesperanto_prototype-0.20.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "34ba7ae0ef26745ab4454a4c1885a0a8",
+          "sha256": "7207144f0e08c8a3547332f3b93ab3831917bb473b817475e67780a69ec9d457"
+        },
+        "downloads": -1,
+        "filename": "pyclesperanto_prototype-0.20.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "34ba7ae0ef26745ab4454a4c1885a0a8",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.6",
+        "size": 198377,
+        "upload_time": "2022-12-02T10:27:40",
+        "upload_time_iso_8601": "2022-12-02T10:27:40.453574Z",
+        "url": "https://files.pythonhosted.org/packages/16/0b/10a16868ec28ff70b8f55d4d3e4903f1813ea9153fcee3b8161426f60232/pyclesperanto_prototype-0.20.0.tar.gz",
         "yanked": false,
         "yanked_reason": null
       }
@@ -1955,40 +2375,40 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "ebaac72b4fef866aca177a97b10ec5f8",
-        "sha256": "754e3cc93ce22bcee403e9477473fb4f141bcf7768d450471117f0e93ee028f6"
+        "md5": "d0e3d26066b775c163a3a104a34b6e76",
+        "sha256": "02ecade3f2fdd6b40073430215476095b8c7056d2ccf98e614aacc82cdabc108"
       },
       "downloads": -1,
-      "filename": "pyclesperanto_prototype-0.18.0-py3-none-any.whl",
+      "filename": "pyclesperanto_prototype-0.20.0-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "ebaac72b4fef866aca177a97b10ec5f8",
+      "md5_digest": "d0e3d26066b775c163a3a104a34b6e76",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.6",
-      "size": 544960,
-      "upload_time": "2022-08-07T12:25:55",
-      "upload_time_iso_8601": "2022-08-07T12:25:55.952294Z",
-      "url": "https://files.pythonhosted.org/packages/9b/83/c4880c79609175a1493fd5e4a569baf4ff84a288aa4f7743c2ce43ce8113/pyclesperanto_prototype-0.18.0-py3-none-any.whl",
+      "size": 596892,
+      "upload_time": "2022-12-02T10:27:37",
+      "upload_time_iso_8601": "2022-12-02T10:27:37.690151Z",
+      "url": "https://files.pythonhosted.org/packages/82/2d/62c623c4100e6bc114c6446b32c75875b3630433903050fcf0a43b691a61/pyclesperanto_prototype-0.20.0-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "md5": "dd456ad68547d4727a47209120721e30",
-        "sha256": "f2f75d0dd2c4fb8b30336ca8c94b1a4eb65d86a8b1f4db9d01055d132b500816"
+        "md5": "34ba7ae0ef26745ab4454a4c1885a0a8",
+        "sha256": "7207144f0e08c8a3547332f3b93ab3831917bb473b817475e67780a69ec9d457"
       },
       "downloads": -1,
-      "filename": "pyclesperanto_prototype-0.18.0.tar.gz",
+      "filename": "pyclesperanto_prototype-0.20.0.tar.gz",
       "has_sig": false,
-      "md5_digest": "dd456ad68547d4727a47209120721e30",
+      "md5_digest": "34ba7ae0ef26745ab4454a4c1885a0a8",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.6",
-      "size": 178455,
-      "upload_time": "2022-08-07T12:25:58",
-      "upload_time_iso_8601": "2022-08-07T12:25:58.142103Z",
-      "url": "https://files.pythonhosted.org/packages/04/0c/31ddbf3030f790d4aa10712b5f38af347cbefd6d8cd1eaa08da8cd2fc173/pyclesperanto_prototype-0.18.0.tar.gz",
+      "size": 198377,
+      "upload_time": "2022-12-02T10:27:40",
+      "upload_time_iso_8601": "2022-12-02T10:27:40.453574Z",
+      "url": "https://files.pythonhosted.org/packages/16/0b/10a16868ec28ff70b8f55d4d3e4903f1813ea9153fcee3b8161426f60232/pyclesperanto_prototype-0.20.0.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }

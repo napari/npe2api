@@ -1,0 +1,158 @@
+{
+  "info": {
+    "author": "Guillaume Witz",
+    "author_email": "guillaume.witz@unibe.ch",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-steinpose\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-steinpose.svg?color=green)](https://github.com/guiwitz/napari-steinpose/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-steinpose.svg?color=green)](https://pypi.org/project/napari-steinpose)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-steinpose.svg?color=green)](https://python.org)\n[![tests](https://github.com/guiwitz/napari-steinpose/workflows/tests/badge.svg)](https://github.com/guiwitz/napari-steinpose/actions)\n[![codecov](https://codecov.io/gh/guiwitz/napari-steinpose/branch/main/graph/badge.svg)](https://codecov.io/gh/guiwitz/napari-steinpose)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-steinpose)](https://napari-hub.org/plugins/napari-steinpose)\n\nThis napari plugin allows to segment and extract information from Imaging Mass Cytometry data by combining the [cellpose](http://www.cellpose.org/) and [steinbock](https://bodenmillergroup.github.io/steinbock/v0.14.2/) tools.\n\n## Installation\n\nIn order to use this plugin, whe highly recommend to create a specific environment and to install the required software in it. You can create a conda environment using:\n\n    conda create -n steinpose python=3.8.5 napari -c conda-forge\n\nThen activate it and install the plugin:\n    \n    conda activate steinpose\n    pip install napari-steinpose\n\n### Potential issue with PyTorch\n\nCellpose and therefore the plugin and napari can crash without warning in some cases with ```torch==1.12.0```. This can be fixed by reverting to an earlier version using:\n    \n    pip install torch==1.11.0\n\n### GPU\n\nIn order to use a GPU:\n\n1. Uninstall the PyTorch version that gets installed by default with Cellpose:\n\n        pip uninstall torch\n\n2. Make sure your have up-to-date drivers for your NVIDIA card installed.\n\n3. Re-install a GPU version of PyTorch via conda using a command that you can find [here](https://pytorch.org/get-started/locally/) (this takes care of the cuda toolkit, cudnn etc. so **no need to install manually anything more than the driver**). The command will look like this:\n\n        conda install pytorch torchvision cudatoolkit=11.3 -c pytorch\n\n### Plugin Updates\n\nTo update the plugin, you only need to activate the existing environment and install the new version:\n\n    conda activate steinpose\n    pip install git+https://github.com/guiwitz/napari-steinpose.git -U\n\n## Usage\n\nHere is a short summary on how to proceed to use the plugin. For more detailed information, please visit [this page](https://guiwitz.github.io/napari-steinpose).\n\n### Load data\n\nUsing the \"Select data folder\" button, select a folder containing your .mcd files. The contents of the folder will appear in the List of images box. When you select one of the files it is loaded in the viewer. Using the ROI spinpox, you can change the roi (or acquisition) to be visualized.\n### Segmentation\n\n1. In the channels tab, choose the combination of channels to use to define images to segment. You can choose what type of projection (mean, min etc.) is used to combine channels. You can either select channels defining both cells and nuclei or just a single channel. **Note that if you want to just segment nuclei, you need to select them as \"cell channel\".**\n\n2. To save the output, select a folder using the \"Select output folder\" button.\n\n3. In the segmentation tab, pick a cellpose model to use. If you use one of the built-in models, you can specify the average diameter of objects to detect.\n\n4. In the Options tab, you can set a few more options:\n   - cellpose options: you can adjust the flow threshold and cell probabilities. If cells are missing try to use higher values of flow threshold (close to 1) and lower values for the cell probabilities (around -6)\n   - segmentation options: you can decide to remove segmentation touching the image border, and you can also decide to expand the segmented objects by a fixed number of pixels. If a segmentation is displayed in the viewer, adjusting this parameter will live-adjust the mask.\n\n5. You can first test the segmentation using the \"Run on current image\" button. Once segmentation is done, the corresponding mask is displayed. You can then run the segmentation over all ROIs of **all .mcd files** present in the folder by using the \"Run on folder\" button.\n\n### Post-processing\n\nIn the Segmentation tab, if you tick the box \"Run steinbock post-processing\", information will directly be extracted from images and masks at the end of segmentation. Processing is done via steinbock and generates files compatible with further downstream processing.\n\nIn the Export tab, you can select what type of information to export: object intensities, geometric properties and object neighbourhood. Note that if you have performed a segmentation without post-processing, you can still run post-processing using the \"Run steinbock postproc\" button.\n\n### Saving settings\n\nTo avoid having to re-type the same settings repeatedly, you can export a give configuration using the \"Export config\" button in the Options tab. This generates a human readable .yml file with:\n- segmentation options\n- channels selected for projections\n\nThe file is saved in the output folder. You can just copy the file in a new empty output folder to use it for an other analysis run. Once you select that folder containing a configuration file, you can import it with the \"Import config\" button. **Note that you need to have an image opened so that channels can be selected properly.**\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-steinpose\" is free and open source software\n\n## Authors\n\nThe author of this plugin is Guillaume Witz, Data Science Lab and Microscopy Imaging Center, University of Bern. This plugin is the result of a collaboration with the Imaging Mass Cytometry and Mass Cytometry Platform, University of Bern.\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[file an issue]: https://github.com/guiwitz/napari-steinpose/issues\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "https://github.com/guiwitz/napari-steinpose",
+    "keywords": "",
+    "license": "BSD-3-Clause",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "napari-steinpose",
+    "package_url": "https://pypi.org/project/napari-steinpose/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-steinpose/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/guiwitz/napari-steinpose/issues",
+      "Documentation": "https://github.com/guiwitz/napari-steinpose#README.md",
+      "Homepage": "https://github.com/guiwitz/napari-steinpose",
+      "Source Code": "https://github.com/guiwitz/napari-steinpose",
+      "User Support": "https://github.com/guiwitz/napari-steinpose/issues"
+    },
+    "release_url": "https://pypi.org/project/napari-steinpose/0.1.0/",
+    "requires_dist": [
+      "torch (==1.11.0)",
+      "cellpose",
+      "numpy",
+      "magicgui",
+      "qtpy",
+      "matplotlib",
+      "readimc",
+      "steinbock",
+      "pandas",
+      "aicsimageio",
+      "tox ; extra == 'testing'",
+      "pytest ; extra == 'testing'",
+      "pytest-cov ; extra == 'testing'",
+      "pytest-qt ; extra == 'testing'",
+      "napari ; extra == 'testing'",
+      "pyqt5 ; extra == 'testing'",
+      "pytest-order ; extra == 'testing'"
+    ],
+    "requires_python": ">=3.8",
+    "summary": "A plugin to process Imaging Mass Cytometry data with cellpose and steinbock",
+    "version": "0.1.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 15801896,
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "e9b551bfb4e7dfab026d5fc3ba26236a",
+          "sha256": "5d1d96b02ef0def293d7290d5e82d9149e5ca3aa898b2fc09496b2ee67321ff3"
+        },
+        "downloads": -1,
+        "filename": "napari_steinpose-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "e9b551bfb4e7dfab026d5fc3ba26236a",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 1552660,
+        "upload_time": "2022-11-17T13:54:34",
+        "upload_time_iso_8601": "2022-11-17T13:54:34.626169Z",
+        "url": "https://files.pythonhosted.org/packages/89/8a/02cc503b5977b061c9f1f8ff1849e09115b5aae9ff000d3d9c3885cf0b6b/napari_steinpose-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "29871d99ba99c32f028a11da8b444b59",
+          "sha256": "a88235cb1c09e5a45d0eef0f6be3c3281cad997f14accc1b2a019fb3f2b9660d"
+        },
+        "downloads": -1,
+        "filename": "napari-steinpose-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "29871d99ba99c32f028a11da8b444b59",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 17697600,
+        "upload_time": "2022-11-17T13:54:37",
+        "upload_time_iso_8601": "2022-11-17T13:54:37.276948Z",
+        "url": "https://files.pythonhosted.org/packages/af/cb/6f15240efe863ac7db0dcc8c6227a760d028d6da333ffbfac786b1ee4632/napari-steinpose-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "e9b551bfb4e7dfab026d5fc3ba26236a",
+        "sha256": "5d1d96b02ef0def293d7290d5e82d9149e5ca3aa898b2fc09496b2ee67321ff3"
+      },
+      "downloads": -1,
+      "filename": "napari_steinpose-0.1.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "e9b551bfb4e7dfab026d5fc3ba26236a",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.8",
+      "size": 1552660,
+      "upload_time": "2022-11-17T13:54:34",
+      "upload_time_iso_8601": "2022-11-17T13:54:34.626169Z",
+      "url": "https://files.pythonhosted.org/packages/89/8a/02cc503b5977b061c9f1f8ff1849e09115b5aae9ff000d3d9c3885cf0b6b/napari_steinpose-0.1.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "29871d99ba99c32f028a11da8b444b59",
+        "sha256": "a88235cb1c09e5a45d0eef0f6be3c3281cad997f14accc1b2a019fb3f2b9660d"
+      },
+      "downloads": -1,
+      "filename": "napari-steinpose-0.1.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "29871d99ba99c32f028a11da8b444b59",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.8",
+      "size": 17697600,
+      "upload_time": "2022-11-17T13:54:37",
+      "upload_time_iso_8601": "2022-11-17T13:54:37.276948Z",
+      "url": "https://files.pythonhosted.org/packages/af/cb/6f15240efe863ac7db0dcc8c6227a760d028d6da333ffbfac786b1ee4632/napari-steinpose-0.1.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

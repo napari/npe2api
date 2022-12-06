@@ -1,0 +1,149 @@
+{
+  "info": {
+    "author": "Robert Haase",
+    "author_email": "robert.haase@tu-dresden.de",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Framework :: napari",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Scientific/Engineering :: Image Processing",
+      "Topic :: Scientific/Engineering :: Information Analysis"
+    ],
+    "description": "# napari-assistant-plugin-generator\r\n[![License](https://img.shields.io/pypi/l/napari-assistant-plugin-generator.svg?color=green)](https://github.com/haesleinhuepf/napari-assistant-plugin-generator/raw/master/LICENSE)\r\n[![PyPI](https://img.shields.io/pypi/v/napari-assistant-plugin-generator.svg?color=green)](https://pypi.org/project/napari-assistant-plugin-generator)\r\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-assistant-plugin-generator.svg?color=green)](https://python.org)\r\n[![tests](https://github.com/haesleinhuepf/napari-assistant-plugin-generator/workflows/tests/badge.svg)](https://github.com/haesleinhuepf/napari-assistant-plugin-generator/actions)\r\n[![codecov](https://codecov.io/gh/haesleinhuepf/napari-assistant-plugin-generator/branch/master/graph/badge.svg)](https://codecov.io/gh/haesleinhuepf/napari-assistant-plugin-generator)\r\n[![Development Status](https://img.shields.io/pypi/status/napari-assistant-plugin-generator.svg)](https://en.wikipedia.org/wiki/Software_release_life_cycle#Alpha)\r\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-assistant-plugin-generator)](https://napari-hub.org/plugins/napari-assistant-plugin-generator)\r\n[![DOI](https://zenodo.org/badge/322312181.svg)](https://zenodo.org/badge/latestdoi/322312181)\r\n\r\nThe napari-assistant-plugin-generator is a [napari](https://github.com/napari/napari) plugin to generate python code which can be pip-installed and serve as napari-plugin compatible with the [napari-assistant](https://www.napari-hub.org/plugins/napari-assistant).\r\n\r\n## Usage\r\n\r\nFor demonstrating how one can generate a Napari plugin from an existing workflow, we demonstrate the procedure by reusing function from [napari-segment-blobs-and-things-with-membranes](https://www.napari-hub.org/plugins/napari-segment-blobs-and-things-with-membranes) (nsbatwm) for generating a plugin.\r\n\r\n* After installing nsbatwm you can start the assistant from the menu `Tools > Utilities > Assistant (na)` or run `naparia` from the command line. \r\n\r\n* Open the blobs example image `Blobs`, e.g. after downloading it from [here](https://github.com/clEsperanto/napari_pyclesperanto_assistant/blob/master/napari_pyclesperanto_assistant/data/blobs.tif).\r\n\r\n* In the Assistant, click on the `Remove noise` button and select `Gaussian (scikit-image, nsbatwm)` from the operation pulldown.\r\n* Click the `Binarize` button and select `Threshold (Otsu 1979, scikit-image, nsbatwm)` operation.\r\n* Click the `Label` button and select 'Connected component labeling (scikit-image, nsbatwm)' from the operation pulldown.\r\n\r\nAfterwards, your Napari with the configured workflow should look like this:\r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-assistant-plugin-generator/raw/main/docs/screenshot_workflow.png)\r\n\r\n### Plugin generation\r\n\r\nBefore running the plugin-generator, make sure you are connected to the internet, \r\nbecause a [plugin template](https://github.com/haesleinhuepf/cookiecutter-napari-assistant-plugin-generator-plugin) will be downloaded. \r\nThe plugin generator can be found in the menu `Tools > Utilities > Generate Napari plugin from workflow (na)` and also \r\nin the `Generate code...` of the Assistant:\r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-assistant-plugin-generator/raw/main/docs/generate_napari_plugin1.png)\r\n\r\nIn the plugin generator dialog, please enter this information:\r\n* **output dir:** Folder where the Napari plugin code should be saved. If not specified, the plugin will be stored in the current directory Napari was started from.\r\n* **plugin name:** Name of the plugin. A folder with this name will be generated in the folder specified above. Plugin names must not contain special characters or spaces. Use `_` instead.\r\n* **developer name:** Your name as it will be displayed later on the [napari-hub](https://napari-hub.org) in case you decide to publish your plugin.\r\n* **developer email:** Your email as it will be stored in the configuration of your plugin. This email-address is visible to the public.\r\n* **github username:** Your username on [github](https://github.com). URLs in the plugin documentation will point to your profile on github.\r\n* **short description:** Please write one sentence explaining what the plugin is doing.\r\n* **license:** Choose the open-source license your plugin code will be licensed. If you are not sure which one to use, consult [choosealicense.com](https://choosealicense.com).\r\n* **tools menu** The menu under `Tools` where your plugin will be found after installing it.\r\n* **menu name** The menu entry will have this title.\r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-assistant-plugin-generator/raw/main/docs/generate_napari_plugin2.png)\r\n\r\nAfter the Napari plugin code has been generated, open it in the integrated development environment (IDE) of your choice. \r\nGo through the files in the directory and search for `TODO` entries. Start with the `readme.md` and the `requirements.txt` files:\r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-assistant-plugin-generator/raw/main/docs/generate_napari_plugin4.png)\r\n\r\nHighly relevant might be the python file `my_napari_assistant_plugin/_function.py`. It contains a function with python code representing the workflow we designed by clicking above:\r\n\r\n```python\r\nfrom napari_plugin_engine import napari_hook_implementation\r\nfrom napari_tools_menu import register_function\r\nfrom napari_time_slicer import time_slicer\r\n\r\n@napari_hook_implementation\r\ndef napari_experimental_provide_function():\r\n    return [process_image]\r\n\r\n@register_function(menu=\"Segmentation / labeling > Segment image\")\r\n@time_slicer\r\ndef process_image(image0_b: \"napari.types.ImageData\", gaussian_blur_sigma_2: float = 1.0, connected_component_labeling_exclude_on_edges_3: bool = False) -> \"napari.types.LabelsData\":\r\n    \"\"\"\r\n    Short plugin description\r\n    \r\n    # TODO: Provide more detailed documentation here. E.g. specify the parameters and what values users should enter.\r\n    \"\"\"\r\n    # TODO: Check the list of parameters of the function definition above. \r\n    # If there are parameters that should not be editable by the end user, move their definition and values here instead.\r\n    \r\n    import napari_segment_blobs_and_things_with_membranes as nsbatwm  # version 0.3.3\r\n    \r\n    \r\n    # gaussian blur\r\n    image1_G = nsbatwm.gaussian_blur(image0_b, sigma=gaussian_blur_sigma_2)\r\n    \r\n    # threshold otsu\r\n    image2_T = nsbatwm.threshold_otsu(image1_G)\r\n    \r\n    # connected component labeling\r\n    image3_C = nsbatwm.connected_component_labeling(\r\n        image2_T, exclude_on_edges=connected_component_labeling_exclude_on_edges_3)\r\n    return image3_C\r\n```\r\n\r\nIt is recommended to inspect the generated code and rename variables to be more meaningful.\r\nFor renaming variables, make use of your IDE's tools. \r\nFor example variables can be renamed conveniently in [pycharm](https://www.jetbrains.com/pycharm/) using the right-click menu:\r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-assistant-plugin-generator/raw/main/docs/generate_napari_plugin3.png)\r\n\r\nThe `readme.md` file also contains instructions for how to install and distribute your plugin. \r\nTL:DR: As a plugin developer you typically execute this command from the terminal within your plugin's root directory to install your plugin in an `editable`. \r\nThis command allows you to modify the code and test it without the need for re-installing your plugin.\r\n\r\n```\r\npip install -e .\r\n```\r\n\r\nIf installation was successful, you will find your plugin in the menu you specified and a dialog will open requesting the parameters of the generated Python function in `<your_plugin_folder>/<your_plugin_folder>/_function.py`:\r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-assistant-plugin-generator/raw/main/docs/generate_napari_plugin5.png)\r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-assistant-plugin-generator/raw/main/docs/generate_napari_plugin6.png)\r\n\r\n\r\n## Installation\r\n\r\nIt is recommended to install [devbio-napari](https://www.napari-hub.org/plugins/devbio-napari#installation) first. It comes with many image processing functions that can be combined in workflows and where it is easy to generate plugins from.\r\n\r\nAfterwards, the plugin generator can be installed using `pip`:\r\n```\r\npip install napari-assistant-plugin-generator\r\n```\r\n\r\nAlso make sure you have `git` installed. E.g. using `mamba`/`conda`:\r\n\r\n```\r\nmamba install git\r\n```\r\n\r\n## Feedback welcome!\r\n\r\nThe napari-assistant is developed in the open because we believe in the open source community. Feel free to drop feedback as [github issue](https://github.com/haesleinhuepf/napari-assistant-plugin-generator/issues) or via [image.sc](https://image.sc)\r\n\r\n## Contributing\r\n\r\nContributions are very welcome. Please ensure\r\nthe test coverage at least stays the same before you submit a pull request.\r\n\r\n## License\r\n\r\nDistributed under the terms of the [BSD-3] license,\r\n\"napari-assistant-plugin-generator\" is free and open source software\r\n\r\n## Acknowledgements\r\nThis project was supported by the Deutsche Forschungsgemeinschaft under Germany\u2019s Excellence Strategy \u2013 EXC2068 - Cluster of Excellence \"Physics of Life\" of TU Dresden. \r\nThis project has been made possible in part by grant number [2021-240341 (Napari plugin accelerator grant)](https://chanzuckerberg.com/science/programs-resources/imaging/napari/improving-image-processing/) from the Chan Zuckerberg Initiative DAF, an advised fund of the Silicon Valley Community Foundation.\r\n\r\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\r\n\r\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "https://github.com/haesleinhuepf/napari-assistant-plugin-generator/",
+    "keywords": "",
+    "license": "BSD-3-Clause",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "napari-assistant-plugin-generator",
+    "package_url": "https://pypi.org/project/napari-assistant-plugin-generator/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-assistant-plugin-generator/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/haesleinhuepf/napari-assistant-plugin-generator/issues",
+      "Documentation": "https://github.com/haesleinhuepf/napari-assistant-plugin-generator/",
+      "Homepage": "https://github.com/haesleinhuepf/napari-assistant-plugin-generator/",
+      "Source Code": "https://github.com/haesleinhuepf/napari-assistant-plugin-generator",
+      "User Support": "https://forum.image.sc/"
+    },
+    "release_url": "https://pypi.org/project/napari-assistant-plugin-generator/0.1.0/",
+    "requires_dist": [
+      "napari-plugin-engine (>=0.1.4)",
+      "magicgui",
+      "numpy (!=1.19.4)",
+      "jupytext",
+      "jupyter",
+      "dask",
+      "autopep8",
+      "cookiecutter",
+      "napari-tools-menu",
+      "napari-assistant (>=0.4.1)"
+    ],
+    "requires_python": ">=3.8",
+    "summary": "Auto-generate python code from within napari to make napari-assistant compatible plugins",
+    "version": "0.1.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 15713078,
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "52c33e73dd14172c9fb6fd7e6d9f6909",
+          "sha256": "fa5d9d25fc92945139f1673469024e519e5e8b4c176a75785b7ece2dff2526c5"
+        },
+        "downloads": -1,
+        "filename": "napari_assistant_plugin_generator-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "52c33e73dd14172c9fb6fd7e6d9f6909",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 10187,
+        "upload_time": "2022-11-09T14:50:52",
+        "upload_time_iso_8601": "2022-11-09T14:50:52.822849Z",
+        "url": "https://files.pythonhosted.org/packages/62/43/b1c180cb301746a661400424b3d894e4753a31cc9c8b671c15023b205d90/napari_assistant_plugin_generator-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "8ff6b0c5125ab411df1833900f0cc22c",
+          "sha256": "ea33b52858288b1d739d807af6f28df25686703d86c951baf4ed0a3f77d03811"
+        },
+        "downloads": -1,
+        "filename": "napari-assistant-plugin-generator-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "8ff6b0c5125ab411df1833900f0cc22c",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 9853,
+        "upload_time": "2022-11-09T14:50:54",
+        "upload_time_iso_8601": "2022-11-09T14:50:54.584150Z",
+        "url": "https://files.pythonhosted.org/packages/8e/09/1ce0c2a26fc04a8ee2e0da2fbbe361829c99ea3979657a5194cf708cd245/napari-assistant-plugin-generator-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "52c33e73dd14172c9fb6fd7e6d9f6909",
+        "sha256": "fa5d9d25fc92945139f1673469024e519e5e8b4c176a75785b7ece2dff2526c5"
+      },
+      "downloads": -1,
+      "filename": "napari_assistant_plugin_generator-0.1.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "52c33e73dd14172c9fb6fd7e6d9f6909",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.8",
+      "size": 10187,
+      "upload_time": "2022-11-09T14:50:52",
+      "upload_time_iso_8601": "2022-11-09T14:50:52.822849Z",
+      "url": "https://files.pythonhosted.org/packages/62/43/b1c180cb301746a661400424b3d894e4753a31cc9c8b671c15023b205d90/napari_assistant_plugin_generator-0.1.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "8ff6b0c5125ab411df1833900f0cc22c",
+        "sha256": "ea33b52858288b1d739d807af6f28df25686703d86c951baf4ed0a3f77d03811"
+      },
+      "downloads": -1,
+      "filename": "napari-assistant-plugin-generator-0.1.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "8ff6b0c5125ab411df1833900f0cc22c",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.8",
+      "size": 9853,
+      "upload_time": "2022-11-09T14:50:54",
+      "upload_time_iso_8601": "2022-11-09T14:50:54.584150Z",
+      "url": "https://files.pythonhosted.org/packages/8e/09/1ce0c2a26fc04a8ee2e0da2fbbe361829c99ea3979657a5194cf708cd245/napari-assistant-plugin-generator-0.1.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
