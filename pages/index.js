@@ -10,6 +10,7 @@ export default function home({ data }) {
       <h3>(This top page is for humans)</h3>
       <p>Plugin index: <Link href={`/api/plugins`}><a>/api/plugins</a></Link></p>
       <p>Summary info: <Link href={`/api/summary`}><a>/api/summary</a></Link></p>
+      <p>Summary info: <Link href={`/api/extended_summary`}><a>/api/extended_summary</a></Link></p>
       <p>Conda index: <Link href={`/api/conda`}><a>/api/conda</a></Link>  (see conda info for each plugin at /api/conda/pypi_name)</p>
       <p>Fetch errors: <Link href={`/errors.json`}><a>errors.json</a></Link></p>
       <h3>manifests</h3>

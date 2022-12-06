@@ -14,12 +14,15 @@ import re
 from urllib import request, error
 import os
 import sys
+from concurrent.futures import ThreadPoolExecutor
+
+from packaging.version import Version
+
 try:
     import conda
 except ImportError:
     conda = None
 
-sys.path.insert(0, str(Path(__file__).parent.parent / 'lib'))
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from lib.pyapi import github  # noqa
 
@@ -37,6 +40,8 @@ class SummaryDict(TypedDict):
     author: str
     license: str
     home_page: str
+    pypi_versions: List[str]
+    conda_versions: List[str]
 
 
 HERE = Path(__file__)
@@ -56,7 +61,6 @@ def _normname(name: str, delim="-") -> str:
 
 
 def repodatas(channel: str = "conda-forge") -> Dict:
-    from concurrent.futures import ThreadPoolExecutor
     from conda.models.channel import Channel
     from conda.core.subdir_data import SubdirData
     from conda.gateways.logging import initialize_logging
@@ -121,6 +125,20 @@ def conda_data_wrapper(args):
 
 
 if __name__ == "__main__":
+    # the classifiers endpoint is populated by scripts/bigquery.py and it
+    # contains the list of active versions on PyPI with the napari classifier -
+    # we get the available versions from there to include in the summary
+    CLASSIFIERS = PUBLIC / "classifiers.json"
+    try:
+        active_pypi_versions = json.loads(CLASSIFIERS.read_text())["active"]
+    except Exception as exc:
+        print(
+            f"failed to retrieve active PyPI versions from {CLASSIFIERS}",
+            file=sys.stderr,
+        )
+        print(f"{type(exc)}: {exc}", file=sys.stderr)
+        active_pypi_versions = {}
+
     # load each manifest & build the indices (while verifying the manifest)
     for mf_file in (PUBLIC / "manifest").glob("*.json"):
         # move the errors file to top /public folder
@@ -163,10 +181,18 @@ if __name__ == "__main__":
         k: sorted(v, key=str.lower) for k, v in sorted(READER_INDEX.items())
     }
 
+    EXTENDED_SUMMARY = [
+        {
+            **pkg,
+            "pypi_versions": sorted(
+                active_pypi_versions.get(pkg["name"], []), key=Version, reverse=True
+            ),
+        }
+        for pkg in PYPI_INDEX
+    ]
+
     # now check conda for each package and write data to public/conda/{package}.json
     if not os.getenv("SKIP_CONDA") and (conda is not None):
-        from concurrent.futures import ThreadPoolExecutor
-
         # output directory for conda info
         CONDA = PUBLIC / "conda"
         CONDA.mkdir(exist_ok=True)
@@ -199,8 +225,17 @@ if __name__ == "__main__":
         # write summary map of pypi package name to conda channel/name
         (PUBLIC / "conda.json").write_text(json.dumps(CONDA_INDEX, indent=2))
 
+        # update the main index (summary) with the conda versions
+        # de-dupe and sort as in scripts/bigquery.py
+        for pkg in EXTENDED_SUMMARY:
+            versions = data.get(pkg["name"], {}).get("versions", [])
+            pkg["conda_versions"] = sorted(set(versions), key=Version, reverse=True)
+
     # write out data to public locations
     (PUBLIC / "summary.json").write_text(json.dumps(PYPI_INDEX, indent=2))
+    (PUBLIC / "extended_summary.json").write_text(
+        json.dumps(EXTENDED_SUMMARY, indent=2)
+    )
     (PUBLIC / "readers.json").write_text(json.dumps(READER_INDEX))
     (PUBLIC / "index.json").write_text(
         json.dumps({x["name"]: x["version"] for x in PYPI_INDEX}, indent=2)
