@@ -1,0 +1,412 @@
+{
+  "info": {
+    "author": "Sander van Otterdijk",
+    "author_email": "scvanotterdijk@gmail.com",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-buds\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-buds.svg?color=green)](https://github.com/SanderSMFISH/napari-buds/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-buds.svg?color=green)](https://pypi.org/project/napari-buds)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-buds.svg?color=green)](https://python.org)\n[![tests](https://github.com/SanderSMFISH/napari-buds/workflows/tests/badge.svg)](https://github.com/SanderSMFISH/napari-buds/actions)\n[![codecov](https://codecov.io/gh/SanderSMFISH/napari-buds/branch/main/graph/badge.svg)](https://codecov.io/gh/SanderSMFISH/napari-buds)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-buds)](https://napari-hub.org/plugins/napari-buds)\n\nRandom-forest automated bud annotation\n\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/stable/plugins/index.html\n-->\n\n## Installation\n\nmake sure you already have installed napari. \n\nNext, You can install `napari-buds` via [pip]:\n\n    pip install napari-buds\n\n\n\nTo install latest development version :\n\n    pip install git+https://github.com/SanderSMFISH/napari-buds.git\n\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## Documentation\nNapari-Buds is a random forest based mother-bud annotation plugin for Napari devevoped by the TutucciLab (https://www.tutuccilab.com/) of the systems biology group at the Vrije Universiteit van Amsterdam. Mother-bud annotation requires single or multichannel 2D images of budding yeast and a fluorescent marker that localizes to the bud. In the example dataset provided smFISH DNA-probes were used as localized bud marker.The GUI layout for random forest based classification was inspired by ImageJ 'plugin Weka Segmentation' [1]. **Before installation make sure you have a working version of napari installed (pip install \"napari[all]\").** Napari-Buds is a random forest based mother-bud annotation plugin for Napari developed by the TutucciLab (https://www.tutuccilab.com/) of the systems biology group at the Vrije Universiteit van Amsterdam. Mother-bud annotation requires single or multichannel 2D images of budding yeast and a fluorescent marker that localizes to the bud. In the example dataset provided smFISH DNA-probes were used as localized bud marker.The GUI layout for random forest based classification was inspired by ImageJ 'plugin Weka Segmentation' [1]. \n\nPlease follow the workflow described underneath to perform mother-bud annotation:\n\n1. Open images in napari and create empty label layer. **Before starting the plugin it is required that a empty label layer is created**.\nFor multichannel images each channel should be provided seperately to napari.\nAn example (jupyter) notebook (Open Test Images Napari.ipynb) for loading test data in napari is provided in the notebooks folder. \nExample dataset can be downloaded from https://zenodo.org/record/7004556#.YwM1_HZBztU. \n    \n2. If multichannel images are unaligned the  translate widget under Plugins>napari-buds>Translate can be used. \nSelect which layer should be translated to align to the layers in widget menu. Then use the aswd keys to translate (move) the selected layer. \nTo register changes and update coordinates of the translated image in napari press t. \n    \n### Random forest classification\n3. To open the mother-bud annotation plugin go to Plugins>napari-buds>bud annotation. **Before starting the plugin it is required that a empty label layer is created**.\n    \n4. To train a random forest classifier, in the created label layer draw examples of cells, buds and background (see tutorial gif below). \nIn the Define Label segment of the widget you define which label value (class #label_value) corresponds to cells, buds and background. \nCurrently, cells and backgrounds and buds **have to be defined in the Define Label segment**  if you want to be able to segment the classification as well.\nIn the segment **Layers to extract Features from** we can select which layers will be used in training the random forest classifier. \nNext press **Train classifier**. After training is completed a result layer is added to layer list. \nInspect the results carefully to asses classifier performance. The trained classifier can be saved using the **save classifier** button.\nPreviously trained classifier can be loaded by pressing **Load classifier**. Loaded classifier can applied to new images by pressing **Classify**, resulting again in a results layer.\nIt is possible to change the random forest parameters with **the Set random forest parameters** button and changing the values in the pop up menu.\nPress **Run** to register changed settings. For an example of the parameters used see: \nhttps://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html and \nhttps://scikit-image.org/docs/stable/auto_examples/segmentation/plot_trainable_segmentation.html. \n    \n5. Next, we want to perfom watershed segmentation using the result layer. However, for watershed segmentation seeds (also called markers) are required\n(for an explanation of watershed segmenation see: https://en.wikipedia.org/wiki/Watershed_(image_processing)). \nTo define the seeds we can either simply threshold on one of the supplied image layers or we can use distance tranform (https://scikit-image.org/docs/stable/auto_examples/segmentation/plot_watershed.html#sphx-glr-auto   examples-segmentation-plot-watershed-py).The resulting seeds layer can be adjusted manually by editing in napari.\nA good seeds layers correspond to each cell having a single seed (buds are not single cells). To perform watershed segmentation press the **Segment** button.\n    \n6. Carefully inspect the resulting cell mask and bud layer. Correct the mistakes in both layers. \nBud label values should correspond to the label value of the cell mask of mother cell. To verify mother bud relations were drawn correctly\npress **Draw Mother-Bud relations**. If Mother-Bud relations are correct, you can save both label layers. Mother and buds simply share the same label number.\nThus, either the mother or bud layer can be manually corrected for mistakes. Corrections can be checked by clicking **Draw Mother-Bud relations** again. \nmother and buds layer can be saved manually in napari. When using Jupyter notebook mother and bud layers can be saved as shown in Open Test Images Napari.ipynb.\n\n7. An example notebook for dataextraction of the created cell and bud masks can be found in the example notebooks folder (Extract_Mother_Buds_relations_from_Masks_and_intergrate_FQ_spot_data.ipynb).This notebooks relates RNA spots (smFISH data found on zenodo) to the mother or bud compartment. \n\n\nSee video for clarification:\n\n![Watch the video](https://github.com/SanderSMFISH/napari-buds/blob/main/videos/Napari_bud_gif.gif)\n\n## Similar Napari plugins \n\n1-napari-accelerated-pixel-and-object-classification (APOC) by Robert Haase.\n\n2-napari-feature-classifier.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-buds\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n### Known Issues\n\nIf window geometry of the window is unable to be set, this might lead to issues in the display of the widget. For example, part of the widget might fall of the screen.\nIn these cases, it might help to adjust in your display setting the display scaling to a lower setting. \n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[file an issue]: https://github.com/SanderSMFISH/napari-buds/issues\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n\n## References\n1. Arganda-Carreras, I., Kaynig, V., Rueden, C., Eliceiri, K. W., Schindelin, J., Cardona, A., & Sebastian Seung, H. (2017). Trainable Weka Segmentation: a machine learning tool for microscopy pixel classification. Bioinformatics, 33(15), 2424\u20132426. doi:10.1093/bioinformatics/btx180\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "https://github.com/SanderSMFISH/napari-buds",
+    "keywords": "",
+    "license": "BSD-3-Clause",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "napari-buds",
+    "package_url": "https://pypi.org/project/napari-buds/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-buds/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/SanderSMFISH/napari-buds/issues",
+      "Documentation": "https://github.com/SanderSMFISH/napari-buds#README.md",
+      "Homepage": "https://github.com/SanderSMFISH/napari-buds",
+      "Source Code": "https://github.com/SanderSMFISH/napari-buds",
+      "User Support": "https://github.com/SanderSMFISH/napari-buds/issues"
+    },
+    "release_url": "https://pypi.org/project/napari-buds/0.1.2/",
+    "requires_dist": [
+      "numpy",
+      "magicgui",
+      "qtpy",
+      "pandas",
+      "napari",
+      "magic-class",
+      "scipy",
+      "scikit-learn",
+      "scikit-image",
+      "matplotlib",
+      "joblib",
+      "imageio-ffmpeg",
+      "tox ; extra == 'testing'",
+      "pytest ; extra == 'testing'",
+      "pytest-cov ; extra == 'testing'",
+      "pytest-qt ; extra == 'testing'",
+      "napari ; extra == 'testing'",
+      "pyqt5 ; extra == 'testing'"
+    ],
+    "requires_python": ">=3.8",
+    "summary": "Random-forest automated bud annotation",
+    "version": "0.1.2",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 15697585,
+  "releases": {
+    "0.0.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "993335042d03794f47a64b2aaed60b76",
+          "sha256": "3fee08c09c5962d471a0c3f2f8d2f4a5ced4c651063fa5f633abe52af4080ff3"
+        },
+        "downloads": -1,
+        "filename": "napari_buds-0.0.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "993335042d03794f47a64b2aaed60b76",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 9716,
+        "upload_time": "2022-08-16T13:14:29",
+        "upload_time_iso_8601": "2022-08-16T13:14:29.716611Z",
+        "url": "https://files.pythonhosted.org/packages/a4/e8/eed560da6a98ec74ef3b3d7c26115b9941c2ba88084ce44b6856acbeb48a/napari_buds-0.0.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "1fa2090546e0e5f0b61ffc847de23777",
+          "sha256": "f33633d3b41de545956339f5233fe64be6a2e617cf243408d4a05e9bdf2708b9"
+        },
+        "downloads": -1,
+        "filename": "napari-buds-0.0.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "1fa2090546e0e5f0b61ffc847de23777",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 8556,
+        "upload_time": "2022-08-16T13:14:31",
+        "upload_time_iso_8601": "2022-08-16T13:14:31.091726Z",
+        "url": "https://files.pythonhosted.org/packages/2d/c2/d2e83683c1e11025a6b120689609509217c7ab65f0c9239c3a86a6b223fa/napari-buds-0.0.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "5d9b8af89aa547d221d82b2219d98746",
+          "sha256": "b5fdccafd344140ba8b052ad67e399623116de9409475257bbbbc7c5e2c2b03b"
+        },
+        "downloads": -1,
+        "filename": "napari_buds-0.0.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "5d9b8af89aa547d221d82b2219d98746",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 17994,
+        "upload_time": "2022-08-17T10:03:37",
+        "upload_time_iso_8601": "2022-08-17T10:03:37.603552Z",
+        "url": "https://files.pythonhosted.org/packages/9e/59/c9eb247494aa80de9bd355cbaedb79154f03befdf77f767647f82590db5b/napari_buds-0.0.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "32be265b726502c65bf5f4aa066d4888",
+          "sha256": "01be3ad0d85f1331b4eb89a640fc69cc9e0f0dd92442cd9fb5dea3a65e699367"
+        },
+        "downloads": -1,
+        "filename": "napari-buds-0.0.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "32be265b726502c65bf5f4aa066d4888",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 14196,
+        "upload_time": "2022-08-17T10:03:39",
+        "upload_time_iso_8601": "2022-08-17T10:03:39.019676Z",
+        "url": "https://files.pythonhosted.org/packages/54/ea/b0275605404ab90bc0564951bb1bfce3833cc720bbe1c05e6ac4cde6fb69/napari-buds-0.0.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.3": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "eefa264d49ca892a0fc4b72d9e330d71",
+          "sha256": "91bab3828627c1ad3143c3b725053ffb573302942c85868995afb9c3293bf4f0"
+        },
+        "downloads": -1,
+        "filename": "napari_buds-0.0.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "eefa264d49ca892a0fc4b72d9e330d71",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 20763,
+        "upload_time": "2022-08-18T12:27:07",
+        "upload_time_iso_8601": "2022-08-18T12:27:07.886083Z",
+        "url": "https://files.pythonhosted.org/packages/7c/7e/6e28ca5d9da4d7eb638f3f411b93eb341a2a03143cdba9f6e28d4d442054/napari_buds-0.0.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "ef86da636879f85f10f894850a91ebb9",
+          "sha256": "67d7017c6c57688d963f4fb2d3fce1f8f511d6d2d17d470d7c76e96e72e3ea94"
+        },
+        "downloads": -1,
+        "filename": "napari-buds-0.0.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "ef86da636879f85f10f894850a91ebb9",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 18772,
+        "upload_time": "2022-08-18T12:27:08",
+        "upload_time_iso_8601": "2022-08-18T12:27:08.983789Z",
+        "url": "https://files.pythonhosted.org/packages/dc/4a/c20f5b610ef5982146cbd33bfba9b7425c297ce384ee0c46cdedbec6a9ce/napari-buds-0.0.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.4": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "b0f040859bc6f505ba0bba2f0fa9e1fa",
+          "sha256": "aaa4496f2b0665e92c475f82abd5ce327c1f0c61d315b84c3089cd167b25f3b2"
+        },
+        "downloads": -1,
+        "filename": "napari_buds-0.0.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "b0f040859bc6f505ba0bba2f0fa9e1fa",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 21104,
+        "upload_time": "2022-08-20T16:38:39",
+        "upload_time_iso_8601": "2022-08-20T16:38:39.356102Z",
+        "url": "https://files.pythonhosted.org/packages/84/87/0055e0e885b7472c396f0df9a7d159667b287384ccb1bb09c3c7ef49ca05/napari_buds-0.0.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "4141f74ef7c54b917a7dac9378b0deca",
+          "sha256": "840adc65a8a65b69f16419a2dd18b03737966dffe1261a587591cfbd952b3681"
+        },
+        "downloads": -1,
+        "filename": "napari-buds-0.0.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "4141f74ef7c54b917a7dac9378b0deca",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 19114,
+        "upload_time": "2022-08-20T16:38:40",
+        "upload_time_iso_8601": "2022-08-20T16:38:40.529677Z",
+        "url": "https://files.pythonhosted.org/packages/8e/99/a8b4173004fb31ce149a6d0749d783b8a30e41f55d66514ab60c109cfb07/napari-buds-0.0.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.5": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "1f452dcc3cf366177808e158398a2782",
+          "sha256": "60fea19d9561249674ad5fa925f174d30012659e3cdc7dc4a62d08a482d14c59"
+        },
+        "downloads": -1,
+        "filename": "napari_buds-0.0.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "1f452dcc3cf366177808e158398a2782",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 21505,
+        "upload_time": "2022-10-02T20:55:42",
+        "upload_time_iso_8601": "2022-10-02T20:55:42.533247Z",
+        "url": "https://files.pythonhosted.org/packages/fd/9e/4110947868591050fec820c66d7fa2367cb6cdc470746b1556178191abf7/napari_buds-0.0.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "df18c0cf4c0de15cd7432246ec71f1f5",
+          "sha256": "ee6ba3fe8d44a4f00d699c777e92e9ff355a79c07edabc409bfa628e8df968d3"
+        },
+        "downloads": -1,
+        "filename": "napari-buds-0.0.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "df18c0cf4c0de15cd7432246ec71f1f5",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 19927,
+        "upload_time": "2022-10-02T20:55:43",
+        "upload_time_iso_8601": "2022-10-02T20:55:43.763086Z",
+        "url": "https://files.pythonhosted.org/packages/19/03/3ea178ac9ad7d88f0ec8a52c85c545f3d11c417c1c4c5095778854c54a59/napari-buds-0.0.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "e24548b7d433472109f6c74e071ff337",
+          "sha256": "62afc9c6e2eb903c4303e730786f4ee74dd2a50de0829ec1a1d96f82fd66ee02"
+        },
+        "downloads": -1,
+        "filename": "napari_buds-0.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "e24548b7d433472109f6c74e071ff337",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 21596,
+        "upload_time": "2022-10-14T12:54:04",
+        "upload_time_iso_8601": "2022-10-14T12:54:04.068551Z",
+        "url": "https://files.pythonhosted.org/packages/51/72/2a63c0ef7416fd188028daa21e37bbff116d456f2c12878c679377060b34/napari_buds-0.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "0c38f69dc178a16cf7dc1917e9b2d2ba",
+          "sha256": "6a113654ddee30d4606de156d1c4670fbcb14df7c0fbbeefb497fc10b65e6157"
+        },
+        "downloads": -1,
+        "filename": "napari-buds-0.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "0c38f69dc178a16cf7dc1917e9b2d2ba",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 20085,
+        "upload_time": "2022-10-14T12:54:05",
+        "upload_time_iso_8601": "2022-10-14T12:54:05.578740Z",
+        "url": "https://files.pythonhosted.org/packages/01/6b/12139e55c40081196c0ca2bd58bc210f3d9a3df2f08ee9c07cb5d11efed2/napari-buds-0.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "71fcf7297a6d7529e5caeec15d59c725",
+          "sha256": "d7b975609aa6115d2095f475fd961c62a16294ea7a99647f616b0646f755f4ea"
+        },
+        "downloads": -1,
+        "filename": "napari_buds-0.1.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "71fcf7297a6d7529e5caeec15d59c725",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 21662,
+        "upload_time": "2022-11-08T11:55:49",
+        "upload_time_iso_8601": "2022-11-08T11:55:49.657916Z",
+        "url": "https://files.pythonhosted.org/packages/09/ca/087be27abacab50682fe996301e1146e6f84909cccc5e2b041c5fb6a9397/napari_buds-0.1.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "236b836d6df261762377999724922323",
+          "sha256": "f671c6eb59328c29d087ff72a73da8f26072ee373c0b2c7a1ab8200084077833"
+        },
+        "downloads": -1,
+        "filename": "napari-buds-0.1.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "236b836d6df261762377999724922323",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 20193,
+        "upload_time": "2022-11-08T11:55:51",
+        "upload_time_iso_8601": "2022-11-08T11:55:51.337037Z",
+        "url": "https://files.pythonhosted.org/packages/9f/74/750883df5893fc389a59d7016174ef24dd0b04e6e4d6f764adddae25ce13/napari-buds-0.1.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "71fcf7297a6d7529e5caeec15d59c725",
+        "sha256": "d7b975609aa6115d2095f475fd961c62a16294ea7a99647f616b0646f755f4ea"
+      },
+      "downloads": -1,
+      "filename": "napari_buds-0.1.2-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "71fcf7297a6d7529e5caeec15d59c725",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.8",
+      "size": 21662,
+      "upload_time": "2022-11-08T11:55:49",
+      "upload_time_iso_8601": "2022-11-08T11:55:49.657916Z",
+      "url": "https://files.pythonhosted.org/packages/09/ca/087be27abacab50682fe996301e1146e6f84909cccc5e2b041c5fb6a9397/napari_buds-0.1.2-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "236b836d6df261762377999724922323",
+        "sha256": "f671c6eb59328c29d087ff72a73da8f26072ee373c0b2c7a1ab8200084077833"
+      },
+      "downloads": -1,
+      "filename": "napari-buds-0.1.2.tar.gz",
+      "has_sig": false,
+      "md5_digest": "236b836d6df261762377999724922323",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.8",
+      "size": 20193,
+      "upload_time": "2022-11-08T11:55:51",
+      "upload_time_iso_8601": "2022-11-08T11:55:51.337037Z",
+      "url": "https://files.pythonhosted.org/packages/9f/74/750883df5893fc389a59d7016174ef24dd0b04e6e4d6f764adddae25ce13/napari-buds-0.1.2.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
