@@ -1,6 +1,6 @@
 {
   "info": {
-    "author": "Gursharan Ahir, Ryan Thiermann",
+    "author": "Gursharan Ahir, Michael Sandler, Ryan Thiermann",
     "author_email": "ryan.thiermann@gmail.com",
     "bugtrack_url": null,
     "classifiers": [
@@ -16,7 +16,7 @@
       "Programming Language :: Python :: 3.9",
       "Topic :: Software Development :: Testing"
     ],
-    "description": "# napari-mm3\n\n[![License](https://img.shields.io/pypi/l/napari-mm3.svg?color=green)](https://github.com/ahirsharan/napari-mm3/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-mm3.svg?color=green)](https://pypi.org/project/napari-mm3)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-mm3.svg?color=green)](https://python.org)\n[![tests](https://github.com/ahirsharan/napari-mm3/workflows/tests/badge.svg)](https://github.com/ahirsharan/napari-mm3/actions)\n[![codecov](https://codecov.io/gh/ahirsharan/napari-mm3/branch/main/graph/badge.svg)](https://codecov.io/gh/ahirsharan/napari-mm3)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-mm3)](https://napari-hub.org/plugins/napari-mm3)\n\nA plugin for Mother Machine Image Analysis by [Jun Lab](https://jun.ucsd.edu/).\n\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/plugins/stable/index.html\n-->\n\n## Installation\n\nEnsure python and napari are installed in your system. To install the plugin, use:\n\n``` pip install napari-mm3```\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n\n## Workflow\n\nGenerally, there is one widget for each process.\n\n**Basic workflow is as follows:**\n\n1. Locate channels, create channel stacks, and return metadata (Compile widget).\n2. User guided selection of empty and full channels (ChannelSorter widget).\n3. Subtract phase contrast images (Subtract widget).\n4. Segment images (Segment widget).\n5. Create cell lineages\n\nmm3 currently currently takes individual TIFF images as its input. If there are multiple color layers, then each TIFF image should be a stack of planes corresponding to a color. The quality of your images is important for mm3 to work properly.\n\nThe working directory now contains:\n```\n.\n\u251c\u2500\u2500 20170720_SJ388_mopsgluc12aa.nd2\n\u251c\u2500\u2500 TIFF\n```\n\n### 1. Locate channels, create channel stacks, and return metadata (Compile widget).\n<img width=\"1187\" alt=\"fov_inspect1\" src=\"https://user-images.githubusercontent.com/40699438/177629474-5fd7ee80-682e-4aaa-bf6e-dd547e40c458.png\">\n\nThe Compile widget attempts to automatically identify and crop out individual growth channels. Images corresponding to a specific channel are then stacked in time, and these \"channel stacks\" are the basis of further analysis. If there are multiple colors, a channel stack is made for each color for each channel.\n\nIt is also at this time that metadata is drawn from the images and saved. \n\n**Parameters**\n\n* `TIFF_source` needs to be specified to indicate how the script should look for TIFF metadata. Choices are `elements` and `nd2ToTIFF`.\n* `channel_width`, `channel_separation`, and `channel_detection_snr`, which are used to help find the channels.\n* `channel_length_pad` and `channel_width_pad` will increase the size of your channel slices.\n* `t_end` : Will only analyze images up to this time point. Useful for debugging.\n\nThe working directory now contains:\n```\n.\n\u251c\u2500\u2500 20170720_SJ388_mopsgluc12aa.nd2\n\u251c\u2500\u2500 TIFF\n\u251c\u2500\u2500 analysis\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 time_table.pkl\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 time_table.txt\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 TIFF_metadata.pkl\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 TIFF_metadata.txt\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 channel_masks.pkl\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 channel_masks.txt\n\u2502\u00a0\u00a0 \u2514\u2500\u2500 channels\n```\n\n### 2. User guided selection of empty and full channels (ChannelSorter).\n<img width=\"1177\" alt=\"channel_picker\" src=\"https://user-images.githubusercontent.com/40699438/177629496-73b6c4cf-7427-41e6-ac20-720b6fbf2ba1.png\">\n\nThe Compile widget identifies all growth channels, regardless of if they contain or do not contain cells. ChannelSorter first attempts to guess, and then presents the user with a GUI to decide which channels should be analyzed, which channels should be ignored, and which channels should be used as empty channels during subtraction. This information is contained within the specs.yaml file.\n\nClicking the \"Load data\" button displays the first FOV analyzed, along with the program's predicted channel classification. The user is asked to click on the channels to change their designation between analyze (green), empty (blue) and ignore (red).\n\nClick on the colored channels until they are as you wish. To navigate between fields of view click the \"next FOV\" or \"prior FOV\" buttons.  The widget will output the specs file with channels indicated as analyzed (green, 1), empty for subtraction (blue, 0), or ignore (red, -1).\n\n**Parameters**\n\n* `phase_plane` is the postfix of the channel which contains the phase images\n* `channel_picking_threshold` is a measure of correlation between a series of images, so a value of 1 would mean the same image over and over. Channels with values above this value (like empty channels) will be designated as empty before the user selection GUI.\n\nThe working directory is now:\n```\n.\n\u251c\u2500\u2500 20170720_SJ388_mopsgluc12aa.nd2\n\u251c\u2500\u2500 TIFF\n\u251c\u2500\u2500 analysis\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 time_table.pkl\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 time_table.txt\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 TIFF_metadata.pkl\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 TIFF_metadata.txt\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 channel_masks.pkl\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 channel_masks.txt\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 channels\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 crosscorrs.pkl\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 crosscorrs.txt\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 specs.yaml\n```\n\n### 3. Subtract phase contrast images (Subtract widget).\n<img width=\"1183\" alt=\"subtract\" src=\"https://user-images.githubusercontent.com/40699438/177629512-c5ba4abd-0e03-4540-a4bb-7414ad0560d0.png\">\n\nDownstream analysis of phase contrast (brightfield) images requires background subtraction to remove artifacts of the PDMS device in the images. \n\nThe working directory is now:\n```\n.\n\u251c\u2500\u2500 20170720_SJ388_mopsgluc12aa.nd2\n\u251c\u2500\u2500 TIFF\n\u251c\u2500\u2500 analysis\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 time_table.pkl\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 time_table.txt\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 TIFF_metadata.pkl\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 TIFF_metadata.txt\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 channel_masks.pkl\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 channel_masks.txt\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 channels\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 crosscorrs.pkl\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 crosscorrs.txt\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 empties\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 specs.yaml\n\u2502\u00a0\u00a0 \u2514\u2500\u2500 subtracted\n```\n\n### 4. Segment images (SegmentOTSU or SegmentUnet).\n\n<img width=\"1486\" alt=\"otsu\" src=\"https://user-images.githubusercontent.com/40699438/177629756-2bf87d2e-6ec8-4580-8675-648d68b29cb5.png\">\n<img width=\"1180\" alt=\"unet\" src=\"https://user-images.githubusercontent.com/40699438/177629546-81c2f826-73e8-41ef-adbd-7ceb191db461.png\">\nmm3 can use either deep learning or a traditional machine vision approach (Otsu thresholding, morphological operations and watershedding) to locate cells from the subtracted images.\n\n**OTSU parameters**\n\n* `first_opening_size` : Size in pixels of first morphological opening during segmentation.\n* `distance_threshold` : Distance in pixels which thresholds distance transform of binary cell image.\n* `second_opening_size` : Size in pixels of second morphological opening.\n\n**U-net parameters**\n\n* `threshold` : threshold value (between 0 and 1) for cell classification\n* `min_object_size` : Objects smaller than this area in pixels will be removed before labeling.\n\nThe working directory is now:\n```\n.\n\u251c\u2500\u2500 20170720_SJ388_mopsgluc12aa.nd2\n\u251c\u2500\u2500 TIFF\n\u251c\u2500\u2500 analysis\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 time_table.pkl\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 time_table.txt\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 TIFF_metadata.pkl\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 TIFF_metadata.txt\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 channel_masks.pkl\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 channel_masks.txt\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 channels\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 crosscorrs.pkl\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 crosscorrs.txt\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 empties\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 segmented\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 specs.yaml\n\u2502\u00a0\u00a0 \u2514\u2500\u2500 subtracted\n```\n\n\n### 5. Create cell lineages (Track widget).\n\n<img width=\"1188\" alt=\"lineage\" src=\"https://user-images.githubusercontent.com/40699438/177629704-b866d74e-cd80-4171-a6cf-92a887617160.png\">\n\nAfter cells are found for each channel in each time point, these labeled cells are connected across time to create complete cells and lineages.\n\n**Parameters**\n\n* `lost_cell_time` : If this many time points pass and a region has not yet been linked to a future region, it is dropped.\n* `max_growth_length` : If a region is to be connected to a previous region, it cannot be larger in length by more than this ratio.\n* `min_growth_length` : If a region is to be connected to a previous region, it cannot be smaller in length by less than this ratio.\n* `max_growth_area` : If a region is to be connected to a previous region, it cannot be larger in area by more than this ratio.\n* `min_growth_area` : If a region is to be connected to a previous region, it cannot be smaller in area by less than this ratio.\n* `new_cell_y_cutoff` : distance in pixels from closed end of image above which new regions are not considered for starting new cells.\n* `segmentation_method`: whether to construct lineage from cells segmented by the Otsu or U-net method\n\nThe working directory is now:\n```\n.\n\u251c\u2500\u2500 20170720_SJ388_mopsgluc12aa.nd2\n\u251c\u2500\u2500 TIFF\n\u251c\u2500\u2500 analysis\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 time_table.pkl\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 time_table.txt\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 TIFF_metadata.pkl\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 TIFF_metadata.txt\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 cell_data\n\u2502\u00a0\u00a0 \u2502\u00a0\u00a0 \u2514\u2500\u2500 complete_cells.pkl\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 channel_masks.pkl\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 channel_masks.txt\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 channels\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 crosscorrs.pkl\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 crosscorrs.txt\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 empties\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 segmented\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 specs.pkl\n\u2502\u00a0\u00a0 \u251c\u2500\u2500 specs.txt\n\u2502\u00a0\u00a0 \u2514\u2500\u2500 subtracted\n\u2514\u2500\u2500 params.yaml\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-mm3\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[file an issue]: https://github.com/ahirsharan/napari-mm3/issues\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description": "# napari-mm3\n\n[![License](https://img.shields.io/pypi/l/napari-mm3.svg?color=green)](https://github.com/ahirsharan/napari-mm3/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-mm3.svg?color=green)](https://pypi.org/project/napari-mm3)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-mm3.svg?color=green)](https://python.org)\n[![tests](https://github.com/ahirsharan/napari-mm3/workflows/tests/badge.svg)](https://github.com/ahirsharan/napari-mm3/actions)\n[![codecov](https://codecov.io/gh/ahirsharan/napari-mm3/branch/main/graph/badge.svg)](https://codecov.io/gh/ahirsharan/napari-mm3)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-mm3)](https://napari-hub.org/plugins/napari-mm3)\n\nA plugin for Mother Machine Image Analysis by [Jun Lab](https://jun.ucsd.edu/).\n\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/plugins/stable/index.html\n-->\n\n## Installation\n\nLoad up a new environment. We run the following command, replacing `environment-name-here` with a name of your choosing:\n\n`conda create -y -n environment-name-here python=3.9 napari tensorflow` \n\nNow, to install our code: if you would like to have the latest version, do the following.\n\n1. You can clone the repository with `git clone git@github.com:junlabucsd/napari-mm3.git` (SSH) or `git clone https://github.com/junlabucsd/napari-mm3.git` (https)\n2. With your environment active, run `pip install -e .` from inside your cloned repo.\n\nIf you would like to have a more stable verison, simply run `pip install napari-mm3`.\n\nNOTE:\nNot running the conda command and trying to install things in a different way may lead to difficult issues with PyQt5. \nWe recommend following the above commands to simplify the situation.\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## Usage guide\n\n**Brief video introduction:** available [here](https://youtu.be/7MCiGTg6mq4)\n\n### a. Preprocessing\n\n* [nd2ToTIFF](https://github.com/junlabucsd/napari-mm3/blob/main/docs/nd2totiff-widget.md) -- Turn your nd2 microscopy data into TIFFs. If your data is not in the nd2 format, follow the [input image guidelines](/docs/input-images-guidelines.md). Make sure to set 'image source' in Compile to 'Other'.\n\n* [Compile](https://github.com/junlabucsd/napari-mm3/blob/main/docs/compile-widget.md) -- Locate traps, separate their timelapses into their own TIFFs, and return metadata.\n\n### b. Segmentation\n\n___With Otsu:___\n\n* [PickChannels](https://github.com/junlabucsd/napari-mm3/blob/main/docs/pickchannels-widget.md) -- User guided selection of empty and full traps.\n\n* [Subtract](https://github.com/junlabucsd/napari-mm3/blob/main/docs/subtract-widget.md) -- Remove (via subtraction) empty traps from the background of traps that contain cells; run this on the phase contrast channel.\n\n* [SegmentOtsu](https://github.com/junlabucsd/napari-mm3/blob/main/docs/segmentotsu-widget.md) -- Use Otsu segmentation to segment cells.\n\n___With UNet:___\n\n* Annotate -- annotate images for ML (U-Net or similar) training purposes; you can generate a model via TODO.\n\n* [SegmentUnet](https://github.com/junlabucsd/napari-mm3/blob/main/docs/segmentunet-widget.md) -- Run U-Net segmentation (you will need to supply your own model)\n\n### c. Tracking\n\n* [Track](https://github.com/junlabucsd/napari-mm3/blob/main/docs/track-widget.md) -- Acquire individual cell properties and track lineages.\n\n### d. Fluorescence data analysis\n\n* [PickChannels](https://github.com/junlabucsd/napari-mm3/blob/main/docs/pickchannels-widget.md) -- If you've already done this (e.g. for otsu segmentation), no need to do it again. User guided selection of empty and full traps. \n\n* [Subtract](https://github.com/junlabucsd/napari-mm3/blob/main/docs/subtract-widget.md) -- Remove (via subtraction) empty traps from the background of traps that contain cells. This time, run this on your fluorescence channels.\n\n* [Colors](https://github.com/junlabucsd/napari-mm3/blob/main/docs/colors-widget.md) -- Calculate fluorescence information.\n\n### e. (Uncommon) Foci tracking\n\n* [Foci](https://github.com/junlabucsd/napari-mm3/blob/main/docs/foci-widget.md) -- We use this to track `foci' (bright fluorescent spots) inside of cells.\n\n\n### f. Outputs, inputs, and file structure\nFinally, to better understand the data formats, you may wish to refer to the following documents:\n\n* [Input image guidelines](https://github.com/junlabucsd/napari-mm3/blob/main/docs/input-images-guidelines.md)\n\n* [File structure](https://github.com/junlabucsd/napari-mm3/blob/main/docs/file-structure.md)\n\n* [Output file structure](https://github.com/junlabucsd/napari-mm3/blob/main/docs/Cell-class-docs.md)\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-mm3\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[file an issue]: https://github.com/ahirsharan/napari-mm3/issues\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": "",
@@ -25,7 +25,7 @@
       "last_month": -1,
       "last_week": -1
     },
-    "home_page": "https://github.com/ahirsharan/napari-mm3",
+    "home_page": "https://github.com/junlabucsd/napari-mm3",
     "keywords": "",
     "license": "BSD-3-Clause",
     "maintainer": "",
@@ -37,11 +37,11 @@
     "project_urls": {
       "Bug Tracker": "https://github.com/ahirsharan/napari-mm3/issues",
       "Documentation": "https://github.com/ahirsharan/napari-mm3#README.md",
-      "Homepage": "https://github.com/ahirsharan/napari-mm3",
+      "Homepage": "https://github.com/junlabucsd/napari-mm3",
       "Source Code": "https://github.com/ahirsharan/napari-mm3",
       "User Support": "https://github.com/ahirsharan/napari-mm3/issues"
     },
-    "release_url": "https://pypi.org/project/napari-mm3/0.0.6/",
+    "release_url": "https://pypi.org/project/napari-mm3/0.0.10/",
     "requires_dist": [
       "napari-plugin-engine (>=0.1.4)",
       "numpy",
@@ -55,12 +55,54 @@
     ],
     "requires_python": ">=3.7",
     "summary": "a plugin for mother machine image analysis",
-    "version": "0.0.6",
+    "version": "0.0.10",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 14424503,
+  "last_serial": 15527127,
   "releases": {
+    "0.0.10": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "5090fe8b87807b9c3a07a1a534d0dbdd",
+          "sha256": "1e621ace1ebce77b31c552ea891cb4ec2f52bdba8dfdc231950d3290cd2ad6d5"
+        },
+        "downloads": -1,
+        "filename": "napari_mm3-0.0.10-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "5090fe8b87807b9c3a07a1a534d0dbdd",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 84050,
+        "upload_time": "2022-10-06T20:52:51",
+        "upload_time_iso_8601": "2022-10-06T20:52:51.778388Z",
+        "url": "https://files.pythonhosted.org/packages/80/49/7dfc239d38653511afcb019b808665f0c6d31696823395fcfb863733fecf/napari_mm3-0.0.10-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "ff5590f9de788c15cd99053e8c766eab",
+          "sha256": "a83d7cf9b948f1c7c78881c108c7d4d77e4691d51527948ba0cebdaddf25ce55"
+        },
+        "downloads": -1,
+        "filename": "napari-mm3-0.0.10.tar.gz",
+        "has_sig": false,
+        "md5_digest": "ff5590f9de788c15cd99053e8c766eab",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 18969686,
+        "upload_time": "2022-10-06T20:52:53",
+        "upload_time_iso_8601": "2022-10-06T20:52:53.424320Z",
+        "url": "https://files.pythonhosted.org/packages/0c/16/601adf5baa1ba62e3447bb1fb2d536b557d91ccb074395c69dc2bdd1d474/napari-mm3-0.0.10.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
     "0.0.2": [
       {
         "comment_text": "",
@@ -228,46 +270,130 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.0.7": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "e2fa68916b399236048fd64b96f38cb0",
+          "sha256": "636849970eca7ce3ea9cb3deaf4e21d095157f20654b62732402e8cdb644a706"
+        },
+        "downloads": -1,
+        "filename": "napari_mm3-0.0.7-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "e2fa68916b399236048fd64b96f38cb0",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 83942,
+        "upload_time": "2022-10-06T18:30:04",
+        "upload_time_iso_8601": "2022-10-06T18:30:04.783025Z",
+        "url": "https://files.pythonhosted.org/packages/b8/17/e1071bf748ae741488f438090095ab97401f5dd91040d561b46db594f27e/napari_mm3-0.0.7-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "4771d3244da7befd52b8cc3c306ad225",
+          "sha256": "ea25a8ea2025c37d3a92bae03914169a2841ef4e336e65eb5f9e85f4f73bbdbc"
+        },
+        "downloads": -1,
+        "filename": "napari-mm3-0.0.7.tar.gz",
+        "has_sig": false,
+        "md5_digest": "4771d3244da7befd52b8cc3c306ad225",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 18969590,
+        "upload_time": "2022-10-06T18:30:07",
+        "upload_time_iso_8601": "2022-10-06T18:30:07.291285Z",
+        "url": "https://files.pythonhosted.org/packages/4f/1d/a8952323ac6a80c8f0760077dae72ea1dffcaf20b45ea80f460385e00d6b/napari-mm3-0.0.7.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.8": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "294638fd6c0a2c3bd720b26e09d5b52c",
+          "sha256": "735ec9c3be3ed644ff52ad4ba10f22322c531f8b22114241260a5170234ef7a2"
+        },
+        "downloads": -1,
+        "filename": "napari_mm3-0.0.8-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "294638fd6c0a2c3bd720b26e09d5b52c",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 83985,
+        "upload_time": "2022-10-06T20:27:32",
+        "upload_time_iso_8601": "2022-10-06T20:27:32.040055Z",
+        "url": "https://files.pythonhosted.org/packages/f0/29/f73acd92b73e99d6fc073707331d8cca1c6a995d2be36c92320cf8891c4f/napari_mm3-0.0.8-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "a869d7f67ab87317e52c8d91f86ce82d",
+          "sha256": "71134471a99ba1332ca866bef8fd7a531010712587586f04812f5528a427b571"
+        },
+        "downloads": -1,
+        "filename": "napari-mm3-0.0.8.tar.gz",
+        "has_sig": false,
+        "md5_digest": "a869d7f67ab87317e52c8d91f86ce82d",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 18969656,
+        "upload_time": "2022-10-06T20:27:34",
+        "upload_time_iso_8601": "2022-10-06T20:27:34.175504Z",
+        "url": "https://files.pythonhosted.org/packages/68/7d/0a4f535a13d9621cfb7f96215103378174b781ce3bcc3d6a8d2d9c9dc203/napari-mm3-0.0.8.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": "",
       "digests": {
-        "md5": "6451873ac6014eebb74f9db8cd7c34f7",
-        "sha256": "190a32e2fc086193a7556c9142d40a69675dd845f909bf2f0cbe3dc032acc166"
+        "md5": "5090fe8b87807b9c3a07a1a534d0dbdd",
+        "sha256": "1e621ace1ebce77b31c552ea891cb4ec2f52bdba8dfdc231950d3290cd2ad6d5"
       },
       "downloads": -1,
-      "filename": "napari_mm3-0.0.6-py3-none-any.whl",
+      "filename": "napari_mm3-0.0.10-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "6451873ac6014eebb74f9db8cd7c34f7",
+      "md5_digest": "5090fe8b87807b9c3a07a1a534d0dbdd",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.7",
-      "size": 57537,
-      "upload_time": "2022-07-08T18:54:41",
-      "upload_time_iso_8601": "2022-07-08T18:54:41.984902Z",
-      "url": "https://files.pythonhosted.org/packages/47/cd/f0b4c44f5d0832cf21b07cdc1ab3900c57e7f04449f72d6f51b3f9a12572/napari_mm3-0.0.6-py3-none-any.whl",
+      "size": 84050,
+      "upload_time": "2022-10-06T20:52:51",
+      "upload_time_iso_8601": "2022-10-06T20:52:51.778388Z",
+      "url": "https://files.pythonhosted.org/packages/80/49/7dfc239d38653511afcb019b808665f0c6d31696823395fcfb863733fecf/napari_mm3-0.0.10-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "md5": "8f96f6e822d42dad33a227a3c2e6d835",
-        "sha256": "9f0b06bf0b1e90bc22f7da455c8f743fd68ea43c26a56a5ca89964286f4b5ef8"
+        "md5": "ff5590f9de788c15cd99053e8c766eab",
+        "sha256": "a83d7cf9b948f1c7c78881c108c7d4d77e4691d51527948ba0cebdaddf25ce55"
       },
       "downloads": -1,
-      "filename": "napari-mm3-0.0.6.tar.gz",
+      "filename": "napari-mm3-0.0.10.tar.gz",
       "has_sig": false,
-      "md5_digest": "8f96f6e822d42dad33a227a3c2e6d835",
+      "md5_digest": "ff5590f9de788c15cd99053e8c766eab",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.7",
-      "size": 18940641,
-      "upload_time": "2022-07-08T18:54:44",
-      "upload_time_iso_8601": "2022-07-08T18:54:44.143974Z",
-      "url": "https://files.pythonhosted.org/packages/97/f6/c91bd639a84a865e7fb4cafc62f5d26623fe26d44d6dd278edd3a798621d/napari-mm3-0.0.6.tar.gz",
+      "size": 18969686,
+      "upload_time": "2022-10-06T20:52:53",
+      "upload_time_iso_8601": "2022-10-06T20:52:53.424320Z",
+      "url": "https://files.pythonhosted.org/packages/0c/16/601adf5baa1ba62e3447bb1fb2d536b557d91ccb074395c69dc2bdd1d474/napari-mm3-0.0.10.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
