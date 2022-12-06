@@ -9,13 +9,9 @@
       "Framework :: napari",
       "Intended Audience :: Science/Research",
       "License :: OSI Approved :: MIT License",
-      "Natural Language :: English",
-      "Operating System :: Microsoft :: Windows",
-      "Operating System :: POSIX :: Linux",
-      "Programming Language :: Python",
       "Programming Language :: Python :: 3",
-      "Programming Language :: Python :: 3 :: Only",
-      "Programming Language :: Python :: 3.6",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
       "Programming Language :: Python :: 3.7",
       "Programming Language :: Python :: 3.8",
       "Programming Language :: Python :: 3.9",
@@ -24,13 +20,13 @@
     "description": "# pyCUDAdecon\n\nThis package provides a python wrapper and convenience functions for\n[cudaDecon](https://github.com/scopetools/cudaDecon), which is a CUDA/C++\nimplementation of an accelerated Richardson Lucy Deconvolution\nalgorithm<sup>1</sup>.\n\n* CUDA accelerated deconvolution with a handful of artifact-reducing features.\n* radially averaged OTF generation with interpolation for voxel size\n  independence between PSF and data volumes\n* 3D deskew, rotation, general affine transformations\n* CUDA-based camera-correction for [sCMOS artifact correction](https://llspy.readthedocs.io/en/latest/camera.html)\n\n\n### Install\n\nThe conda package includes the required pre-compiled libraries for Windows and Linux. See GPU driver requirements [below](#gpu-requirements)\n\n```sh\nconda install -c conda-forge pycudadecon\n```\n\n*macOS is not supported*\n\n### \ud83d\udcd6   &nbsp; [Documentation](http://www.talleylambert.com/pycudadecon)\n\n\n### GPU requirements\n\nThis software requires a CUDA-compatible NVIDIA GPU. The underlying cudadecon\nlibraries have been compiled against different versions of the CUDA toolkit.\nThe required CUDA libraries are bundled in the conda distributions so you don't\nneed to install the CUDA toolkit separately.  If desired, you can pick which\nversion of CUDA you'd like based on your needs, but please note that different\nversions of the CUDA toolkit have different GPU driver requirements:\n\nTo specify a specific cudatoolkit version, install as follows (for instance, to\nuse `cudatoolkit=10.2`)\n\n```sh\nconda install -c conda-forge pycudadecon cudatoolkit=10.2\n```\n\n| CUDA | Linux driver | Win driver |\n| ---- | ------------ | ---------- |\n| 10.2 | \u2265 440.33     | \u2265 441.22   |\n| 11.0 | \u2265 450.36.06  | \u2265 451.22   |\n| 11.1 | \u2265 455.23     | \u2265 456.38   |\n| 11.2 | \u2265 460.27.03  | \u2265 460.82   |\n\n\nIf you run into trouble, feel free to [open an\nissue](https://github.com/tlambert03/pycudadecon/issues) and describe your\nsetup.\n\n\n## Usage\n\n\nThe [`pycudadecon.decon()`](https://pycudadecon.readthedocs.io/en/latest/deconvolution.html#pycudadecon.decon) function is designed be able to handle most basic applications:\n\n```python\nfrom pycudadecon import decon\n\n# pass filenames of an image and a PSF\nresult = decon('/path/to/3D_image.tif', '/path/to/3D_psf.tif')\n\n# decon also accepts numpy arrays\nresult = decon(img_array, psf_array)\n\n# the image source can also be a sequence of arrays or paths\nresult = decon([img_array, '/path/to/3D_image.tif'], psf_array)\n\n# see docstrings for additional parameter options\n```\n\nFor finer-tuned control, you may wish to make an OTF file from your PSF using [`pycudadecon.make_otf()`](https://pycudadecon.readthedocs.io/en/latest/otf.html?highlight=make_otf#pycudadecon.make_otf), and then use the [`pycudadecon.RLContext`](https://pycudadecon.readthedocs.io/en/latest/deconvolution.html?highlight=RLContext#pycudadecon.RLContext) context manager to setup the GPU for use with the [`pycudadecon.rl_decon()`](https://pycudadecon.readthedocs.io/en/latest/deconvolution.html?highlight=RLContext#pycudadecon.rl_decon) function.  (Note all images processed in the same context must have the same input shape).\n\n```python\nfrom pycudadecon import RLContext, rl_decon\nfrom glob import glob\nimport tifffile\n\nimage_folder = '/path/to/some_images/'\nimlist = glob(image_folder + '*488*.tif')\notf_path = '/path/to/pregenerated_otf.tif'\n\nwith tifffile.TiffFile(imlist[0]) as tf:\n    imshape = tf.series[0].shape\n\nwith RLContext(imshape, otf_path, dz) as ctx:\n    for impath in imlist:\n        image = tifffile.imread(impath)\n        result = rl_decon(image, ctx.out_shape)\n        # do something with result...\n```\n\nIf you have a 3D PSF volume, the [`pycudadecon.TemporaryOTF`](https://pycudadecon.readthedocs.io/en/latest/otf.html?highlight=temporaryotf#pycudadecon.TemporaryOTF) context manager facilitates temporary OTF generation...\n\n```python\n # continuing with the variables from the previous example...\n psf_path = \"/path/to/psf_3D.tif\"\n with TemporaryOTF(psf) as otf:\n     with RLContext(imshape, otf.path, dz) as ctx:\n         for impath in imlist:\n             image = tifffile.imread(impath)\n             result = rl_decon(image, ctx.out_shape)\n             # do something with result...\n```\n\n... and that bit of code is essentially what the [`pycudadecon.decon()`](https://pycudadecon.readthedocs.io/en/latest/deconvolution.html#pycudadecon.decon) function is doing, with a little bit of additional conveniences added in.\n\n*Each of these functions has many options and accepts multiple keyword arguments. See the [documentation](https://pycudadecon.readthedocs.io/en/latest/index.html) for further information on the respective functions.*\n\nFor examples and information on affine transforms, volume rotations, and deskewing (typical of light sheet volumes acquired with stage-scanning), see the [documentation on Affine Transformations](https://pycudadecon.readthedocs.io/en/latest/affine.html)\n___\n\n<sup>1</sup> D.S.C. Biggs and M. Andrews, Acceleration of iterative image restoration algorithms, Applied Optics, Vol. 36, No. 8, 1997. https://doi.org/10.1364/AO.36.001766\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
-    "download_url": "https://github.com/tlambert03/pycudadecon",
+    "download_url": "",
     "downloads": {
       "last_day": -1,
       "last_month": -1,
       "last_week": -1
     },
-    "home_page": "https://github.com/tlambert03/pycudadecon",
+    "home_page": "",
     "keywords": "deconvolution,microscopy,CUDA",
     "license": "MIT",
     "maintainer": "",
@@ -41,32 +37,41 @@
     "project_url": "https://pypi.org/project/pycudadecon/",
     "project_urls": {
       "Documentation": "https://pycudadecon.readthedocs.io/en/latest/",
-      "Download": "https://github.com/tlambert03/pycudadecon",
-      "Homepage": "https://github.com/tlambert03/pycudadecon",
       "Source": "https://github.com/tlambert03/pycudadecon",
       "Tracker": "https://github.com/tlambert03/pycudadecon/issues"
     },
-    "release_url": "https://pypi.org/project/pycudadecon/0.3.0/",
+    "release_url": "https://pypi.org/project/pycudadecon/0.4.0/",
     "requires_dist": [
       "numpy",
       "tifffile",
       "typing-extensions",
       "importlib-metadata ; python_version < \"3.8\"",
       "black ; extra == 'dev'",
+      "cruft ; extra == 'dev'",
+      "flake8-bugbear ; extra == 'dev'",
+      "flake8-docstrings ; extra == 'dev'",
+      "flake8-pyprojecttoml ; extra == 'dev'",
+      "flake8-typing-imports ; extra == 'dev'",
       "flake8 ; extra == 'dev'",
       "ipython ; extra == 'dev'",
       "isort ; extra == 'dev'",
       "mypy ; extra == 'dev'",
+      "pdbpp ; extra == 'dev'",
       "pre-commit ; extra == 'dev'",
-      "pytest ; extra == 'testing'"
+      "pydocstyle ; extra == 'dev'",
+      "pytest-cov ; extra == 'dev'",
+      "pytest ; extra == 'dev'",
+      "rich ; extra == 'dev'",
+      "pytest (>=6.0) ; extra == 'test'",
+      "pytest-cov ; extra == 'test'"
     ],
-    "requires_python": ">=3.6",
+    "requires_python": ">=3.7",
     "summary": "Python wrapper for CUDA-accelerated 3D deconvolution",
-    "version": "0.3.0",
+    "version": "0.4.0",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 14722163,
+  "last_serial": 15685895,
   "releases": {
     "0.3.0": [
       {
@@ -109,46 +114,88 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.4.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "fcf25b162bd743d1e1dcb433a4b795c1",
+          "sha256": "2458f088bc318a49ba00267d9b32da66cd7f9c67b59f10206e4ad25f404eac58"
+        },
+        "downloads": -1,
+        "filename": "pycudadecon-0.4.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "fcf25b162bd743d1e1dcb433a4b795c1",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 21571,
+        "upload_time": "2022-11-07T14:48:45",
+        "upload_time_iso_8601": "2022-11-07T14:48:45.317086Z",
+        "url": "https://files.pythonhosted.org/packages/29/6a/8f321907763884367cd64966ae815d3bb2b31ce6e54e621637e08f0f9c15/pycudadecon-0.4.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "df5c0ed33fc24b4ea5bd0915b27e6c59",
+          "sha256": "5c05a485f5538c57fa266fe2397d0886fd8801d9d26b63e743902656e4d73947"
+        },
+        "downloads": -1,
+        "filename": "pycudadecon-0.4.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "df5c0ed33fc24b4ea5bd0915b27e6c59",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 52355095,
+        "upload_time": "2022-11-07T14:48:50",
+        "upload_time_iso_8601": "2022-11-07T14:48:50.312877Z",
+        "url": "https://files.pythonhosted.org/packages/9f/ff/639bcebd3971de9157939338a6012633bf4d75028c6d9ee6357c2662a2ae/pycudadecon-0.4.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": "",
       "digests": {
-        "md5": "292a463fbd0f4ebb0d50d66ffeab9182",
-        "sha256": "35fab52954f1c271e438e6055b1702d14149b56ff8fd063b13d716dc1fcc769a"
+        "md5": "fcf25b162bd743d1e1dcb433a4b795c1",
+        "sha256": "2458f088bc318a49ba00267d9b32da66cd7f9c67b59f10206e4ad25f404eac58"
       },
       "downloads": -1,
-      "filename": "pycudadecon-0.3.0-py3-none-any.whl",
+      "filename": "pycudadecon-0.4.0-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "292a463fbd0f4ebb0d50d66ffeab9182",
+      "md5_digest": "fcf25b162bd743d1e1dcb433a4b795c1",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
-      "requires_python": ">=3.6",
-      "size": 20762,
-      "upload_time": "2022-08-10T22:10:53",
-      "upload_time_iso_8601": "2022-08-10T22:10:53.720438Z",
-      "url": "https://files.pythonhosted.org/packages/b0/93/a00a1ee154d5ce3540dd5ae081dc53fcfa7498f34ba68a7345ac027a4f96/pycudadecon-0.3.0-py3-none-any.whl",
+      "requires_python": ">=3.7",
+      "size": 21571,
+      "upload_time": "2022-11-07T14:48:45",
+      "upload_time_iso_8601": "2022-11-07T14:48:45.317086Z",
+      "url": "https://files.pythonhosted.org/packages/29/6a/8f321907763884367cd64966ae815d3bb2b31ce6e54e621637e08f0f9c15/pycudadecon-0.4.0-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "md5": "33bef1b006000e3048b9c735504e3c11",
-        "sha256": "ff2dd2393ca23b2bf3b17fe2bf7011dde1570d84f578fcdd9cf20352b3c6b697"
+        "md5": "df5c0ed33fc24b4ea5bd0915b27e6c59",
+        "sha256": "5c05a485f5538c57fa266fe2397d0886fd8801d9d26b63e743902656e4d73947"
       },
       "downloads": -1,
-      "filename": "pycudadecon-0.3.0.tar.gz",
+      "filename": "pycudadecon-0.4.0.tar.gz",
       "has_sig": false,
-      "md5_digest": "33bef1b006000e3048b9c735504e3c11",
+      "md5_digest": "df5c0ed33fc24b4ea5bd0915b27e6c59",
       "packagetype": "sdist",
       "python_version": "source",
-      "requires_python": ">=3.6",
-      "size": 52353510,
-      "upload_time": "2022-08-10T22:10:57",
-      "upload_time_iso_8601": "2022-08-10T22:10:57.340421Z",
-      "url": "https://files.pythonhosted.org/packages/4a/84/de031ba465f183c319cb37633c49dfebd57f1ff42bc9744db3f80f7f4093/pycudadecon-0.3.0.tar.gz",
+      "requires_python": ">=3.7",
+      "size": 52355095,
+      "upload_time": "2022-11-07T14:48:50",
+      "upload_time_iso_8601": "2022-11-07T14:48:50.312877Z",
+      "url": "https://files.pythonhosted.org/packages/9f/ff/639bcebd3971de9157939338a6012633bf4d75028c6d9ee6357c2662a2ae/pycudadecon-0.4.0.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
