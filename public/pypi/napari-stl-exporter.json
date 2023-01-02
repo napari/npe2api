@@ -16,7 +16,7 @@
       "Programming Language :: Python :: 3.9",
       "Topic :: Software Development :: Testing"
     ],
-    "description": "# napari-stl-exporter\n\n[![License](https://img.shields.io/pypi/l/napari-stl-exporter.svg?color=green)](https://github.com/jo-mueller/napari-stl-exporter/raw/master/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-stl-exporter.svg?color=green)](https://pypi.org/project/napari-stl-exporter)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-stl-exporter.svg?color=green)](https://python.org)\n[![tests](https://github.com/jo-mueller/napari-stl-exporter/workflows/tests/badge.svg)](https://github.com/jo-mueller/napari-stl-exporter/actions)\n[![codecov](https://codecov.io/gh/jo-mueller/napari-stl-exporter/branch/main/graph/badge.svg?token=9zctLzazD9)](https://codecov.io/gh/jo-mueller/napari-stl-exporter)\n\nThis plugin allows to import and export surface data in Napari to common file formats. The generated file formats can be read by other common applications, and - in particular - allow *3D-printing*.\n\n<img src=\"https://github.com/jo-mueller/napari-stl-exporter/blob/main/doc/model_and_printed_model.png\" width=80% height=80%>\n\n## Usage\nThis section explains which data can be written with the napari-stl-exported and how you can do so.\n\n### Supported file formats:\nCurrently supported file formats for export include and rely on the [vedo io API](https://vedo.embl.es/autodocs/content/vedo/io.html#vedo.io).\n* *.stl*: [Standard triangle language](https://en.wikipedia.org/wiki/STL_%28file_format%29)\n* *.ply*: [Polygon file format](https://en.wikipedia.org/wiki/PLY_(file_format))\n* *.obj*: [Wavefront object](https://en.wikipedia.org/wiki/Wavefront_.obj_file)\n\n### Supported Napari layers:\n\nCurrently supported Napari layer types are:\n* [Surface layers](https://napari.org/howtos/layers/surface.html)\n* [Label layers](https://napari.org/howtos/layers/labels.html): The label data is converted to surface data under the hood using the [marching cubes algorithm](https://scikit-image.org/docs/dev/api/skimage.measure.html#skimage.measure.marching_cubes) implemented in [scikit-image](https://scikit-image.org/) and is then exported using [Vedo](https://vedo.embl.es/). Warning: This can be slow for large image data!\n\n### Import/export\n\n**Interactively:** To export the data, simply save the selected layer with `File > Save Selected Layer(s)` and specify the file ending to be `some_file.[file_ending]`, for supported file types, see above. Similarly, supported file types can be imported into Napari with `File > `\n\n**From code**: A [Napari Label layer](https://napari.org/api/napari.layers.Labels.html) can be added to the viewer as described in the [napari reference](https://napari.org/gallery/add_labels.html?highlight=add_labels) with this code snippet:\n\n```python\nimport napari\nimport numpy as np\n\n# Load and binarize image\nlabel_image = np.zeros((100, 100, 100), dtype=int)\nlabel_image[25:75, 25:75, 25:75] = 1\n\n# Add data to viewer\nviewer = napari.Viewer()\nlabel_layer = viewer.add_labels(data, name='3D object')\n\n# save the layer as 3D printable file to disc\nnapari.save_layers(r'/some/path/test.stl', [label_layer])\n```\n\n### Sample data\nYou can create sample label/surface data for export using the built-in functions as shown here:\n\n<img src=\"https://github.com/jo-mueller/napari-stl-exporter/blob/main/doc/1_sample_data.png\" width=45% height=45%>\n\n...or from code with\n\n```Python\nimport napari_stl_exporter\n\npyramid = napari_stl_exporter.make_pyramid_surface()\n\n```\n\n### 3D-printing\nTo actually send your object to a 3D-printer, it has to be further converted to the *.gcode* format with a Slicer program. The latter convert the 3D object to machine-relevant parameters (printing detail, motor trajectories, etc). Popular slicers are:\n\n* [Slic3r](https://slic3r.org/): Documentation [here](https://manual.slic3r.org/intro/overview)\n* [Prusa Slicer](https://www.prusa3d.com/prusaslicer/): Tutorial [here](https://help.prusa3d.com/en/article/first-print-with-prusaslicer_1753)\n\n*Note*: You can also upload the STL file to [github.com](https://github.com) and interact with it in the browser:\n\n<img src=\"https://github.com/jo-mueller/napari-stl-exporter/blob/main/doc/pyramid_browser_screenshot.png\" width=45% height=45%>\n\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using with [@napari]'s [cookiecutter-napari-plugin] template.\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/docs/plugins/index.html\n-->\n\n## Installation\n\nYou can install `napari-stl-exporter` via [pip]:\n\n    pip install napari-stl-exporter\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-stl-exporter\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue](https://github.com/jo-mueller/napari-stl-exporter/issues) along with a detailed description or post to image.sc and tag ```El_Pollo_Diablo```\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description": "# napari-stl-exporter\n\n[![License](https://img.shields.io/pypi/l/napari-stl-exporter.svg?color=green)](https://github.com/jo-mueller/napari-stl-exporter/raw/master/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-stl-exporter.svg?color=green)](https://pypi.org/project/napari-stl-exporter)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-stl-exporter.svg?color=green)](https://python.org)\n[![tests](https://github.com/jo-mueller/napari-stl-exporter/workflows/tests/badge.svg)](https://github.com/jo-mueller/napari-stl-exporter/actions)\n[![codecov](https://codecov.io/gh/jo-mueller/napari-stl-exporter/branch/main/graph/badge.svg?token=9zctLzazD9)](https://codecov.io/gh/jo-mueller/napari-stl-exporter)\n\nThis plugin allows to import and export surface data in Napari to common file formats. The generated file formats can be read by other common applications, and - in particular - allow *3D-printing*.\n\n<img src=\"https://github.com/jo-mueller/napari-stl-exporter/blob/main/doc/model_and_printed_model.png\" width=80% height=80%>\n\n\n### Supported file formats:\nCurrently supported file formats for export include and rely on the [vedo io API](https://vedo.embl.es/autodocs/content/vedo/io.html#vedo.io).\n* *.stl*: [Standard triangle language](https://en.wikipedia.org/wiki/STL_%28file_format%29)\n* *.ply*: [Polygon file format](https://en.wikipedia.org/wiki/PLY_(file_format))\n* *.obj*: [Wavefront object](https://en.wikipedia.org/wiki/Wavefront_.obj_file)\n\n### Supported Napari layers:\n\nCurrently supported Napari layer types are:\n* [Surface layers](https://napari.org/howtos/layers/surface.html)\n* [Label layers](https://napari.org/howtos/layers/labels.html): The label data is converted to surface data under the hood using the [marching cubes algorithm](https://scikit-image.org/docs/dev/api/skimage.measure.html#skimage.measure.marching_cubes) implemented in [scikit-image](https://scikit-image.org/) and is then exported using [Vedo](https://vedo.embl.es/). Warning: This can be slow for large image data!\n\n### Import/export\n\n**Interactively:** To export the data, simply save the selected layer with `File > Save Selected Layer(s)` and specify the file ending to be `some_file.[file_ending]`, for supported file types, see above. Similarly, supported file types can be imported into Napari with `File > `\n\n**From code**: A [Napari Label layer](https://napari.org/api/napari.layers.Labels.html) can be added to the viewer as described in the [napari reference](https://napari.org/gallery/add_labels.html?highlight=add_labels) with this code snippet:\n\n```python\nimport napari\nimport numpy as np\n\n# Load and binarize image\nlabel_image = np.zeros((100, 100, 100), dtype=int)\nlabel_image[25:75, 25:75, 25:75] = 1\n\n# Add data to viewer\nviewer = napari.Viewer()\nlabel_layer = viewer.add_labels(data, name='3D object')\n\n# save the layer as 3D printable file to disc\nnapari.save_layers(r'/some/path/test.stl', [label_layer])\n```\n\n### Sample data\nYou can create sample label/surface data for export using the built-in functions as shown here:\n\n<img src=\"https://github.com/jo-mueller/napari-stl-exporter/blob/main/doc/1_sample_data.png\" width=45% height=45%>\n\n...or from code with\n\n```Python\nimport napari_stl_exporter\n\npyramid = napari_stl_exporter.make_pyramid_surface()\n\n```\n\n### 3D-printing\nTo actually send your object to a 3D-printer, it has to be further converted to the *.gcode* format with a Slicer program. The latter convert the 3D object to machine-relevant parameters (printing detail, motor trajectories, etc). Popular slicers are:\n\n* [Slic3r](https://slic3r.org/): Documentation [here](https://manual.slic3r.org/intro/overview)\n* [Prusa Slicer](https://www.prusa3d.com/prusaslicer/): Tutorial [here](https://help.prusa3d.com/en/article/first-print-with-prusaslicer_1753)\n\n*Note*: You can also upload the STL file to [github.com](https://github.com) and interact with it in the browser:\n\n<img src=\"https://github.com/jo-mueller/napari-stl-exporter/blob/main/doc/pyramid_browser_screenshot.png\" width=45% height=45%>\n\n** Digital elevation models**\n\nDIgital elevation models (DEMs) can be printed with the st-exporter following these steps:\n\n1. Go to the [open topography repository](https://portal.opentopography.org/raster?opentopoID=OTSDEM.032021.4326.2) and select a region of your choice, then download it as a GeoTiff file (`.tif`, intensity encodes elevation)\n2. Open the downloaded tif image use the image conversion plugin (\u00b4Plugins > napari-stl-exporter > 2D image to surface\u00b4) to convert the downloaded image to a surface. CHeck the `solidify` option to make it readily 3D-printable.\n\n<img src=\"https://github.com/jo-mueller/napari-stl-exporter/blob/main/doc/landscape_to_surface.png\">\n\n3. Export the created surface layer as `.stl` or `.ply` file. Open it in your Slicer of choice (you may have to scale it according to the size limitations of your printer) and off you go!\n\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using with [@napari]'s [cookiecutter-napari-plugin] template.\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/docs/plugins/index.html\n-->\n\n## Installation\n\nYou can install `napari-stl-exporter` via [pip]:\n\n    pip install napari-stl-exporter\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-stl-exporter\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue](https://github.com/jo-mueller/napari-stl-exporter/issues) along with a detailed description or post to image.sc and tag ```El_Pollo_Diablo```\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": "",
@@ -35,24 +35,28 @@
     "platform": null,
     "project_url": "https://pypi.org/project/napari-stl-exporter/",
     "project_urls": {
-      "Homepage": "https://github.com/jo-mueller/napari-stl-exporter.git"
+      "Documentation": "https://pypi.org/project/napari-stl-exporter/",
+      "Homepage": "https://github.com/jo-mueller/napari-stl-exporter.git",
+      "Project Site": "https://github.com/jo-mueller/napari-stl-exporter",
+      "Report Issues": "https://github.com/jo-mueller/napari-stl-exporter/issues",
+      "Twitter": "https://twitter.com/jm_mightypirate",
+      "User Support": "https://github.com/jo-mueller/napari-stl-exporter/issues"
     },
-    "release_url": "https://pypi.org/project/napari-stl-exporter/0.0.11/",
+    "release_url": "https://pypi.org/project/napari-stl-exporter/0.1.0/",
     "requires_dist": [
       "napari",
-      "napari-plugin-engine (>=0.1.4)",
-      "numpy",
       "scikit-image",
       "vedo",
-      "npe2"
+      "npe2",
+      "numpy (<1.24.0)"
     ],
     "requires_python": ">=3.7",
     "summary": "Exports label images to 3D-printable stl files.",
-    "version": "0.0.11",
+    "version": "0.1.0",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 14626246,
+  "last_serial": 16277948,
   "releases": {
     "0.0.1": [
       {
@@ -371,46 +375,88 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.1.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "125ec252686261b13fcfcf687e66e2c4",
+          "sha256": "2dc8f30f4ccdef849db706fc17b8e7462365f6578cd1f1bd7cb9c86401329493"
+        },
+        "downloads": -1,
+        "filename": "napari_stl_exporter-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "125ec252686261b13fcfcf687e66e2c4",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 367917,
+        "upload_time": "2023-01-02T10:48:50",
+        "upload_time_iso_8601": "2023-01-02T10:48:50.806702Z",
+        "url": "https://files.pythonhosted.org/packages/07/ed/8ca02ecd131f79a040d6127b882b1d114ecc18f24b29ee49cbc1defeae80/napari_stl_exporter-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "e13bc709b9cf3e488a845de3986c14e3",
+          "sha256": "c72f06dee5eccd5aa68609f04a939adf170a46529b96b8f9dff72d960cdfceb2"
+        },
+        "downloads": -1,
+        "filename": "napari-stl-exporter-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e13bc709b9cf3e488a845de3986c14e3",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 367104,
+        "upload_time": "2023-01-02T10:48:52",
+        "upload_time_iso_8601": "2023-01-02T10:48:52.089400Z",
+        "url": "https://files.pythonhosted.org/packages/1f/77/ac2aff729d3310c8bcbb7394e457091641568ecbc58214fec53cb879c510/napari-stl-exporter-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": "",
       "digests": {
-        "md5": "0d0fe695a9cd2979edfa6d5eaa05c687",
-        "sha256": "f8111e44cd86020f7b0d81edd31563c00c3e3bafdc8e1c3b3b2dd7a8f5c14499"
+        "md5": "125ec252686261b13fcfcf687e66e2c4",
+        "sha256": "2dc8f30f4ccdef849db706fc17b8e7462365f6578cd1f1bd7cb9c86401329493"
       },
       "downloads": -1,
-      "filename": "napari_stl_exporter-0.0.11-py3-none-any.whl",
+      "filename": "napari_stl_exporter-0.1.0-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "0d0fe695a9cd2979edfa6d5eaa05c687",
+      "md5_digest": "125ec252686261b13fcfcf687e66e2c4",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.7",
-      "size": 366137,
-      "upload_time": "2022-08-02T11:09:54",
-      "upload_time_iso_8601": "2022-08-02T11:09:54.445003Z",
-      "url": "https://files.pythonhosted.org/packages/ff/d9/2837937369edc0d8de96706ec0c93a0d2fe843a2ad8408b81eeafa5d2e0e/napari_stl_exporter-0.0.11-py3-none-any.whl",
+      "size": 367917,
+      "upload_time": "2023-01-02T10:48:50",
+      "upload_time_iso_8601": "2023-01-02T10:48:50.806702Z",
+      "url": "https://files.pythonhosted.org/packages/07/ed/8ca02ecd131f79a040d6127b882b1d114ecc18f24b29ee49cbc1defeae80/napari_stl_exporter-0.1.0-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "md5": "999d6e0fcafbcd4d2c8ebe8d8b59eb07",
-        "sha256": "be9fba0ebb45a2b89e71ab178884719c9e085267a2cf2b10bdc2282e30c70b9b"
+        "md5": "e13bc709b9cf3e488a845de3986c14e3",
+        "sha256": "c72f06dee5eccd5aa68609f04a939adf170a46529b96b8f9dff72d960cdfceb2"
       },
       "downloads": -1,
-      "filename": "napari-stl-exporter-0.0.11.tar.gz",
+      "filename": "napari-stl-exporter-0.1.0.tar.gz",
       "has_sig": false,
-      "md5_digest": "999d6e0fcafbcd4d2c8ebe8d8b59eb07",
+      "md5_digest": "e13bc709b9cf3e488a845de3986c14e3",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.7",
-      "size": 364815,
-      "upload_time": "2022-08-02T11:09:56",
-      "upload_time_iso_8601": "2022-08-02T11:09:56.670047Z",
-      "url": "https://files.pythonhosted.org/packages/07/c7/aa7ae41718bc662661ab95bb3f38f6195cbedbdb67c261351b085da4d75f/napari-stl-exporter-0.0.11.tar.gz",
+      "size": 367104,
+      "upload_time": "2023-01-02T10:48:52",
+      "upload_time_iso_8601": "2023-01-02T10:48:52.089400Z",
+      "url": "https://files.pythonhosted.org/packages/1f/77/ac2aff729d3310c8bcbb7394e457091641568ecbc58214fec53cb879c510/napari-stl-exporter-0.1.0.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
