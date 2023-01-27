@@ -1,0 +1,155 @@
+{
+  "info": {
+    "author": "Hanjin Liu",
+    "author_email": "liuhanjin-sc@g.ecc.u-tokyo.ac.jp",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-result-stack\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-result-stack.svg?color=green)](https://github.com/hanjinliu/napari-result-stack/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-result-stack.svg?color=green)](https://pypi.org/project/napari-result-stack)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-result-stack.svg?color=green)](https://python.org)\n[![tests](https://github.com/hanjinliu/napari-result-stack/workflows/tests/badge.svg)](https://github.com/hanjinliu/napari-result-stack/actions)\n[![codecov](https://codecov.io/gh/hanjinliu/napari-result-stack/branch/main/graph/badge.svg)](https://codecov.io/gh/hanjinliu/napari-result-stack)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-result-stack)](https://napari-hub.org/plugins/napari-result-stack)\n\nWidgets and type annotations for storing function results of any types.\n\n## `Stored` type\n\nType `Stored[T]` is equivalent to `T` for the type checker, but `magicgui` is aware of this annotation and behaves as a \"storage\" for the `T` instances.\n\n```python\nfrom pathlib import Path\nimport pandas as pd\nfrom magicgui import magicgui\nfrom napari_result_stack import Stored\n\n# Returned values will be stored in a result stack.\n@magicgui\ndef provide_data(path: Path) -> Stored[pd.DataFrame]:\n    return pd.read_csv(path)\n\n# You can choose one of the values stored in the result stack\n# for the argument `df` from a ComboBox widget.\n@magicgui\ndef print_data(df: Stored[pd.DataFrame]):\n    print(df)\n```\n\n![](https://github.com/hanjinliu/napari-result-stack/blob/main/images/demo-0.gif)\n\n- Different types use different storage. e.g. `Stored[int]` and `Stored[str]` do not share the same place.\n- Even for the same type, you can specify the second key to split the storage. e.g. `Stored[int]`, `Stored[int, 0]` and `Stored[int, \"my-plugin-name\"]` use the distinct storages.\n\n## Manually store variables\n\n`Stored.valuesof[T]` is a `list`-like object that returns a view of the values stored in `Stored[T]`. This value view is useful if you want to store values outside `@magicgui`.\n\n```python\nfrom magicgui.widgets import PushButton\nfrom datetime import datetime\nfrom napari_result_stack import Stored\n\nbutton = PushButton(text=\"Click!\")\n\n@button.changed.connect\ndef _record_now():\n    Stored.valuesof[datetime].append(datetime.now())\n\n```\n\n## Result stack widget\n\n`napari-result-stack` provides a plugin widget that is helpful to inspect all the stored values.\n\n![](https://github.com/hanjinliu/napari-result-stack/blob/main/images/demo-1.gif)\n\n\n<details><summary>Show code</summary><div>\n\n```python\nfrom napari_result_stack import Stored\nfrom magicgui import magicgui\nimport numpy as np\nimport pandas as pd\n\n@magicgui\ndef f0() -> Stored[pd.DataFrame]:\n    return pd.DataFrame(np.random.random((4, 3)))\n\n@magicgui\ndef f1(x: Stored[pd.DataFrame]) -> Stored[float]:\n    return np.mean(np.array(x))\n\nviewer.window.add_dock_widget(f0, name=\"returns a DataFrame\")\nviewer.window.add_dock_widget(f1, name=\"mean of a DataFrame\")\n```\n\n---\n</div></details>\n\n\n\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/stable/plugins/index.html\n-->\n\n## Installation\n\nYou can install `napari-result-stack` via [pip]:\n\n    pip install napari-result-stack\n\n\n\nTo install latest development version :\n\n    pip install git+https://github.com/hanjinliu/napari-result-stack.git\n\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-result-stack\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[file an issue]: https://github.com/hanjinliu/napari-result-stack/issues\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "https://github.com/hanjinliu/napari-result-stack",
+    "keywords": "",
+    "license": "BSD-3-Clause",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "napari-result-stack",
+    "package_url": "https://pypi.org/project/napari-result-stack/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-result-stack/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/hanjinliu/napari-result-stack/issues",
+      "Documentation": "https://github.com/hanjinliu/napari-result-stack#README.md",
+      "Homepage": "https://github.com/hanjinliu/napari-result-stack",
+      "Source Code": "https://github.com/hanjinliu/napari-result-stack",
+      "User Support": "https://github.com/hanjinliu/napari-result-stack/issues"
+    },
+    "release_url": "https://pypi.org/project/napari-result-stack/0.0.1/",
+    "requires_dist": [
+      "numpy",
+      "magicgui",
+      "qtpy",
+      "tox ; extra == 'testing'",
+      "pytest ; extra == 'testing'",
+      "pytest-cov ; extra == 'testing'",
+      "pytest-qt ; extra == 'testing'",
+      "napari ; extra == 'testing'",
+      "pyqt5 ; extra == 'testing'"
+    ],
+    "requires_python": ">=3.8",
+    "summary": "Widgets and type annotations for storing function results of any types",
+    "version": "0.0.1",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 16589531,
+  "releases": {
+    "0.0.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "7563940ead571d53688a6374a947d375f62888d27283eedb58b8d128f5c6d9c6",
+          "md5": "3c14e657e9cea7eea9056e2a59d5c69b",
+          "sha256": "eb5fc1e215a24bb644c2ed4210a2de7f93688cc22d5001f815e460ca552addcc"
+        },
+        "downloads": -1,
+        "filename": "napari_result_stack-0.0.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "3c14e657e9cea7eea9056e2a59d5c69b",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 23400,
+        "upload_time": "2023-01-27T12:34:21",
+        "upload_time_iso_8601": "2023-01-27T12:34:21.726357Z",
+        "url": "https://files.pythonhosted.org/packages/75/63/940ead571d53688a6374a947d375f62888d27283eedb58b8d128f5c6d9c6/napari_result_stack-0.0.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "ca73be8386ee628eb7ba2c2c91a8e239761a25a3c36b33445000898555d3a755",
+          "md5": "2928b2d5553b94a1c54b2ee5fc0f5701",
+          "sha256": "2952bfe0313d350dbd15f2e09e889eca8965a1f7ad7b1de18856acb411d17eaf"
+        },
+        "downloads": -1,
+        "filename": "napari-result-stack-0.0.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "2928b2d5553b94a1c54b2ee5fc0f5701",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 19480,
+        "upload_time": "2023-01-27T12:34:24",
+        "upload_time_iso_8601": "2023-01-27T12:34:24.005057Z",
+        "url": "https://files.pythonhosted.org/packages/ca/73/be8386ee628eb7ba2c2c91a8e239761a25a3c36b33445000898555d3a755/napari-result-stack-0.0.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "blake2b_256": "7563940ead571d53688a6374a947d375f62888d27283eedb58b8d128f5c6d9c6",
+        "md5": "3c14e657e9cea7eea9056e2a59d5c69b",
+        "sha256": "eb5fc1e215a24bb644c2ed4210a2de7f93688cc22d5001f815e460ca552addcc"
+      },
+      "downloads": -1,
+      "filename": "napari_result_stack-0.0.1-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "3c14e657e9cea7eea9056e2a59d5c69b",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.8",
+      "size": 23400,
+      "upload_time": "2023-01-27T12:34:21",
+      "upload_time_iso_8601": "2023-01-27T12:34:21.726357Z",
+      "url": "https://files.pythonhosted.org/packages/75/63/940ead571d53688a6374a947d375f62888d27283eedb58b8d128f5c6d9c6/napari_result_stack-0.0.1-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "blake2b_256": "ca73be8386ee628eb7ba2c2c91a8e239761a25a3c36b33445000898555d3a755",
+        "md5": "2928b2d5553b94a1c54b2ee5fc0f5701",
+        "sha256": "2952bfe0313d350dbd15f2e09e889eca8965a1f7ad7b1de18856acb411d17eaf"
+      },
+      "downloads": -1,
+      "filename": "napari-result-stack-0.0.1.tar.gz",
+      "has_sig": false,
+      "md5_digest": "2928b2d5553b94a1c54b2ee5fc0f5701",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.8",
+      "size": 19480,
+      "upload_time": "2023-01-27T12:34:24",
+      "upload_time_iso_8601": "2023-01-27T12:34:24.005057Z",
+      "url": "https://files.pythonhosted.org/packages/ca/73/be8386ee628eb7ba2c2c91a8e239761a25a3c36b33445000898555d3a755/napari-result-stack-0.0.1.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

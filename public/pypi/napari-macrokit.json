@@ -1,0 +1,156 @@
+{
+  "info": {
+    "author": "Hanjin Liu",
+    "author_email": "liuhanjin-sc@g.ecc.u-tokyo.ac.jp",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-macrokit\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-macrokit.svg?color=green)](https://github.com/hanjinliu/napari-macrokit/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-macrokit.svg?color=green)](https://pypi.org/project/napari-macrokit)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-macrokit.svg?color=green)](https://python.org)\n[![tests](https://github.com/hanjinliu/napari-macrokit/workflows/tests/badge.svg)](https://github.com/hanjinliu/napari-macrokit/actions)\n[![codecov](https://codecov.io/gh/hanjinliu/napari-macrokit/branch/main/graph/badge.svg)](https://codecov.io/gh/hanjinliu/napari-macrokit)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-macrokit)](https://napari-hub.org/plugins/napari-macrokit)\n\nExecutable script generation for napari plugins.\n\n![](https://github.com/hanjinliu/napari-macrokit/blob/main/images/example.gif)\n&uarr; [Example](https://github.com/hanjinliu/napari-macrokit/blob/main/examples/regionprops.py) showing the real-time recording of GUI operation.\n\nThis napari plugin aims at making image analysis reproducible with arbitrary input/output types.\n\n## Usage\n\nCreate a macro object, decorate functions with `record` method and run!\n\n```python\nfrom napari_macrokit import get_macro\n\nmacro = get_macro(\"my-plugin-specifier\")  # get macro object\n\n# define a function\n@macro.record\ndef add(a: float, b: float) -> float:\n    return a + b\n\n# run\nresult = add(3.2, 5.4)\nadd(result, 1.0)\n\nmacro\n\n# Out:\n# >>> float0 = add(3.2, 5.4)\n# >>> float1 = add(float0, 1.0)\n```\n\n## Record GUI Operations\n\nYou can use recordable functions in your widgets to keep tracks of GUI operations.\nMore simply, you can double-decorate functions with `record` and `magicgui`.\n\n```python\nimport numpy as np\nfrom magicgui import magicgui\nimport napari\nfrom napari.types import ImageData\nfrom napari_macrokit import get_macro\n\nmacro = get_macro(\"my-plugin-specifier\")  # get macro object\n\n# define recordable magicgui\n@magicgui\n@macro.record\ndef add(image: ImageData, b: float) -> ImageData:\n    return image + b\n\nviewer = napari.Viewer()  # launch a viewer\nviewer.add_image(np.random.random((100, 100)))  # image data\nviewer.window.add_dock_widget(add)  # add magicgui to the viewer\n```\n\nRunning add twice in GUI and you'll find macro updated like below.\n\n```python\nmacro\n# Out\n# >>> image0 = add(viewer.layers['Image'].data, 0.06)\n# >>> image1 = add(image0, 0.12)\n```\n\n## Combining Plugins\n\nSuppose you have two modules that use `napari-macrokit`.\n\n```python\n# napari_module_0.py\n\nfrom napari.types import ImageData\nfrom scipy import ndimage as ndi\nfrom napari_macrokit import get_macro\n\nmacro = get_macro(\"napari-module-0\")\n\n@macro.record\ndef gaussian_filter(image: ImageData, sigma: float) -> ImageData:\n    return ndi.gaussian_filter(image, sigma=sigma)\n\n@macro.record\ndef threshold(image: ImageData, value: float) -> ImageData:\n    return image > value\n```\n\n```python\n# napari_module_1.py\n\nfrom napari.types import ImageData\nimport numpy as np\nfrom napari_macrokit import get_macro\nmacro = get_macro(\"napari-module-1\")\n\n@macro.record\ndef estimate_background(image: ImageData) -> float:\n    return np.percentile(image, 10.0)\n\n```\n\nYou can use functions from both modules to build an analysis workflow by collecting existing macro objects with `collect_macro` function. All the recordable actions in the modules will also be recorded to the returned macro object.\n\n```python\nimport numpy as np\nfrom napari_macrokit import collect_macro\nfrom napari_module_0 import gaussian_filter, threshold\nfrom napari_module_1 import estimate_background\n\n# global_macro will record all the macro available at this point\nglobal_macro = collect_macro()\n\n# start image analysis!\nimage = np.random.random((100, 100))\n\nout = gaussian_filter(image, 2.0)\nthresh = estimate_background(out)\nbinary = threshold(out, thresh)\n\nmacro\n# Out\n# >>> image0 = gaussian_filter(arr0, 2.0)\n# >>> float0 = estimate_background(image0)\n# >>> image1 = threshold(image1, float0)\n```\n\n---------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n\n## Installation\n\nYou can install `napari-macrokit` via [pip]:\n\n    pip install napari-macrokit\n\n\n\nTo install latest development version :\n\n    pip install git+https://github.com/hanjinliu/napari-macrokit.git\n\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-macrokit\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[file an issue]: https://github.com/hanjinliu/napari-macrokit/issues\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "https://github.com/hanjinliu/napari-macrokit",
+    "keywords": "",
+    "license": "BSD-3-Clause",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "napari-macrokit",
+    "package_url": "https://pypi.org/project/napari-macrokit/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-macrokit/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/hanjinliu/napari-macrokit/issues",
+      "Documentation": "https://github.com/hanjinliu/napari-macrokit#README.md",
+      "Homepage": "https://github.com/hanjinliu/napari-macrokit",
+      "Source Code": "https://github.com/hanjinliu/napari-macrokit",
+      "User Support": "https://github.com/hanjinliu/napari-macrokit/issues"
+    },
+    "release_url": "https://pypi.org/project/napari-macrokit/0.0.1/",
+    "requires_dist": [
+      "numpy",
+      "magicgui",
+      "qtpy",
+      "macro-kit (>=0.4.0)",
+      "tox ; extra == 'testing'",
+      "pytest ; extra == 'testing'",
+      "pytest-cov ; extra == 'testing'",
+      "pytest-qt ; extra == 'testing'",
+      "napari ; extra == 'testing'",
+      "pyqt5 ; extra == 'testing'"
+    ],
+    "requires_python": ">=3.8",
+    "summary": "Executable script generation for napari plugins",
+    "version": "0.0.1",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 16589342,
+  "releases": {
+    "0.0.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "31d4210013297eb67d1b3dabf2f3c835b683a5b553d7e39d15f057fcb12964db",
+          "md5": "93b5cad6cfca302eb6fe407b6b846a69",
+          "sha256": "8d878d54bf4c544466b27a49e7356c693f466953dd5507bb9ea0d31b51323e64"
+        },
+        "downloads": -1,
+        "filename": "napari_macrokit-0.0.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "93b5cad6cfca302eb6fe407b6b846a69",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 25834,
+        "upload_time": "2023-01-27T12:24:15",
+        "upload_time_iso_8601": "2023-01-27T12:24:15.215078Z",
+        "url": "https://files.pythonhosted.org/packages/31/d4/210013297eb67d1b3dabf2f3c835b683a5b553d7e39d15f057fcb12964db/napari_macrokit-0.0.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "9c42581a9a5c5fa5260d272e4a33d4fa677705af1ef31f386befc6cb13def2b2",
+          "md5": "e6a1f71f371a35fe54256acbc88d966c",
+          "sha256": "9f49f629f22d0088d482b7292415a76205723b4bbac82319cd5e0fd43022b507"
+        },
+        "downloads": -1,
+        "filename": "napari-macrokit-0.0.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e6a1f71f371a35fe54256acbc88d966c",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 22969,
+        "upload_time": "2023-01-27T12:24:17",
+        "upload_time_iso_8601": "2023-01-27T12:24:17.580783Z",
+        "url": "https://files.pythonhosted.org/packages/9c/42/581a9a5c5fa5260d272e4a33d4fa677705af1ef31f386befc6cb13def2b2/napari-macrokit-0.0.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "blake2b_256": "31d4210013297eb67d1b3dabf2f3c835b683a5b553d7e39d15f057fcb12964db",
+        "md5": "93b5cad6cfca302eb6fe407b6b846a69",
+        "sha256": "8d878d54bf4c544466b27a49e7356c693f466953dd5507bb9ea0d31b51323e64"
+      },
+      "downloads": -1,
+      "filename": "napari_macrokit-0.0.1-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "93b5cad6cfca302eb6fe407b6b846a69",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.8",
+      "size": 25834,
+      "upload_time": "2023-01-27T12:24:15",
+      "upload_time_iso_8601": "2023-01-27T12:24:15.215078Z",
+      "url": "https://files.pythonhosted.org/packages/31/d4/210013297eb67d1b3dabf2f3c835b683a5b553d7e39d15f057fcb12964db/napari_macrokit-0.0.1-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "blake2b_256": "9c42581a9a5c5fa5260d272e4a33d4fa677705af1ef31f386befc6cb13def2b2",
+        "md5": "e6a1f71f371a35fe54256acbc88d966c",
+        "sha256": "9f49f629f22d0088d482b7292415a76205723b4bbac82319cd5e0fd43022b507"
+      },
+      "downloads": -1,
+      "filename": "napari-macrokit-0.0.1.tar.gz",
+      "has_sig": false,
+      "md5_digest": "e6a1f71f371a35fe54256acbc88d966c",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.8",
+      "size": 22969,
+      "upload_time": "2023-01-27T12:24:17",
+      "upload_time_iso_8601": "2023-01-27T12:24:17.580783Z",
+      "url": "https://files.pythonhosted.org/packages/9c/42/581a9a5c5fa5260d272e4a33d4fa677705af1ef31f386befc6cb13def2b2/napari-macrokit-0.0.1.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
