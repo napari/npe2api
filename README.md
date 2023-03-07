@@ -1,4 +1,13 @@
-# how this repo works
+# npe2api
+
+The rest API used by napari to query plugins
+
+**Status:** [![vercel](https://img.shields.io/github/deployments/napari/npe2api/production?label=vercel&logo=vercel&style=flat-square)](https://api.napari.org)
+
+<https://api.napari.org>
+
+## how this repo works
+
 
 1. [The fetch action](.github/workflows/fetch.yml) is triggered by:
     - any push to the `main` branch
