@@ -1,0 +1,158 @@
+{
+  "info": {
+    "author": "Andrey Aristov",
+    "author_email": "aaristov@pasteur.fr",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: Implementation :: CPython",
+      "Topic :: Software Development :: Testing"
+    ],
+    "description": "# \u2693 anchor-droplet-chip\n## Measuring single-cell susceptibility to antibiotics within monoclonal fluorescent bacteria.\n\nWe are imaging the entire chip using 20x 0.7NA objective lens using automatic stitching in NIS.\nBright-field image 2D and TRITC-3D acquired. The 3D stack is converted to 2D using maximum projection in NIS or Fiji. Both channels are then merged together and saved as a tif stack. After that this package can be applied to detect the individual droplets and count the fluorescent cells.\n\nAs the chips are bonded to the coverslip manually, they contain a randon tilt and shift, so detecting individual droplets proved to be unreliable. The current approach consisnts of preparing a well-lebelled template bright-field image and a labelled mask and matching the experimental brightfield image to the template.\n![Paper outline(1)](https://user-images.githubusercontent.com/11408456/178001287-513e6398-c4e0-4946-b38f-6cb98dc0ee6c.svg)\n\n## Installation\n```bash\npip install git+https://github.com/BaroudLab/anchor-droplet-chip.git\n```\n## Usage\n\n1. Notebook: `jupyter lab example.ipynb`\n2. Napari plugin: see the menu `Plugins / andhor-droplet-chips / ...\n3. Command line:\n\n    `python -m adc.align --help`\n\n    `python -m adc.count --help`\n\n### Dowloading the raw data\nHead to release page https://github.com/BaroudLab/anchor-droplet-chip/releases/tag/v0.0.1 and download files one by one.\n\nOr\n\nExecute the notebook example.ipynb - the data will be fetched automatically.\n\n### Aligning the chips with the template and the mask\n\nDay 1:\n```bash\npython -m adc.align day1/00ng_BF_TRITC_bin2.tif template_bin16_bf.tif labels_bin2.tif\n```\nThis command will create the stack day1/00ng_BF_TRITC_bin2-aligned.tif, which can be viewed in Fiji.\n![Screenshot of 00ng_BF_TRITC_bin2-aligned.tif](https://user-images.githubusercontent.com/11408456/176169270-3d494fc3-a771-4bf0-859e-c9cc853ce2d9.png)\n\nDay 2:\n```bash\npython -m adc.align day2/00ng_BF_TRITC_bin2_24h.tif template_bin16_bf.tif labels_bin2.tif\n```\n\n### Counting the cells day 1 and day2\n```\npython -m adc.count day1/00ng_BF_TRITC_bin2-aligned.tif day1/counts.csv\npython -m adc.count day2/00ng_BF_TRITC_bin2_24h-aligned.tif day2/counts.csv\n```\n\n### Combining the tables from 2 days\n```\npython adc.merge day1/counts.csv day2/counts.csv table.csv\n```\n\n### Plotting and fitting the probabilities\n\n\n## Sample data\n\n### Batch processing:\n\nFirst you'll need to clone the repo locally and install it to have the scripts at hand.\n\n```bash\ngit clone https://github.com/BaroudLab/anchor-droplet-chip.git\n\ncd anchor-droplet-chip\n\npip install .\n```\nMake a data folder\n```bash\nmkdir data\n\n```\nDownload the dataset from Zenodo https://zenodo.org/record/6940212\n```bash\nzenodo_get 6940212 -o data\n```\nProceed with Snakemake pipeline to get tha table and plots. Be careful with the number of threads `-c` as a single thread can consume over 8 GBs of RAM.\n```bash\nsnakemake -c4 -d data table.csv\n```\n\n# Napari plugin functionaluties\n\n## nd2 reader\n\nOpen large nd2 file by drag-n-drop and select anchor-droplet-chip as a reader.\nThe reader plugin will aotimatically detect the subchannels and split them in different layers.\nThe reader will also extract the pixel size from metadata and save it as Layer.metadata[\"pixel_size_um\"]\nThe data itself is opened ad dask array using nd2 python library.\n\n## Substack\n\nSome datasets are so big, it's hard to even to open them, let alone doing processing in them.\n`anchor-droplet-chip / Make a sub stack ` addresses this problem.\nUpon opening the plugin you'll see all  dimensions of you dataset, and the axes will become named accordingly.\nSimply choose the subset of data you need, and click \"Crop it!\". This will create a new layer with the subset of data.\nNote that no new files are created in the process and in the background nd2 library lazy loading chunks of data from the original nd2 file.\n\n## Populate ROIs along the line\nDraw a line in the new shapes layer and call the widget. It will populate square ROIs along the line. Adjust the number of columns and rows. This way you can manually map the 2D wells on your chip.\n\n## Crop ROIs\nUse this widget to crop the mapped previously ROIs. The extracted crops can be saved as tifs.\n\n## Split along axis\n\nAllows to split any dataset along a selected axis and save the pieces as separate tifs (imagej format, so only TZCYX axes supported)\n* Select the axis name\n* Click Split it! and check the table with the names, shapes and paths.\n* To change the prefix, set the folder by clicking at \"Choose folder\"\n* Once the table looks right, click \"Save tifs\" and wait. The colunm \"saved\" will be updated along the way.\n![image](https://user-images.githubusercontent.com/11408456/214313498-5b1f8408-1fa3-4e24-810a-b9394e936c8e.png)\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "https://github.com/aaristov/napari-segment",
+    "keywords": "",
+    "license": "BSD-3-Clause",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "anchor-droplet-chip",
+    "package_url": "https://pypi.org/project/anchor-droplet-chip/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/anchor-droplet-chip/",
+    "project_urls": {
+      "Homepage": "https://github.com/aaristov/napari-segment",
+      "Source Code": "https://github.com/BaroudLab/anchor-droplet-chip"
+    },
+    "release_url": "https://pypi.org/project/anchor-droplet-chip/0.2.0/",
+    "requires_dist": [
+      "dask",
+      "fire",
+      "imreg-dft",
+      "jupyterlab",
+      "matplotlib",
+      "napari",
+      "nd2",
+      "numpy",
+      "pandas",
+      "pyqt6",
+      "pyyaml",
+      "scikit-image",
+      "scipy",
+      "seaborn",
+      "tifffile",
+      "zarr-tools",
+      "zenodo-get"
+    ],
+    "requires_python": ">=3.8",
+    "summary": "Segment organoids and measure intensities",
+    "version": "0.2.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 17273900,
+  "releases": {
+    "0.2.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "84e234c6d714462aaa2e5d9bcacf6508f5f71b568c1ebe7a497191696d6fd0cf",
+          "md5": "776ab7a19bf63cb9cffd485234889b77",
+          "sha256": "97d66a0bb8612c591f4a4ff9f0fe80eb4101da321b4dfe313283483d41dd24c1"
+        },
+        "downloads": -1,
+        "filename": "anchor_droplet_chip-0.2.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "776ab7a19bf63cb9cffd485234889b77",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 53098,
+        "upload_time": "2023-03-13T16:39:50",
+        "upload_time_iso_8601": "2023-03-13T16:39:50.789449Z",
+        "url": "https://files.pythonhosted.org/packages/84/e2/34c6d714462aaa2e5d9bcacf6508f5f71b568c1ebe7a497191696d6fd0cf/anchor_droplet_chip-0.2.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "73f745b8368599e56f39a972eb655bc3f283d624d68289d8e9e0d3c8e3460260",
+          "md5": "eeef1a98121ac3ef614a20fd137884b4",
+          "sha256": "cc9ca8add92b482f5721bff9c8bca838f913e6bfe63bbab32defa10586154c2c"
+        },
+        "downloads": -1,
+        "filename": "anchor_droplet_chip-0.2.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "eeef1a98121ac3ef614a20fd137884b4",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 101497,
+        "upload_time": "2023-03-13T16:39:52",
+        "upload_time_iso_8601": "2023-03-13T16:39:52.887595Z",
+        "url": "https://files.pythonhosted.org/packages/73/f7/45b8368599e56f39a972eb655bc3f283d624d68289d8e9e0d3c8e3460260/anchor_droplet_chip-0.2.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "blake2b_256": "84e234c6d714462aaa2e5d9bcacf6508f5f71b568c1ebe7a497191696d6fd0cf",
+        "md5": "776ab7a19bf63cb9cffd485234889b77",
+        "sha256": "97d66a0bb8612c591f4a4ff9f0fe80eb4101da321b4dfe313283483d41dd24c1"
+      },
+      "downloads": -1,
+      "filename": "anchor_droplet_chip-0.2.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "776ab7a19bf63cb9cffd485234889b77",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.8",
+      "size": 53098,
+      "upload_time": "2023-03-13T16:39:50",
+      "upload_time_iso_8601": "2023-03-13T16:39:50.789449Z",
+      "url": "https://files.pythonhosted.org/packages/84/e2/34c6d714462aaa2e5d9bcacf6508f5f71b568c1ebe7a497191696d6fd0cf/anchor_droplet_chip-0.2.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "blake2b_256": "73f745b8368599e56f39a972eb655bc3f283d624d68289d8e9e0d3c8e3460260",
+        "md5": "eeef1a98121ac3ef614a20fd137884b4",
+        "sha256": "cc9ca8add92b482f5721bff9c8bca838f913e6bfe63bbab32defa10586154c2c"
+      },
+      "downloads": -1,
+      "filename": "anchor_droplet_chip-0.2.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "eeef1a98121ac3ef614a20fd137884b4",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.8",
+      "size": 101497,
+      "upload_time": "2023-03-13T16:39:52",
+      "upload_time_iso_8601": "2023-03-13T16:39:52.887595Z",
+      "url": "https://files.pythonhosted.org/packages/73/f7/45b8368599e56f39a972eb655bc3f283d624d68289d8e9e0d3c8e3460260/anchor_droplet_chip-0.2.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
