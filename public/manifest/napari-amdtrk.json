@@ -1,0 +1,137 @@
+{
+  "name": "napari-amdtrk",
+  "display_name": "Amend segmentation and track",
+  "visibility": "public",
+  "icon": "",
+  "categories": [],
+  "schema_version": "0.2.0",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-amdtrk.get_reader",
+        "title": "Open data with Amend segmentation and track",
+        "python_name": "napari_amdtrk._reader:napari_get_reader",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-amdtrk.make_sample_data",
+        "title": "Load sample data from Amend segmentation and track",
+        "python_name": "napari_amdtrk._sample_data:make_sample_data",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-amdtrk.make_amdtrkwidget",
+        "title": "Make amend track widget",
+        "python_name": "napari_amdtrk._widget:AmdTrkWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": [
+      {
+        "command": "napari-amdtrk.get_reader",
+        "filename_patterns": [
+          "*"
+        ],
+        "accepts_directories": true
+      }
+    ],
+    "writers": null,
+    "widgets": [
+      {
+        "command": "napari-amdtrk.make_amdtrkwidget",
+        "display_name": "Amend track widget",
+        "autogenerate": true
+      }
+    ],
+    "sample_data": [
+      {
+        "key": "napari-amdtrk - simple",
+        "display_name": "basic tracks",
+        "uri": "simple",
+        "reader_plugin": null
+      },
+      {
+        "key": "napari-amdtrk - full",
+        "display_name": "complete cell cycle tracks",
+        "uri": "full",
+        "reader_plugin": null
+      }
+    ],
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.1",
+    "name": "napari-amdtrk",
+    "version": "1.0.0",
+    "dynamic": null,
+    "platform": null,
+    "supported_platform": null,
+    "summary": "Manually amend segmentation and track within napari",
+    "description": "# napari-amdtrk\n\n[![License MIT](https://img.shields.io/pypi/l/napari-amdtrk.svg?color=green)](https://github.com/Jeff-Gui/napari-amdtrk/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-amdtrk.svg?color=green)](https://pypi.org/project/napari-amdtrk)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-amdtrk.svg?color=green)](https://python.org)\n[![tests](https://github.com/Jeff-Gui/napari-amdtrk/workflows/tests/badge.svg)](https://github.com/Jeff-Gui/napari-amdtrk/actions)\n[![codecov](https://codecov.io/gh/Jeff-Gui/napari-amdtrk/branch/main/graph/badge.svg)](https://codecov.io/gh/Jeff-Gui/napari-amdtrk)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-amdtrk)](https://napari-hub.org/plugins/napari-amdtrk)\n\nAmend segmentation and track within napari manually.\n\n<img src=\"preview.png\" alt=\"overview\" width=\"900\" />\n\n\n### [:eyes: watch a demo video](https://drive.google.com/file/d/1oHPdYcKv-QgOWylm21DnOF1NlVNsRIcL/view)\n\n----------------------------------\n\n### Input data structure\n\nNapari-amdtrk reads an input directory which includes:\n- An intensity image (`tif`) in txyc (or txy) format\n- An object mask (`tif`) in txy format\n- An object table (`csv`) with following essential columns:\n    - frame: time frame\n    - trackId: ID of the track, starting from 1\n    - Center_of_the_object_0: x coordinate\n    - Center_of_the_object_1: y coordinate\n    - continuous_label: the corresponding label (intensity value) of the object in the object mask (You may use `skimage.measure.label` to get it from a binary mask.)\n\n- A config file named `config.yaml` (_other names are not allowed_)\n\n    Within the config file, there should be:\n    - intensity_suffix: suffix of the intensity image (e.g., for `foo_GFP.tif`, use `GFP` in the config)\n    - mask_suffix: suffix of the mask image\n    - track_suffix: suffix of the tracked object table\n    - frame_base: index of the first frame (either `0` or `1`)\n    - stateCol: __optional__ column name for the cell state (e.g., cell cycle phase) in the object table. Leave blank if the object table does not contain it.\n\n---\n### Quick start\n\n1. Open `napari` GUI.\n2. `File` > `Open folder` > choose `Amend segmentation and track`\n3. `Plugins` > `napari-amdtrk: Amend track widget` > `Run`\n4. In `layer list`, select the `segm` layer to start editing.\n\nPlease check out the demo video [here](https://drive.google.com/file/d/1oHPdYcKv-QgOWylm21DnOF1NlVNsRIcL/view) and the sample data (see below).\n\n----------------------------------\n\n### Sample data\n\nTo load sample data, `File` > `Open Sample` > `napari-amdtrk` > `basic tracks` or `complete cell cycle tracks`.\n\n- basic tracks: simple cell tracks as essential input data.\n- complete cell cycle tracks: cell tracks with additional cell cycle features.\n\nThe above operations will download data to `~/.amd_trk/_sample_data/` (__~230MB__). After downloading is finished, sample data will be loaded.\n\n_Notes_\n- Please cite this repository if using the plugin in your work (try `About` > `Cite this repository` upper right of this homepage).\n  \n- Sample data (cell track videos) have been published with [_pcnaDeep: a fast and robust single-cell tracking method using deep-learning mediated cell cycle profiling_](10.1093/bioinformatics/btac602). We acknowledge Dr Kuan Yoow Chan and members of his lab for generating the data. \n\n\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/stable/plugins/index.html\n-->\n\n## Installation\n\nPlease install `napari` GUI first:\n\n    python -m pip install \"napari[all]\"\n\nYou can install `napari-amdtrk` via [pip]:\n\n    pip install napari-amdtrk\n\n\n## License\n\nDistributed under the terms of the [MIT] license,\n\"napari-amdtrk\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": "https://github.com/Jeff-Gui/napari-amdtrk-plugin",
+    "download_url": null,
+    "author": "Yifan Gui",
+    "author_email": "jeffgui9912@gmail.com",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "MIT",
+    "classifier": [
+      "Development Status :: 3 - Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: MIT License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Programming Language :: Python :: 3.10",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "requires_dist": [
+      "numpy (<1.24)",
+      "magicgui",
+      "qtpy",
+      "trackpy",
+      "pandas",
+      "scikit-image",
+      "tox ; extra == 'testing'",
+      "pytest ; extra == 'testing'",
+      "pytest-cov ; extra == 'testing'",
+      "pytest-qt ; extra == 'testing'",
+      "napari ; extra == 'testing'",
+      "pyqt5 ; extra == 'testing'"
+    ],
+    "requires_python": ">=3.8",
+    "requires_external": null,
+    "project_url": [
+      "Bug Tracker, https://github.com/Jeff-Gui/napari-amdtrk-plugin/issues",
+      "Documentation, https://github.com/Jeff-Gui/napari-amdtrk-plugin/blob/master/README.md",
+      "Source Code, https://github.com/Jeff-Gui/napari-amdtrk-plugin"
+    ],
+    "provides_extra": [
+      "testing"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}
