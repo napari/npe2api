@@ -1,0 +1,85 @@
+{
+  "name": "napari-laptrack",
+  "display_name": "napari-laptrack",
+  "visibility": "public",
+  "icon": "",
+  "categories": [],
+  "schema_version": "0.2.0",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-laptrack.napari_experimental_provide_function",
+        "title": "track_labels_centroid_based",
+        "python_name": "napari_laptrack._function:napari_experimental_provide_function",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "napari-laptrack.napari_experimental_provide_function",
+        "display_name": "track_labels_centroid_based",
+        "autogenerate": true
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.1",
+    "name": "napari-laptrack",
+    "version": "0.1.0",
+    "dynamic": null,
+    "platform": null,
+    "supported_platform": null,
+    "summary": "Tracking particles in Napari, based on the LapTrack library",
+    "description": "# napari_laptrack\n\n\n\n[![License](https://img.shields.io/pypi/l/napari_laptrack.svg?color=green)](https://github.com/haesleinhuepf/napari_laptrack/raw/master/LICENSE)\n\n[![PyPI](https://img.shields.io/pypi/v/napari_laptrack.svg?color=green)](https://pypi.org/project/napari_laptrack)\n\n[![Python Version](https://img.shields.io/pypi/pyversions/napari_laptrack.svg?color=green)](https://python.org)\n\n[![tests](https://github.com/haesleinhuepf/napari_laptrack/workflows/tests/badge.svg)](https://github.com/haesleinhuepf/napari_laptrack/actions)\n\n[![codecov](https://codecov.io/gh/haesleinhuepf/napari_laptrack/branch/master/graph/badge.svg)](https://codecov.io/gh/haesleinhuepf/napari_laptrack)\n\n[![Development Status](https://img.shields.io/pypi/status/napari_laptrack.svg)](https://en.wikipedia.org/wiki/Software_release_life_cycle#Alpha)\n\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari_laptrack)](https://napari-hub.org/plugins/napari_laptrack)\n\n\n\nTracking particles in Napari, using the [LabTrack](https://laptrack.readthedocs.io/en/latest/usage.html) library.\n\nThis plugin is young and has just limited functionality. Contributions are welcome.\n\n\n\n\n\n## Installation instructions\n\n\n\nIt is recommended to use this napari-plugin together with [devbio-napari](https://github.com/haesleinhuepf/devbio-napari).\n\nInstall both using mamba-forge ([download here](https://github.com/conda-forge/miniforge#mambaforge)) by running these commands line-by line from the terminal:\n\n\n\n```\n\nmamba create --name napari-laptrack-env -c conda-forge python=3.9 devbio-napari\n\nmamba activate napari-laptrack-env\n\npip install napari-laptrack\n\n```\n\n\n\n## Usage\n\n\n\nThe starting point for napari-laptrack is a 4D image layer and a corresponding labels layer. \n\nThe following procedure demonstrates how to start from a 2D+t image stack, convert it in the right format and segment the labels.\n\nAfterwards, napari-laptrack is demonstrated. Depending on your input data, you may skip some of the initial steps.\n\n\n\n### Example data\n\n\n\nWe demonstrate the procedure using the example dataset `File > Open Samples > clesperanto > CalibZAPWfixed` which should be available if you installed [devbio-napari](https://github.com/haesleinhuepf/devbio-napari). \n\nYou can also download it from [zenodo](https://zenodo.org/record/5090508#.ZDQZ9nZBxaQ).\n\n\n\n### 4D+t input data.\n\n\n\nIn case your image data comes as 3D-stack, you must convert it in the format 4D+t with shape [t,1,y,x] first. \n\nYou can do this using the menu `Tools > Utilities > Convert 3D stack to 2d+t timelapse`, which is part of the [napari-time-slicer](https://www.napari-hub.org/plugins/napari-time-slicer) plugin. \n\nIt will create a new layer named `2D+t <original name>`. After this conversion, you can delete the original image layer, which is recommended to avoid confusion due to too many layers. \n\nFor deleting the original layer, select it and hit the trash-bin button.\n\n\n\n![img.png](https://github.com/haesleinhuepf/napari-laptrack/raw/main/docs/convert2d_t.png)\n\n\n\n### Object segmentation\n\n\n\nVarious segmentation algorithms are available in Napari (see the [Napari-hub](https://www.napari-hub.org/?search=segmentation&sort=relevance&page=1)). \n\nIn principle all algorithms are compatible if they produce a 3D+t label image as result.\n\nIn this tutorial, we use the [Voronoi-Otsu-Labeling algorithm](https://haesleinhuepf.github.io/BioImageAnalysisNotebooks/20_image_segmentation/11_voronoi_otsu_labeling.html) implemented using [clesperanto](https://github.com/clEsperanto/pyclesperanto_prototype). \n\nIt is available from the menu `Tools > Segmentation / labeling`.\n\n\n\n![img.png](https://github.com/haesleinhuepf/napari-laptrack/raw/main/docs/labeling_vol.png)\n\n\n\n### Tracking labeled objects\n\n\n\nNow that we have a 3D+t image and a corresponding label-image, we can start tracking the objects. \n\nCentroid-based tracking is available from the menu `Tracking > Track labeled objects (centroid-based, LapTrack)`.\n\nAfter tracking, multiple new layers will be added to Napari, which are explained in detail below. \n\nFurthermore, a table will open containing the columns `centroid-0/1/2` with spatial positions of the labels. \n\nThe table also contain colums `label`, `frame` and `track_id`. \n\nAll labels which belong to the same track, but to different frames, have the same `track_id`. \n\nIn some cases, also layers named `Stack 4D <original layer name>` are created. This is done to store the labels which were analysed. These layers are technically duplicates of the original layers which were computed on-the-fly.\n\n\n\n![img.png](https://github.com/haesleinhuepf/napari-laptrack/raw/main/docs/result.png)\n\n\n\n### The Tracks layer\n\n\n\nThe tracks layer visualizes the travel path of the labels' centroids over time. [Read more about the Tracks layer in the Napari documentation](https://napari.org/stable/howtos/layers/tracks.html).\n\n\n\n![img.png](https://github.com/haesleinhuepf/napari-laptrack/raw/main/docs/tracks_layer.png)\n\n\n\n### The Track-ID image\n\nOne result of the plugin is a Track-ID image. This is a label image where objects have the same label / color over time. \n\nThis image is not suited for many quantitative label-measurment methods because it is non-sequentially labeled.\n\n\n\nAs example, two subsequent frames are shown:\n\n\n\n![img.png](https://github.com/haesleinhuepf/napari-laptrack/raw/main/docs/track_id_image_0.png)\n\n\n\n![img.png](https://github.com/haesleinhuepf/napari-laptrack/raw/main/docs/track_id_image_1.png)\n\n\n\n## Similar and related plugins\n\n\n\nThere are other napari-plugins and python packages which allow tracking particles, visualizing tracking data and quantiative measurements of tracks:\n\n* [arboretum](https://github.com/lowe-lab-ucl/arboretum)\n\n* [btrack](https://github.com/quantumjot/btrack)\n\n* [ultrack](https://github.com/royerlab/ultrack)\n\n* [napari-stracking](https://www.napari-hub.org/plugins/napari-stracking)\n\n* [napari-tracks-reader](https://www.napari-hub.org/plugins/napari-tracks-reader)\n\n* [vollseg-napari-trackmate](https://www.napari-hub.org/plugins/vollseg-napari-trackmate)\n\n* [palmari](https://www.napari-hub.org/plugins/palmari)\n\n* [napari-amdtrk](https://www.napari-hub.org/plugins/napari-amdtrk)\n\n\n\n\n\n## Contributing\n\n\n\nContributions are very welcome. Tests can be run with [tox], please ensure\n\nthe coverage at least stays the same before you submit a pull request.\n\n\n\n\n\n## License\n\n\n\nDistributed under the terms of the [BSD-3] license,\n\n\"napari_laptrack\" is free and open source software\n\n\n\n## Issues\n\n\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n\n\n[napari]: https://github.com/napari/napari\n\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n\n[@napari]: https://github.com/napari\n\n[MIT]: http://opensource.org/licenses/MIT\n\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n\n[cookiecutter-napari-plugin]: https://github.com/haesleinhuepf/cookiecutter-napari-assistant-plugin\n\n[file an issue]: https://github.com/haesleinhuepf/napari_laptrack/issues\n\n[napari]: https://github.com/napari/napari\n\n[tox]: https://tox.readthedocs.io/en/latest/\n\n[pip]: https://pypi.org/project/pip/\n\n[PyPI]: https://pypi.org/\n\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": "https://github.com/haesleinhuepf/napari_laptrack",
+    "download_url": null,
+    "author": "Robert Haase",
+    "author_email": "robert.haase@tu-dresden.de",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "BSD-3",
+    "classifier": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Intended Audience :: Science/Research",
+      "Framework :: napari",
+      "Topic :: Scientific/Engineering :: Image Processing",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Operating System :: OS Independent",
+      "License :: OSI Approved :: BSD License"
+    ],
+    "requires_dist": [
+      "napari-plugin-engine (>=0.1.4)",
+      "numpy",
+      "napari-tools-menu",
+      "napari-time-slicer",
+      "laptrack (>=0.10.0)",
+      "napari-skimage-regionprops (>=0.9.0)",
+      "pandas"
+    ],
+    "requires_python": ">=3.6",
+    "requires_external": null,
+    "project_url": null,
+    "provides_extra": null,
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": true
+}
