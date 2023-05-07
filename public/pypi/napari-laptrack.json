@@ -15,7 +15,7 @@
       "Programming Language :: Python :: 3.9",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "# napari_laptrack\r\n\r\n\r\n\r\n[![License](https://img.shields.io/pypi/l/napari_laptrack.svg?color=green)](https://github.com/haesleinhuepf/napari_laptrack/raw/master/LICENSE)\r\n\r\n[![PyPI](https://img.shields.io/pypi/v/napari_laptrack.svg?color=green)](https://pypi.org/project/napari_laptrack)\r\n\r\n[![Python Version](https://img.shields.io/pypi/pyversions/napari_laptrack.svg?color=green)](https://python.org)\r\n\r\n[![tests](https://github.com/haesleinhuepf/napari_laptrack/workflows/tests/badge.svg)](https://github.com/haesleinhuepf/napari_laptrack/actions)\r\n\r\n[![codecov](https://codecov.io/gh/haesleinhuepf/napari_laptrack/branch/master/graph/badge.svg)](https://codecov.io/gh/haesleinhuepf/napari_laptrack)\r\n\r\n[![Development Status](https://img.shields.io/pypi/status/napari_laptrack.svg)](https://en.wikipedia.org/wiki/Software_release_life_cycle#Alpha)\r\n\r\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari_laptrack)](https://napari-hub.org/plugins/napari_laptrack)\r\n\r\n\r\n\r\nTracking particles in Napari, using the [LabTrack](https://laptrack.readthedocs.io/en/latest/usage.html) library.\r\n\r\nThis plugin is young and has just limited functionality. Contributions are welcome.\r\n\r\n\r\n\r\n\r\n\r\n## Installation instructions\r\n\r\n\r\n\r\nIt is recommended to use this napari-plugin together with [devbio-napari](https://github.com/haesleinhuepf/devbio-napari).\r\n\r\nInstall both using mamba-forge ([download here](https://github.com/conda-forge/miniforge#mambaforge)) by running these commands line-by line from the terminal:\r\n\r\n\r\n\r\n```\r\n\r\nmamba create --name napari-laptrack-env -c conda-forge python=3.9 devbio-napari\r\n\r\nmamba activate napari-laptrack-env\r\n\r\npip install napari-laptrack\r\n\r\n```\r\n\r\n\r\n\r\n## Usage\r\n\r\n\r\n\r\nThe starting point for napari-laptrack is a 4D image layer and a corresponding labels layer. \r\n\r\nThe following procedure demonstrates how to start from a 2D+t image stack, convert it in the right format and segment the labels.\r\n\r\nAfterwards, napari-laptrack is demonstrated. Depending on your input data, you may skip some of the initial steps.\r\n\r\n\r\n\r\n### Example data\r\n\r\n\r\n\r\nWe demonstrate the procedure using the example dataset `File > Open Samples > clesperanto > CalibZAPWfixed` which should be available if you installed [devbio-napari](https://github.com/haesleinhuepf/devbio-napari). \r\n\r\nYou can also download it from [zenodo](https://zenodo.org/record/5090508#.ZDQZ9nZBxaQ).\r\n\r\n\r\n\r\n### 4D+t input data.\r\n\r\n\r\n\r\nIn case your image data comes as 3D-stack, you must convert it in the format 4D+t with shape [t,1,y,x] first. \r\n\r\nYou can do this using the menu `Tools > Utilities > Convert 3D stack to 2d+t timelapse`, which is part of the [napari-time-slicer](https://www.napari-hub.org/plugins/napari-time-slicer) plugin. \r\n\r\nIt will create a new layer named `2D+t <original name>`. After this conversion, you can delete the original image layer, which is recommended to avoid confusion due to too many layers. \r\n\r\nFor deleting the original layer, select it and hit the trash-bin button.\r\n\r\n\r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-laptrack/raw/main/docs/convert2d_t.png)\r\n\r\n\r\n\r\n### Object segmentation\r\n\r\n\r\n\r\nVarious segmentation algorithms are available in Napari (see the [Napari-hub](https://www.napari-hub.org/?search=segmentation&sort=relevance&page=1)). \r\n\r\nIn principle all algorithms are compatible if they produce a 3D+t label image as result.\r\n\r\nIn this tutorial, we use the [Voronoi-Otsu-Labeling algorithm](https://haesleinhuepf.github.io/BioImageAnalysisNotebooks/20_image_segmentation/11_voronoi_otsu_labeling.html) implemented using [clesperanto](https://github.com/clEsperanto/pyclesperanto_prototype). \r\n\r\nIt is available from the menu `Tools > Segmentation / labeling`.\r\n\r\n\r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-laptrack/raw/main/docs/labeling_vol.png)\r\n\r\n\r\n\r\n### Tracking labeled objects\r\n\r\n\r\n\r\nNow that we have a 3D+t image and a corresponding label-image, we can start tracking the objects. \r\n\r\nCentroid-based tracking is available from the menu `Tracking > Track labeled objects (centroid-based, LapTrack)`.\r\n\r\nAfter tracking, multiple new layers will be added to Napari, which are explained in detail below. \r\n\r\nFurthermore, a table will open containing the columns `centroid-0/1/2` with spatial positions of the labels. \r\n\r\nThe table also contain colums `label`, `frame` and `track_id`. \r\n\r\nAll labels which belong to the same track, but to different frames, have the same `track_id`. \r\n\r\nIn some cases, also layers named `Stack 4D <original layer name>` are created. This is done to store the labels which were analysed. These layers are technically duplicates of the original layers which were computed on-the-fly.\r\n\r\n\r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-laptrack/raw/main/docs/result.png)\r\n\r\n\r\n\r\n### The Tracks layer\r\n\r\n\r\n\r\nThe tracks layer visualizes the travel path of the labels' centroids over time. [Read more about the Tracks layer in the Napari documentation](https://napari.org/stable/howtos/layers/tracks.html).\r\n\r\n\r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-laptrack/raw/main/docs/tracks_layer.png)\r\n\r\n\r\n\r\n### The Track-ID image\r\n\r\nOne result of the plugin is a Track-ID image. This is a label image where objects have the same label / color over time. \r\n\r\nThis image is not suited for many quantitative label-measurment methods because it is non-sequentially labeled.\r\n\r\n\r\n\r\nAs example, two subsequent frames are shown:\r\n\r\n\r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-laptrack/raw/main/docs/track_id_image_0.png)\r\n\r\n\r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-laptrack/raw/main/docs/track_id_image_1.png)\r\n\r\n\r\n\r\n## Similar and related plugins\r\n\r\n\r\n\r\nThere are other napari-plugins and python packages which allow tracking particles, visualizing tracking data and quantiative measurements of tracks:\r\n\r\n* [arboretum](https://github.com/lowe-lab-ucl/arboretum)\r\n\r\n* [btrack](https://github.com/quantumjot/btrack)\r\n\r\n* [ultrack](https://github.com/royerlab/ultrack)\r\n\r\n* [napari-stracking](https://www.napari-hub.org/plugins/napari-stracking)\r\n\r\n* [napari-tracks-reader](https://www.napari-hub.org/plugins/napari-tracks-reader)\r\n\r\n* [vollseg-napari-trackmate](https://www.napari-hub.org/plugins/vollseg-napari-trackmate)\r\n\r\n* [palmari](https://www.napari-hub.org/plugins/palmari)\r\n\r\n* [napari-amdtrk](https://www.napari-hub.org/plugins/napari-amdtrk)\r\n\r\n\r\n\r\n\r\n\r\n## Contributing\r\n\r\n\r\n\r\nContributions are very welcome. Tests can be run with [tox], please ensure\r\n\r\nthe coverage at least stays the same before you submit a pull request.\r\n\r\n\r\n\r\n\r\n\r\n## License\r\n\r\n\r\n\r\nDistributed under the terms of the [BSD-3] license,\r\n\r\n\"napari_laptrack\" is free and open source software\r\n\r\n\r\n\r\n## Issues\r\n\r\n\r\n\r\nIf you encounter any problems, please [file an issue] along with a detailed description.\r\n\r\n\r\n\r\n[napari]: https://github.com/napari/napari\r\n\r\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\r\n\r\n[@napari]: https://github.com/napari\r\n\r\n[MIT]: http://opensource.org/licenses/MIT\r\n\r\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\r\n\r\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\r\n\r\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\r\n\r\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\r\n\r\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\r\n\r\n[cookiecutter-napari-plugin]: https://github.com/haesleinhuepf/cookiecutter-napari-assistant-plugin\r\n\r\n[file an issue]: https://github.com/haesleinhuepf/napari_laptrack/issues\r\n\r\n[napari]: https://github.com/napari/napari\r\n\r\n[tox]: https://tox.readthedocs.io/en/latest/\r\n\r\n[pip]: https://pypi.org/project/pip/\r\n\r\n[PyPI]: https://pypi.org/\r\n\r\n",
+    "description": "# napari-laptrack\r\n\r\n\r\n\r\n[![License](https://img.shields.io/pypi/l/napari-laptrack.svg?color=green)](https://github.com/haesleinhuepf/napari-laptrack/raw/master/LICENSE)\r\n\r\n[![PyPI](https://img.shields.io/pypi/v/napari-laptrack.svg?color=green)](https://pypi.org/project/napari-laptrack)\r\n\r\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-laptrack.svg?color=green)](https://python.org)\r\n\r\n[![tests](https://github.com/haesleinhuepf/napari-laptrack/workflows/tests/badge.svg)](https://github.com/haesleinhuepf/napari-laptrack/actions)\r\n\r\n[![codecov](https://codecov.io/gh/haesleinhuepf/napari-laptrack/branch/master/graph/badge.svg)](https://codecov.io/gh/haesleinhuepf/napari-laptrack)\r\n\r\n[![Development Status](https://img.shields.io/pypi/status/napari-laptrack.svg)](https://en.wikipedia.org/wiki/Software_release_life_cycle#Alpha)\r\n\r\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-laptrack)](https://napari-hub.org/plugins/napari-laptrack)\r\n\r\n\r\n\r\nTracking particles in Napari, using the [LapTrack](https://laptrack.readthedocs.io/en/latest/usage.html) library.\r\n\r\nThis plugin is young and has just limited functionality. Contributions are welcome.\r\n\r\n\r\n\r\n## Installation instructions\r\n\r\n\r\n\r\nIt is recommended to use this napari-plugin together with [devbio-napari](https://github.com/haesleinhuepf/devbio-napari).\r\n\r\nInstall both using mamba-forge ([download here](https://github.com/conda-forge/miniforge#mambaforge)) by running these commands line-by line from the terminal:\r\n\r\n\r\n\r\n```\r\n\r\nmamba create --name napari-laptrack-env -c conda-forge python=3.9 devbio-napari\r\n\r\n```\r\n\r\n\r\n\r\n```\r\n\r\nmamba activate napari-laptrack-env\r\n\r\n```\r\n\r\n\r\n\r\n```\r\n\r\npip install napari-laptrack\r\n\r\n```\r\n\r\n\r\n\r\n## Usage\r\n\r\n\r\n\r\nThe starting point for napari-laptrack is a 4D image layer and a corresponding labels layer.\r\n\r\nThe following procedure demonstrates how to start from a 2D+t image stack, convert it in the right format and segment the labels.\r\n\r\nAfterwards, napari-laptrack is demonstrated. Depending on your input data, you may skip some of the initial steps.\r\n\r\n\r\n\r\n### Example data\r\n\r\n\r\n\r\nWe demonstrate the procedure using the example dataset `File > Open Samples > clesperanto > CalibZAPWfixed` which should be available if you installed [devbio-napari](https://github.com/haesleinhuepf/devbio-napari).\r\n\r\nYou can also download it from [zenodo](https://zenodo.org/record/5090508#.ZDQZ9nZBxaQ).\r\n\r\n\r\n\r\n### 4D+t input data.\r\n\r\n\r\n\r\nIn case your image data comes as 3D-stack, you must convert it in the format 4D+t with shape [t,1,y,x] first.\r\n\r\nYou can do this using the menu `Tools > Utilities > Convert 3D stack to 2d+t timelapse`, which is part of the [napari-time-slicer](https://www.napari-hub.org/plugins/napari-time-slicer) plugin.\r\n\r\nIt will create a new layer named `2D+t <original name>`. After this conversion, you can delete the original image layer, which is recommended to avoid confusion due to too many layers.\r\n\r\nFor deleting the original layer, select it and hit the trash-bin button.\r\n\r\n\r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-laptrack/raw/main/docs/convert2d_t.png)\r\n\r\n\r\n\r\n### Object segmentation\r\n\r\n\r\n\r\nVarious segmentation algorithms are available in Napari (see the [Napari-hub](https://www.napari-hub.org/?search=segmentation&sort=relevance&page=1)).\r\n\r\nIn principle all algorithms are compatible if they produce a 3D+t label image as result.\r\n\r\nIn this tutorial, we use the [Voronoi-Otsu-Labeling algorithm](https://haesleinhuepf.github.io/BioImageAnalysisNotebooks/20_image_segmentation/11_voronoi_otsu_labeling.html) implemented using [clesperanto](https://github.com/clEsperanto/pyclesperanto_prototype).\r\n\r\nIt is available from the menu `Tools > Segmentation / labeling`.\r\n\r\n\r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-laptrack/raw/main/docs/labeling_vol.png)\r\n\r\n\r\n\r\n### Tracking labeled objects\r\n\r\n\r\n\r\nNow that we have a 3D+t image and a corresponding label-image, we can start tracking the objects.\r\n\r\nCentroid-based tracking is available from the menu `Tracking > Track labeled objects (centroid-based, LapTrack)`.\r\n\r\nAfter tracking, multiple new layers will be added to Napari, which are explained in detail below.\r\n\r\nFurthermore, a table will open containing the columns `centroid-0/1/2` with spatial positions of the labels.\r\n\r\nThe table also contain colums `label`, `frame` and `track_id`.\r\n\r\nAll labels which belong to the same track, but to different frames, have the same `track_id`.\r\n\r\nIn some cases, also layers named `Stack 4D <original layer name>` are created. This is done to store the labels which were analysed. These layers are technically duplicates of the original layers which were computed on-the-fly.\r\n\r\n\r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-laptrack/raw/main/docs/result.png)\r\n\r\n\r\n\r\n### The Tracks layer\r\n\r\n\r\n\r\nThe tracks layer visualizes the travel path of the labels' centroids over time. [Read more about the Tracks layer in the Napari documentation](https://napari.org/stable/howtos/layers/tracks.html).\r\n\r\n\r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-laptrack/raw/main/docs/tracks_layer.png)\r\n\r\n\r\n\r\n### The Track-ID image\r\n\r\n\r\n\r\nOne result of the plugin is a Track-ID image. This is a label image where objects have the same label / color over time.\r\n\r\nThis image is not suited for many quantitative label-measurment methods because it is non-sequentially labeled.\r\n\r\n\r\n\r\nAs example, two subsequent frames are shown:\r\n\r\n\r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-laptrack/raw/main/docs/track_id_image_0.png)\r\n\r\n\r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-laptrack/raw/main/docs/track_id_image_1.png)\r\n\r\n\r\n\r\n## Similar and related plugins\r\n\r\n\r\n\r\nThere are other napari-plugins and python packages which allow tracking particles, visualizing tracking data and quantiative measurements of tracks:\r\n\r\n\r\n\r\n- [arboretum](https://github.com/lowe-lab-ucl/arboretum)\r\n\r\n- [btrack](https://github.com/quantumjot/btrack)\r\n\r\n- [ultrack](https://github.com/royerlab/ultrack)\r\n\r\n- [napari-stracking](https://www.napari-hub.org/plugins/napari-stracking)\r\n\r\n- [napari-tracks-reader](https://www.napari-hub.org/plugins/napari-tracks-reader)\r\n\r\n- [vollseg-napari-trackmate](https://www.napari-hub.org/plugins/vollseg-napari-trackmate)\r\n\r\n- [palmari](https://www.napari-hub.org/plugins/palmari)\r\n\r\n- [napari-amdtrk](https://www.napari-hub.org/plugins/napari-amdtrk)\r\n\r\n\r\n\r\n## Contributing\r\n\r\n\r\n\r\nContributions are very welcome. Tests can be run with [tox], please ensure\r\n\r\nthe coverage at least stays the same before you submit a pull request.\r\n\r\n\r\n\r\n## License\r\n\r\n\r\n\r\nDistributed under the terms of the [BSD-3] license,\r\n\r\n\"napari-laptrack\" is free and open source software\r\n\r\n\r\n\r\n## Issues\r\n\r\n\r\n\r\nIf you encounter any problems, please [file an issue] along with a detailed description.\r\n\r\n\r\n\r\n<!-- prettier-ignore-start -->\r\n\r\n[napari]: https://github.com/napari/napari\r\n\r\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\r\n\r\n[@napari]: https://github.com/napari\r\n\r\n[MIT]: http://opensource.org/licenses/MIT\r\n\r\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\r\n\r\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\r\n\r\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\r\n\r\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\r\n\r\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\r\n\r\n[cookiecutter-napari-plugin]: https://github.com/haesleinhuepf/cookiecutter-napari-assistant-plugin\r\n\r\n[file an issue]: https://github.com/haesleinhuepf/napari-laptrack/issues\r\n\r\n[napari]: https://github.com/napari/napari\r\n\r\n[tox]: https://tox.readthedocs.io/en/latest/\r\n\r\n[pip]: https://pypi.org/project/pip/\r\n\r\n[PyPI]: https://pypi.org/\r\n\r\n<!-- prettier-ignore-end -->\r\n\r\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": "",
@@ -36,7 +36,7 @@
     "project_urls": {
       "Homepage": "https://github.com/haesleinhuepf/napari_laptrack"
     },
-    "release_url": "https://pypi.org/project/napari-laptrack/0.1.0/",
+    "release_url": "https://pypi.org/project/napari-laptrack/0.2.0/",
     "requires_dist": [
       "napari-plugin-engine (>=0.1.4)",
       "numpy",
@@ -48,11 +48,11 @@
     ],
     "requires_python": ">=3.6",
     "summary": "Tracking particles in Napari, based on the LapTrack library",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 17646976,
+  "last_serial": 18006837,
   "releases": {
     "0.1.0": [
       {
@@ -97,48 +97,92 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.2.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "bb30fff0fff3fc05bc6375d34ad6b4553d94611982d2715bb771734708d20fee",
+          "md5": "3042f4903cb1a3e49f01fc4bf011d77d",
+          "sha256": "a364f0ceccc769d6153fdb841104cbfed2061f8e0888100dd83e900c91ffa793"
+        },
+        "downloads": -1,
+        "filename": "napari_laptrack-0.2.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "3042f4903cb1a3e49f01fc4bf011d77d",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.6",
+        "size": 8527,
+        "upload_time": "2023-05-07T13:03:26",
+        "upload_time_iso_8601": "2023-05-07T13:03:26.146014Z",
+        "url": "https://files.pythonhosted.org/packages/bb/30/fff0fff3fc05bc6375d34ad6b4553d94611982d2715bb771734708d20fee/napari_laptrack-0.2.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "63a41e2ae8392f4995ce0fbed676f28b32c74d373e17dc07b91761af0cb62330",
+          "md5": "d7a94a76b45af6f9417afe7d8913b636",
+          "sha256": "5cf84b735954271e97d98986a73210dbd50aa1c4ae285eadf2bc3c13ae56958f"
+        },
+        "downloads": -1,
+        "filename": "napari-laptrack-0.2.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d7a94a76b45af6f9417afe7d8913b636",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.6",
+        "size": 9202432,
+        "upload_time": "2023-05-07T13:03:38",
+        "upload_time_iso_8601": "2023-05-07T13:03:38.978593Z",
+        "url": "https://files.pythonhosted.org/packages/63/a4/1e2ae8392f4995ce0fbed676f28b32c74d373e17dc07b91761af0cb62330/napari-laptrack-0.2.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "2db24e24c14c1ed154a18f27f67d262de4e3b20b6ad48e805f1d0d608c282807",
-        "md5": "24f57ffb0b6700b454bb9540cfa17009",
-        "sha256": "a31964a4f6cc4ece7ad350b4074100efa2b8ce92182b5f5aa38f2f7a3b5673be"
+        "blake2b_256": "bb30fff0fff3fc05bc6375d34ad6b4553d94611982d2715bb771734708d20fee",
+        "md5": "3042f4903cb1a3e49f01fc4bf011d77d",
+        "sha256": "a364f0ceccc769d6153fdb841104cbfed2061f8e0888100dd83e900c91ffa793"
       },
       "downloads": -1,
-      "filename": "napari_laptrack-0.1.0-py3-none-any.whl",
+      "filename": "napari_laptrack-0.2.0-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "24f57ffb0b6700b454bb9540cfa17009",
+      "md5_digest": "3042f4903cb1a3e49f01fc4bf011d77d",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.6",
-      "size": 7458,
-      "upload_time": "2023-04-10T14:50:49",
-      "upload_time_iso_8601": "2023-04-10T14:50:49.345014Z",
-      "url": "https://files.pythonhosted.org/packages/2d/b2/4e24c14c1ed154a18f27f67d262de4e3b20b6ad48e805f1d0d608c282807/napari_laptrack-0.1.0-py3-none-any.whl",
+      "size": 8527,
+      "upload_time": "2023-05-07T13:03:26",
+      "upload_time_iso_8601": "2023-05-07T13:03:26.146014Z",
+      "url": "https://files.pythonhosted.org/packages/bb/30/fff0fff3fc05bc6375d34ad6b4553d94611982d2715bb771734708d20fee/napari_laptrack-0.2.0-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "073eb55d717f4f4fba44cf77a4a31044369da8e1835de68b8fdcc848a552d70c",
-        "md5": "66d64a785a507dbc7ce8619c49d9242c",
-        "sha256": "e92406c812e601fcb04e030d995c625e58a2d64fe8b02fed565426caab346b26"
+        "blake2b_256": "63a41e2ae8392f4995ce0fbed676f28b32c74d373e17dc07b91761af0cb62330",
+        "md5": "d7a94a76b45af6f9417afe7d8913b636",
+        "sha256": "5cf84b735954271e97d98986a73210dbd50aa1c4ae285eadf2bc3c13ae56958f"
       },
       "downloads": -1,
-      "filename": "napari-laptrack-0.1.0.tar.gz",
+      "filename": "napari-laptrack-0.2.0.tar.gz",
       "has_sig": false,
-      "md5_digest": "66d64a785a507dbc7ce8619c49d9242c",
+      "md5_digest": "d7a94a76b45af6f9417afe7d8913b636",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.6",
-      "size": 9201222,
-      "upload_time": "2023-04-10T14:51:05",
-      "upload_time_iso_8601": "2023-04-10T14:51:05.911343Z",
-      "url": "https://files.pythonhosted.org/packages/07/3e/b55d717f4f4fba44cf77a4a31044369da8e1835de68b8fdcc848a552d70c/napari-laptrack-0.1.0.tar.gz",
+      "size": 9202432,
+      "upload_time": "2023-05-07T13:03:38",
+      "upload_time_iso_8601": "2023-05-07T13:03:38.978593Z",
+      "url": "https://files.pythonhosted.org/packages/63/a4/1e2ae8392f4995ce0fbed676f28b32c74d373e17dc07b91761af0cb62330/napari-laptrack-0.2.0.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
