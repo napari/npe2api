@@ -18,7 +18,7 @@
       "Programming Language :: Python :: 3.9",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "# napari-LF\n\n[![License](https://img.shields.io/pypi/l/napari-LF.svg?color=green)](https://github.com/PolarizedLightFieldMicroscopy/napari-LF/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-LF.svg?color=green)](https://pypi.org/project/napari-LF)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-LF.svg?color=green)](https://python.org)\n[![tests](https://github.com/PolarizedLightFieldMicroscopy/napari-LF/workflows/tests/badge.svg)](https://github.com/PolarizedLightFieldMicroscopy/napari-LF/actions)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-LF)](https://napari-hub.org/plugins/napari-LF)\n[![Downloads](https://static.pepy.tech/badge/napari-lf)](https://pepy.tech/project/napari-lf)\n<!-- [![codecov](https://codecov.io/gh/PolarizedLightFieldMicroscopy/napari-LF/branch/main/graph/badge.svg)](https://codecov.io/gh/PolarizedLightFieldMicroscopy/napari-LF) -->\n\nLight field imaging plugin for napari\n\n----------------------------------\n\nDeconvolves a 4D light field image into a full 3D focus stack reconstruction\n\nhttps://user-images.githubusercontent.com/23206511/236919283-d53ca97a-9bdd-4598-b553-34996f688237.mp4\n\nnapari-LF contains an analytic and neural net analysis methods for light field images.\n\n### LF Analyze\n**LF Analyze**, the analytic method, provides three basic processes to Calibrate, Rectify, and Deconvolve light field images:\n\nThe **Calibrate** process generates a calibration file that represents the optical setup that was used to record the light field images. The same calibration file can be used to rectify and deconvolve all light field images that were recorded with the same optical setup, usually the same microscope and light field camera. The Calibrate process requires as input the radiometry frame, dark frame, optical parameters, and volume parameters to generate the calibration file, which is subsequently used to rectify and deconvolve related light field images. The calibration file includes a point spread function (PSF) derived from the optical and volume parameters and is stored in HDF5 file format.\n\nThe **Rectify** process uses the calibration file for an affine transformation to scale and rotate experimental light field images that were recorded with a light field camera whose microlens array was (slightly) rotated with respect to the pixel array of the area detector and whose pixel pitch is not commensurate with the microlens pitch. After rectification, the rectified light field has the same integer number of pixels behind each microlens. When the Deconvolve process is called for an experimental light field image, rectifying the light field image is automatically applied before the iterative deconvolution does begin. However, the rectified light field image is not saved and is not available for viewing. Therefore, by pushing the Rectify button in the middle of the napari-LF widget, only the rectification step is invoked and the rectified light field image is saved to the project directory.\n\nThe **Deconvolve** process uses the PSF and a wave optics model to iteratively deconvolve a light field image into a stack of optical sections.\n\nThe **Parameter** panels, located in the lower half of the napari-LF widget, allows the user to specify settings for the reconstruction process. Once the appropriate parameters are selected, the Calibrate button followed by the Deconvolve button can be pushed to complete the reconstruction.\n\n### Neural Net\n**Neural Net** provides a method of applying a trained neural net model to deconvolve a light field image.\n\n## Quickstart\n1. Install the napari-LF plugin into your napari environment, as described below under **Installation**.\n1. From the napari Plugins menu, select the napari-LF plugin to install its widget into the napari viewer.\n### LF Analyze\n1. Near the top of the widget, select your project folder containing the following images: light field, radiometry, and dark frame.\n1. Calibration\n    1. In the processing panel, navigate to **Calibrate, Required** (top tab **Calibrate**, bottom tab **Required**), which is the default selection.\n    1. Select **radiometry** and **dark frame** images from pull down menus.\n    1. Write the name of the **calibration file** you would like to produce, e.g. calibration.lfc.\n    1. Enter the appropriate **optical parameters** according to your microscope and sample material.\n    1. Enter the **volume parameters** you would like for your 3D reconstuction.\n    1. Push the `Calibrate` button.\n1. Deconvolution\n    1. In the processing panel, navigate to **Deconvolve, Required**.\n    1. Select **light field** image and **calibration file** from pull down menus.\n    1. Write the name of the **output image stack** you would like to produce, e.g. output_stack.tif.\n    1. Push the `Deconvolve` button.\nThe 3D focal stack reconstruction will display in the napari viewer and be saved in your original project folder.\n### Neural Net\n1. Click on the **LF Analyze** logo to toggle to the **Neural Net** mode.\n1. Near the top of the widget, select your project folder containing the light field image and the trained neural net. If you do not already have a trained model, you can train a model using this [Jupyter notebook](https://github.com/PolarizedLightFieldMicroscopy/napari-LF/blob/main/src/napari_lf/lfa/main_train_neural_net.ipynb).\n1. In the processing panel, select your **light field image** and **neural net model**.\n1. Write the name of the **output image stack** you would like to produce, e.g. output_stack.tif.\n1. Push the `Deconvolve` button.\nThe 3D focal stack reconstruction will display in the napari viewer and be saved in your original project folder.\n\n## Getting Help\nFor details about each parameter, hover over each parameter textbox to read the tooltip description.\nFor additional information about the reconstruction process, see our [User Guide](docs/napari-LF_UserGuide_5July2022.docx).\n\n## Installation\n\nAfter you have [napari] installed, you can one of the methods below to install `napari-LF`.\n\nMethod 1: You can install `napari-LF` via [pip]:\n\n    pip install napari-LF\n\nMethod 2: Use the napari plugin menu.\n\n1. Open napari from the command line:\n\n        napari\n\n1. From the napari menu, select **Plugins > Install/uninstall Packages**.\n\n1. Either (a) scroll through the list of available plugins to find `napari-LF`, or (b) drag and drop a downloaded `napari-LF` directory into the bottom bar.\n\n1. Select **Install** to install the light field plugin.\n\nMethod 3: Install the latest development version from the command line.\n\n    pip install git+https://github.com/PolarizedLightFieldMicroscopy/napari-LF.git\n\nLastly, to access the installed plugin, open napari from the command line:\n\n    napari\n\nFrom the napari menu, select **Plugins > Main Menu (napari-LF)**. Note that you may need to close and reopen napari for the `napari-LF` to appear.\n\n### Installation for developers\n\nCreate a virtual environment from the command line for napari with the python libraries necessary for the light field plugin:\n\n    conda create --name napari-lf python==3.9\n    conda activate napari-lf\n\nClone the github repository:\n\n    conda install git\n    git clone https://github.com/PolarizedLightFieldMicroscopy/napari-LF.git\n    cd napari-LF\n    pip install -e .\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-LF\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[file an issue]: https://github.com/PolarizedLightFieldMicroscopy/napari-LF/issues\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description": "# napari-LF\n\n[![License](https://img.shields.io/pypi/l/napari-LF.svg?color=green)](https://github.com/PolarizedLightFieldMicroscopy/napari-LF/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-LF.svg?color=green)](https://pypi.org/project/napari-LF)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-LF.svg?color=green)](https://python.org)\n[![tests](https://github.com/PolarizedLightFieldMicroscopy/napari-LF/workflows/tests/badge.svg)](https://github.com/PolarizedLightFieldMicroscopy/napari-LF/actions)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-LF)](https://napari-hub.org/plugins/napari-LF)\n[![Downloads](https://static.pepy.tech/badge/napari-lf)](https://pepy.tech/project/napari-lf)\n<!-- [![codecov](https://codecov.io/gh/PolarizedLightFieldMicroscopy/napari-LF/branch/main/graph/badge.svg)](https://codecov.io/gh/PolarizedLightFieldMicroscopy/napari-LF) -->\n\nLight field imaging plugin for napari\n\n----------------------------------\n\nDeconvolves a 4D light field image into a full 3D focus stack reconstruction\n\nhttps://user-images.githubusercontent.com/23206511/236919283-d53ca97a-9bdd-4598-b553-34996f688237.mp4\n\nnapari-LF contains an analytic and neural net analysis methods for light field images. To download example light field images, see our repository [napari-LF-docs-samples](https://github.com/PolarizedLightFieldMicroscopy/napari-LF-docs-samples).\n\n### LF Analyze\n**LF Analyze**, the analytic method, provides three basic processes to Calibrate, Rectify, and Deconvolve light field images:\n\nThe **Calibrate** process generates a calibration file that represents the optical setup that was used to record the light field images. The same calibration file can be used to rectify and deconvolve all light field images that were recorded with the same optical setup, usually the same microscope and light field camera. The Calibrate process requires as input the radiometry frame, dark frame, optical parameters, and volume parameters to generate the calibration file, which is subsequently used to rectify and deconvolve related light field images. The calibration file includes a point spread function (PSF) derived from the optical and volume parameters and is stored in HDF5 file format.\n\nThe **Rectify** process uses the calibration file for an affine transformation to scale and rotate experimental light field images that were recorded with a light field camera whose microlens array was (slightly) rotated with respect to the pixel array of the area detector and whose pixel pitch is not commensurate with the microlens pitch. After rectification, the rectified light field has the same integer number of pixels behind each microlens. When the Deconvolve process is called for an experimental light field image, rectifying the light field image is automatically applied before the iterative deconvolution does begin. However, the rectified light field image is not saved and is not available for viewing. Therefore, by pushing the Rectify button in the middle of the napari-LF widget, only the rectification step is invoked and the rectified light field image is saved to the project directory.\n\nThe **Deconvolve** process uses the PSF and a wave optics model to iteratively deconvolve a light field image into a stack of optical sections.\n\nThe **Parameter** panels, located in the lower half of the napari-LF widget, allows the user to specify settings for the reconstruction process. Once the appropriate parameters are selected, the Calibrate button followed by the Deconvolve button can be pushed to complete the reconstruction.\n\n### Neural Net\n**Neural Net** provides a method of applying a trained neural net model to deconvolve a light field image. Based on Pytorch Lightning and a provided [base class](https://github.com/PolarizedLightFieldMicroscopy/napari-LF/blob/main/src/napari_lf/lfa/neural_nets/LFNeuralNetworkProto.py), you can either create your own network, or use the pre-shipped networks (LFMNet, VCDNet, ...).\n\n## Quickstart\n1. Install the napari-LF plugin into your napari environment, as described below under **Installation**.\n1. From the napari Plugins menu, select the napari-LF plugin to install its widget into the napari viewer.\n### LF Analyze\n1. Near the top of the widget, select your project folder containing the following images: light field, radiometry, and dark frame.\n1. Calibration\n    1. In the processing panel, navigate to **Calibrate, Required** (top tab **Calibrate**, bottom tab **Required**), which is the default selection.\n    1. Select **radiometry** and **dark frame** images from pull down menus.\n    1. Write the name of the **calibration file** you would like to produce, e.g. calibration.lfc.\n    1. Enter the appropriate **optical parameters** according to your microscope and sample material.\n    1. Enter the **volume parameters** you would like for your 3D reconstuction.\n    1. Push the `Calibrate` button.\n1. Deconvolution\n    1. In the processing panel, navigate to **Deconvolve, Required**.\n    1. Select **light field** image and **calibration file** from pull down menus.\n    1. Write the name of the **output image stack** you would like to produce, e.g. output_stack.tif.\n    1. Push the `Deconvolve` button.\nThe 3D focal stack reconstruction will display in the napari viewer and be saved in your original project folder.\n\n### Neural Net\n1. Click on the **LF Analyze** logo to toggle to the **Neural Net** mode.\n1. Near the top of the widget, select your project folder containing the light field image and the trained neural net. If you do not already have a trained model, you can train a model using this [Jupyter notebook](https://github.com/PolarizedLightFieldMicroscopy/napari-LF/blob/main/src/napari_lf/lfa/main_train_neural_net.ipynb).\n1. In the processing panel, select your **light field image** and **neural net model**.\n1. Write the name of the **output image stack** you would like to produce, e.g. output_stack.tif.\n1. Push the `Deconvolve` button.\nThe 3D focal stack reconstruction will display in the napari viewer and be saved in your original project folder.\n\n## Getting Help\nFor details about each parameter, hover over each parameter textbox to read the tooltip description.\nFor additional information about the reconstruction process, see our [User Guide](docs/napari-LF_UserGuide_12May2023.pdf).\n\n## Installation\n\nAfter you have [napari] installed, you can one of the methods below to install `napari-LF`.\n\nMethod 1: You can install `napari-LF` via [pip]:\n\n    pip install napari-LF\n\nMethod 2: Use the napari plugin menu.\n\n1. Open napari from the command line:\n\n        napari\n\n1. From the napari menu, select **Plugins > Install/uninstall Packages**.\n\n1. Either (a) scroll through the list of available plugins to find `napari-LF`, or (b) drag and drop a downloaded `napari-LF` directory into the bottom bar.\n\n1. Select **Install** to install the light field plugin.\n\nMethod 3: Install the latest development version from the command line.\n\n    pip install git+https://github.com/PolarizedLightFieldMicroscopy/napari-LF.git\n\nLastly, to access the installed plugin, open napari from the command line:\n\n    napari\n\nFrom the napari menu, select **Plugins > Main Menu (napari-LF)**. Note that you may need to close and reopen napari for the `napari-LF` to appear.\n\n### Installation for developers\n\nCreate a virtual environment from the command line for napari with the python libraries necessary for the light field plugin:\n\n    conda create --name napari-lf python==3.9\n    conda activate napari-lf\n\nClone the github repository:\n\n    conda install git\n    git clone https://github.com/PolarizedLightFieldMicroscopy/napari-LF.git\n    cd napari-LF\n    pip install -e .\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-LF\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[file an issue]: https://github.com/PolarizedLightFieldMicroscopy/napari-LF/issues\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": "",
@@ -43,7 +43,7 @@
       "Source Code": "https://github.com/PolarizedLightFieldMicroscopy/napari-LF",
       "User Support": "https://github.com/PolarizedLightFieldMicroscopy/napari-LF/issues"
     },
-    "release_url": "https://pypi.org/project/napari-LF/0.1.5/",
+    "release_url": "https://pypi.org/project/napari-LF/0.1.6/",
     "requires_dist": [
       "numpy",
       "h5py",
@@ -56,11 +56,11 @@
     ],
     "requires_python": ">=3.7",
     "summary": "Light field imaging plugin for napari",
-    "version": "0.1.5",
+    "version": "0.1.6",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 18036488,
+  "last_serial": 18083721,
   "releases": {
     "0.0.2": [
       {
@@ -172,48 +172,92 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.1.6": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "29eddcafe9d085ef89a457418e35d0ffc84c8f95ff025702bae3adebf10d0433",
+          "md5": "df793714fd1c2dd94054c8a74427d7fe",
+          "sha256": "76fce351fc564efa3616de776d4595d9857098619b0fed8a9e1de718ccf48da1"
+        },
+        "downloads": -1,
+        "filename": "napari_LF-0.1.6-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "df793714fd1c2dd94054c8a74427d7fe",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 26262811,
+        "upload_time": "2023-05-12T20:24:13",
+        "upload_time_iso_8601": "2023-05-12T20:24:13.454388Z",
+        "url": "https://files.pythonhosted.org/packages/29/ed/dcafe9d085ef89a457418e35d0ffc84c8f95ff025702bae3adebf10d0433/napari_LF-0.1.6-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "d2785800152f7bd426d787b0c20c30e333ead61aea7e3449285e89c665f625a1",
+          "md5": "4ea12f6cd2b7dc8f36bdfad495dc767c",
+          "sha256": "8264942da5f1de030ecfc2ae0438d407aba1dcdec16a243c77ebd6610cc48634"
+        },
+        "downloads": -1,
+        "filename": "napari-LF-0.1.6.tar.gz",
+        "has_sig": false,
+        "md5_digest": "4ea12f6cd2b7dc8f36bdfad495dc767c",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 27402638,
+        "upload_time": "2023-05-12T20:24:19",
+        "upload_time_iso_8601": "2023-05-12T20:24:19.347005Z",
+        "url": "https://files.pythonhosted.org/packages/d2/78/5800152f7bd426d787b0c20c30e333ead61aea7e3449285e89c665f625a1/napari-LF-0.1.6.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "3f35cb1b528cdc487bb126127a3fd411b3a51b18f34b4261f467e0c2258b5df1",
-        "md5": "60edcea33f9046a510f11a002888eb68",
-        "sha256": "6c6d1845f3491254d2f7e76cdeb6ba82fae02ad9d819c82c41a0b9310844281a"
+        "blake2b_256": "29eddcafe9d085ef89a457418e35d0ffc84c8f95ff025702bae3adebf10d0433",
+        "md5": "df793714fd1c2dd94054c8a74427d7fe",
+        "sha256": "76fce351fc564efa3616de776d4595d9857098619b0fed8a9e1de718ccf48da1"
       },
       "downloads": -1,
-      "filename": "napari_LF-0.1.5-py3-none-any.whl",
+      "filename": "napari_LF-0.1.6-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "60edcea33f9046a510f11a002888eb68",
+      "md5_digest": "df793714fd1c2dd94054c8a74427d7fe",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.7",
-      "size": 26473588,
-      "upload_time": "2023-05-09T19:26:47",
-      "upload_time_iso_8601": "2023-05-09T19:26:47.479420Z",
-      "url": "https://files.pythonhosted.org/packages/3f/35/cb1b528cdc487bb126127a3fd411b3a51b18f34b4261f467e0c2258b5df1/napari_LF-0.1.5-py3-none-any.whl",
+      "size": 26262811,
+      "upload_time": "2023-05-12T20:24:13",
+      "upload_time_iso_8601": "2023-05-12T20:24:13.454388Z",
+      "url": "https://files.pythonhosted.org/packages/29/ed/dcafe9d085ef89a457418e35d0ffc84c8f95ff025702bae3adebf10d0433/napari_LF-0.1.6-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "63e0eaea93169b8dee86d21c09b7f665e8b69f88b8df4a1a35d321d3fdb3bb58",
-        "md5": "d7940e5439f3ca52b237f45bcd9bf21b",
-        "sha256": "a6df3be4cd8cfb41af905b187ea5d50c42c1e7cc70472514905d4fd1445000db"
+        "blake2b_256": "d2785800152f7bd426d787b0c20c30e333ead61aea7e3449285e89c665f625a1",
+        "md5": "4ea12f6cd2b7dc8f36bdfad495dc767c",
+        "sha256": "8264942da5f1de030ecfc2ae0438d407aba1dcdec16a243c77ebd6610cc48634"
       },
       "downloads": -1,
-      "filename": "napari-LF-0.1.5.tar.gz",
+      "filename": "napari-LF-0.1.6.tar.gz",
       "has_sig": false,
-      "md5_digest": "d7940e5439f3ca52b237f45bcd9bf21b",
+      "md5_digest": "4ea12f6cd2b7dc8f36bdfad495dc767c",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.7",
-      "size": 28810422,
-      "upload_time": "2023-05-09T19:27:07",
-      "upload_time_iso_8601": "2023-05-09T19:27:07.902650Z",
-      "url": "https://files.pythonhosted.org/packages/63/e0/eaea93169b8dee86d21c09b7f665e8b69f88b8df4a1a35d321d3fdb3bb58/napari-LF-0.1.5.tar.gz",
+      "size": 27402638,
+      "upload_time": "2023-05-12T20:24:19",
+      "upload_time_iso_8601": "2023-05-12T20:24:19.347005Z",
+      "url": "https://files.pythonhosted.org/packages/d2/78/5800152f7bd426d787b0c20c30e333ead61aea7e3449285e89c665f625a1/napari-LF-0.1.6.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
