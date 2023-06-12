@@ -17,7 +17,7 @@
       "Programming Language :: Python :: 3.9",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "# multireg\n\n[![License BSD-3](https://img.shields.io/pypi/l/multireg.svg?color=green)](https://gitlab.pasteur.fr/gletort/multireg/blob/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/multireg.svg?color=green)](https://pypi.org/project/multireg)\n[![Python Version](https://img.shields.io/pypi/pyversions/multireg.svg?color=green)](https://python.org)\n[![codecov](https://codecov.io/gh/gletort/multireg/branch/main/graph/badge.svg)](https://codecov.io/gh/gletort/multireg)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/multireg)](https://napari-hub.org/plugins/multireg)\n\nRegistration of 3D multiplex images with one common chanel\n\nThe stacks must have one common chanel (typically cell junctions and nuclei) that is used to calculate the registration transformation. It can be rotated, translated, deformed, and with a wider field of view. \nThen the calculated transformation is applied to all the other chanels for each stack.\nThe final result is a multi-chanel 3D stack.\n\nThe common chanel can be averaged between the different chanels, which improves its quality.\n\n\n----------------------------------\n## Installation\n\nYou can install `multireg` via [pip]:\n\n    pip install multireg\n\n## Usage\n\nYou can launch `multireg` in napari by going to `Plugins>multireg: do multiplex registration`.\n\n### Fixed image\nIt will open a prompt to ask you to select the reference (fixed) image, compared to which all other images will be aligned.\nThen you have to choose the reference chanel that will be used in all the stacks to calculate the alignement. So this chanel should be common to all stacks.\n\n### Reference points\nThe first part of the registration relies on reference points manually selected, because the common field of view can be quite far from each other in the acquisition. So first a affine registration is applied to bring close the region of interest between the two stacks to match.\n\nYou have to manually placed a few reference points (4-5 should be enough). Try to spread them in the image (in x,y and z) on landmarks to recognize them in other images. \n\nTo add a new reference point, click on the \"plus\" sign in the left panel. To select one, click on the arrow icon (or press 3), then on the point. You can move the point in x and y. To move it in z, press 'u' for up and 'd' for down. \nWhen all points are placed, save them.\n\n\n### Moving image\nThen you can choose one of the images you want to align with the reference image.\n\n\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"multireg\" is free and open source software\n\n## Plugin initialization\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description": "# multireg\n\n[![License BSD-3](https://img.shields.io/pypi/l/multireg.svg?color=green)](https://gitlab.pasteur.fr/gletort/multireg/blob/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/multireg.svg?color=green)](https://pypi.org/project/multireg)\n[![Python Version](https://img.shields.io/pypi/pyversions/multireg.svg?color=green)](https://python.org)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/multireg)](https://napari-hub.org/plugins/multireg)\n\nRegistration of 3D multiplex images with one common chanel, based on itk-elastix.\n\nNapari plugin to align 3D stacks that have one common field of view in one chanel used to calculate the alignement. The plugin will apply the registration to all other chanels and output one final stack with all the aligned chanels.\n\nThe stacks **must have one common chanel** (typically cell junctions and nuclei) that is used to calculate the registration transformation. It can be rotated, translated, deformed, and with a wider field of view. \nThen the calculated transformation is applied to all the other chanels for each stack.\n\nThe final result is **one multi-chanel 3D stack**, with the first chanel being an average (or not) of the common chanel and each other chanel the registered chanels from the multiple stacks. The common chanel can be averaged between the different chanels, which improves its quality.\n\nThe plugin save and load files to a folder named `aligned` and created in the same directory as the source images.\n\nExample of usage of this module is in the case of imaging the same cells with washing out or moving the sample in between. The corresponding cells will not be at the same position in the new stacks, and can even be deformed by the procedure. This plugin realign the images based on one common chanel on which the transformation is calculated. \n\n----------------------------------\n## Installation\n\n* You can install the plugin directly in `Napari` by going to `Plugins>Install/Uninstall plugins` and search for `multireg`\n\n* Or you can install `multireg` via [pip]:\n\n    pip install multireg\n\n\n## Usage\n\nYou can launch `multireg` in napari by going to `Plugins>multireg: do multiplex registration`.\n\n### Fixed image\nIt will open a prompt to ask you to select the reference (fixed) image, compared to which all other images will be aligned.\nThen you have to choose the `reference chanel` that will be used in all the stacks to calculate the alignement. So this chanel should be common to all stacks.\n\n![](https://gitlab.pasteur.fr/gletort/multireg/raw/main/imgs/plugin_step0.png)\n\n#### Reference points\nThe first part of the registration relies on reference points manually selected, because the common field of view can be quite far from each other in the acquisition. So first a affine registration is applied to bring close the region of interest between the two stacks to match. \n<br> *Note that if your stacks did not move a lot then you could calculate the transformation without using the reference points. There's an option in the alignement calculation panel for this.*\n\n![](https://gitlab.pasteur.fr/gletort/multireg/raw/main/imgs/plugin_fixedpoints.png)\n\nYou have to manually placed a few reference points (4-5 should be enough). Try to spread them in the image (in x,y and z) on landmarks to recognize them in other images. \n\nTo add a new reference point, click on the \"plus\" sign in the left panel. To select one, click on the arrow icon (or press 3), then on the point. You can move the point in x and y. To move it in z, press `u` for up and `d` for down. \n\nWhen all points are placed, save them. The **points have to be saved** to be correctly loaded by the alignement calculation step.\nThen click on `Fixed points done` to continue to the next step.\n\n\n### Moving images\nThen you can choose one of the images you want to align with the reference image. Its chanel that is common to the fixed image should be the same chanel, selected in the first step (the `reference chanel`). Click on `do moving image` once you have selected the moving image to align.\nWhen you will have process all the moving images, you can click on `All done` to finish the plugin by creating the [resulting stack](#create-resulting-image).\n\n![moving image step](https://gitlab.pasteur.fr/gletort/multireg/raw/main/imgs/plugin_movingimg.png)\n\n#### Moving points\nYou now have to locate where the region of interest (the fixed image) is in your new image and find the landmarks referenced in the fixed image are in this new image. This allows the plugin to put together the region of interest in the two images in a first step, before to fine-tune the registration.\n\nFor each point placed in the fixed image, place the corresponding point in the moving image. By default, the moving points are placed close to the fixed points. \n* Each point must have the same label (number) as its corresponding fixed points to associate them correctly. You can change a point label by selecting it and putting the new value in `param` and clicking on `update`.\n\n\n* When a point is selected, you can drag it to its desired location. To move it in the Z direction, you can press `u` to move it to the next Z (up direction) and `d` (down) to the previous Z. The viewed slice will also move, following the point new position, when you do so.\n\n* You can click on `side_by_side` view to see the two images (fixed and moving) with their placed points at the same time.\n\n\nWhen all the moving points have been correctly placed, click on `Save points` to save this positions and let it be usable by the alignement step. The points **have to be saved** in the point file to be correctly loaded in the alignement step.\n\n### Alignement calculation\nThis step is the core of the plugin. The transformation necessary to change the moving image to match with the fixed image on the `reference chanel` is calculated based on [itk-elastix](https://pypi.org/project/itk-elastix/) python module. It is decomposed in two steps. (1) First a global **affine registration** is performed, based on the correspondance between the reference and moving points. This allows to locate the fixed image postion within the moving image and apply a first **shearing, scaling, rotation and translation** to super-impose the region of interest. (2) The second step fine-tunes the registration. It doesn't use the reference point anymore but calculate the matching based on the images local intensities. **Non-rigid transformation** based on B-spline is performed at this step, thus allowing to compensate for **local deformations** in the moving image.\n\n![apply alignement step](https://gitlab.pasteur.fr/gletort/multireg/raw/main/imgs/interm.png)\n\n\nYou can click on `show advanced parameters` to tune the parameters of the non rigid transformation. After calculating the registration, the plugin will add a new layer, which is the moving image after alignement, so you can check the sucess of the regristration. `show intermediate_layer` will also add the moving image aligned after the first step only (the points matching with affine registration).\n\n![calculate alignement step](https://gitlab.pasteur.fr/gletort/multireg/raw/main/imgs/align.png)\n\n\n### Apply alignement\nOnce the calculated registration is satisfying, you can apply it to all the chanels of your moving image, or only to a few. By default, all chanels are selected in the `Apply alignement` panel, but you can unselect the chanels that you don't want to align in the parameter `align chanels`. \nWhen you click on `Align images`, the plugin will apply the transformation on the selected chanels of the moving image and save each of them in the `aligned` folder as individual `.tif` files. \n\n![apply alignement step](https://gitlab.pasteur.fr/gletort/multireg/raw/main/imgs/goalign.png)\n\n### Create resulting image\nThis step allows to save a single 3D multi-chanels stack with all the aligned chanels. \n\nThe common chanel present in all the images can be averaged together after alignement to obtain a much less noisy image. By default, the aligned `reference chanel` of all the images are averaged together to create the final image first chanel. However, it is possible to unselect some images in the first panel (`average chanels` parameter) if you do not wish to use all the images or do an average.\n\n![create result image](https://gitlab.pasteur.fr/gletort/multireg/raw/main/imgs/create.png)\n\nThen each aligned chanel of all the images that were not the reference chanel are stacked together in the final resulting image. Here also, if you don't want to keep all the other chanels in the resulting image, you can unselect the one that you don't want stacked, in the `add_chanels` parameter. \nAll the aligned chanels have been previously saved in the `aligned` folder. If `delete_files` is checked (default) all these interemediate files will be deleted and only the final resulting stack will be saved in that folder.\n\nYou will end-up with a final 3D multi-chanels stack, saved as a `.tif` file in the `aligned` folder, with the same name as your fixed image. It can have a lot of chanels if you stacked together multiple images.\nIn napari, you can separate the chanels by right clicking on the layer and select `Split stack`. \nIn Fiji, you can make the stack as a composite to see the chanels with different colors.\n\n![final image](https://gitlab.pasteur.fr/gletort/multireg/raw/main/imgs/reslayer.png)\n\n## License\nDistributed under the terms of the [BSD-3] license,\n\"multireg\" is free and open source software\n\n## Plugin initialization\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": "",
@@ -37,15 +37,13 @@
     "project_url": "https://pypi.org/project/multireg/",
     "project_urls": {
       "Bug Tracker": "https://gitlab.pasteur.fr/gletort/multireg/issues",
-      "Documentation": "https://gitlab.pasteur.fr/gletort/mutlireg#README.md",
+      "Documentation": "https://gitlab.pasteur.fr/gletort/multireg#README.md",
       "Homepage": "https://gitlab.pasteur.fr/gletort/multireg",
-      "Source Code": "https://gitlab.pasteur.fr/gletort/multireg",
-      "User Support": "https://gitlab.pasteur.fr/gletort/multireg/issues"
+      "Source Code": "https://gitlab.pasteur.fr/gletort/multireg"
     },
-    "release_url": "https://pypi.org/project/multireg/0.0.7/",
+    "release_url": "https://pypi.org/project/multireg/0.0.11/",
     "requires_dist": [
       "numpy",
-      "napari",
       "magicgui",
       "qtpy",
       "tifffile",
@@ -56,11 +54,11 @@
     ],
     "requires_python": ">=3.8",
     "summary": "Registration of 3D multiplex images with one common chanel",
-    "version": "0.0.7",
+    "version": "0.0.11",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 18438838,
+  "last_serial": 18468262,
   "releases": {
     "0.0.0": [
       {
@@ -146,6 +144,94 @@
         "upload_time": "2023-06-09T08:18:43",
         "upload_time_iso_8601": "2023-06-09T08:18:43.431266Z",
         "url": "https://files.pythonhosted.org/packages/0e/6c/42641ea4d4b9a047c739160b3a0637d5868ed1e6503e0e320a0ef8126774/multireg-0.0.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.10": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "a4dc2a91c42e25d49f8167ad858d7a3491a1e214d1714c95e843c7abc90765b2",
+          "md5": "46cfbfe1ef7d75896f1798feda730e6a",
+          "sha256": "d640c0cc9d703d6ebf3cd109bded8c64afc6ca1d498de787979009e26eefeaf1"
+        },
+        "downloads": -1,
+        "filename": "multireg-0.0.10-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "46cfbfe1ef7d75896f1798feda730e6a",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 15210,
+        "upload_time": "2023-06-12T09:34:32",
+        "upload_time_iso_8601": "2023-06-12T09:34:32.307836Z",
+        "url": "https://files.pythonhosted.org/packages/a4/dc/2a91c42e25d49f8167ad858d7a3491a1e214d1714c95e843c7abc90765b2/multireg-0.0.10-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "ab6b88c4aad4fb3461704f50f5574c036379463888cd741a03e74d1de1712581",
+          "md5": "412c1c7cca6adf7d10570de1cf84dc1e",
+          "sha256": "53ec347678d93984dc544859c2cbcbdd181c8a21c33ded45ba0212459cdf1e70"
+        },
+        "downloads": -1,
+        "filename": "multireg-0.0.10.tar.gz",
+        "has_sig": false,
+        "md5_digest": "412c1c7cca6adf7d10570de1cf84dc1e",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 19004,
+        "upload_time": "2023-06-12T09:34:33",
+        "upload_time_iso_8601": "2023-06-12T09:34:33.587704Z",
+        "url": "https://files.pythonhosted.org/packages/ab/6b/88c4aad4fb3461704f50f5574c036379463888cd741a03e74d1de1712581/multireg-0.0.10.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.11": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "78a87d3162f56e7713f5eb37cbc4b382b867c9ecf1625ad1f95d6ffb2829f65b",
+          "md5": "d6f05c4e6c7e7291e22c019723afdcd8",
+          "sha256": "ba7f873707638da3f672236d9b512b45c78e620ac6abb2172a8e4668925e7728"
+        },
+        "downloads": -1,
+        "filename": "multireg-0.0.11-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "d6f05c4e6c7e7291e22c019723afdcd8",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 15171,
+        "upload_time": "2023-06-12T11:45:27",
+        "upload_time_iso_8601": "2023-06-12T11:45:27.497065Z",
+        "url": "https://files.pythonhosted.org/packages/78/a8/7d3162f56e7713f5eb37cbc4b382b867c9ecf1625ad1f95d6ffb2829f65b/multireg-0.0.11-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "4424cd3902de04e13b294597de02c8c48346f8eb6f5680588469aec27bf56c80",
+          "md5": "c3d036b42caa539873244ed116ddc9d2",
+          "sha256": "0793c713cbbb12256f2ce89b4598803c1d71c9c28c98fc2ee55dc4f013461f29"
+        },
+        "downloads": -1,
+        "filename": "multireg-0.0.11.tar.gz",
+        "has_sig": false,
+        "md5_digest": "c3d036b42caa539873244ed116ddc9d2",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 18926,
+        "upload_time": "2023-06-12T11:45:28",
+        "upload_time_iso_8601": "2023-06-12T11:45:28.763147Z",
+        "url": "https://files.pythonhosted.org/packages/44/24/cd3902de04e13b294597de02c8c48346f8eb6f5680588469aec27bf56c80/multireg-0.0.11.tar.gz",
         "yanked": false,
         "yanked_reason": null
       }
@@ -237,48 +323,136 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.0.8": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "fb99f265701889f79955cb0fccc44eadf45f95c28897541ab4336e22637512a0",
+          "md5": "12c714cd196200d06234164ff23b73f9",
+          "sha256": "24887908d7f3f8fda0e6865f4d5a3a97639523ee040504e6351fdec5b3a0b7cc"
+        },
+        "downloads": -1,
+        "filename": "multireg-0.0.8-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "12c714cd196200d06234164ff23b73f9",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 14593,
+        "upload_time": "2023-06-12T08:04:35",
+        "upload_time_iso_8601": "2023-06-12T08:04:35.739052Z",
+        "url": "https://files.pythonhosted.org/packages/fb/99/f265701889f79955cb0fccc44eadf45f95c28897541ab4336e22637512a0/multireg-0.0.8-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "d111cd7ccb6cb83f7f63c18937a27a8f85832130dc502173eb6eef8007621d19",
+          "md5": "5131cb2e877494ee91418e3794d32199",
+          "sha256": "1f52a8ad9296dc896d5060d807d59bb940acb1146e1c96bda74294ccbe3cee04"
+        },
+        "downloads": -1,
+        "filename": "multireg-0.0.8.tar.gz",
+        "has_sig": false,
+        "md5_digest": "5131cb2e877494ee91418e3794d32199",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 17834,
+        "upload_time": "2023-06-12T08:04:37",
+        "upload_time_iso_8601": "2023-06-12T08:04:37.208331Z",
+        "url": "https://files.pythonhosted.org/packages/d1/11/cd7ccb6cb83f7f63c18937a27a8f85832130dc502173eb6eef8007621d19/multireg-0.0.8.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.9": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "34325c61f24bd78e4dadc3b59c45039ad6e4191bacad9571d0b82065b46adc66",
+          "md5": "41ed0d28d3fa15ee011621a0a8e3ae27",
+          "sha256": "4dbe5e9d0162d12151f01bd78e758065045cb3d0068c2e6325a330d54e8c065e"
+        },
+        "downloads": -1,
+        "filename": "multireg-0.0.9-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "41ed0d28d3fa15ee011621a0a8e3ae27",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 15201,
+        "upload_time": "2023-06-12T09:31:28",
+        "upload_time_iso_8601": "2023-06-12T09:31:28.376095Z",
+        "url": "https://files.pythonhosted.org/packages/34/32/5c61f24bd78e4dadc3b59c45039ad6e4191bacad9571d0b82065b46adc66/multireg-0.0.9-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "c30eafe000aba0f38b61bb2e54ce1cdfd01cd2d03ad61079a34c64e741aa5a1e",
+          "md5": "373ec8d43a9886796db4e9de8816a5e6",
+          "sha256": "fc4e15645a3ed80f82d754339a4c26612ca088b0f3e9f7531aeb4643cb0c2337"
+        },
+        "downloads": -1,
+        "filename": "multireg-0.0.9.tar.gz",
+        "has_sig": false,
+        "md5_digest": "373ec8d43a9886796db4e9de8816a5e6",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 19004,
+        "upload_time": "2023-06-12T09:31:29",
+        "upload_time_iso_8601": "2023-06-12T09:31:29.875984Z",
+        "url": "https://files.pythonhosted.org/packages/c3/0e/afe000aba0f38b61bb2e54ce1cdfd01cd2d03ad61079a34c64e741aa5a1e/multireg-0.0.9.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "8a4255a85d96c11d69a3f666505c8b7822bb4bd1f9dfc6fa68aff02c6d95bfbe",
-        "md5": "acdedeee83816293597996fb9f319b62",
-        "sha256": "77d397d4e9226854e9931d3270a9e0f34f0622835027b471ab365d6509f5a5b8"
+        "blake2b_256": "78a87d3162f56e7713f5eb37cbc4b382b867c9ecf1625ad1f95d6ffb2829f65b",
+        "md5": "d6f05c4e6c7e7291e22c019723afdcd8",
+        "sha256": "ba7f873707638da3f672236d9b512b45c78e620ac6abb2172a8e4668925e7728"
       },
       "downloads": -1,
-      "filename": "multireg-0.0.7-py3-none-any.whl",
+      "filename": "multireg-0.0.11-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "acdedeee83816293597996fb9f319b62",
+      "md5_digest": "d6f05c4e6c7e7291e22c019723afdcd8",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.8",
-      "size": 13020,
-      "upload_time": "2023-06-09T09:23:02",
-      "upload_time_iso_8601": "2023-06-09T09:23:02.554955Z",
-      "url": "https://files.pythonhosted.org/packages/8a/42/55a85d96c11d69a3f666505c8b7822bb4bd1f9dfc6fa68aff02c6d95bfbe/multireg-0.0.7-py3-none-any.whl",
+      "size": 15171,
+      "upload_time": "2023-06-12T11:45:27",
+      "upload_time_iso_8601": "2023-06-12T11:45:27.497065Z",
+      "url": "https://files.pythonhosted.org/packages/78/a8/7d3162f56e7713f5eb37cbc4b382b867c9ecf1625ad1f95d6ffb2829f65b/multireg-0.0.11-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "6fed219952a64e7227cac69c7f1b8d738b805d7ad2e5600d1d334c83a6e4d56e",
-        "md5": "344920d29b4fed7d98521fafd0665c58",
-        "sha256": "b802c45e6e6f7de03bea3fb612152ff20ffeb615b533d13fbbbd39d6d2802671"
+        "blake2b_256": "4424cd3902de04e13b294597de02c8c48346f8eb6f5680588469aec27bf56c80",
+        "md5": "c3d036b42caa539873244ed116ddc9d2",
+        "sha256": "0793c713cbbb12256f2ce89b4598803c1d71c9c28c98fc2ee55dc4f013461f29"
       },
       "downloads": -1,
-      "filename": "multireg-0.0.7.tar.gz",
+      "filename": "multireg-0.0.11.tar.gz",
       "has_sig": false,
-      "md5_digest": "344920d29b4fed7d98521fafd0665c58",
+      "md5_digest": "c3d036b42caa539873244ed116ddc9d2",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.8",
-      "size": 14638,
-      "upload_time": "2023-06-09T09:23:03",
-      "upload_time_iso_8601": "2023-06-09T09:23:03.938346Z",
-      "url": "https://files.pythonhosted.org/packages/6f/ed/219952a64e7227cac69c7f1b8d738b805d7ad2e5600d1d334c83a6e4d56e/multireg-0.0.7.tar.gz",
+      "size": 18926,
+      "upload_time": "2023-06-12T11:45:28",
+      "upload_time_iso_8601": "2023-06-12T11:45:28.763147Z",
+      "url": "https://files.pythonhosted.org/packages/44/24/cd3902de04e13b294597de02c8c48346f8eb6f5680588469aec27bf56c80/multireg-0.0.11.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
