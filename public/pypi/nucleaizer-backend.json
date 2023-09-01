@@ -5,6 +5,7 @@
     "bugtrack_url": null,
     "classifiers": [
       "Development Status :: 3 - Alpha",
+      "Framework :: napari",
       "Intended Audience :: Developers",
       "License :: OSI Approved :: BSD License",
       "Operating System :: OS Independent",
@@ -12,7 +13,8 @@
       "Programming Language :: Python :: 3",
       "Programming Language :: Python :: 3.10",
       "Programming Language :: Python :: 3.8",
-      "Programming Language :: Python :: 3.9"
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Software Development :: Testing"
     ],
     "description": "# nucleaizer_backend\n[![Python package](https://github.com/etasnadi/nucleaizer_backend/actions/workflows/test_and_deploy.yml/badge.svg)](https://github.com/etasnadi/nucleaizer_backend/actions/workflows/test_and_deploy.yml)\n[![codecov](https://codecov.io/gh/etasnadi/nucleaizer_backend/branch/master/graph/badge.svg?token=ZOCTU6N7O2)](https://codecov.io/gh/etasnadi/nucleaizer_backend)\n[![Documentation Status](https://readthedocs.org/projects/napari-nucleaizer-docs/badge/?version=latest)](https://napari-nucleaizer-docs.readthedocs.io/en/latest/?badge=latest)\n\n\n## Overview\n\nThis package contains the code needed to execute the nucleAIzer nuclei segmentation algorithm. A Mask R-CNN and a pix2pix implementation is embedded.\n\nDescription of the method: \"Hollandi et al.: nucleAIzer: A Parameter-free Deep Learning Framework for Nucleus Segmentation Using Image Style Transfer, Cell Systems, 2020. https://doi.org/10.1016/j.cels.2020.04.003\"\n\nThis is a cleaned, simplified python interface for the algorithm (https://github.com/spreka/biomagdsb) (This prediction and training through command line)\n\nIf you want to use the web version, visit: http://nucleaizer.org (only prediction).\n\n## Requirements\n\nThe nucleaizer backend runs on Windows and Linux only. MacOS is not supported yet.\n\n### Prediction\n\nThre prediction runs on any machine where `tensorflow` is supported.\n\n### Training\n\nSome of the functionalities in our training code are implemented as MATLAB scripts. (See the full training code in https://github.com/spreka/biomagdsb repo.)\n\nTherefore, a MATLAB (or MATLAB Runtime on Linux) is needed to execute the training.\n\n* If you have MATLAB, the `biomagdsb` repository (containing the code) is pulled from git by the training script automatically to your home folder. Then, the scripts are executed with the `matlab` command (in headless mode). This method is supported on Windows an Linux.\n    * If you do not have matlab on the system path, set the `MATLAB_COMMAND` environment variable pointing to the `matlab` binary.\n\n* If you do not have a MATLAB license, you can install the MATLAB Runtime. The MATLAB code can execute the compiled version of the sciprt. Currently, we only have compiled versions for Linux. If you choose this option, the training script automatically downoads the compiled code and executes them. This method is only supported on Linux.\n    * If you did not set the `LD_LIBRARY_PATH` for MATLAB Runtime properly,  set the `MATLAB_RUNTIME_PATHS` variable to point to your MATLAB Runtime.\n    * If you wish to use the full MATLAB instead of the MATLAB Runtime, set the `USE_MATLAB_SCRIPT` environment variable.\n\n## Install\n\nUse `python3 -m pipi install -e <dir>` to install locally.\n\n## Run\n\nThe training script can be called using the command line interface (CLI).\n\n`python3 -m nucleaizer_backend.training_cli`\n\nThe only required argument is the input directory. This is where the `train`, `val` and `test` subdirectories are found.\n\nThere are two additional paths used by the training script:\n1. The home directory for the algorithm (`NUCLEAIZER_HOME`). The auxiliary files to execute the training will be downloaded here. If not set it will be under the current urser's home folder with name `.nucleaizer`.\n2. The work directoy (workflow), where the intermediate results put. The default is the `workflow` in the current directory.\n\nBy default, the whole pipeline is executed, that is exactly: `presegment,clustering,style,train`.\n1. `presegment`: presegmentation setp. Using the presegmentation model, weak labels are generated for the elements of the `test` set.\n2. `clustering`: clusters the test set based on image similarities using a pretrained distance predictor network. The clusters correspond to the styles.\n3. `style`: uses image-to-image translation (pix2pix) to learn the translation from mask to microscopy image, while artificial labelled masks are generated. Then, the model is used to synthesize microscopy images for the generated masks. This is done for each cluster (style) so it can take a bit time.\n4. `train`: trains a Mask R-CNN model on the concatenation of the samples in the `train` directory and the previously synthesized set of samples. The trained model will be in the `output_model` directory under the work dir.\n\n## Further help\n\nSee the [documentation](https://napari-nucleaizer-docs.readthedocs.io/en/latest).\n",
     "description_content_type": "text/markdown",
@@ -25,7 +27,7 @@
     },
     "home_page": "https://github.com/etasnadi/nucleaizer_backend",
     "keywords": "",
-    "license": "BSD-3",
+    "license": "GPL-3.0",
     "maintainer": "",
     "maintainer_email": "",
     "name": "nucleaizer-backend",
@@ -39,31 +41,31 @@
       "Source Code": "https://github.com/etasnadi/nucleaizer_backend",
       "User Support": "https://github.com/etasnadi/nucleaizer_backend/issues"
     },
-    "release_url": "https://pypi.org/project/nucleaizer-backend/0.2.1/",
+    "release_url": "https://pypi.org/project/nucleaizer-backend/0.2.5/",
     "requires_dist": [
-      "numpy (>=1.18.5)",
-      "scipy (>=1.4.1)",
+      "numpy >=1.18.5",
+      "scipy >=1.4.1",
       "Cython",
       "tqdm",
       "albumentations",
-      "opencv-python (>=4.5.1)",
-      "tensorflow-gpu (>=2.3)",
-      "imageio (>=2.9.0)",
+      "opencv-python >=4.5.1",
+      "tensorflow >=2.3",
+      "imageio >=2.9.0",
       "imagecodecs",
       "matplotlib",
-      "scikit-image (>=0.18.1)",
+      "scikit-image >=0.18.1",
       "ipython",
-      "torch (>=1.8.1)",
-      "torchvision (>=0.9.1)",
+      "torch >=1.8.1",
+      "torchvision >=0.9.1",
       "dominate"
     ],
     "requires_python": ">=3.8",
     "summary": "The backend for the nucleAIzer nuclei segmentation method.",
-    "version": "0.2.1",
+    "version": "0.2.5",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 14344573,
+  "last_serial": 19551880,
   "releases": {
     "0.1.1": [
       {
@@ -221,27 +223,73 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.2.4": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "0adbf25f16b500840fbd28d596d5195c954a75a849be11041c0b0545f32e8172",
+          "md5": "22fcd82796d4bc666af476ab776dcb5e",
+          "sha256": "d6b99468c510fb8201fe22e7966beb3790800bc7a4ce40a1da9d6c0364dfc7a4"
+        },
+        "downloads": -1,
+        "filename": "nucleaizer_backend-0.2.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "22fcd82796d4bc666af476ab776dcb5e",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 98846,
+        "upload_time": "2023-09-01T13:25:45",
+        "upload_time_iso_8601": "2023-09-01T13:25:45.718853Z",
+        "url": "https://files.pythonhosted.org/packages/0a/db/f25f16b500840fbd28d596d5195c954a75a849be11041c0b0545f32e8172/nucleaizer_backend-0.2.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.5": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "5754c6ebd90f57aeaf6fe7c3223f8b6888ebc6bdc523f8fe63ceddc9f3173177",
+          "md5": "19df97951cfbd192f048f14726a634af",
+          "sha256": "f05773a105bf49622faea549b46875f1114f30f8fabaf40eacb0255c117eb751"
+        },
+        "downloads": -1,
+        "filename": "nucleaizer_backend-0.2.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "19df97951cfbd192f048f14726a634af",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 98846,
+        "upload_time": "2023-09-01T13:53:11",
+        "upload_time_iso_8601": "2023-09-01T13:53:11.176439Z",
+        "url": "https://files.pythonhosted.org/packages/57/54/c6ebd90f57aeaf6fe7c3223f8b6888ebc6bdc523f8fe63ceddc9f3173177/nucleaizer_backend-0.2.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "cfffd1a50c9f34e7cd24fd07798d1f976673873d7318dcae49f12596b3d13d98",
-        "md5": "028948e214d543bb73cc51bf4c5a1958",
-        "sha256": "6b267295a2f3a6725f32680adef088f1c73a52ed92656c70a33390fa9ad5dff9"
+        "blake2b_256": "5754c6ebd90f57aeaf6fe7c3223f8b6888ebc6bdc523f8fe63ceddc9f3173177",
+        "md5": "19df97951cfbd192f048f14726a634af",
+        "sha256": "f05773a105bf49622faea549b46875f1114f30f8fabaf40eacb0255c117eb751"
       },
       "downloads": -1,
-      "filename": "nucleaizer_backend-0.2.1-py3-none-any.whl",
+      "filename": "nucleaizer_backend-0.2.5-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "028948e214d543bb73cc51bf4c5a1958",
+      "md5_digest": "19df97951cfbd192f048f14726a634af",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.8",
-      "size": 98831,
-      "upload_time": "2022-07-05T21:18:52",
-      "upload_time_iso_8601": "2022-07-05T21:18:52.503710Z",
-      "url": "https://files.pythonhosted.org/packages/cf/ff/d1a50c9f34e7cd24fd07798d1f976673873d7318dcae49f12596b3d13d98/nucleaizer_backend-0.2.1-py3-none-any.whl",
+      "size": 98846,
+      "upload_time": "2023-09-01T13:53:11",
+      "upload_time_iso_8601": "2023-09-01T13:53:11.176439Z",
+      "url": "https://files.pythonhosted.org/packages/57/54/c6ebd90f57aeaf6fe7c3223f8b6888ebc6bdc523f8fe63ceddc9f3173177/nucleaizer_backend-0.2.5-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     }
