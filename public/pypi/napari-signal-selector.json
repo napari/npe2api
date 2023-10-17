@@ -1,0 +1,202 @@
+{
+  "info": {
+    "author": "Marcelo Leomil Zoccoler",
+    "author_email": "marzoccoler@gmail.com",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-signal-selector\r\n\r\n[![License BSD-3](https://img.shields.io/pypi/l/napari-signal-selector.svg?color=green)](https://github.com/zoccoler/napari-signal-selector/raw/main/LICENSE)\r\n[![PyPI](https://img.shields.io/pypi/v/napari-signal-selector.svg?color=green)](https://pypi.org/project/napari-signal-selector)\r\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-signal-selector.svg?color=green)](https://python.org)\r\n[![tests](https://github.com/zoccoler/napari-signal-selector/workflows/tests/badge.svg)](https://github.com/zoccoler/napari-signal-selector/actions)\r\n[![codecov](https://codecov.io/gh/zoccoler/napari-signal-selector/branch/main/graph/badge.svg)](https://codecov.io/gh/zoccoler/napari-signal-selector)\r\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-signal-selector)](https://napari-hub.org/plugins/napari-signal-selector)\r\n\r\nAn interactive signal selector and annotator for napari, based on [napari-matplotlib](https://github.com/matplotlib/napari-matplotlib#napari-matplotlib).\r\n\r\n[Jump to Intallation](#installation)\r\n\r\n----------------------------------\r\n\r\n## Usage\r\n\r\nThis plugin opens an embedded plotter in napari capable of plotting and interacting (selecting/annotating) with individual object signals (typically temporal features).\r\n\r\n![plotting](https://github.com/zoccoler/napari-signal-selector/raw/main/images/plotting.gif)\r\n\r\n### Input Data\r\n\r\nnapari-signal-selector works with a [Labels layer](https://napari.org/stable/howtos/layers/labels.html) containing segmented objects and whose `features` attribute contains a table that follows the example structure shown below:\r\n\r\n| `label` | `frame` | `feature` | ...  |\r\n|-------|-------|---------|---|\r\n| 1     | 0     | 1.0     | ...  |\r\n| 2     | 0     | 1.0     | ...  |\r\n| 3     | 0     | 0.5     | ...  |\r\n| 4     | 0     | 0.5     | ...  |\r\n| 1     | 1     | 2.0     | ...  |\r\n| 2     | 1     | 1.0     | ...  |\r\n| 3     | 1     | 1.0     | ...  |\r\n| 4     | 1     | 1.0     | ...  |\r\n| 1     | 2     | 3.0     | ...  |\r\n| 2     | 2     | 1.0     | ...  |\r\n| 3     | 2     | 0.5     | ...  |\r\n| 4     | 2     | 1.5     | ...  |\r\n| \u22ee     | \u22ee     | \u22ee     |   |\r\n\r\nBasically, it needs an object identifier (in this case, the `label` column) that matches the labels in the Labels layer, and other columns containing x- and y-axis numbers to plot. Typically, x-axis is some temporal-related property.\r\n\r\nHere is how one could add such a layer to a napari viewer via code (check [this example notebook](./examples/synthetic_example.ipynb) for more details):\r\n\r\n```python\r\nviewer.add_labels(labels_image, features = table)\r\n```\r\n\r\nIf a layer like this is selected, you can choose what to plot by means of dropdown fields in the bottom of the plotter.\r\n\r\nBelow is a basic example using the \"Flashing Polygons\" synthetic data:\r\n\r\n![intro](https://github.com/zoccoler/napari-signal-selector/raw/main/images/intro.gif)\r\n\r\n## Tools\r\n\r\n### Selection Tool\r\n\r\nThe selection tool (arrowhead icon) is a toggle button which enables you to select individual signals. Once activated, the icon gets highlighted and you can click over individual signals to select them. Right-clicking unselects everything.\r\n\r\n![select](https://github.com/zoccoler/napari-signal-selector/raw/main/images/select.gif)\r\n\r\nIf the region you want to click is too crowded, consider zooming in first and then selecting.\r\n\r\n![zoom-select](https://github.com/zoccoler/napari-signal-selector/raw/main/images/zoom_select.gif)\r\n\r\nAnd if you know which label you want to select, you can enable `'show selected'` from the Labels layer options to solely display one label at a time. The Lables layer picker tool may help you get the right label.\r\n\r\n![show-selected](https://github.com/zoccoler/napari-signal-selector/raw/main/images/show_selected.gif)\r\n\r\n### Annotation Tool\r\n\r\nOnce one or multiple signals are selected, you can annotate them with the annotation tool (brush with a 'plus' icon). You need to choose a signal class first.\r\n*Remember to right-click to remove previous selections when annotating different signal classes!*\r\n\r\n![annotation](https://github.com/zoccoler/napari-signal-selector/raw/main/images/annotation.gif)\r\n\r\nAnnotations are saved back in the table in a new column called 'Annotations'.\r\n*Currently multiple annotations is not possible, i.e., more than one class assigned to the same part of the signal.*\r\n\r\n### Span-Selection Tool\r\n\r\nYou can use the span-selection tool (bounded horizontal arrows icon) to sub-select one or multiple parts of signals. Right-click to unselect regions. Hold 'SHIFT' while dragging the mouse to select multiple sub-regions.\r\n\r\n![span-select](https://github.com/zoccoler/napari-signal-selector/raw/main/images/span_select.gif)\r\n\r\nYou can use this in conjunction with the annotation tool to have sub-regions from the same signal with different annotations.\r\n\r\n![](https://github.com/zoccoler/napari-signal-selector/raw/main/images/span_annotation.gif)\r\n\r\n### Deletion Tool\r\n\r\nIf you made a mistake, you can remove previous annotations by selecting signal(s) and clicking on the trash icon at the right of the toolbar (or just annotate them with class 0).\r\n\r\n![delete](https://github.com/zoccoler/napari-signal-selector/raw/main/images/delete.gif)\r\n\r\nAlso, with the selection tool enbaled, by holding 'SHIFT' and left-clicking, you can select all signals. This may be useful to delete all previous annotations.\r\n\r\n![select-delete-all](https://github.com/zoccoler/napari-signal-selector/raw/main/images/select_delete_all.gif)\r\n\r\n### Exporting Annotations\r\n\r\nThe table with annotations can be displayed in napari using the 'Show table' widget from [napari-skimage-regionprops plugin](https://github.com/haesleinhuepf/napari-skimage-regionprops#napari-skimage-regionprops-nsr), which is available under `Tools > Measurements > Show Table (nsr)`.\r\n\r\n![](https://github.com/zoccoler/napari-signal-selector/raw/main/images/table_view.gif)\r\n\r\nBy the way, with `'show selected'` checked, you can click on a label row in the table and see the corresponding label in the image **...and** in the plotter!\r\n\r\nTo export the table, click on `'Save as csv...'`.\r\n\r\n## Installation\r\n\r\nYou can install `napari-signal-selector` via [pip]. Follow these steps from a terminal.\r\n\r\nWe recommend using `mamba-forge` whenever possible. Click [here](https://github.com/conda-forge/miniforge#mambaforge) to choose the right download option for your OS.\r\n**If you do not use `mamba-forge`, replace the `mamba` term whenever you see it below with `conda`.**\r\n\r\nCreate a conda environment :\r\n\r\n    mamba create -n napari-ss-env napari pyqt python=3.9\r\n    \r\nActivate the environment :\r\n\r\n    mamba activate napari-ss-env\r\n\r\nInstall `napari-signal-selector` via [pip] :\r\n\r\n    pip install napari-signal-selector\r\n\r\nAlternatively, install latest development version with :\r\n\r\n    pip install git+https://github.com/zoccoler/napari-signal-selector.git\r\n\r\n\r\n## Contributing\r\n\r\nContributions are very welcome. Tests can be run with [tox], please ensure\r\nthe coverage at least stays the same before you submit a pull request.\r\n\r\n## License\r\n\r\nDistributed under the terms of the [BSD-3] license,\r\n\"napari-signal-selector\" is free and open source software\r\n\r\n## Issues\r\n\r\nIf you encounter any problems, please [file an issue] along with a detailed description.\r\n\r\n[napari]: https://github.com/napari/napari\r\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\r\n[@napari]: https://github.com/napari\r\n[MIT]: http://opensource.org/licenses/MIT\r\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\r\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\r\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\r\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\r\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\r\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\r\n\r\n[file an issue]: https://github.com/zoccoler/napari-signal-selector/issues\r\n\r\n[napari]: https://github.com/napari/napari\r\n[tox]: https://tox.readthedocs.io/en/latest/\r\n[pip]: https://pypi.org/project/pip/\r\n[PyPI]: https://pypi.org/\r\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "https://github.com/zoccoler/napari-signal-selector",
+    "keywords": "",
+    "license": "BSD-3-Clause",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "napari-signal-selector",
+    "package_url": "https://pypi.org/project/napari-signal-selector/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-signal-selector/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/zoccoler/napari-signal-selector/issues",
+      "Documentation": "https://github.com/zoccoler/napari-signal-selector#README.md",
+      "Homepage": "https://github.com/zoccoler/napari-signal-selector",
+      "Source Code": "https://github.com/zoccoler/napari-signal-selector",
+      "User Support": "https://github.com/zoccoler/napari-signal-selector/issues"
+    },
+    "release_url": "https://pypi.org/project/napari-signal-selector/0.0.3/",
+    "requires_dist": [
+      "numpy",
+      "magicgui",
+      "qtpy",
+      "napari-matplotlib >=1.1.0",
+      "napari-skimage-regionprops",
+      "cmap",
+      "tox ; extra == 'testing'",
+      "pytest ; extra == 'testing'",
+      "pytest-cov ; extra == 'testing'",
+      "pytest-qt ; extra == 'testing'",
+      "napari ; extra == 'testing'",
+      "pyqt5 ; extra == 'testing'"
+    ],
+    "requires_python": ">=3.8",
+    "summary": "An interactive signal selector for napari, based on napari-matplotlib.",
+    "version": "0.0.3",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 20213556,
+  "releases": {
+    "0.0.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "122d8fe607c40bc8b61f081458b4c93e1c14a79ddba1d6557cb8aaba5b4bdb5a",
+          "md5": "3ae359075c1b4b17c5c75163a10f29fd",
+          "sha256": "fc9b854ce97b71c7a36abc97a85d8e7aca4f8fd33ab2c2de93612ba87fff5981"
+        },
+        "downloads": -1,
+        "filename": "napari_signal_selector-0.0.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "3ae359075c1b4b17c5c75163a10f29fd",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 626973,
+        "upload_time": "2023-10-17T15:19:29",
+        "upload_time_iso_8601": "2023-10-17T15:19:29.036328Z",
+        "url": "https://files.pythonhosted.org/packages/12/2d/8fe607c40bc8b61f081458b4c93e1c14a79ddba1d6557cb8aaba5b4bdb5a/napari_signal_selector-0.0.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "1e01dbb82ab8311e6e80d302ae812dd9fb60250b1791c7654bd6207bfee9e03b",
+          "md5": "f6874983a4cf322825aa1541c96d8494",
+          "sha256": "fe4a99c0269aa6b1edfea09e233496d5c65ba3b6347e672ff0a6e2b8f5d74842"
+        },
+        "downloads": -1,
+        "filename": "napari-signal-selector-0.0.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "f6874983a4cf322825aa1541c96d8494",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 569532,
+        "upload_time": "2023-10-17T15:19:31",
+        "upload_time_iso_8601": "2023-10-17T15:19:31.858957Z",
+        "url": "https://files.pythonhosted.org/packages/1e/01/dbb82ab8311e6e80d302ae812dd9fb60250b1791c7654bd6207bfee9e03b/napari-signal-selector-0.0.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.3": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "ca4459e5eec3a100fa0c14f80c5658eb0a488a554adbe0df9954555c05c41739",
+          "md5": "19e90c3a397342d162d11167d2302949",
+          "sha256": "c638f3d3bf5dd2f46e6d5dae377486f907e6f8317efd40654aae812dd838bf8b"
+        },
+        "downloads": -1,
+        "filename": "napari_signal_selector-0.0.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "19e90c3a397342d162d11167d2302949",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 626996,
+        "upload_time": "2023-10-17T15:32:36",
+        "upload_time_iso_8601": "2023-10-17T15:32:36.794007Z",
+        "url": "https://files.pythonhosted.org/packages/ca/44/59e5eec3a100fa0c14f80c5658eb0a488a554adbe0df9954555c05c41739/napari_signal_selector-0.0.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "1ae770150d41f92670592d0290fd500496c433cd383a1516ac3472ad5d3ea337",
+          "md5": "faad4de7cc24b3cf905cee1a3e11a90a",
+          "sha256": "66c2131a096fefa1eff0b91c7bf4bbb43a89f6e71868d287c0006feedb73fbdb"
+        },
+        "downloads": -1,
+        "filename": "napari-signal-selector-0.0.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "faad4de7cc24b3cf905cee1a3e11a90a",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 569566,
+        "upload_time": "2023-10-17T15:32:39",
+        "upload_time_iso_8601": "2023-10-17T15:32:39.036019Z",
+        "url": "https://files.pythonhosted.org/packages/1a/e7/70150d41f92670592d0290fd500496c433cd383a1516ac3472ad5d3ea337/napari-signal-selector-0.0.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "blake2b_256": "ca4459e5eec3a100fa0c14f80c5658eb0a488a554adbe0df9954555c05c41739",
+        "md5": "19e90c3a397342d162d11167d2302949",
+        "sha256": "c638f3d3bf5dd2f46e6d5dae377486f907e6f8317efd40654aae812dd838bf8b"
+      },
+      "downloads": -1,
+      "filename": "napari_signal_selector-0.0.3-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "19e90c3a397342d162d11167d2302949",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.8",
+      "size": 626996,
+      "upload_time": "2023-10-17T15:32:36",
+      "upload_time_iso_8601": "2023-10-17T15:32:36.794007Z",
+      "url": "https://files.pythonhosted.org/packages/ca/44/59e5eec3a100fa0c14f80c5658eb0a488a554adbe0df9954555c05c41739/napari_signal_selector-0.0.3-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "blake2b_256": "1ae770150d41f92670592d0290fd500496c433cd383a1516ac3472ad5d3ea337",
+        "md5": "faad4de7cc24b3cf905cee1a3e11a90a",
+        "sha256": "66c2131a096fefa1eff0b91c7bf4bbb43a89f6e71868d287c0006feedb73fbdb"
+      },
+      "downloads": -1,
+      "filename": "napari-signal-selector-0.0.3.tar.gz",
+      "has_sig": false,
+      "md5_digest": "faad4de7cc24b3cf905cee1a3e11a90a",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.8",
+      "size": 569566,
+      "upload_time": "2023-10-17T15:32:39",
+      "upload_time_iso_8601": "2023-10-17T15:32:39.036019Z",
+      "url": "https://files.pythonhosted.org/packages/1a/e7/70150d41f92670592d0290fd500496c433cd383a1516ac3472ad5d3ea337/napari-signal-selector-0.0.3.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
