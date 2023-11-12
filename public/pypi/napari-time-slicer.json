@@ -16,7 +16,7 @@
       "Programming Language :: Python :: 3.9",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "# napari-time-slicer\n\n[![License](https://img.shields.io/pypi/l/napari-time-slicer.svg?color=green)](https://github.com/haesleinhuepf/napari-time-slicer/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-time-slicer.svg?color=green)](https://pypi.org/project/napari-time-slicer)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-time-slicer.svg?color=green)](https://python.org)\n[![tests](https://github.com/haesleinhuepf/napari-time-slicer/workflows/tests/badge.svg)](https://github.com/haesleinhuepf/napari-time-slicer/actions)\n[![codecov](https://codecov.io/gh/haesleinhuepf/napari-time-slicer/branch/main/graph/badge.svg)](https://codecov.io/gh/haesleinhuepf/napari-time-slicer)\n[![Development Status](https://img.shields.io/pypi/status/napari-time-slicer.svg)](https://en.wikipedia.org/wiki/Software_release_life_cycle#Alpha)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-time-slicer)](https://napari-hub.org/plugins/napari-time-slicer)\n\nA meta plugin for processing timelapse data timepoint by timepoint. It \nenables a list of napari plugins to process 2D+t or 3D+t data step by step when the user goes \nthrough the timelapse. Currently, these plugins are using `napari-time-slicer`:\n* [napari-segment-blobs-and-things-with-membranes](https://www.napari-hub.org/plugins/napari-segment-blobs-and-things-with-membranes)\n* [napari-cupy-image-processing](https://www.napari-hub.org/plugins/napari-cupy-image-processing)\n* [napari-pyclesperanto-assistant](https://www.napari-hub.org/plugins/napari-pyclesperanto-assistant)\n* [napari-accelerated-pixel-and-object-classification](https://www.napari-hub.org/plugins/napari-accelerated-pixel-and-object-classification)\n* [napari-simpleitk-image-processing](https://www.napari-hub.org/plugins/napari-simpleitk-image-processing)\n* [napari-stress](https://www.napari-hub.org/plugins/napari-stress)\n* [napari-process-points-and-surfaces](https://www.napari-hub.org/plugins/napari-process-points-and-surfaces)\n\n`napari-time-slicer` enables inter-plugin communication, e.g. allowing to combine the plugins listed above in \none image processing workflow for segmenting a timelapse dataset:\n\n![](https://github.com/haesleinhuepf/napari-time-slicer/raw/main/images/screencast1.gif)\n\nThe workflow can then also be exported as a script. The 'Generate Code' button can be found in the [Workflow Inspector](https://www.napari-hub.org/plugins/napari-workflow-inspector)\n\n\nIf you want to convert a 3D dataset into a 2D + time dataset, use the \nmenu `Tools > Utilities > Convert 3D stack to 2D timelapse (time-slicer)`. It will turn the 3D dataset to a 4D datset\nwhere the Z-dimension (index 1) has only 1 element, which will in napari be displayed with a time-slider. Note: It is \nrecommended to remove the original 3D dataset after this conversion.\n\n## Working with large on-the-fly processed datasets\n\nUsing the [napari-assistant](https://www.napari-hub.org/plugins/napari-assistant) complex image processing workflows on timelapse datasets can be setup. \nIn combination with the time-slicer it is possible to process time-lapse data that is larger than available computer memory.\nIn case the workflow only consists of images and label-images and out-of-memory issues arise, consider storing intermediate results on disk following this procedure: \nAfter setting up the workflow and testing it on a couple of selected frames, store the entire processed timelapse dataset to disk \nusing the menu `Tools > Utilities > Convert to file-backed timelapse data (time-slicer)`. It will open this dialog, where you can select \n![img.png](https://github.com/haesleinhuepf/napari-time-slicer/raw/main/images/convert_to_file_backed_timelapse.png)\n\nIt is recommended to enter a folder location in the text field. \nIf not provided, a temporary folder will be created, typically in the User's temp folder in the home directory. \nThe user is responsible for emptying this folder from time to time.\nThe data stored in this folder can also be loaded into napari using its `File > Open Folder...` menu.\n\nExecuting this operation can take time as every timepoint of the timelapse is computed. \nAfterwards, there will be another layer available in napari, which is typically faster to navigate through. \nConsider removing the layer(s) that were only needed to determine the new file-backed layer.\n\n![img.png](https://github.com/haesleinhuepf/napari-time-slicer/raw/main/images/new_file_backed_layer.png)\n\n## Usage for plugin developers\n\nPlugins which implement the `napari_experimental_provide_function` hook can make use of the `@time_slicer`. At the moment,\nonly functions which take `napari.types.ImageData`, `napari.types.LabelsData` and basic python types such as `int` \nand `float` are supported. If you annotate such a function with `@time_slicer` it will internally convert any 4D dataset\nto a 3D dataset according to the timepoint currently selected in napari. Furthermore, when the napari user changes the\ncurrent timepoint or the input data of the function changes, a re-computation is invoked. Thus, it is recommended to \nonly use the `time_slicer` for functions which can provide [almost] real-time performance. Another constraint is that \nthese annotated functions have to have a `viewer` parameter. This is necessary to read the current timepoint from the \nviewer when invoking the re-computions.\n\nExample\n```python\nimport napari\nfrom napari_time_slicer import time_slicer\n\n@time_slicer\ndef threshold_otsu(image:napari.types.ImageData, viewer: napari.Viewer = None) -> napari.types.LabelsData:\n    # ...\n```\n\nYou can see a full implementations of this concept in the napari plugins listed above.\n\nIf you want to combine slicing in time and processing z-stack images slice-by-slice, you can use the `@slice_by_slice` annotation.\nMake sure, to insert it after `@time_slicer` as shown below and implemented in [napari-pillow-image-processing](https://github.com/haesleinhuepf/napari-pillow-image-processing/blob/4d846b226739843124953f16059241d917cde8e1/src/napari_pillow_image_processing/__init__.py#L151)\n\n```python\nfrom napari_time_slicer import slice_by_slice\n\n@time_slicer\n@slice_by_slice\ndef blur_2d(image:napari.types.ImageData, sigma:float = 1, viewer: napari.Viewer = None) -> napari.types.LabelsData:\n    # ...\n```\n\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n\n## Installation\n\nYou can install `napari-time-slicer` via [pip]:\n\n    pip install napari-time-slicer\n\n\n\nTo install latest development version :\n\n    pip install git+https://github.com/haesleinhuepf/napari-time-slicer.git\n\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-time-slicer\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[file an issue]: https://github.com/haesleinhuepf/napari-time-slicer/issues\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description": "# napari-time-slicer\r\n\r\n[![License](https://img.shields.io/pypi/l/napari-time-slicer.svg?color=green)](https://github.com/haesleinhuepf/napari-time-slicer/raw/main/LICENSE)\r\n[![PyPI](https://img.shields.io/pypi/v/napari-time-slicer.svg?color=green)](https://pypi.org/project/napari-time-slicer)\r\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-time-slicer.svg?color=green)](https://python.org)\r\n[![tests](https://github.com/haesleinhuepf/napari-time-slicer/workflows/tests/badge.svg)](https://github.com/haesleinhuepf/napari-time-slicer/actions)\r\n[![codecov](https://codecov.io/gh/haesleinhuepf/napari-time-slicer/branch/main/graph/badge.svg)](https://codecov.io/gh/haesleinhuepf/napari-time-slicer)\r\n[![Development Status](https://img.shields.io/pypi/status/napari-time-slicer.svg)](https://en.wikipedia.org/wiki/Software_release_life_cycle#Alpha)\r\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-time-slicer)](https://napari-hub.org/plugins/napari-time-slicer)\r\n\r\nA meta plugin for processing timelapse data timepoint by timepoint. It \r\nenables a list of napari plugins to process 2D+t or 3D+t data step by step when the user goes \r\nthrough the timelapse. Currently, these plugins are using `napari-time-slicer`:\r\n* [napari-segment-blobs-and-things-with-membranes](https://www.napari-hub.org/plugins/napari-segment-blobs-and-things-with-membranes)\r\n* [napari-cupy-image-processing](https://www.napari-hub.org/plugins/napari-cupy-image-processing)\r\n* [napari-pyclesperanto-assistant](https://www.napari-hub.org/plugins/napari-pyclesperanto-assistant)\r\n* [napari-accelerated-pixel-and-object-classification](https://www.napari-hub.org/plugins/napari-accelerated-pixel-and-object-classification)\r\n* [napari-simpleitk-image-processing](https://www.napari-hub.org/plugins/napari-simpleitk-image-processing)\r\n* [napari-stress](https://www.napari-hub.org/plugins/napari-stress)\r\n* [napari-process-points-and-surfaces](https://www.napari-hub.org/plugins/napari-process-points-and-surfaces)\r\n\r\n`napari-time-slicer` enables inter-plugin communication, e.g. allowing to combine the plugins listed above in \r\none image processing workflow for segmenting a timelapse dataset:\r\n\r\n![](https://github.com/haesleinhuepf/napari-time-slicer/raw/main/images/screencast1.gif)\r\n\r\nThe workflow can then also be exported as a script. The 'Generate Code' button can be found in the [Workflow Inspector](https://www.napari-hub.org/plugins/napari-workflow-inspector)\r\n\r\n\r\nIf you want to convert a 3D dataset into a 2D + time dataset, use the \r\nmenu `Tools > Utilities > Convert 3D stack to 2D timelapse (time-slicer)`. It will turn the 3D dataset to a 4D datset\r\nwhere the Z-dimension (index 1) has only 1 element, which will in napari be displayed with a time-slider. Note: It is \r\nrecommended to remove the original 3D dataset after this conversion.\r\n\r\n## Working with large on-the-fly processed datasets\r\n\r\nUsing the [napari-assistant](https://www.napari-hub.org/plugins/napari-assistant) complex image processing workflows on timelapse datasets can be setup. \r\nIn combination with the time-slicer it is possible to process time-lapse data that is larger than available computer memory.\r\nIn case the workflow only consists of images and label-images and out-of-memory issues arise, consider storing intermediate results on disk following this procedure: \r\nAfter setting up the workflow and testing it on a couple of selected frames, store the entire processed timelapse dataset to disk \r\nusing the menu `Tools > Utilities > Convert to file-backed timelapse data (time-slicer)`. It will open this dialog, where you can select \r\n![img.png](https://github.com/haesleinhuepf/napari-time-slicer/raw/main/images/convert_to_file_backed_timelapse.png)\r\n\r\nIt is recommended to enter a folder location in the text field. \r\nIf not provided, a temporary folder will be created, typically in the User's temp folder in the home directory. \r\nThe user is responsible for emptying this folder from time to time.\r\nThe data stored in this folder can also be loaded into napari using its `File > Open Folder...` menu.\r\n\r\nExecuting this operation can take time as every timepoint of the timelapse is computed. \r\nAfterwards, there will be another layer available in napari, which is typically faster to navigate through. \r\nConsider removing the layer(s) that were only needed to determine the new file-backed layer.\r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-time-slicer/raw/main/images/new_file_backed_layer.png)\r\n\r\n## Usage for plugin developers\r\n\r\nPlugins which implement the `napari_experimental_provide_function` hook can make use of the `@time_slicer`. At the moment,\r\nonly functions which take `napari.types.ImageData`, `napari.types.LabelsData` and basic python types such as `int` \r\nand `float` are supported. If you annotate such a function with `@time_slicer` it will internally convert any 4D dataset\r\nto a 3D dataset according to the timepoint currently selected in napari. Furthermore, when the napari user changes the\r\ncurrent timepoint or the input data of the function changes, a re-computation is invoked. Thus, it is recommended to \r\nonly use the `time_slicer` for functions which can provide [almost] real-time performance. Another constraint is that \r\nthese annotated functions have to have a `viewer` parameter. This is necessary to read the current timepoint from the \r\nviewer when invoking the re-computions.\r\n\r\nExample\r\n```python\r\nimport napari\r\nfrom napari_time_slicer import time_slicer\r\n\r\n@time_slicer\r\ndef threshold_otsu(image:napari.types.ImageData, viewer: napari.Viewer = None) -> napari.types.LabelsData:\r\n    # ...\r\n```\r\n\r\nYou can see a full implementations of this concept in the napari plugins listed above.\r\n\r\nIf you want to combine slicing in time and processing z-stack images slice-by-slice, you can use the `@slice_by_slice` annotation.\r\nMake sure, to insert it after `@time_slicer` as shown below and implemented in [napari-pillow-image-processing](https://github.com/haesleinhuepf/napari-pillow-image-processing/blob/4d846b226739843124953f16059241d917cde8e1/src/napari_pillow_image_processing/__init__.py#L151)\r\n\r\n```python\r\nfrom napari_time_slicer import slice_by_slice\r\n\r\n@time_slicer\r\n@slice_by_slice\r\ndef blur_2d(image:napari.types.ImageData, sigma:float = 1, viewer: napari.Viewer = None) -> napari.types.LabelsData:\r\n    # ...\r\n```\r\n\r\n----------------------------------\r\n\r\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\r\n\r\n## Installation\r\n\r\nYou can install `napari-time-slicer` via [pip]:\r\n\r\n    pip install napari-time-slicer\r\n\r\n\r\n\r\nTo install latest development version :\r\n\r\n    pip install git+https://github.com/haesleinhuepf/napari-time-slicer.git\r\n\r\n\r\n## Contributing\r\n\r\nContributions are very welcome. Tests can be run with [tox], please ensure\r\nthe coverage at least stays the same before you submit a pull request.\r\n\r\n## License\r\n\r\nDistributed under the terms of the [BSD-3] license,\r\n\"napari-time-slicer\" is free and open source software\r\n\r\n## Issues\r\n\r\nIf you encounter any problems, please [file an issue] along with a detailed description.\r\n\r\n[napari]: https://github.com/napari/napari\r\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\r\n[@napari]: https://github.com/napari\r\n[MIT]: http://opensource.org/licenses/MIT\r\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\r\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\r\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\r\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\r\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\r\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\r\n\r\n[file an issue]: https://github.com/haesleinhuepf/napari-time-slicer/issues\r\n\r\n[napari]: https://github.com/napari/napari\r\n[tox]: https://tox.readthedocs.io/en/latest/\r\n[pip]: https://pypi.org/project/pip/\r\n[PyPI]: https://pypi.org/\r\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": "",
@@ -41,9 +41,9 @@
       "Source Code": "https://github.com/haesleinhuepf/napari-time-slicer",
       "User Support": "https://github.com/haesleinhuepf/napari-time-slicer/issues"
     },
-    "release_url": "https://pypi.org/project/napari-time-slicer/0.4.9/",
+    "release_url": "https://pypi.org/project/napari-time-slicer/0.5.0/",
     "requires_dist": [
-      "napari-plugin-engine (>=0.1.4)",
+      "napari-plugin-engine >=0.1.4",
       "numpy",
       "toolz",
       "napari-tools-menu",
@@ -51,11 +51,11 @@
     ],
     "requires_python": ">=3.8",
     "summary": "A meta plugin for processing timelapse data in napari timepoint by timepoint",
-    "version": "0.4.9",
+    "version": "0.5.0",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 14390570,
+  "last_serial": 20595407,
   "releases": {
     "0.1.0": [
       {
@@ -959,48 +959,92 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.5.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "5e70f4cec1bbd3b7256336979ff13bc4401382e52d4ff67a68c1e7e65125cf5f",
+          "md5": "7008d641339f536e42ffc3f943ce5af8",
+          "sha256": "6c7f53f762cb3410da097be43ba47b4f4213e89930a3ade3ec1c7c1beb9d605f"
+        },
+        "downloads": -1,
+        "filename": "napari_time_slicer-0.5.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "7008d641339f536e42ffc3f943ce5af8",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 10749,
+        "upload_time": "2023-11-12T15:27:12",
+        "upload_time_iso_8601": "2023-11-12T15:27:12.042517Z",
+        "url": "https://files.pythonhosted.org/packages/5e/70/f4cec1bbd3b7256336979ff13bc4401382e52d4ff67a68c1e7e65125cf5f/napari_time_slicer-0.5.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "f07e4bc75a41176ba66cdefb0b1ccb861e676f2c9cc3427ee1572f748d2905fc",
+          "md5": "27b8f42fa1ec8062cbbd92c27c343c02",
+          "sha256": "950d3b35d9f1657178201da73de56d038e9bf4e257cf120882081f2707f1e074"
+        },
+        "downloads": -1,
+        "filename": "napari-time-slicer-0.5.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "27b8f42fa1ec8062cbbd92c27c343c02",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 12531,
+        "upload_time": "2023-11-12T15:27:13",
+        "upload_time_iso_8601": "2023-11-12T15:27:13.847549Z",
+        "url": "https://files.pythonhosted.org/packages/f0/7e/4bc75a41176ba66cdefb0b1ccb861e676f2c9cc3427ee1572f748d2905fc/napari-time-slicer-0.5.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "61d839c9498d97c25348c4ddc6ba02093e87ae51becd16d04d41dd95d6c71ed5",
-        "md5": "195fd2464935a635563dbbab36a57754",
-        "sha256": "d3062b75d19a41320a0dd50409f1f179a9dac2fac8ad4461caaba2f605071719"
+        "blake2b_256": "5e70f4cec1bbd3b7256336979ff13bc4401382e52d4ff67a68c1e7e65125cf5f",
+        "md5": "7008d641339f536e42ffc3f943ce5af8",
+        "sha256": "6c7f53f762cb3410da097be43ba47b4f4213e89930a3ade3ec1c7c1beb9d605f"
       },
       "downloads": -1,
-      "filename": "napari_time_slicer-0.4.9-py3-none-any.whl",
+      "filename": "napari_time_slicer-0.5.0-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "195fd2464935a635563dbbab36a57754",
+      "md5_digest": "7008d641339f536e42ffc3f943ce5af8",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.8",
-      "size": 10718,
-      "upload_time": "2022-07-10T14:24:14",
-      "upload_time_iso_8601": "2022-07-10T14:24:14.887100Z",
-      "url": "https://files.pythonhosted.org/packages/61/d8/39c9498d97c25348c4ddc6ba02093e87ae51becd16d04d41dd95d6c71ed5/napari_time_slicer-0.4.9-py3-none-any.whl",
+      "size": 10749,
+      "upload_time": "2023-11-12T15:27:12",
+      "upload_time_iso_8601": "2023-11-12T15:27:12.042517Z",
+      "url": "https://files.pythonhosted.org/packages/5e/70/f4cec1bbd3b7256336979ff13bc4401382e52d4ff67a68c1e7e65125cf5f/napari_time_slicer-0.5.0-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "7f43afcb54826384fef526336748dac183bdef6b31ced907e17580860b8a3980",
-        "md5": "372f693d1d18be1cf1cc2412ca3b79c7",
-        "sha256": "329f7b04952d56aeb9c446fc1d034850d417367e3eaa0d1dd74fa596b5e73fd7"
+        "blake2b_256": "f07e4bc75a41176ba66cdefb0b1ccb861e676f2c9cc3427ee1572f748d2905fc",
+        "md5": "27b8f42fa1ec8062cbbd92c27c343c02",
+        "sha256": "950d3b35d9f1657178201da73de56d038e9bf4e257cf120882081f2707f1e074"
       },
       "downloads": -1,
-      "filename": "napari-time-slicer-0.4.9.tar.gz",
+      "filename": "napari-time-slicer-0.5.0.tar.gz",
       "has_sig": false,
-      "md5_digest": "372f693d1d18be1cf1cc2412ca3b79c7",
+      "md5_digest": "27b8f42fa1ec8062cbbd92c27c343c02",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.8",
-      "size": 12507,
-      "upload_time": "2022-07-10T14:24:16",
-      "upload_time_iso_8601": "2022-07-10T14:24:16.837228Z",
-      "url": "https://files.pythonhosted.org/packages/7f/43/afcb54826384fef526336748dac183bdef6b31ced907e17580860b8a3980/napari-time-slicer-0.4.9.tar.gz",
+      "size": 12531,
+      "upload_time": "2023-11-12T15:27:13",
+      "upload_time_iso_8601": "2023-11-12T15:27:13.847549Z",
+      "url": "https://files.pythonhosted.org/packages/f0/7e/4bc75a41176ba66cdefb0b1ccb861e676f2c9cc3427ee1572f748d2905fc/napari-time-slicer-0.5.0.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
