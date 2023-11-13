@@ -17,7 +17,7 @@
       "Programming Language :: Python :: 3.9",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "# manini\r\n\r\n[![License BSD-3](https://img.shields.io/pypi/l/manini.svg?color=green)](https://github.com/hereariim/manini/raw/main/LICENSE)\r\n[![PyPI](https://img.shields.io/pypi/v/manini.svg?color=green)](https://pypi.org/project/manini)\r\n[![Python Version](https://img.shields.io/pypi/pyversions/manini.svg?color=green)](https://python.org)\r\n[![tests](https://github.com/hereariim/manini/workflows/tests/badge.svg)](https://github.com/hereariim/manini/actions)\r\n[![codecov](https://codecov.io/gh/hereariim/manini/branch/main/graph/badge.svg)](https://codecov.io/gh/hereariim/manini)\r\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/manini)](https://napari-hub.org/plugins/manini)\r\n\r\nAn user-friendly plugin that enables to annotate images from pre-trained model (segmentation, classification, detection)\r\n\r\n----------------------------------\r\n\r\nThe Manini plugin for napari a tool to perform image inference from a pre-trained model (tensorflow .h5) and then annotate the resulting images with the tools provided by napari. Its development is ongoing.\r\n\r\n![Screencast from 24-01-2023 14 00 51](https://user-images.githubusercontent.com/93375163/214298805-8405a923-5952-458c-8542-7c78887479ab.gif)\r\n\r\n----------------------------------\r\n\r\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\r\n\r\n<!--\r\nDon't miss the full getting started guide to set up your new package:\r\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\r\n\r\nand review the napari docs for plugin developers:\r\nhttps://napari.org/stable/plugins/index.html!\r\n\r\n-->\r\n\r\n## Installation\r\n\r\nYou can install `manini` via [pip]:\r\n\r\n    pip install manini\r\n\r\nTo install latest development version :\r\n\r\n    pip install git+https://github.com/hereariim/manini.git\r\n\r\n\r\n## Description\r\n\r\nThis plugin is a tool to perform 2D image inference. The inference is open to the model for image segmentation (binary or multiclass), image classification and object detection.\r\nThis tool is compatible with tensorflow h5 models. In this format, the h5 file must contain all the elements of the model (architecture, weights, etc).\r\n\r\n### Image segmentation\r\n\r\nThis tool allows image inference from a segmentation model.\r\n\r\n#### Input\r\n\r\nThe user must deposit two items (+1 optional item).\r\n\r\n- A compressed file (.zip) containing the images in RGB\r\n\r\n```\r\n.\r\n\u2514\u2500\u2500 input.zip\r\n    \u251c\u2500\u2500 im_1.JPG\r\n    \u251c\u2500\u2500 im_2.JPG \r\n    \u251c\u2500\u2500 im_3.JPG\r\n    ...\r\n    \u2514\u2500\u2500 im_n.JPG\r\n```\r\n\r\n- A tensorflow h5 file (.h5) which is the segmentation model\r\n- A text file (.txt) containing the names of the classes (optional)\r\n\r\nThe Ok button is used to validate the imported elements. The Run button is used to launch the segmentation.\r\n\r\n#### Processing\r\n\r\nOnce the image inference is complete, the plugin returns a drop-down menu showing a list of RGB images contained in the compressed file. When the user clicks on an image displayed in this list, two items appear in the napari window:\r\n\r\n- A layer label which is the segmentation mask\r\n- A layer image which is the RGB image\r\n\r\n![cpe](https://user-images.githubusercontent.com/93375163/214246685-e86a9f62-bb27-44b5-92eb-86ef5aa2c663.png)\r\n\r\nA widget also appears to the right of the window. This is a list of the classes in the model with their associated colours. In this tool, the number of classes is limited to 255.\r\n\r\nThe user can make annotations on the layer label. For example, the user can correct mispredicted pixels by annotating them with a brush or an eraser.\r\n\r\n#### Output\r\n\r\nThe Save button allows you to obtain a compressed image file. This file contains folders containing the RGB images and their greyscale mask.\r\n\r\n### Image classification\r\n\r\nThis tool performs image inference from an image classification model.\r\n\r\n#### Input\r\n\r\nThis tool offers three mandatory inputs:\r\n\r\n- A compressed file (.zip) containing the RGB images\r\n\r\n```\r\n.\r\n\u2514\u2500\u2500 input.zip\r\n    \u251c\u2500\u2500 im_1.JPG\r\n    \u251c\u2500\u2500 im_2.JPG \r\n    \u251c\u2500\u2500 im_3.JPG\r\n    ...\r\n    \u2514\u2500\u2500 im_n.JPG\r\n```\r\n\r\n- A tensorflow h5 (.h5) file which is the image classification model\r\n- A text file (.txt) containing the class names\r\n\r\nThe Ok button is used to validate the imported elements. The Run button is used to launch the classification.\r\n\r\n#### Processing\r\n\r\nOnce the image inference is complete, the plugin returns two elements :\r\n\r\n- a drop-down menu showing a list of RGB images contained in the compressed file.\r\n- an table containing the predicted class for each image.\r\n\r\n![cpe2](https://user-images.githubusercontent.com/93375163/214252875-c8e59773-4c3d-4582-b8db-67c59ab01975.png)\r\n\r\nThe user can change the predicted class by selecting a class displayed in the associated drop-down menu for an image.\r\n\r\n#### Output\r\n\r\nThe Save button allows you to obtain a csv file. This file is the table on which the user had made his modifications.\r\n\r\n### Detection\r\n\r\nThis tool performs image inference from an yolo object detection model. The inference is made from [darknet] command\r\n\r\n#### Input\r\n\r\nThis tool offers five mandatory inputs:\r\n\r\n- A folder which is the darknet repository images\r\n- A file (.data) containing the paths (train,validation,test,class) and the number of class\r\n- A file (.cfg) containing the model architecture\r\n- A file (.weight) containing the weights associated to the model (.cfg) cited just above\r\n- A file (.txt) that indicates the path of the images\r\n\r\nThe Ok button is used to validate the imported elements. The Run button is used to launch the command `./darknet detector test` .\r\n\r\n#### Processing\r\n\r\nWhen the prediction of bounding box coordinates is complete for each image, the plugin returns two elements:\r\n\r\n- A menu that presents a list of the RGB images given as input.\r\n- A menu that presents a list of the classes given as input\r\n\r\n![Screenshot from 2023-01-24 10-33-07](https://user-images.githubusercontent.com/93375163/214257222-945ed096-49dd-4b91-aa2a-df4c43a30372.png)\r\n\r\nThe window displays the bounding boxes and the RGB image. The bounding box coordinates are taken from the json file which is an output file of the darknet detector test command. The user can update these coordinates by deleting or adding one or more bounding boxes. From the list of classes, the user can quickly add a bounding box to the image.\r\n\r\n#### Output\r\n\r\nThe Save button allows you to obtain a json file. This file contains for each image, the bounding box coordinates and the class for each detected object.\r\n\r\n## License\r\n\r\nDistributed under the terms of the [BSD-3] license,\r\n\"manini\" is free and open source software\r\n\r\n## Issues\r\n\r\nIf you encounter any problems, please [file an issue] along with a detailed description.\r\n\r\n[napari]: https://github.com/napari/napari\r\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\r\n[@napari]: https://github.com/napari\r\n[MIT]: http://opensource.org/licenses/MIT\r\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\r\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\r\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\r\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\r\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\r\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\r\n\r\n[file an issue]: https://github.com/hereariim/manini/issues\r\n\r\n[napari]: https://github.com/napari/napari\r\n[tox]: https://tox.readthedocs.io/en/latest/\r\n[pip]: https://pypi.org/project/pip/\r\n[PyPI]: https://pypi.org/\r\n",
+    "description": "# manini\n\n[![License BSD-3](https://img.shields.io/pypi/l/manini.svg?color=green)](https://github.com/hereariim/manini/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/manini.svg?color=green)](https://pypi.org/project/manini)\n[![Python Version](https://img.shields.io/pypi/pyversions/manini.svg?color=green)](https://python.org)\n[![tests](https://github.com/hereariim/manini/workflows/tests/badge.svg)](https://github.com/hereariim/manini/actions)\n[![codecov](https://codecov.io/gh/hereariim/manini/branch/main/graph/badge.svg)](https://codecov.io/gh/hereariim/manini)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/manini)](https://napari-hub.org/plugins/manini)\n\nManini is thought as a tool to boost the collaborative contribution of end-users to the assessment of deep learning model during their testing phase.\nIt is a user-Friendly plugin that enables to manually correct the result of an inference of deep learning model by an end-user. The plugin covers the following informational tasks: segmentation, classification and object detection.\n\n----------------------------------\n\nThis plugin was written by Herearii Metuarea, PHENET engineer at LARIS (French laboratory located in Angers, France) in Imhorphen team, french scientific research team lead by David Rousseau (Full professor). This plugin was designed in the context of the european project INVITE and PHENET.\n\n![Screenshot from 2023-11-13 00-13-13](https://github.com/hereariim/manini/assets/93375163/c602e802-71b9-48ec-a9f2-cec3e4fa8220)\n\nThe Manini plugin for napari a tool to perform image inference from a pre-trained model (tensorflow .h5) and then annotate the resulting images with the tools provided by napari. Its development is ongoing.\n\n![Screencast from 24-01-2023 14 00 51](https://user-images.githubusercontent.com/93375163/214298805-8405a923-5952-458c-8542-7c78887479ab.gif)\n\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/stable/plugins/index.html!\n\n-->\n\n## Installation\n\nYou can install `manini` via [pip]:\n\n    pip install manini\n\nTo install latest development version :\n\n    pip install git+https://github.com/hereariim/manini.git\n\n\n## Description\n\nThis plugin is a tool to perform 2D image inference. The inference is open to the model for image segmentation (binary or multiclass), image classification and object detection.\nThis tool is compatible with tensorflow h5 models. In this format, the h5 file must contain all the elements of the model (architecture, weights, etc).\n\n### Image segmentation\n\nThis tool allows image inference from a segmentation model.\n\n#### Input\n\nThe user must deposit two items (+1 optional item).\n\n- A compressed file (.zip) containing the images in RGB\n\n```\n.\n\u2514\u2500\u2500 input.zip\n    \u251c\u2500\u2500 im_1.JPG\n    \u251c\u2500\u2500 im_2.JPG \n    \u251c\u2500\u2500 im_3.JPG\n    ...\n    \u2514\u2500\u2500 im_n.JPG\n```\n\n- A tensorflow h5 file (.h5) which is the segmentation model\n- A text file (.txt) containing the names of the classes (optional)\n\nThe Ok button is used to validate the imported elements. The Run button is used to launch the segmentation.\n\n#### Processing\n\nOnce the image inference is complete, the plugin returns a drop-down menu showing a list of RGB images contained in the compressed file. When the user clicks on an image displayed in this list, one items appear in the napari window:\n\n- A menu that presents a list of the classes given as input\n\n![cpe](https://user-images.githubusercontent.com/93375163/214246685-e86a9f62-bb27-44b5-92eb-86ef5aa2c663.png)\n\nA widget also appears to the right of the window. This is a list of the classes in the model with their associated colours. In this tool, the number of classes is limited to 255.\n\nThe user can make annotations on the layer label. For example, the user can correct mispredicted pixels by annotating them with a brush or an eraser.\n\n#### Output\n\nThe Save button allows you to obtain a compressed image file. This file contains folders containing the RGB images and their greyscale mask.\n\n### Image classification\n\nThis tool performs image inference from an image classification model.\n\n#### Input\n\nThis tool offers three mandatory inputs:\n\n- A compressed file (.zip) containing the RGB images\n\n```\n.\n\u2514\u2500\u2500 input.zip\n    \u251c\u2500\u2500 im_1.JPG\n    \u251c\u2500\u2500 im_2.JPG \n    \u251c\u2500\u2500 im_3.JPG\n    ...\n    \u2514\u2500\u2500 im_n.JPG\n```\n\n- A tensorflow h5 (.h5) file which is the image classification model\n- A text file (.txt) containing the class names\n\nThe Ok button is used to validate the imported elements. The Run button is used to launch the classification.\n\n#### Processing\n\nOnce the image inference is complete, the plugin returns one elements :\n\n- an table containing the predicted class for each image.\n\n![cpe2](https://user-images.githubusercontent.com/93375163/214252875-c8e59773-4c3d-4582-b8db-67c59ab01975.png)\n\nThe user can change the predicted class by selecting a class displayed in the associated drop-down menu for an image.\n\n#### Output\n\nThe Save button allows you to obtain a csv file. This file is the table on which the user had made his modifications.\n\n### Detection\n\nThis tool performs image inference from an yolo object detection model.\n\n#### Input\n\nThe user must deposit two items (+1 optional item).\n\n- A compressed file (.zip) containing the images in RGB\n\n```\n.\n\u2514\u2500\u2500 input.zip\n    \u251c\u2500\u2500 im_1.JPG\n    \u251c\u2500\u2500 im_2.JPG \n    \u251c\u2500\u2500 im_3.JPG\n    ...\n    \u2514\u2500\u2500 im_n.JPG\n```\n\n- A tensorflow h5 file (.h5) which is the detection model\n- A text file (.txt) containing the names of the classes (optional)\n\nThe Ok button is used to validate the imported elements. The Run button is used to launch the segmentation.\n\n#### Processing\n\nWhen the prediction of bounding box coordinates is complete for each image, the plugin returns one elements:\n\n- A menu that presents a list of the classes given as input\n\n![Screenshot from 2023-01-24 10-33-07](https://user-images.githubusercontent.com/93375163/214257222-945ed096-49dd-4b91-aa2a-df4c43a30372.png)\n\nThe window displays the bounding boxes and the RGB image. The bounding box coordinates are taken from the json file which is an output file of the darknet detector test command. The user can update these coordinates by deleting or adding one or more bounding boxes. From the list of classes, the user can quickly add a bounding box to the image.\n\n#### Output\n\nThe Save button allows you to obtain a json file. This file contains for each image, the bounding box coordinates and the class for each detected object.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"manini\" is free and open source software\n\n## Citation\n\nHerearii Metuarea, David Rousseau. Toward more collaborative deep learning project management in plant phenotyping. ESS Open Archive . October 31, 2023.\nDOI: 10.22541/essoar.169876925.51005273/v1\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[file an issue]: https://github.com/hereariim/manini/issues\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": "",
@@ -42,7 +42,7 @@
       "Source Code": "https://github.com/hereariim/manini",
       "User Support": "https://github.com/hereariim/manini/issues"
     },
-    "release_url": "https://pypi.org/project/manini/0.0.4/",
+    "release_url": "https://pypi.org/project/manini/0.0.5/",
     "requires_dist": [
       "numpy",
       "magicgui",
@@ -71,11 +71,11 @@
     ],
     "requires_python": ">=3.8",
     "summary": "An user-friendly plugin that enables to annotate images from a pre-trained model (segmentation, classification, detection) given by an user.",
-    "version": "0.0.4",
+    "version": "0.0.5",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 20477547,
+  "last_serial": 20599846,
   "releases": {
     "0.0.4": [
       {
@@ -120,48 +120,92 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.0.5": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "51be4ea9bf178eef7843d22b8c7c2d8603d9e1fd4d51077628526269495b0380",
+          "md5": "c3c385da28d74e97c5aaad1bcde9cdbd",
+          "sha256": "37ad9578a54f744a53eba448c1acc572ce77cb2c2f64f929da043be196a3654c"
+        },
+        "downloads": -1,
+        "filename": "manini-0.0.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "c3c385da28d74e97c5aaad1bcde9cdbd",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 17498,
+        "upload_time": "2023-11-12T23:26:37",
+        "upload_time_iso_8601": "2023-11-12T23:26:37.831620Z",
+        "url": "https://files.pythonhosted.org/packages/51/be/4ea9bf178eef7843d22b8c7c2d8603d9e1fd4d51077628526269495b0380/manini-0.0.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "0d0dd6c995f4df9d01f0a5a19342d399926aef5c055b649e80d6d24c2cc57a3c",
+          "md5": "a0542c6ce7843c5f1db251c58585f5fa",
+          "sha256": "149beb0085170deba2a2a6021c1880a2aa7b39df903f16e29572e08958ad4492"
+        },
+        "downloads": -1,
+        "filename": "manini-0.0.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "a0542c6ce7843c5f1db251c58585f5fa",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 21688,
+        "upload_time": "2023-11-12T23:26:40",
+        "upload_time_iso_8601": "2023-11-12T23:26:40.140204Z",
+        "url": "https://files.pythonhosted.org/packages/0d/0d/d6c995f4df9d01f0a5a19342d399926aef5c055b649e80d6d24c2cc57a3c/manini-0.0.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "a3e34d286e9b5bccccd6a918d47b87a6f96883a2870ebbb572b3ff167741a3f2",
-        "md5": "5a15d411bbf6032df97df495b504c1c1",
-        "sha256": "2104288ceee2b4c0d7e790627f5dff205ffe01ed557ffd7316e69d1750acef57"
+        "blake2b_256": "51be4ea9bf178eef7843d22b8c7c2d8603d9e1fd4d51077628526269495b0380",
+        "md5": "c3c385da28d74e97c5aaad1bcde9cdbd",
+        "sha256": "37ad9578a54f744a53eba448c1acc572ce77cb2c2f64f929da043be196a3654c"
       },
       "downloads": -1,
-      "filename": "manini-0.0.4-py3-none-any.whl",
+      "filename": "manini-0.0.5-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "5a15d411bbf6032df97df495b504c1c1",
+      "md5_digest": "c3c385da28d74e97c5aaad1bcde9cdbd",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.8",
-      "size": 17269,
-      "upload_time": "2023-11-04T01:18:10",
-      "upload_time_iso_8601": "2023-11-04T01:18:10.912493Z",
-      "url": "https://files.pythonhosted.org/packages/a3/e3/4d286e9b5bccccd6a918d47b87a6f96883a2870ebbb572b3ff167741a3f2/manini-0.0.4-py3-none-any.whl",
+      "size": 17498,
+      "upload_time": "2023-11-12T23:26:37",
+      "upload_time_iso_8601": "2023-11-12T23:26:37.831620Z",
+      "url": "https://files.pythonhosted.org/packages/51/be/4ea9bf178eef7843d22b8c7c2d8603d9e1fd4d51077628526269495b0380/manini-0.0.5-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "44d35440fd1133b1ad1d082d5d145bd38d208a411f575315fbd2a4ac287f6ded",
-        "md5": "dfef5bfab49b4f7a36f2104db87e36e3",
-        "sha256": "8e9180f4ef0815760eeb99cf925daace64fcef4f7394c9ef59a9b2b8cb0a7cb8"
+        "blake2b_256": "0d0dd6c995f4df9d01f0a5a19342d399926aef5c055b649e80d6d24c2cc57a3c",
+        "md5": "a0542c6ce7843c5f1db251c58585f5fa",
+        "sha256": "149beb0085170deba2a2a6021c1880a2aa7b39df903f16e29572e08958ad4492"
       },
       "downloads": -1,
-      "filename": "manini-0.0.4.tar.gz",
+      "filename": "manini-0.0.5.tar.gz",
       "has_sig": false,
-      "md5_digest": "dfef5bfab49b4f7a36f2104db87e36e3",
+      "md5_digest": "a0542c6ce7843c5f1db251c58585f5fa",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.8",
-      "size": 21229,
-      "upload_time": "2023-11-04T01:18:13",
-      "upload_time_iso_8601": "2023-11-04T01:18:13.127135Z",
-      "url": "https://files.pythonhosted.org/packages/44/d3/5440fd1133b1ad1d082d5d145bd38d208a411f575315fbd2a4ac287f6ded/manini-0.0.4.tar.gz",
+      "size": 21688,
+      "upload_time": "2023-11-12T23:26:40",
+      "upload_time_iso_8601": "2023-11-12T23:26:40.140204Z",
+      "url": "https://files.pythonhosted.org/packages/0d/0d/d6c995f4df9d01f0a5a19342d399926aef5c055b649e80d6d24c2cc57a3c/manini-0.0.5.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
