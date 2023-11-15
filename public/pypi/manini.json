@@ -17,7 +17,7 @@
       "Programming Language :: Python :: 3.9",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "# manini\r\n\r\n[![License BSD-3](https://img.shields.io/pypi/l/manini.svg?color=green)](https://github.com/hereariim/manini/raw/main/LICENSE)\r\n[![PyPI](https://img.shields.io/pypi/v/manini.svg?color=green)](https://pypi.org/project/manini)\r\n[![Python Version](https://img.shields.io/pypi/pyversions/manini.svg?color=green)](https://python.org)\r\n[![tests](https://github.com/hereariim/manini/workflows/tests/badge.svg)](https://github.com/hereariim/manini/actions)\r\n[![codecov](https://codecov.io/gh/hereariim/manini/branch/main/graph/badge.svg)](https://codecov.io/gh/hereariim/manini)\r\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/manini)](https://napari-hub.org/plugins/manini)\r\n\r\nAn user-friendly plugin that enables to annotate images from a pre-trained model (segmentation, classification, detection) given by an user.\r\n\r\nThe Manini plugin for napari a tool to perform image inference from a pre-trained model (tensorflow .h5) and then annotate the resulting images with the tools provided by napari. Its development is ongoing.\r\n\r\n![Screencast from 24-01-2023 14 00 51](https://user-images.githubusercontent.com/93375163/214298805-8405a923-5952-458c-8542-7c78887479ab.gif)\r\n\r\n----------------------------------\r\n\r\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\r\n\r\n<!--\r\nDon't miss the full getting started guide to set up your new package:\r\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\r\n\r\nand review the napari docs for plugin developers:\r\nhttps://napari.org/stable/plugins/index.html!\r\n\r\n-->\r\n\r\n## Installation\r\n\r\nYou can install `manini` via [pip]:\r\n\r\n    pip install manini\r\n\r\nTo install latest development version :\r\n\r\n    pip install git+https://github.com/hereariim/manini.git\r\n\r\n\r\n## Description\r\n\r\nThis plugin is a tool to perform 2D image inference. The inference is open to the model for image segmentation (binary or multiclass), image classification and object detection.\r\nThis tool is compatible with tensorflow h5 models. In this format, the h5 file must contain all the elements of the model (architecture, weights, etc).\r\n\r\n### Image segmentation\r\n\r\nThis tool allows image inference from a segmentation model.\r\n\r\n#### Input\r\n\r\nThe user must deposit two items (+1 optional item).\r\n\r\n- A compressed file (.zip) containing the images in RGB\r\n\r\n```\r\n.\r\n\u2514\u2500\u2500 input.zip\r\n    \u251c\u2500\u2500 im_1.JPG\r\n    \u251c\u2500\u2500 im_2.JPG \r\n    \u251c\u2500\u2500 im_3.JPG\r\n    ...\r\n    \u2514\u2500\u2500 im_n.JPG\r\n```\r\n\r\n- A tensorflow h5 file (.h5) which is the segmentation model\r\n- A text file (.txt) containing the names of the classes (optional)\r\n\r\nThe Ok button is used to validate the imported elements. The Run button is used to launch the segmentation.\r\n\r\n#### Processing\r\n\r\nOnce the image inference is complete, the plugin returns a drop-down menu showing a list of RGB images contained in the compressed file. When the user clicks on an image displayed in this list, two items appear in the napari window:\r\n\r\n- A layer label which is the segmentation mask\r\n- A layer image which is the RGB image\r\n\r\n![cpe](https://user-images.githubusercontent.com/93375163/214246685-e86a9f62-bb27-44b5-92eb-86ef5aa2c663.png)\r\n\r\nA widget also appears to the right of the window. This is a list of the classes in the model with their associated colours. In this tool, the number of classes is limited to 255.\r\n\r\nThe user can make annotations on the layer label. For example, the user can correct mispredicted pixels by annotating them with a brush or an eraser.\r\n\r\n#### Output\r\n\r\nThe Save button allows you to obtain a compressed image file. This file contains folders containing the RGB images and their greyscale mask.\r\n\r\n### Image classification\r\n\r\nThis tool performs image inference from an image classification model.\r\n\r\n#### Input\r\n\r\nThis tool offers three mandatory inputs:\r\n\r\n- A compressed file (.zip) containing the RGB images\r\n\r\n```\r\n.\r\n\u2514\u2500\u2500 input.zip\r\n    \u251c\u2500\u2500 im_1.JPG\r\n    \u251c\u2500\u2500 im_2.JPG \r\n    \u251c\u2500\u2500 im_3.JPG\r\n    ...\r\n    \u2514\u2500\u2500 im_n.JPG\r\n```\r\n\r\n- A tensorflow h5 (.h5) file which is the image classification model\r\n- A text file (.txt) containing the class names\r\n\r\nThe Ok button is used to validate the imported elements. The Run button is used to launch the classification.\r\n\r\n#### Processing\r\n\r\nOnce the image inference is complete, the plugin returns two elements :\r\n\r\n- a drop-down menu showing a list of RGB images contained in the compressed file.\r\n- an table containing the predicted class for each image.\r\n\r\n![cpe2](https://user-images.githubusercontent.com/93375163/214252875-c8e59773-4c3d-4582-b8db-67c59ab01975.png)\r\n\r\nThe user can change the predicted class by selecting a class displayed in the associated drop-down menu for an image.\r\n\r\n#### Output\r\n\r\nThe Save button allows you to obtain a csv file. This file is the table on which the user had made his modifications.\r\n\r\n### Detection\r\n\r\nThis tool performs image inference from an yolo object detection model. The inference is made from [darknet] command\r\n\r\n#### Input\r\n\r\nThis tool offers five mandatory inputs:\r\n\r\n- A folder which is the darknet repository images\r\n- A file (.data) containing the paths (train,validation,test,class) and the number of class\r\n- A file (.cfg) containing the model architecture\r\n- A file (.weight) containing the weights associated to the model (.cfg) cited just above\r\n- A file (.txt) that indicates the path of the images\r\n\r\nThe Ok button is used to validate the imported elements. The Run button is used to launch the command `./darknet detector test` .\r\n\r\n#### Processing\r\n\r\nWhen the prediction of bounding box coordinates is complete for each image, the plugin returns two elements:\r\n\r\n- A menu that presents a list of the RGB images given as input.\r\n- A menu that presents a list of the classes given as input\r\n\r\n![Screenshot from 2023-01-24 10-33-07](https://user-images.githubusercontent.com/93375163/214257222-945ed096-49dd-4b91-aa2a-df4c43a30372.png)\r\n\r\nThe window displays the bounding boxes and the RGB image. The bounding box coordinates are taken from the json file which is an output file of the darknet detector test command. The user can update these coordinates by deleting or adding one or more bounding boxes. From the list of classes, the user can quickly add a bounding box to the image.\r\n\r\n#### Output\r\n\r\nThe Save button allows you to obtain a json file. This file contains for each image, the bounding box coordinates and the class for each detected object.\r\n\r\n## Contributing\r\n\r\nContributions are very welcome. Tests can be run with [tox], please ensure\r\nthe coverage at least stays the same before you submit a pull request.\r\n\r\n## License\r\n\r\nDistributed under the terms of the [BSD-3] license,\r\n\"manini\" is free and open source software\r\n\r\n## Issues\r\n\r\nIf you encounter any problems, please [file an issue] along with a detailed description.\r\n\r\n[napari]: https://github.com/napari/napari\r\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\r\n[@napari]: https://github.com/napari\r\n[MIT]: http://opensource.org/licenses/MIT\r\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\r\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\r\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\r\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\r\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\r\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\r\n\r\n[file an issue]: https://github.com/hereariim/manini/issues\r\n\r\n[napari]: https://github.com/napari/napari\r\n[darknet]: https://pjreddie.com/darknet/yolo/\r\n[tox]: https://tox.readthedocs.io/en/latest/\r\n[pip]: https://pypi.org/project/pip/\r\n[PyPI]: https://pypi.org/\r\n",
+    "description": "# manini\n\n[![License BSD-3](https://img.shields.io/pypi/l/manini.svg?color=green)](https://github.com/hereariim/manini/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/manini.svg?color=green)](https://pypi.org/project/manini)\n[![Python Version](https://img.shields.io/pypi/pyversions/manini.svg?color=green)](https://python.org)\n[![tests](https://github.com/hereariim/manini/workflows/tests/badge.svg)](https://github.com/hereariim/manini/actions)\n[![codecov](https://codecov.io/gh/hereariim/manini/branch/main/graph/badge.svg)](https://codecov.io/gh/hereariim/manini)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/manini)](https://napari-hub.org/plugins/manini)\n\nManini (**MA**chi**N**e **IN**ference  & Correct**I**on) is thought as a tool to boost the collaborative contribution of end-users to the assessment of deep learning model during their testing phase.\nIt is a user-Friendly plugin that enables to manually correct the result of an inference of deep learning model by an end-user. The plugin covers the following informational tasks: segmentation, classification and object detection.\n\n## White paper\n\nHerearii Metuarea, David Rousseau. [Toward more collaborative deep learning project management in plant phenotyping. ](https://essopenarchive.org/doi/full/10.22541/essoar.169876925.51005273/v1)\n\nESS Open Archive . October 31, 2023.\nDOI: 10.22541/essoar.169876925.51005273/v1\n\n----------------------------------\n\nThis plugin was written by Herearii Metuarea, PHENET engineer at LARIS (French laboratory located in Angers, France) in Imhorphen team (bioimaging research group lead) under the supervision by David Rousseau (Full professor). This plugin was designed in the context of the european project INVITE and PHENET.\n\n![Screenshot from 2023-11-13 00-13-13](https://github.com/hereariim/manini/assets/93375163/c602e802-71b9-48ec-a9f2-cec3e4fa8220)\n\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/stable/plugins/index.html!\n\n-->\n\n## Installation\n\nYou can install `manini` via [pip]:\n\n    pip install manini\n\nTo install latest development version :\n\n    pip install git+https://github.com/hereariim/manini.git\n\n\n## Description\n\nThis plugin is a tool to perform image inference. The inference is open to the model for image segmentation (binary or multiclass), image classification and object detection. The dimension of image should be the same size with the input of model.\nCurrently compatible with tensorflow h5 models. In this format, the h5 file must contain all the elements of the model (architecture, weights, etc). Several ongoing developments, feel free to contact us if you have some request.\n\n## Contact\n\nImhorphen team, bioimaging research group\n\n42 rue George Morel, Angers, France\n\n- Pr David Rousseau, david.rousseau@univ-angers.fr\n- Herearii Metuarea, herearii.metuarea@univ-angers.fr \n\n### Scheme\n\n![manini](https://github.com/hereariim/manini/assets/93375163/636a5e15-da0f-4387-8f37-b8ca89b4482b)\n\n#### Input\n\nThe user must deposit two items (+1 optional item). \n\n- A compressed file (.zip) containing the images in RGB\n\n```\n.\n\u2514\u2500\u2500 input.zip\n    \u251c\u2500\u2500 im_1.JPG\n    \u251c\u2500\u2500 im_2.JPG \n    \u251c\u2500\u2500 im_3.JPG\n    ...\n    \u2514\u2500\u2500 im_n.JPG\n```\n\n- A tensorflow h5 file (.h5) which is the segmentation model\n- A text file (.txt) containing the names of the classes (optional)\n\nThe Ok button is used to validate the imported elements. The Run button is used to launch the segmentation.\n\n#### Process\n\nCorrection is made by selecting some classes displayed in a widget :\n\n- Paint panel for image segmentation\n\n- Table for image classification\n\n- Bounding box panel for object detection\n\n#### Output\n\n##### Segmentation + Detection\n\nThe plugin suggest 'Export' widget. When user select image and mask, the Save button allows you to obtain data in a compressed file. This file contains folders containing the images and their mask.\n\n##### Classification\n\nThe Save button allows you to obtain a csv file. This file is the table on which the user had made his modifications.\n\n#### Tutorial\n\nPlease, you can learn better if you watch a video tutorial below.\n\nPresentation video of the context where the plugin was developped : [MANINI Napari Plugin Part 1](https://www.youtube.com/watch?v=ltbMIhApwRk)\n\nTutorial video to get started : [MANINI Napari Plugin Part 2](https://www.youtube.com/watch?v=HU21VQpvRAM)\n\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"manini\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[file an issue]: https://github.com/hereariim/manini/issues\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": "",
@@ -42,7 +42,7 @@
       "Source Code": "https://github.com/hereariim/manini",
       "User Support": "https://github.com/hereariim/manini/issues"
     },
-    "release_url": "https://pypi.org/project/manini/0.0.3/",
+    "release_url": "https://pypi.org/project/manini/0.0.10/",
     "requires_dist": [
       "numpy",
       "magicgui",
@@ -66,144 +66,321 @@
       "scikit-image ; extra == 'testing'",
       "pandas ; extra == 'testing'",
       "opencv-python-headless ; extra == 'testing'",
-      "tensorflow ; extra == 'testing'"
+      "tensorflow ; extra == 'testing'",
+      "PyQt5 ; extra == 'testing'"
     ],
     "requires_python": ">=3.8",
     "summary": "An user-friendly plugin that enables to annotate images from a pre-trained model (segmentation, classification, detection) given by an user.",
-    "version": "0.0.3",
+    "version": "0.0.10",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 16558112,
+  "last_serial": 20639214,
   "releases": {
-    "0.0.1": [
+    "0.0.10": [
       {
         "comment_text": "",
         "digests": {
-          "blake2b_256": "242c2bdb221b8ca2ef872804fcbb6c71f70617d35973cfd4638bf489a522cf75",
-          "md5": "eb2cd703fc01fcb106cdc1331d42120f",
-          "sha256": "3381595b2eb11d76c1c0a9405cd88dbda0a64cfe71270e28cb2e90369611421a"
+          "blake2b_256": "906f5bc49aed820a2c8be27a240ab9709ffe1652c99e704657b4c512c86dd044",
+          "md5": "bb8e718d06abe884193e15d057287065",
+          "sha256": "35c3e1a1d784a14719239bd303ba01bbbbace6993457b05a7eec17f9ebd7ece9"
         },
         "downloads": -1,
-        "filename": "manini-0.0.1-py3-none-any.whl",
+        "filename": "manini-0.0.10-py3-none-any.whl",
         "has_sig": false,
-        "md5_digest": "eb2cd703fc01fcb106cdc1331d42120f",
+        "md5_digest": "bb8e718d06abe884193e15d057287065",
         "packagetype": "bdist_wheel",
         "python_version": "py3",
         "requires_python": ">=3.8",
-        "size": 19777,
-        "upload_time": "2023-01-24T11:54:12",
-        "upload_time_iso_8601": "2023-01-24T11:54:12.918234Z",
-        "url": "https://files.pythonhosted.org/packages/24/2c/2bdb221b8ca2ef872804fcbb6c71f70617d35973cfd4638bf489a522cf75/manini-0.0.1-py3-none-any.whl",
+        "size": 17472,
+        "upload_time": "2023-11-15T06:11:34",
+        "upload_time_iso_8601": "2023-11-15T06:11:34.949893Z",
+        "url": "https://files.pythonhosted.org/packages/90/6f/5bc49aed820a2c8be27a240ab9709ffe1652c99e704657b4c512c86dd044/manini-0.0.10-py3-none-any.whl",
         "yanked": false,
         "yanked_reason": null
       },
       {
         "comment_text": "",
         "digests": {
-          "blake2b_256": "e000cb8baaa3634deae0e7049b3a8e9b8d71976ba8cc6230e9831504c47aab94",
-          "md5": "2972d1e091dd6486d066fa2405b347ec",
-          "sha256": "2245e2233d6eba4f24f0c1c718d2b201f60a86703d7f23da2ae56b009eb40300"
+          "blake2b_256": "15e63670b43cad58e02f7672569833797c4d8beca8ef26194f67b2d4b1ffb889",
+          "md5": "d5d1343335924d7415461aec328fa385",
+          "sha256": "e3f02b7d07fafe3131956edff54f58c5965db8656c84c884b17af6c4709130e2"
         },
         "downloads": -1,
-        "filename": "manini-0.0.1.tar.gz",
+        "filename": "manini-0.0.10.tar.gz",
         "has_sig": false,
-        "md5_digest": "2972d1e091dd6486d066fa2405b347ec",
+        "md5_digest": "d5d1343335924d7415461aec328fa385",
         "packagetype": "sdist",
         "python_version": "source",
         "requires_python": ">=3.8",
-        "size": 23141,
-        "upload_time": "2023-01-24T11:54:15",
-        "upload_time_iso_8601": "2023-01-24T11:54:15.698334Z",
-        "url": "https://files.pythonhosted.org/packages/e0/00/cb8baaa3634deae0e7049b3a8e9b8d71976ba8cc6230e9831504c47aab94/manini-0.0.1.tar.gz",
+        "size": 21317,
+        "upload_time": "2023-11-15T06:11:37",
+        "upload_time_iso_8601": "2023-11-15T06:11:37.513013Z",
+        "url": "https://files.pythonhosted.org/packages/15/e6/3670b43cad58e02f7672569833797c4d8beca8ef26194f67b2d4b1ffb889/manini-0.0.10.tar.gz",
         "yanked": false,
         "yanked_reason": null
       }
     ],
-    "0.0.2": [
+    "0.0.4": [
       {
         "comment_text": "",
         "digests": {
-          "blake2b_256": "1cc22cd7aaa300e8145daacdf394074f222bbe18758186af16b624ba4ef0e9ef",
-          "md5": "c7cce2527869b721a2add0475906c631",
-          "sha256": "bba4b64c6def04c6a97845fb786af94ec5d0ac97654f0a4334a4f50f1a55b369"
+          "blake2b_256": "a3e34d286e9b5bccccd6a918d47b87a6f96883a2870ebbb572b3ff167741a3f2",
+          "md5": "5a15d411bbf6032df97df495b504c1c1",
+          "sha256": "2104288ceee2b4c0d7e790627f5dff205ffe01ed557ffd7316e69d1750acef57"
         },
         "downloads": -1,
-        "filename": "manini-0.0.2-py3-none-any.whl",
+        "filename": "manini-0.0.4-py3-none-any.whl",
         "has_sig": false,
-        "md5_digest": "c7cce2527869b721a2add0475906c631",
+        "md5_digest": "5a15d411bbf6032df97df495b504c1c1",
         "packagetype": "bdist_wheel",
         "python_version": "py3",
         "requires_python": ">=3.8",
-        "size": 19978,
-        "upload_time": "2023-01-24T15:03:28",
-        "upload_time_iso_8601": "2023-01-24T15:03:28.234850Z",
-        "url": "https://files.pythonhosted.org/packages/1c/c2/2cd7aaa300e8145daacdf394074f222bbe18758186af16b624ba4ef0e9ef/manini-0.0.2-py3-none-any.whl",
+        "size": 17269,
+        "upload_time": "2023-11-04T01:18:10",
+        "upload_time_iso_8601": "2023-11-04T01:18:10.912493Z",
+        "url": "https://files.pythonhosted.org/packages/a3/e3/4d286e9b5bccccd6a918d47b87a6f96883a2870ebbb572b3ff167741a3f2/manini-0.0.4-py3-none-any.whl",
         "yanked": false,
         "yanked_reason": null
       },
       {
         "comment_text": "",
         "digests": {
-          "blake2b_256": "93e23d65c2ddda81bf6ac36c1fb916702abfa00a6fb770ce169de69ccc156f7b",
-          "md5": "cf72a90f945057c7659b24ffaa5fbc4b",
-          "sha256": "2d798d2d305888d42857bcda49ceec9031ecd09407aac0b985386eb52dd22bed"
+          "blake2b_256": "44d35440fd1133b1ad1d082d5d145bd38d208a411f575315fbd2a4ac287f6ded",
+          "md5": "dfef5bfab49b4f7a36f2104db87e36e3",
+          "sha256": "8e9180f4ef0815760eeb99cf925daace64fcef4f7394c9ef59a9b2b8cb0a7cb8"
         },
         "downloads": -1,
-        "filename": "manini-0.0.2.tar.gz",
+        "filename": "manini-0.0.4.tar.gz",
         "has_sig": false,
-        "md5_digest": "cf72a90f945057c7659b24ffaa5fbc4b",
+        "md5_digest": "dfef5bfab49b4f7a36f2104db87e36e3",
         "packagetype": "sdist",
         "python_version": "source",
         "requires_python": ">=3.8",
-        "size": 23543,
-        "upload_time": "2023-01-24T15:03:30",
-        "upload_time_iso_8601": "2023-01-24T15:03:30.260440Z",
-        "url": "https://files.pythonhosted.org/packages/93/e2/3d65c2ddda81bf6ac36c1fb916702abfa00a6fb770ce169de69ccc156f7b/manini-0.0.2.tar.gz",
+        "size": 21229,
+        "upload_time": "2023-11-04T01:18:13",
+        "upload_time_iso_8601": "2023-11-04T01:18:13.127135Z",
+        "url": "https://files.pythonhosted.org/packages/44/d3/5440fd1133b1ad1d082d5d145bd38d208a411f575315fbd2a4ac287f6ded/manini-0.0.4.tar.gz",
         "yanked": false,
         "yanked_reason": null
       }
     ],
-    "0.0.3": [
+    "0.0.5": [
       {
         "comment_text": "",
         "digests": {
-          "blake2b_256": "3ccd0860a7453c4c8c45905fb143ef104857cb4654428891ed99f1fa58513513",
-          "md5": "eaecba894736d0a41bb6f92afb55397c",
-          "sha256": "d442bf0bfeb3e08387d669cb5e375b2cf7e9e49606b153d929fb592cb8d8424d"
+          "blake2b_256": "51be4ea9bf178eef7843d22b8c7c2d8603d9e1fd4d51077628526269495b0380",
+          "md5": "c3c385da28d74e97c5aaad1bcde9cdbd",
+          "sha256": "37ad9578a54f744a53eba448c1acc572ce77cb2c2f64f929da043be196a3654c"
         },
         "downloads": -1,
-        "filename": "manini-0.0.3-py3-none-any.whl",
+        "filename": "manini-0.0.5-py3-none-any.whl",
         "has_sig": false,
-        "md5_digest": "eaecba894736d0a41bb6f92afb55397c",
+        "md5_digest": "c3c385da28d74e97c5aaad1bcde9cdbd",
         "packagetype": "bdist_wheel",
         "python_version": "py3",
         "requires_python": ">=3.8",
-        "size": 19971,
-        "upload_time": "2023-01-25T07:30:01",
-        "upload_time_iso_8601": "2023-01-25T07:30:01.159737Z",
-        "url": "https://files.pythonhosted.org/packages/3c/cd/0860a7453c4c8c45905fb143ef104857cb4654428891ed99f1fa58513513/manini-0.0.3-py3-none-any.whl",
+        "size": 17498,
+        "upload_time": "2023-11-12T23:26:37",
+        "upload_time_iso_8601": "2023-11-12T23:26:37.831620Z",
+        "url": "https://files.pythonhosted.org/packages/51/be/4ea9bf178eef7843d22b8c7c2d8603d9e1fd4d51077628526269495b0380/manini-0.0.5-py3-none-any.whl",
         "yanked": false,
         "yanked_reason": null
       },
       {
         "comment_text": "",
         "digests": {
-          "blake2b_256": "7f231834b0fbac73cb6881c53ed73cf3f03948bc926b613f9c430434aaaa6e49",
-          "md5": "4044cea4781a1d68610ffa1e3a043f0a",
-          "sha256": "22ced1ff260a80e90d69bc3ed6dcc85f6473b11c7900ba5e33104b9b3286c2de"
+          "blake2b_256": "0d0dd6c995f4df9d01f0a5a19342d399926aef5c055b649e80d6d24c2cc57a3c",
+          "md5": "a0542c6ce7843c5f1db251c58585f5fa",
+          "sha256": "149beb0085170deba2a2a6021c1880a2aa7b39df903f16e29572e08958ad4492"
         },
         "downloads": -1,
-        "filename": "manini-0.0.3.tar.gz",
+        "filename": "manini-0.0.5.tar.gz",
         "has_sig": false,
-        "md5_digest": "4044cea4781a1d68610ffa1e3a043f0a",
+        "md5_digest": "a0542c6ce7843c5f1db251c58585f5fa",
         "packagetype": "sdist",
         "python_version": "source",
         "requires_python": ">=3.8",
-        "size": 23554,
-        "upload_time": "2023-01-25T07:30:02",
-        "upload_time_iso_8601": "2023-01-25T07:30:02.817454Z",
-        "url": "https://files.pythonhosted.org/packages/7f/23/1834b0fbac73cb6881c53ed73cf3f03948bc926b613f9c430434aaaa6e49/manini-0.0.3.tar.gz",
+        "size": 21688,
+        "upload_time": "2023-11-12T23:26:40",
+        "upload_time_iso_8601": "2023-11-12T23:26:40.140204Z",
+        "url": "https://files.pythonhosted.org/packages/0d/0d/d6c995f4df9d01f0a5a19342d399926aef5c055b649e80d6d24c2cc57a3c/manini-0.0.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.6": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "b426e8ea9537e8f421a6f6f82f3cff80d704975f2dc7aa12c979eadec756477d",
+          "md5": "6fe6d21ac908001ab2edececc4425bc5",
+          "sha256": "c29564bc55b16b102fcc91fbe91f135093ebcafee48d0a10487e4a77cbda0b0c"
+        },
+        "downloads": -1,
+        "filename": "manini-0.0.6-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "6fe6d21ac908001ab2edececc4425bc5",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 17392,
+        "upload_time": "2023-11-14T11:05:38",
+        "upload_time_iso_8601": "2023-11-14T11:05:38.787498Z",
+        "url": "https://files.pythonhosted.org/packages/b4/26/e8ea9537e8f421a6f6f82f3cff80d704975f2dc7aa12c979eadec756477d/manini-0.0.6-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "6d682c3e0bfedccbc2a1b73510b646ea9bc9ef8d4bbf969d4e2f0edca4ce427a",
+          "md5": "1d9355d3f9e9dd147fd6234dcf80bf40",
+          "sha256": "827fa5d53852841cd75b60502b46dd1d84a40d5fb01bc7be418a311c3a87bfb2"
+        },
+        "downloads": -1,
+        "filename": "manini-0.0.6.tar.gz",
+        "has_sig": false,
+        "md5_digest": "1d9355d3f9e9dd147fd6234dcf80bf40",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 21166,
+        "upload_time": "2023-11-14T11:05:46",
+        "upload_time_iso_8601": "2023-11-14T11:05:46.079752Z",
+        "url": "https://files.pythonhosted.org/packages/6d/68/2c3e0bfedccbc2a1b73510b646ea9bc9ef8d4bbf969d4e2f0edca4ce427a/manini-0.0.6.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.7": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "55b57fe72fe77f1fbebf874729e4ccc8f29e298626cc51a0312076b70e687db4",
+          "md5": "d42736869e41045a1c594ed0793f92de",
+          "sha256": "39a46f4bb8ab2f4869acfb97f152f3ade5c22bfc15582a3d2400780c936f09ea"
+        },
+        "downloads": -1,
+        "filename": "manini-0.0.7-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "d42736869e41045a1c594ed0793f92de",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 17565,
+        "upload_time": "2023-11-14T17:55:04",
+        "upload_time_iso_8601": "2023-11-14T17:55:04.030613Z",
+        "url": "https://files.pythonhosted.org/packages/55/b5/7fe72fe77f1fbebf874729e4ccc8f29e298626cc51a0312076b70e687db4/manini-0.0.7-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "02b9bfbf6e65ca245ebb1783abc48f955936911ba9de547862256c5a6d615049",
+          "md5": "431d644d411e4f911b092db77335f7a2",
+          "sha256": "0e4140f68016edbef63cfd397bee3c788ac676a06b5b65aec01b72f8126891f9"
+        },
+        "downloads": -1,
+        "filename": "manini-0.0.7.tar.gz",
+        "has_sig": false,
+        "md5_digest": "431d644d411e4f911b092db77335f7a2",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 21519,
+        "upload_time": "2023-11-14T17:55:08",
+        "upload_time_iso_8601": "2023-11-14T17:55:08.949803Z",
+        "url": "https://files.pythonhosted.org/packages/02/b9/bfbf6e65ca245ebb1783abc48f955936911ba9de547862256c5a6d615049/manini-0.0.7.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.8": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "2f370f14346e613cdeda90a409a4f3b26619d2d283fd3b6d467d10aeee5de0b9",
+          "md5": "877b80c9e063ec723e9615edefebbdb9",
+          "sha256": "9b3e1448bebde2cf13a53c270238bf22ed7a1ab4d539ee598513171399fc1b5d"
+        },
+        "downloads": -1,
+        "filename": "manini-0.0.8-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "877b80c9e063ec723e9615edefebbdb9",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 17546,
+        "upload_time": "2023-11-14T18:05:09",
+        "upload_time_iso_8601": "2023-11-14T18:05:09.878446Z",
+        "url": "https://files.pythonhosted.org/packages/2f/37/0f14346e613cdeda90a409a4f3b26619d2d283fd3b6d467d10aeee5de0b9/manini-0.0.8-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "af6c8b8e3866a5fd91cdde86c861d32e3a5a1a04a484d4f596988211b9d87e59",
+          "md5": "b4187b4b3f223c4203afc1e29ceb6b37",
+          "sha256": "03bfda53b2facc4602e3f0b82e536e4554bd5b3bbed140ac5f0427312a50335d"
+        },
+        "downloads": -1,
+        "filename": "manini-0.0.8.tar.gz",
+        "has_sig": false,
+        "md5_digest": "b4187b4b3f223c4203afc1e29ceb6b37",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 21476,
+        "upload_time": "2023-11-14T18:05:11",
+        "upload_time_iso_8601": "2023-11-14T18:05:11.933946Z",
+        "url": "https://files.pythonhosted.org/packages/af/6c/8b8e3866a5fd91cdde86c861d32e3a5a1a04a484d4f596988211b9d87e59/manini-0.0.8.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.9": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "5702c71d4798f625abe6635e6513375bcbb13671307aebe942150f750b43eede",
+          "md5": "41649ab6c5d425fbc2787c4d5437f8b5",
+          "sha256": "c52176f0c85e388496bf26cf8a1c525a903b68013aeaace8f30b44663aa80afe"
+        },
+        "downloads": -1,
+        "filename": "manini-0.0.9-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "41649ab6c5d425fbc2787c4d5437f8b5",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 17460,
+        "upload_time": "2023-11-14T23:59:09",
+        "upload_time_iso_8601": "2023-11-14T23:59:09.414415Z",
+        "url": "https://files.pythonhosted.org/packages/57/02/c71d4798f625abe6635e6513375bcbb13671307aebe942150f750b43eede/manini-0.0.9-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "b42a58e3d43fcf5ad14077ea3eda5e97efe8c91d85e838ac09b13e57ee427aab",
+          "md5": "fed29b195e5a237e7c78f353048caf86",
+          "sha256": "b99ba0eb43a2e3130a41b76026f9adc99bd8a4651c3962fcc9ebdf49b5ae9394"
+        },
+        "downloads": -1,
+        "filename": "manini-0.0.9.tar.gz",
+        "has_sig": false,
+        "md5_digest": "fed29b195e5a237e7c78f353048caf86",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 21304,
+        "upload_time": "2023-11-14T23:59:11",
+        "upload_time_iso_8601": "2023-11-14T23:59:11.697280Z",
+        "url": "https://files.pythonhosted.org/packages/b4/2a/58e3d43fcf5ad14077ea3eda5e97efe8c91d85e838ac09b13e57ee427aab/manini-0.0.9.tar.gz",
         "yanked": false,
         "yanked_reason": null
       }
@@ -213,42 +390,42 @@
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "3ccd0860a7453c4c8c45905fb143ef104857cb4654428891ed99f1fa58513513",
-        "md5": "eaecba894736d0a41bb6f92afb55397c",
-        "sha256": "d442bf0bfeb3e08387d669cb5e375b2cf7e9e49606b153d929fb592cb8d8424d"
+        "blake2b_256": "906f5bc49aed820a2c8be27a240ab9709ffe1652c99e704657b4c512c86dd044",
+        "md5": "bb8e718d06abe884193e15d057287065",
+        "sha256": "35c3e1a1d784a14719239bd303ba01bbbbace6993457b05a7eec17f9ebd7ece9"
       },
       "downloads": -1,
-      "filename": "manini-0.0.3-py3-none-any.whl",
+      "filename": "manini-0.0.10-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "eaecba894736d0a41bb6f92afb55397c",
+      "md5_digest": "bb8e718d06abe884193e15d057287065",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.8",
-      "size": 19971,
-      "upload_time": "2023-01-25T07:30:01",
-      "upload_time_iso_8601": "2023-01-25T07:30:01.159737Z",
-      "url": "https://files.pythonhosted.org/packages/3c/cd/0860a7453c4c8c45905fb143ef104857cb4654428891ed99f1fa58513513/manini-0.0.3-py3-none-any.whl",
+      "size": 17472,
+      "upload_time": "2023-11-15T06:11:34",
+      "upload_time_iso_8601": "2023-11-15T06:11:34.949893Z",
+      "url": "https://files.pythonhosted.org/packages/90/6f/5bc49aed820a2c8be27a240ab9709ffe1652c99e704657b4c512c86dd044/manini-0.0.10-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "7f231834b0fbac73cb6881c53ed73cf3f03948bc926b613f9c430434aaaa6e49",
-        "md5": "4044cea4781a1d68610ffa1e3a043f0a",
-        "sha256": "22ced1ff260a80e90d69bc3ed6dcc85f6473b11c7900ba5e33104b9b3286c2de"
+        "blake2b_256": "15e63670b43cad58e02f7672569833797c4d8beca8ef26194f67b2d4b1ffb889",
+        "md5": "d5d1343335924d7415461aec328fa385",
+        "sha256": "e3f02b7d07fafe3131956edff54f58c5965db8656c84c884b17af6c4709130e2"
       },
       "downloads": -1,
-      "filename": "manini-0.0.3.tar.gz",
+      "filename": "manini-0.0.10.tar.gz",
       "has_sig": false,
-      "md5_digest": "4044cea4781a1d68610ffa1e3a043f0a",
+      "md5_digest": "d5d1343335924d7415461aec328fa385",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.8",
-      "size": 23554,
-      "upload_time": "2023-01-25T07:30:02",
-      "upload_time_iso_8601": "2023-01-25T07:30:02.817454Z",
-      "url": "https://files.pythonhosted.org/packages/7f/23/1834b0fbac73cb6881c53ed73cf3f03948bc926b613f9c430434aaaa6e49/manini-0.0.3.tar.gz",
+      "size": 21317,
+      "upload_time": "2023-11-15T06:11:37",
+      "upload_time_iso_8601": "2023-11-15T06:11:37.513013Z",
+      "url": "https://files.pythonhosted.org/packages/15/e6/3670b43cad58e02f7672569833797c4d8beca8ef26194f67b2d4b1ffb889/manini-0.0.10.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
