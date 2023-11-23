@@ -14,7 +14,7 @@
       "Topic :: Scientific/Engineering :: Image Recognition",
       "Topic :: Utilities"
     ],
-    "description": "domb-napari\n===========\n## DoMB Tools for napari\n\nImplementation of the [DoMB Tools](https://domb.bio/) package as plugin for [napari](https://napari.org/).\n\nA Napari plugin offers widgets to analyze fluorescence-labeled proteins redistribution in widefield epifluorescence time-lapse acquisitions. Useful for studying calcium-dependent translocation of neuronal calcium sensors, synaptic receptors traffic during long-term plasticity induction, membrane protein tracking, etc.\n\n_Currently, the plugin lacks test coverage!_\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/translocation.gif)\n__Hippocalcin (neuronal calcium sensor) redistributes in dendritic branches upon NMDA application__\n\n## Widgets\n### Image Preprocessing\nProvides functions for preprocessing multi-channel fluorescence acquisitions:\n- If the input image has 4 dimensions (time, channel, x-axis, y-axis), channels will be split into individual 3 dimensions images (time, x-axis, y-axis) with the `_ch%index%` suffix.\n- If the `gaussian blur` option is selected, the image will be blurred with a Gaussian filter using sigma=`gaussian sigma`.\n- If the `photobleaching correction` option is selected, the image will undergo correction with exponential (method `exp`) or bi-exponential (method `bi_exp`) fitting.\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/pic_0.png)\n\n### Red-Green Series\nPrimary method for detecting fluorescent-labeled targets redistribution in time. Returns a series of differential images representing the intensity difference between the current frame and the previous one as new image with the `_red-green` siffix.\n\nParameters:\n- `left frames` - number of previous frames for pixel-wise averaging.\n- `space frames` - number of frames between the last left and first right frames.\n- `right frames` - number of subsequent frames for pixel-wise averaging.\n- `save mask series` - if selected, a series of labels will be created for each frame of the differential image with the threshold `insertion threshold`.\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/pic_1.png)\n\n### Up Mask\nGenerates labels for insertion sites (regions with increasing intensity) based on `-red-green` images. Returns labels layer with `_up-labels` siffix.\n\nParameters:\n- `detection img index` - index of the frame from `-red-green` image used for insertion sites detection.\n- `insertion threshold` - threshold value for insertion site detection, intensity on selected `_red-green` frame normalized in -1 - 0 range.\n- `save mask` - if selected, a total up mask (containing all ROIs) will be created with the `_up-mask` suffix.\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/pic_2.png)\n\n### Individual Labels Profiles\nBuilds a plot with mean intensity profiles for each ROI in `labels` using absolute intensity (if `raw intensity` is selected) or relative intensities (\u0394F/F0).\n\nThe `time scale` sets the number of seconds between frames for x-axis scaling.\n\nThe baseline intensity for \u0394F/F0 profiles is estimated as the mean intensity of the initial profile points (`\u0394F win`).\n\nFilters ROIs by minimum (`min amplitude`) and maximum (`max amplitude`) intensity amplitudes.\n\n_Note: Intensity filtering is most relevant for \u0394F/F0 profiles._\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/pic_3.png)\n\n### Labels Profile\nBuilds a plot with the averaged intensity of all ROIs in `labels`. Can take two images (`img 0` and `img 1`) as input if `two profiles` are selected.\n\nThe `time scale` and `\u0394F win` are the same as in the __Individual Labels Profiles__.\n\nThe `stat method` provides methods for calculating intensity errors:\n- `se` - standard error of mean.\n- `iqr` - interquartile range.\n- `ci` - 95% confidence interval for t-distribution.\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/pic_4.png)\n",
+    "description": "domb-napari\n===========\n## DoMB Tools for napari\n\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/domb-napari)](https://napari-hub.org/plugins/domb-napari)\n![PyPI - Version](https://img.shields.io/pypi/v/domb-napari)\n![PyPI - License](https://img.shields.io/pypi/l/domb-napari)\n![Website](https://img.shields.io/website?up_message=domb.bio%2Fnapari&up_color=%2323038C93&url=https%3A%2F%2Fdomb.bio%2Fnapari%2F)\n\nA napari plugin offers widgets to analyze fluorescence-labeled proteins redistribution in widefield epifluorescence time-lapse acquisitions. Useful for studying calcium-dependent translocation of neuronal calcium sensors, synaptic receptors traffic during long-term plasticity induction, membrane protein tracking, etc.\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/translocation.gif)\n__Hippocalcin (neuronal calcium sensor) redistributes in dendritic branches upon NMDA application__\n\n## Widgets\n### Image Preprocessing\nProvides functions for preprocessing multi-channel fluorescence acquisitions:\n- If the input image has 4 dimensions (time, channel, x-axis, y-axis), channels will be split into individual 3 dimensions images (time, x-axis, y-axis) with the `_ch%index%` suffix.\n- If the `gaussian blur` option is selected, the image will be blurred with a Gaussian filter using sigma=`gaussian sigma`.\n- If the `photobleaching correction` option is selected, the image will undergo correction with exponential (method `exp`) or bi-exponential (method `bi_exp`) fitting.\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/pic_0.png)\n\n### Red-Green Series\nPrimary method for detecting fluorescent-labeled targets redistribution in time. Returns a series of differential images representing the intensity difference between the current frame and the previous one as new image with the `_red-green` suffix.\n\nParameters:\n\n- `left frames` - number of previous frames for pixel-wise averaging.\n- `space frames` - number of frames between the last left and first right frames.\n- `right frames` - number of subsequent frames for pixel-wise averaging.\n- `save mask series` - if selected, a series of labels will be created for each frame of the differential image with the threshold `insertion threshold`.\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/pic_1.png)\n\n### Up Mask\nGenerates labels for insertion sites (regions with increasing intensity) based on `-red-green` images. Returns labels layer with `_up-labels` suffix.\n\nParameters:\n\n- `detection img index` - index of the frame from `-red-green` image used for insertion sites detection.\n- `insertion threshold` - threshold value for insertion site detection, intensity on selected `_red-green` frame normalized in -1 - 0 range.\n- `save mask` - if selected, a total up mask (containing all ROIs) will be created with the `_up-mask` suffix.\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/pic_2.png)\n\n### Individual Labels Profiles\nBuilds a plot with mean intensity profiles for each ROI in `labels` using absolute intensity (if `raw intensity` is selected) or relative intensities (\u0394F/F0).\n\nThe `time scale` sets the number of seconds between frames for x-axis scaling.\n\nThe baseline intensity for \u0394F/F0 profiles is estimated as the mean intensity of the initial profile points (`\u0394F win`).\n\nFilters ROIs by minimum (`min amplitude`) and maximum (`max amplitude`) intensity amplitudes.\n\n_Note: Intensity filtering is most relevant for \u0394F/F0 profiles._\n\nAdditionally, you can save ROI intensity profiles as .csv using the `save data frame` option and specifying the `saving path`. The output data frames `%img_name%_lab_prof.csv` will contain the following columns:\n\n- __id__ - unique image ID, the name of the input `napari.Image` object.\n- __roi__ - ROI number, consecutively numbered starting from 1.\n- __int__ - ROI mean intensity, raw or \u0394F/F0 according to the `raw intensity` option.\n- __time__ - frame time point according to the `time scale`.\n\n_Note: The data frame will contain information for all ROIs; filtering options pertain to plotting only._\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/pic_3.png)\n\n### Labels Profile\nBuilds a plot with the averaged intensity of all ROIs in `labels`. Can take two images (`img 0` and `img 1`) as input if `two profiles` are selected.\n\nThe `time scale` and `\u0394F win` are the same as in the __Individual Labels Profiles__.\n\nThe `stat method` provides methods for calculating intensity errors:\n\n- `se` - standard error of mean.\n- `iqr` - interquartile range.\n- `ci` - 95% confidence interval for t-distribution.\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/pic_4.png)\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": "",
@@ -38,19 +38,63 @@
       "Source Code": "https://github.com/wisstock/domb-napari",
       "User Support": "https://github.com/wisstock/domb-napari/issues"
     },
-    "release_url": "https://pypi.org/project/domb-napari/2023.11.7/",
+    "release_url": "https://pypi.org/project/domb-napari/2023.11.10/",
     "requires_dist": [
       "napari",
       "domb"
     ],
     "requires_python": "",
     "summary": "Napari plugin implementing DoMB Tools for analyzing fluorescence-labeled proteins redistribution",
-    "version": "2023.11.7",
+    "version": "2023.11.10",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 20754419,
+  "last_serial": 20767900,
   "releases": {
+    "2023.11.10": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "4ac20d27c05593fe95dc1d46eeb5250b7623d87acf7b0c7c501b98a86b8c9766",
+          "md5": "7b3abf8f4354851a0fdfd2568a7e52de",
+          "sha256": "efb79a25d2fcbf3d86ae8b93cd5dcf224172e2f507232a337073b4711478ce87"
+        },
+        "downloads": -1,
+        "filename": "domb_napari-2023.11.10-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "7b3abf8f4354851a0fdfd2568a7e52de",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": null,
+        "size": 8691,
+        "upload_time": "2023-11-23T15:14:21",
+        "upload_time_iso_8601": "2023-11-23T15:14:21.682242Z",
+        "url": "https://files.pythonhosted.org/packages/4a/c2/0d27c05593fe95dc1d46eeb5250b7623d87acf7b0c7c501b98a86b8c9766/domb_napari-2023.11.10-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "ed4b4744a5231735fb12219fd38fcedb62c0cf096b777f8a0c4fb6029fa161b4",
+          "md5": "83e5f703e0b144189e06f21405ac1829",
+          "sha256": "96cb0c215f738dcf59b60458f44366dd58ad8f8fec9c643d0abc617ad80acb32"
+        },
+        "downloads": -1,
+        "filename": "domb-napari-2023.11.10.tar.gz",
+        "has_sig": false,
+        "md5_digest": "83e5f703e0b144189e06f21405ac1829",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": null,
+        "size": 9884,
+        "upload_time": "2023-11-23T15:14:23",
+        "upload_time_iso_8601": "2023-11-23T15:14:23.690395Z",
+        "url": "https://files.pythonhosted.org/packages/ed/4b/4744a5231735fb12219fd38fcedb62c0cf096b777f8a0c4fb6029fa161b4/domb-napari-2023.11.10.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
     "2023.11.4": [
       {
         "comment_text": "",
@@ -226,48 +270,92 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "2023.11.9": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "ba4d75cb19a889eb156e6b2ec68988bd5fd291d9faf381f7000968dd61eec3c9",
+          "md5": "c6e69c77a9229c1e6f37e91c80f51c32",
+          "sha256": "d70f44db437591be2623dc58c9dab1bfb1240bb55ddd1903e5bc67dbba1d9409"
+        },
+        "downloads": -1,
+        "filename": "domb_napari-2023.11.9-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "c6e69c77a9229c1e6f37e91c80f51c32",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": null,
+        "size": 8259,
+        "upload_time": "2023-11-23T14:25:14",
+        "upload_time_iso_8601": "2023-11-23T14:25:14.507652Z",
+        "url": "https://files.pythonhosted.org/packages/ba/4d/75cb19a889eb156e6b2ec68988bd5fd291d9faf381f7000968dd61eec3c9/domb_napari-2023.11.9-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "a764e94329a25f0d7308cbf8ee48425ea2bad085ed7c5626747842b518a13462",
+          "md5": "5411108ad4525b2751c1c0fedf7465ad",
+          "sha256": "24dd22d2ad5edf49265dc4ad31c066acc74b2ef1edc0e010f2b6c102cab8127c"
+        },
+        "downloads": -1,
+        "filename": "domb-napari-2023.11.9.tar.gz",
+        "has_sig": false,
+        "md5_digest": "5411108ad4525b2751c1c0fedf7465ad",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": null,
+        "size": 8740,
+        "upload_time": "2023-11-23T14:25:16",
+        "upload_time_iso_8601": "2023-11-23T14:25:16.269998Z",
+        "url": "https://files.pythonhosted.org/packages/a7/64/e94329a25f0d7308cbf8ee48425ea2bad085ed7c5626747842b518a13462/domb-napari-2023.11.9.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "cdd513c1efb6cb39e93cba43214f4bf6f5e5dd27b0fbfcdbbd15c8352528e598",
-        "md5": "1e912fd7e5fe2ce49bd84eab845e7539",
-        "sha256": "d49d4ba1f524be22eabae1394cc0d44a2f760e7d215855c0963996fef7cc1fe4"
+        "blake2b_256": "4ac20d27c05593fe95dc1d46eeb5250b7623d87acf7b0c7c501b98a86b8c9766",
+        "md5": "7b3abf8f4354851a0fdfd2568a7e52de",
+        "sha256": "efb79a25d2fcbf3d86ae8b93cd5dcf224172e2f507232a337073b4711478ce87"
       },
       "downloads": -1,
-      "filename": "domb_napari-2023.11.7-py3-none-any.whl",
+      "filename": "domb_napari-2023.11.10-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "1e912fd7e5fe2ce49bd84eab845e7539",
+      "md5_digest": "7b3abf8f4354851a0fdfd2568a7e52de",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": null,
-      "size": 7387,
-      "upload_time": "2023-11-22T19:54:44",
-      "upload_time_iso_8601": "2023-11-22T19:54:44.881645Z",
-      "url": "https://files.pythonhosted.org/packages/cd/d5/13c1efb6cb39e93cba43214f4bf6f5e5dd27b0fbfcdbbd15c8352528e598/domb_napari-2023.11.7-py3-none-any.whl",
+      "size": 8691,
+      "upload_time": "2023-11-23T15:14:21",
+      "upload_time_iso_8601": "2023-11-23T15:14:21.682242Z",
+      "url": "https://files.pythonhosted.org/packages/4a/c2/0d27c05593fe95dc1d46eeb5250b7623d87acf7b0c7c501b98a86b8c9766/domb_napari-2023.11.10-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "01e2dc5b6abafc616eb25d1e72c1656af5185a77788a2659835efbe43b2b7f96",
-        "md5": "1b199baf81da4a0d3f5e564d1dbde24d",
-        "sha256": "24a74c1d9db64a202022f0f1e4e4f8120d332e7ed38c41cce87a7d49a768ae86"
+        "blake2b_256": "ed4b4744a5231735fb12219fd38fcedb62c0cf096b777f8a0c4fb6029fa161b4",
+        "md5": "83e5f703e0b144189e06f21405ac1829",
+        "sha256": "96cb0c215f738dcf59b60458f44366dd58ad8f8fec9c643d0abc617ad80acb32"
       },
       "downloads": -1,
-      "filename": "domb-napari-2023.11.7.tar.gz",
+      "filename": "domb-napari-2023.11.10.tar.gz",
       "has_sig": false,
-      "md5_digest": "1b199baf81da4a0d3f5e564d1dbde24d",
+      "md5_digest": "83e5f703e0b144189e06f21405ac1829",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": null,
-      "size": 7437,
-      "upload_time": "2023-11-22T19:54:46",
-      "upload_time_iso_8601": "2023-11-22T19:54:46.789486Z",
-      "url": "https://files.pythonhosted.org/packages/01/e2/dc5b6abafc616eb25d1e72c1656af5185a77788a2659835efbe43b2b7f96/domb-napari-2023.11.7.tar.gz",
+      "size": 9884,
+      "upload_time": "2023-11-23T15:14:23",
+      "upload_time_iso_8601": "2023-11-23T15:14:23.690395Z",
+      "url": "https://files.pythonhosted.org/packages/ed/4b/4744a5231735fb12219fd38fcedb62c0cf096b777f8a0c4fb6029fa161b4/domb-napari-2023.11.10.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
