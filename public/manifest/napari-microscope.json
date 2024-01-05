@@ -1,0 +1,77 @@
+{
+  "name": "napari-microscope",
+  "display_name": "napari-microscope",
+  "visibility": "public",
+  "icon": "",
+  "categories": [],
+  "schema_version": "0.2.0",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-microscope.MicroscopeWidget",
+        "title": "MicroscopeWidget",
+        "python_name": "napari_microscope:MicroscopeWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "napari-microscope.MicroscopeWidget",
+        "display_name": "MicroscopeWidget",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.1",
+    "name": "napari-microscope",
+    "version": "0.0.3",
+    "dynamic": null,
+    "platform": null,
+    "supported_platform": null,
+    "summary": "Napari plugin for Microscope.",
+    "description": "Microscope control plugin for Napari via Python Microscope.\n\nCurrent development stage is whatever comes before alpha and \"proof of\nconcept\".\n\nTo test\n-------\n\nI haven't had access to real hardware yet, so this has all been\ndeveloped with simulated devices.\n\n1. Start the device server with simulated devices.\n\n    a. Create a device server configuration file like so::\n\n        import microscope\n        from microscope.device_server import device\n        from microscope.simulators import (\n            SimulatedCamera,\n            SimulatedFilterWheel,\n            SimulatedLightSource,\n            SimulatedStage,\n        )\n\n        DEVICES = [\n            device(SimulatedCamera, \"localhost\", 8000,),\n            device(SimulatedLightSource, \"localhost\", 8001),\n            device(SimulatedFilterWheel, \"localhost\", 8002,\n                   {\"positions\": 6}),\n            device(SimulatedStage, \"localhost\", 8003,\n                   {\"limits\": {\"X\": microscope.AxisLimits(0, 25000),\n                               \"Y\": microscope.AxisLimits(0, 12000)}}),\n        ]\n\n    b. Start the device server (ensure port 8000-8003 are unused)::\n\n        $ device-server path-to-microscope-config.py\n\n2. Start napari\n\n3. Plugins > Add Dock Widget > microscope: MicroscopeWidget\n\n4. Connect to the camera:\n\n    a. On the new widget, click on the \"Add device\" button.\n\n    b. Enter the camera URI `PYRO:SimulatedCamera@localhost:8000`\n\n5. Tick the `Enabled` box to enable the camera and then press the\n\"Snap\" button.\n\n6. A random values image will appear displayed on the napari viewer.\nKeep pressing the \"Snap\" button to get new images.  The top left\ncorner of the image is the simulated image number.\n\n7. Connect to the other simulated devices.  Their URIs are:\n\n    a. PYRO:SimulatedLightSource@localhost:8001\n    b. PYRO:SimulatedFilterWheel@localhost:8002\n    c. PYRO:SimulatedStage@localhost:8003\n\n8. Changing the other simulated devices, doesn't really do much (but\ndoes change state of the devices, as can be seen in the logs)\n\n\nTest with stage aware camera\n----------------------------\n\nThis is pretty much the same as before but one can use a large RGB\nTIFF (histology samples are perfect) to simulate a camera that returns\nsubsections of the image file based on the simulated stage position.\n\nFor quick example, try::\n\n    wget https://zenodo.org/record/1445489/files/B0002.tif\n\nAnd use the following device server configuration file::\n\n    from microscope.device_server import device\n    from microscope.simulators.stage_aware_camera import simulated_setup_from_image\n\n    DEVICES = [\n        device(simulated_setup_from_image, \"localhost\", 8000,\n               conf={\"filepath\": \"B0002.tif\"}),\n    ]\n\nThe URI for the devices will be::\n\n    PYRO:camera@localhost:8000\n    PYRO:filterwheel@localhost:8000\n    PYRO:stage@localhost:8000\n\nChanging the filterwheel changes which channel from the image is\nreturned.  Changing the stage coordinates changes the image that is\nreturned (but beware of the corners, pixels outside the image size are\nnot handled yet and will give an error).\n",
+    "description_content_type": null,
+    "keywords": null,
+    "home_page": null,
+    "download_url": null,
+    "author": "David Miguel Susano Pinto",
+    "author_email": "david.pinto@bioch.ox.ac.uk",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "GPL-3.0-or-later",
+    "classifier": [
+      "Development Status :: 3 - Alpha",
+      "Environment :: Plugins",
+      "Framework :: napari ",
+      "Intended Audience :: Science/Research",
+      "Operating System :: OS Independent",
+      "Topic :: Scientific/Engineering"
+    ],
+    "requires_dist": [
+      "Pyro4",
+      "microscope",
+      "napari-plugin-engine"
+    ],
+    "requires_python": ">=3.6",
+    "requires_external": null,
+    "project_url": null,
+    "provides_extra": null,
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": true
+}
