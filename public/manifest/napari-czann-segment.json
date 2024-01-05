@@ -1,0 +1,103 @@
+{
+  "name": "napari-czann-segment",
+  "display_name": "CZANN Segmentation",
+  "visibility": "public",
+  "icon": "",
+  "categories": [],
+  "schema_version": "0.2.0",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-czann-segment.get_czann_widget",
+        "title": "CZANN segmentation Adv",
+        "python_name": "napari_czann_segment.dock_widget:segment_with_czann",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "napari-czann-segment.get_czann_widget",
+        "display_name": "Segment with CZANN Model",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.1",
+    "name": "napari-czann-segment",
+    "version": "0.0.18",
+    "dynamic": null,
+    "platform": null,
+    "supported_platform": null,
+    "summary": "Semantic Segmentation using Deep Learning ONNX models packaged as *.czann files",
+    "description": "# napari-czann-segment\n\n[![License](https://img.shields.io/pypi/l/napari-czann-segment.svg?color=green)](https://github.com/sebi06/napari-czann-segment/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-czann-segment.svg?color=green)](https://pypi.org/project/napari-czann-segment)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-czann-segment.svg?color=green)](https://python.org)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-czann-segment)](https://napari-hub.org/plugins/napari-czann-segment)\n\nSemantic Segmentation of multidimensional images using Deep Learning ONNX models packaged as *.czann files.\n\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n\n![Train on APEER and use model in Napari](https://github.com/sebi06/napari-czann-segment/raw/main/readme_images/Train_APEER_run_Napari_CZANN_no_highlights_small.gif)\n\n## Installation\n\nBefore installing, please setup a conda environment. If you have never worked with conda environments, go through [this tutorial](https://biapol.github.io/blog/johannes_mueller/anaconda_getting_started/) first.\n\nYou can then install `napari-czann-segment` via [pip]:\n\n    pip install napari-czann-segment\n\n## What does the plugin do\n\nThe plugin allows you to:\n\n- Use a *.czann file containing the Deep Neural Network (ONNX) for semantic segmentation and metadata\n- Segmentation will be applied per 2D plane for all dimensions\n- Processing larger multidimensional images it uses the [cztile] package to chunk the individual 2d arrays using a specific overlap.\n- multidimensional images will be processed plane-by-plane\n\n## What does the plugin NOT do\n\n**Before one can actually use a model it needs to be trained, which is NOT done by this plugin**.\n\nThere are two main ways hwo such a model can be created:\n\n- Train the segmentation model fully automated on [APEER] and download the *.czann file\n- Train your model in a Jupyter notebook etc. and package it using the [czmodel] python package as an *.czann\n\n## Using this plugin\n\n### Sample Data\n\nA test image and a *.czann model file can be downloaded [here](https://github.com/sebi06/napari-czann-segment/tree/main/src/napari_czann_segment/_data).\n\n- `PGC_20X.ome.tiff` --> use `PGC_20X_nucleus_detector.czann` to segment\n\nIn order to use this plugin the user has to do the following things:\n\n- Open the image using \"File - Open Files(s)\" (requires [napari-aicsimageio] plugin).\n- Click **napari-czann-segment: Segment with CZANN model** in the \"Plugins\" menu.\n- **Select a czann file** to use the model for segmentation.\n- metadata of the model will be shown (see example below)\n\n| Parameter    | Value                                        | Explanation                                             |\n| :----------- | :------------------------------------------- | ------------------------------------------------------- |\n| model_type   | ModelType.SINGLE_CLASS_SEMANTIC_SEGMENTATION | see: [czmodel] for details                              |\n| input_shape  | [1024, 1024, 1]                              | tile dimensions of model input                          |\n| output_shape | [1024, 1024, 3]                              | tile dimensions of model output                         |\n| model_id     | ba32bc6d-6bc9-4774-8b47-20646c7cb838         | unique GUID for that model                              |\n| min_overlap  | [128, 128]                                   | tile overlap used during training (for this model)      |\n| classes      | ['background', 'grains', 'inclusions']       | available classes                                       |\n| model_name   | APEER-trained model                          | name of the model                                       |\n\n![Napari - Image loaded and czann selected](https://github.com/sebi06/napari-czann-segment/raw/main/readme_images/napari_czann1.png)\n\n- Adjust the **minimum overlap** for the tiling (optional, see [cztile] for details).\n- Select the **layer** to be segmented.\n- Toggle **Use GPU for inference** checkbox to enable / disable using a GPU (Nvidia) for the segmentation (experimental feature).\n- Press **Segment Selected Image Layer** to run the segmentation.\n\n![Napari - Image successfully segmented](https://github.com/sebi06/napari-czann-segment/raw/main/readme_images/napari_czann3.png)\n\nA successful is obviously only the starting point for further image analysis steps to extract the desired numbers from the segmented image.\nAnother example is shown below demonstrating a simple \"Grain Size Analysis\" using a deep-learning model trained on [APEER] used in [napari]\n\n![Napari - Simple Grain Size Analysis](https://github.com/sebi06/napari-czann-segment/raw/main/readme_images/grainsize_czann_napari.png)\n\n### Remarks\n\n> **IMPORTANT**: Currently the plugin only supports using models trained on a **single channel** image. Therefore, make sure that during the training on [APEER] or somewhere else the correct inputs images are used.\n> It is quite simple to train a single RGB image, which actually has three channels, load this image in [napari] and notice only then that the model will not work, because the image will 3 channels inside [napari].\n\n- Only the CPU will be used for the inference using the ONNX runtime for the [ONNX-CPU] runtime\n- GPUs are supported but require the [ONNX-GPU] runtime and the respective CUDA libraries.\n- Please check the [YAML](env_napari_czann_segment.yml) for an example environment with GPU support.\n- See also [pytorch] for instruction on how to install pytorch\n\n## For developers\n\n- **Please clone this repository first using your favorite tool.**\n\n- **Ideally one creates a new [conda] environment or use an existing environment that already contains [Napari].**\n\nFeel free to create a new environment using the [YAML](env_napari_czann_segment.yml) file at your own risk:\n\n    cd the-github-repo-with-YAML-file\n    conda env create --file conda_env_napari_czann_segment.yml\n    conda activate napari_czmodel\n\n- **Install the plugin locally**\n\nPlease run the following command:\n\n    pip install -e .\n\nTo install latest development version:\n\n    pip install git+https://github.com/sebi06/napari_czann_segment.git\n\n## Contributing\n\nContributions and Feedback are very welcome.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-czann-segment\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n[file an issue]: https://github.com/sebi06/napari-czann-segment/issues\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n[czmodel]: https://pypi.org/project/czmodel/\n[cztile]: https://pypi.org/project/cztile/\n[APEER]: https://www.apeer.com\n[napari-aicsimageio]: https://github.com/AllenCellModeling/napari-aicsimageio\n[ONNX-GPU]: https://pypi.org/project/onnxruntime-gpu/\n[ONNX-CPU]: https://pypi.org/project/onnxruntime/\n[conda]: https://docs.conda.io/projects/conda/en/latest/user-guide/getting-started.html\n[pytorch]: https://pytorch.org/get-started/locally\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": "https://github.com/sebi06/napari-czann-segment",
+    "download_url": null,
+    "author": "Sebastian Rhode",
+    "author_email": "sebrhode@gmail.com",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "BSD-3-Clause",
+    "classifier": [
+      "Development Status :: 3 - Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "Intended Audience :: Science/Research",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: Unix",
+      "Operating System :: Microsoft :: Windows",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.9",
+      "Programming Language :: Python :: 3.10",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "requires_dist": [
+      "numpy",
+      "magicgui",
+      "qtpy",
+      "napari",
+      "cztile",
+      "czmodel[pytorch] >=5",
+      "onnxruntime-gpu",
+      "aicsimageio",
+      "pytest",
+      "tox ; extra == 'testing'",
+      "pytest ; extra == 'testing'",
+      "pytest-cov ; extra == 'testing'",
+      "pytest-qt ; extra == 'testing'",
+      "napari ; extra == 'testing'",
+      "pyqt5 ; extra == 'testing'"
+    ],
+    "requires_python": ">=3.9",
+    "requires_external": null,
+    "project_url": [
+      "Bug Tracker, https://github.com/sebi06/napari-czann-segment/issues",
+      "Documentation, https://github.com/sebi06/napari-czann-segment#README.md",
+      "Source Code, https://github.com/sebi06/napari-czann-segment",
+      "User Support, https://github.com/sebi06/napari-czann-segment/issues"
+    ],
+    "provides_extra": [
+      "testing"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}
