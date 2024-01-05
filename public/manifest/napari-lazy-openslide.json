@@ -1,0 +1,85 @@
+{
+  "name": "napari-lazy-openslide",
+  "display_name": "napari-lazy-openslide",
+  "visibility": "public",
+  "icon": "",
+  "categories": [],
+  "schema_version": "0.2.0",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-lazy-openslide.napari_get_reader",
+        "title": "napari_get_reader",
+        "python_name": "napari_lazy_openslide.lazy_openslide:napari_get_reader",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": [
+      {
+        "command": "napari-lazy-openslide.napari_get_reader",
+        "filename_patterns": [
+          "*"
+        ],
+        "accepts_directories": true
+      }
+    ],
+    "writers": null,
+    "widgets": null,
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.1",
+    "name": "napari-lazy-openslide",
+    "version": "0.3.0",
+    "dynamic": null,
+    "platform": null,
+    "supported_platform": null,
+    "summary": "A plugin to lazily load multiscale whole-slide images with openslide and dask",
+    "description": "# napari-lazy-openslide\n\n[![License](https://img.shields.io/pypi/l/napari-lazy-openslide.svg?color=green)](https://github.com/manzt/napari-lazy-openslide/raw/master/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-lazy-openslide.svg?color=green)](https://pypi.org/project/napari-lazy-openslide)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-lazy-openslide.svg?color=green)](https://python.org)\n[![tests](https://github.com/manzt/napari-lazy-openslide/workflows/tests/badge.svg)](https://github.com/manzt/napari-lazy-openslide/actions)\n\nAn experimental plugin to lazily load multiscale whole-slide tiff images with openslide and dask.\n\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using with [@napari]'s [cookiecutter-napari-plugin] template.\n\n## Installation\n\n**Step 1.)** Make sure you have OpenSlide installed. Download instructions [here](https://openslide.org/download/).\n\n> NOTE: Installation on macOS is easiest via Homebrew: `brew install openslide`. Up-to-date and multiplatform \n> binaries for `openslide` are also avaiable via `conda`: `conda install -c sdvillal openslide-python`\n\n**Step 2.)** Install `napari-lazy-openslide` via `pip`:\n\n    pip install napari-lazy-openslide\n\n## Usage\n\n### Napari plugin\n\n```bash\n$ napari tumor_004.tif\n```\nBy installing this package via `pip`, the plugin should be recognized by `napari`. The plugin\nattempts to read image formats recognized by `openslide` that are multiscale \n(`openslide.OpenSlide.level_count > 1`). \n\nIt should be noted that `napari-lazy-openslide` is experimental and has primarily \nbeen tested with `CAMELYON16` and `CAMELYON17` datasets, which can be \ndownloaded [here](https://camelyon17.grand-challenge.org/Data/).\n\n![Interactive deep zoom of whole-slide image](tumor_004.gif)\n\n\n### Using `OpenSlideStore` with Zarr and Dask\n\nThe `OpenSlideStore` class wraps an `openslide.OpenSlide` object as a valid Zarr store. \nThe underlying `openslide` image pyramid is translated to the Zarr multiscales extension,\nwhere each level of the pyramid is a separate 3D `zarr.Array` with shape `(y, x, 4)`.\n\n```python\nimport dask.array as da\nimport zarr\n\nfrom napari_lazy_openslide import OpenSlideStore\n\nstore = OpenSlideStore('tumor_004.tif')\ngrp = zarr.open(store, mode=\"r\")\n\n# The OpenSlideStore implements the multiscales extension\n# https://forum.image.sc/t/multiscale-arrays-v0-1/37930\ndatasets = grp.attrs[\"multiscales\"][0][\"datasets\"]\n\npyramid = [grp.get(d[\"path\"]) for d in datasets]\nprint(pyramid)\n# [\n#   <zarr.core.Array '/0' (23705, 29879, 4) uint8 read-only>,\n#   <zarr.core.Array '/1' (5926, 7469, 4) uint8 read-only>,\n#   <zarr.core.Array '/2' (2963, 3734, 4) uint8 read-only>,\n# ]\n\npyramid = [da.from_zarr(store, component=d[\"path\"]) for d in datasets]\nprint(pyramid)\n# [\n#   dask.array<from-zarr, shape=(23705, 29879, 4), dtype=uint8, chunksize=(512, 512, 4), chunktype=numpy.ndarray>,\n#   dask.array<from-zarr, shape=(5926, 7469, 4), dtype=uint8, chunksize=(512, 512, 4), chunktype=numpy.ndarray>,\n#   dask.array<from-zarr, shape=(2963, 3734, 4), dtype=uint8, chunksize=(512, 512, 4), chunktype=numpy.ndarray>,\n# ]\n\n# Now you can use numpy-like indexing with openslide, reading data into memory lazily!\nlow_res = pyramid[-1][:]\nregion = pyramid[0][y_start:y_end, x_start:x_end]\n```\n\n## Contributing\n\nContributions are very welcome. Tests can be run with `tox`, please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n[file an issue]: https://github.com/manzt/napari-lazy-openslide/issues\n[PyPI]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": "https://github.com/manzt/napari-lazy-openslide",
+    "download_url": null,
+    "author": "Trevor Manz",
+    "author_email": "trevor.j.manz@gmail.com",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "BSD-3",
+    "classifier": [
+      "Development Status :: 4 - Beta",
+      "Intended Audience :: Developers",
+      "Topic :: Software Development :: Testing",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3.7",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Operating System :: OS Independent",
+      "License :: OSI Approved :: BSD License",
+      "Framework :: napari"
+    ],
+    "requires_dist": [
+      "napari-plugin-engine (>=0.1.4)",
+      "zarr (>=2.11.0)",
+      "numpy",
+      "dask[array]",
+      "openslide-python"
+    ],
+    "requires_python": ">=3.6",
+    "requires_external": null,
+    "project_url": null,
+    "provides_extra": null,
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": true
+}
