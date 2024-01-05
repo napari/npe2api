@@ -1,0 +1,114 @@
+{
+  "name": "napari-signal-selector",
+  "display_name": "Napari Signal Selector",
+  "visibility": "public",
+  "icon": "",
+  "categories": [],
+  "schema_version": "0.2.0",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-signal-selector.load_flashing_polygons_data",
+        "title": "Load sample data from Napari Signal Selector",
+        "python_name": "napari_signal_selector._sample_data:load_flashing_polygons_data",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-signal-selector.make_inter_features_line_widget",
+        "title": "Signal Selector",
+        "python_name": "napari_signal_selector.interactive:InteractiveFeaturesLineWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "napari-signal-selector.make_inter_features_line_widget",
+        "display_name": "Signal Selector",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": [
+      {
+        "command": "napari-signal-selector.load_flashing_polygons_data",
+        "key": "flashing_polygons",
+        "display_name": "Flashing Polygons (2D+t)"
+      }
+    ],
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.1",
+    "name": "napari-signal-selector",
+    "version": "0.0.3",
+    "dynamic": null,
+    "platform": null,
+    "supported_platform": null,
+    "summary": "An interactive signal selector for napari, based on napari-matplotlib.",
+    "description": "# napari-signal-selector\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-signal-selector.svg?color=green)](https://github.com/zoccoler/napari-signal-selector/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-signal-selector.svg?color=green)](https://pypi.org/project/napari-signal-selector)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-signal-selector.svg?color=green)](https://python.org)\n[![tests](https://github.com/zoccoler/napari-signal-selector/workflows/tests/badge.svg)](https://github.com/zoccoler/napari-signal-selector/actions)\n[![codecov](https://codecov.io/gh/zoccoler/napari-signal-selector/branch/main/graph/badge.svg)](https://codecov.io/gh/zoccoler/napari-signal-selector)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-signal-selector)](https://napari-hub.org/plugins/napari-signal-selector)\n\nAn interactive signal selector and annotator for napari, based on [napari-matplotlib](https://github.com/matplotlib/napari-matplotlib#napari-matplotlib).\n\n[Jump to Intallation](#installation)\n\n----------------------------------\n\n## Usage\n\nThis plugin opens an embedded plotter in napari capable of plotting and interacting (selecting/annotating) with individual object signals (typically temporal features).\n\n![plotting](https://github.com/zoccoler/napari-signal-selector/raw/main/images/plotting.gif)\n\n### Input Data\n\nnapari-signal-selector works with a [Labels layer](https://napari.org/stable/howtos/layers/labels.html) containing segmented objects and whose `features` attribute contains a table that follows the example structure shown below:\n\n| `label` | `frame` | `feature` | ...  |\n|-------|-------|---------|---|\n| 1     | 0     | 1.0     | ...  |\n| 2     | 0     | 1.0     | ...  |\n| 3     | 0     | 0.5     | ...  |\n| 4     | 0     | 0.5     | ...  |\n| 1     | 1     | 2.0     | ...  |\n| 2     | 1     | 1.0     | ...  |\n| 3     | 1     | 1.0     | ...  |\n| 4     | 1     | 1.0     | ...  |\n| 1     | 2     | 3.0     | ...  |\n| 2     | 2     | 1.0     | ...  |\n| 3     | 2     | 0.5     | ...  |\n| 4     | 2     | 1.5     | ...  |\n| \u22ee     | \u22ee     | \u22ee     |   |\n\nBasically, it needs an object identifier (in this case, the `label` column) that matches the labels in the Labels layer, and other columns containing x- and y-axis numbers to plot. Typically, x-axis is some temporal-related property.\n\nHere is how one could add such a layer to a napari viewer via code (check [this example notebook](./examples/synthetic_example.ipynb) for more details):\n\n```python\nviewer.add_labels(labels_image, features = table)\n```\n\nIf a layer like this is selected, you can choose what to plot by means of dropdown fields in the bottom of the plotter.\n\nBelow is a basic example using the \"Flashing Polygons\" synthetic data:\n\n![intro](https://github.com/zoccoler/napari-signal-selector/raw/main/images/intro.gif)\n\n## Tools\n\n### Selection Tool\n\nThe selection tool (arrowhead icon) is a toggle button which enables you to select individual signals. Once activated, the icon gets highlighted and you can click over individual signals to select them. Right-clicking unselects everything.\n\n![select](https://github.com/zoccoler/napari-signal-selector/raw/main/images/select.gif)\n\nIf the region you want to click is too crowded, consider zooming in first and then selecting.\n\n![zoom-select](https://github.com/zoccoler/napari-signal-selector/raw/main/images/zoom_select.gif)\n\nAnd if you know which label you want to select, you can enable `'show selected'` from the Labels layer options to solely display one label at a time. The Lables layer picker tool may help you get the right label.\n\n![show-selected](https://github.com/zoccoler/napari-signal-selector/raw/main/images/show_selected.gif)\n\n### Annotation Tool\n\nOnce one or multiple signals are selected, you can annotate them with the annotation tool (brush with a 'plus' icon). You need to choose a signal class first.\n*Remember to right-click to remove previous selections when annotating different signal classes!*\n\n![annotation](https://github.com/zoccoler/napari-signal-selector/raw/main/images/annotation.gif)\n\nAnnotations are saved back in the table in a new column called 'Annotations'.\n*Currently multiple annotations is not possible, i.e., more than one class assigned to the same part of the signal.*\n\n### Span-Selection Tool\n\nYou can use the span-selection tool (bounded horizontal arrows icon) to sub-select one or multiple parts of signals. Right-click to unselect regions. Hold 'SHIFT' while dragging the mouse to select multiple sub-regions.\n\n![span-select](https://github.com/zoccoler/napari-signal-selector/raw/main/images/span_select.gif)\n\nYou can use this in conjunction with the annotation tool to have sub-regions from the same signal with different annotations.\n\n![](https://github.com/zoccoler/napari-signal-selector/raw/main/images/span_annotation.gif)\n\n### Deletion Tool\n\nIf you made a mistake, you can remove previous annotations by selecting signal(s) and clicking on the trash icon at the right of the toolbar (or just annotate them with class 0).\n\n![delete](https://github.com/zoccoler/napari-signal-selector/raw/main/images/delete.gif)\n\nAlso, with the selection tool enbaled, by holding 'SHIFT' and left-clicking, you can select all signals. This may be useful to delete all previous annotations.\n\n![select-delete-all](https://github.com/zoccoler/napari-signal-selector/raw/main/images/select_delete_all.gif)\n\n### Exporting Annotations\n\nThe table with annotations can be displayed in napari using the 'Show table' widget from [napari-skimage-regionprops plugin](https://github.com/haesleinhuepf/napari-skimage-regionprops#napari-skimage-regionprops-nsr), which is available under `Tools > Measurements > Show Table (nsr)`.\n\n![](https://github.com/zoccoler/napari-signal-selector/raw/main/images/table_view.gif)\n\nBy the way, with `'show selected'` checked, you can click on a label row in the table and see the corresponding label in the image **...and** in the plotter!\n\nTo export the table, click on `'Save as csv...'`.\n\n## Installation\n\nYou can install `napari-signal-selector` via [pip]. Follow these steps from a terminal.\n\nWe recommend using `mamba-forge` whenever possible. Click [here](https://github.com/conda-forge/miniforge#mambaforge) to choose the right download option for your OS.\n**If you do not use `mamba-forge`, replace the `mamba` term whenever you see it below with `conda`.**\n\nCreate a conda environment :\n\n    mamba create -n napari-ss-env napari pyqt python=3.9\n    \nActivate the environment :\n\n    mamba activate napari-ss-env\n\nInstall `napari-signal-selector` via [pip] :\n\n    pip install napari-signal-selector\n\nAlternatively, install latest development version with :\n\n    pip install git+https://github.com/zoccoler/napari-signal-selector.git\n\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-signal-selector\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[file an issue]: https://github.com/zoccoler/napari-signal-selector/issues\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": "https://github.com/zoccoler/napari-signal-selector",
+    "download_url": null,
+    "author": "Marcelo Leomil Zoccoler",
+    "author_email": "marzoccoler@gmail.com",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "BSD-3-Clause",
+    "classifier": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Programming Language :: Python :: 3.10",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "requires_dist": [
+      "numpy",
+      "magicgui",
+      "qtpy",
+      "napari-matplotlib >=1.1.0",
+      "napari-skimage-regionprops",
+      "cmap",
+      "tox ; extra == 'testing'",
+      "pytest ; extra == 'testing'",
+      "pytest-cov ; extra == 'testing'",
+      "pytest-qt ; extra == 'testing'",
+      "napari ; extra == 'testing'",
+      "pyqt5 ; extra == 'testing'"
+    ],
+    "requires_python": ">=3.8",
+    "requires_external": null,
+    "project_url": [
+      "Bug Tracker, https://github.com/zoccoler/napari-signal-selector/issues",
+      "Documentation, https://github.com/zoccoler/napari-signal-selector#README.md",
+      "Source Code, https://github.com/zoccoler/napari-signal-selector",
+      "User Support, https://github.com/zoccoler/napari-signal-selector/issues"
+    ],
+    "provides_extra": [
+      "testing"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}
