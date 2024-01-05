@@ -116,6 +116,7 @@ def conda_data(package_name, channel="conda-forge", repodata=None) -> Tuple[str,
                         patch_api_data_with_repodata(data, repodata)
                     except Exception as exc:
                         print(f"{package_name} -> {type(exc)}: {exc}", file=sys.stderr)
+                data["builds"] = sorted(data["builds"])
                 return (package_name, data)
     return (package_name, {})
 
