@@ -1,14 +1,15 @@
 {
   "info": {
     "author": "Patrick Cleeve",
-    "author_email": "Patrick Cleeve <Patrick.Cleeve@monash.edu>",
+    "author_email": "Patrick.Cleeve@monash.edu",
     "bugtrack_url": null,
     "classifiers": [
+      "Framework :: napari",
       "License :: OSI Approved :: MIT License",
       "Operating System :: OS Independent",
-      "Programming Language :: Python :: 3"
+      "Programming Language :: Python :: 3.9"
     ],
-    "description": "# OpenFIBSEM\n\nA universal API for FIBSEM Control, Development and Automation\n\n## Overview\n\nOpenFIBSEM is a Python package for controlling and automating FIB/SEM microscopes. It is designed to be a universal API for FIBSEM control, development and automation. OpenFIBSEM is designed to abstract away the details of the microscope and provide a simple, intuitive interface for controlling the microscope, as well as reuseable modules for common workflows and operations. OpenFIBSEM is designed to be extensible and can be easily adapted to support new microscopes.\n\nWe currently support the [TESCAN Automation SDK](https://www.tescan.com/en/products/automation-sdk/) and [ThermoFisher AutoScript](https://www.tescan.com/en/products/autoscript/). Support for other FIBSEM systems is planned.\n\n\n## Install\n\n### Install OpenFIBSEM\n\nClone this repository, and checkout v0.2-stable: \n\n```\n$ git clone https://github.com/DeMarcoLab/fibsem.git\n$ git checkout origin/v0.2-stable\n```\n\nInstall dependencies and package\n```bash\n$ cd fibsem\n$ conda create -n fibsem python=3.9 pip\n$ conda activate fibsem\n$ pip install -e .\n\n```\n\nFor detailed instructions on installation, and installing the commercial microscope APIs, see [Installation Guide](INSTALLATION.md).\n\n## Getting Started\n\nTo get started, see the example/example.py:\n\nRecommended: You can start an offline demo microscope by speciying manufacturer: \"Demo\" in the system.yaml file (fibsem/config/system.yaml). This will start a demo microscope that you can use to test the API without connecting to a real microscope. To connect to a real microscope, set the ip_address and manufacturer of your microscope in the system.yaml or alternatively, you can pass these arguments to utils.setup_session() directly. \n\nThis example shows you how to connect to the microscope, take an image with both beams, and then plot.\n\n```python\nfrom fibsem import utils, acquire\nimport matplotlib.pyplot as plt\n\ndef main():\n\n    # connect to microscope\n    microscope, settings = utils.setup_session(ip_address=\"localhost\", manufacturer=\"Demo\")\n\n    # take image with both beams\n    eb_image, ib_image = acquire.take_reference_images(microscope, settings.image)\n\n    # show images\n    fig, ax = plt.subplots(1, 2, figsize=(7, 5))\n    ax[0].imshow(eb_image.data, cmap=\"gray\")\n    ax[1].imshow(ib_image.data, cmap=\"gray\")\n    plt.show()\n\n\nif __name__ == \"__main__\":\n    main()\n\n```\n\nThis example is available as a script in example/example.py.\nFor more detailed examples, see the Examples sections below.\n\n## Examples\n\n### Core Functionality\n\nFor examples of core functionality please see:\n\n- example/example_imaging.py: image acqusition\n- example/example_movement.py: stage movement\n- example/example_milling.py: drawing patterns and beam milling\n\n### Comparison to AutoScript\n\n- Take an Electron Beam image with autocontrast...\n\nAutoScript\n\n```python\n    from autoscript_sdb_microscope_client import SdbMicroscopeClient\n    from autoscript_sdb_microscope_client.structures import GrabFrameSettings, RunAutoCbSettings\n\n    # connect to microscope\n    microscope = SdbMicroscopeClient()\n    microscope.connect(\"10.0.0.1\")\n\n    # set the active view\n    microscope.imaging.set_active_view(1)\n\n    # set frame settings\n    frame_settings = GrabFrameSettings(\n        resolution=\"1536x1024\",\n        dwell_time=1e-6,\n    )\n\n    # set hfw\n    microscope.beams.electron_beam.horizontal_field_width.value = 150e-6\n\n    # autocontrast\n    cb_settings = RunAutoCbSettings(\n        method=\"MaxContrast\",\n        resolution=\"768x512\",  \n        number_of_frames=5,\n    )\n    microscope.auto_functions.run_auto_cb(cb_settings)\n\n    # grab frame\n    eb_image = microscope.imaging.grab_frame(frame_settings)\n\n```\n\nOpenFIBSEM\n\n```python\n\nfrom fibsem import utils, acquire\nfrom fibsem.structures import BeamType, ImageSettings\n\n# connect to microscope\nmicroscope, settings = utils.setup_session(ip_address=\"localhost\", manufacturer=\"Thermo\")\n\n# set imaging settings\nimage_settings = ImageSettings(\n        hfw=150e-6, \n        resolution=[1536, 1024],\n        dwell_time=1e-6, \n        autocontrast=True, \n        beam_type=BeamType.ELECTRON)\n\n# take electron image\neb_image = acquire.new_image(microscope, image_settings)\n\n```\n\n## Application Demonstrations\n\nThe example directory contains the following applications:\n\n**Autolamella (autolamella.py)**\n\nRecreation of [AutoLamella](https://github.com/DeMarcoLab/autolamella) (automated cryo-lamella preparation) in ~150 lines of code.\n\n**Volume Microscopy (slice_and_view.py)**\n\nRecreation of a volume microscopy workflow (slice and view) in ~50 lines of code.\n\n**Lithography (lithography.py)**\n\nMilling of a grayscale lithography profile using a bitmap pattern.\n\n## Projects using OpenFIBSEM\n\nWe are currently working on a number of projects using OpenFIBSEM. If you are using OpenFIBSEM in your research, please let us know!\n\n- [AutoLamella v2: Automated cryo-lamella preparation](www.github.com/DeMarcoLab/autolamella)\n- [AutoLiftout: Automated cryo-liftout](www.github.com/DeMarcoLab/autoliftout)\n- [Salami: Volume Electron Microscopy](www.github.com/DeMarcoLab/salami)\n- [Vulcan: Grayscale FIB Lithography](www.github.com/DeMarcoLab/vulcan)\n\n## Contributing\n\nContributions are welcome! Please open a pull request or issue.\n\n## Docs\n\nOpenFIBSEM is a large package with many features. For more detailed documentation, please see the [Documentation Website](https://demarcolab.github.io/fibsem/).\n\n## Citation\n\n```bibtex\n@article{CLEEVE2023107967,\ntitle = {OpenFIBSEM: A universal API for FIBSEM control},\njournal = {Journal of Structural Biology},\nvolume = {215},\nnumber = {3},\npages = {107967},\nyear = {2023},\nissn = {1047-8477},\ndoi = {https://doi.org/10.1016/j.jsb.2023.107967},\nurl = {https://www.sciencedirect.com/science/article/pii/S1047847723000308},\nauthor = {Patrick Cleeve and David Dierickx and Lucile Naegele and Rohit Kannachel and Lachlan Burne and Genevieve Buckley and Sergey Gorelick and James C. Whisstock and Alex {de Marco}},\nkeywords = {Focused Ion Beam microscopy, Automation, Python, API, Microscopy, Controller},\nabstract = {This paper introduces OpenFIBSEM, a universal API to control Focused Ion Beam Scanning Electron Microscopes (FIBSEM). OpenFIBSEM aims to improve the programmability and automation of electron microscopy workflows in structural biology research. The API is designed to be cross-platform, composable, and extendable: allowing users to use any portion of OpenFIBSEM to develop or integrate with other software tools. The package provides core functionality such as imaging, movement, milling, and manipulator control, as well as system calibration, alignment, and image analysis modules. Further, a library of reusable user interface components integrated with napari is provided, ensuring easy and efficient application development. OpenFIBSEM currently supports ThermoFisher and TESCAN hardware, with support for other manufacturers planned. To demonstrate the improved automation capabilities enabled by OpenFIBSEM, several example applications that are compatible with multiple hardware manufacturers are discussed. We argue that OpenFIBSEM provides the foundation for a cross-platform operating system and development ecosystem for FIBSEM systems. The API and applications are open-source and available on GitHub (https://github.com/DeMarcoLab/fibsem).}\n}\n```\n\nenjoy :)\n",
+    "description": "# OpenFIBSEM\n\nA universal API for FIBSEM Control, Development and Automation\n\n## Overview\n\nOpenFIBSEM is a Python package for controlling and automating FIB/SEM microscopes. It is designed to be a universal API for FIBSEM control, development and automation. OpenFIBSEM is designed to abstract away the details of the microscope and provide a simple, intuitive interface for controlling the microscope, as well as reuseable modules for common workflows and operations. OpenFIBSEM is designed to be extensible and can be easily adapted to support new microscopes.\n\nWe currently support the [TESCAN Automation SDK](https://www.tescan.com/en/products/automation-sdk/) and [ThermoFisher AutoScript](https://www.tescan.com/en/products/autoscript/). Support for other FIBSEM systems is planned.\n\n## Install\n\n### Install OpenFIBSEM\n\nThere are several ways to install OpenFIBSEM depending on your application and needs.\n\n#### PyPI (For Users)\n\n```bash\npip install fibsem \n```\n\n#### Github (For Development)\n\nClone this repository, and checkout main:\n\n```bash\ngit clone https://github.com/DeMarcoLab/fibsem.git\n```\n\nInstall dependencies and package\n\n```bash\ncd fibsem\nconda create -n fibsem python=3.9 pip\nconda activate fibsem\npip install -e .\n\n```\n\n#### Napari Plugin\n\nThe OpenFIBSEM tools and user interface are also available as a napari plugin:\n\n```bash\npip install napari-openfibsem\n```\n\nOr use napari plugin manager\n\n#### Additional Installation Information\n\nFor detailed instructions on installation, and installing the commercial microscope APIs, see [Installation Guide](INSTALLATION.md).\n\n## Getting Started\n\nTo get started, see the example/example.py:\n\nRecommended: You can start an offline demo microscope by speciying manufacturer: \"Demo\" in the system.yaml file (fibsem/config/system.yaml). This will start a demo microscope that you can use to test the API without connecting to a real microscope. To connect to a real microscope, set the ip_address and manufacturer of your microscope in the system.yaml or alternatively, you can pass these arguments to utils.setup_session() directly.\n\nThis example shows you how to connect to the microscope, take an image with both beams, and then plot.\n\n```python\nfrom fibsem import utils, acquire\nimport matplotlib.pyplot as plt\n\ndef main():\n\n    # connect to microscope\n    microscope, settings = utils.setup_session(ip_address=\"localhost\", manufacturer=\"Demo\")\n\n    # take image with both beams\n    eb_image, ib_image = acquire.take_reference_images(microscope, settings.image)\n\n    # show images\n    fig, ax = plt.subplots(1, 2, figsize=(7, 5))\n    ax[0].imshow(eb_image.data, cmap=\"gray\")\n    ax[1].imshow(ib_image.data, cmap=\"gray\")\n    plt.show()\n\n\nif __name__ == \"__main__\":\n    main()\n\n```\n\nThis example is available as a script in example/example.py.\nFor more detailed examples, see the Examples sections below.\n\n## Examples\n\n### Core Functionality\n\nFor examples of core functionality please see:\n\n- example/example_imaging.py: image acqusition\n- example/example_movement.py: stage movement\n- example/example_milling.py: drawing patterns and beam milling\n- example/autolamella.py: recreation of [AutoLamella V1](https://github.com/DeMarcoLab/autolamella) (automated cryo-lamella preparation) in ~150 lines of code\n\nAdditional example scripts and notebooks are available.\n\n## Projects using OpenFIBSEM\n\nWe are currently working on a number of projects using OpenFIBSEM. If you are using OpenFIBSEM in your research, please let us know!\n\n- [AutoLamella v2: Automated cryo-lamella preparation](www.github.com/DeMarcoLab/autolamella)\n- [Salami: Volume Electron Microscopy](www.github.com/DeMarcoLab/salami)\n\n## Contributing\n\nContributions are welcome! Please open a pull request or issue.\n\n## Docs\n\nOpenFIBSEM is a large package with many features. For more detailed documentation, please see the [Documentation Website](https://demarcolab.github.io/openfibsem-docs).\n\n## Citation\n\nIf you find this work useful, please cite:\n\n```bibtex\n@article{CLEEVE2023107967,\ntitle = {OpenFIBSEM: A universal API for FIBSEM control},\njournal = {Journal of Structural Biology},\nvolume = {215},\nnumber = {3},\npages = {107967},\nyear = {2023},\nissn = {1047-8477},\ndoi = {https://doi.org/10.1016/j.jsb.2023.107967},\nurl = {https://www.sciencedirect.com/science/article/pii/S1047847723000308},\nauthor = {Patrick Cleeve and David Dierickx and Lucile Naegele and Rohit Kannachel and Lachlan Burne and Genevieve Buckley and Sergey Gorelick and James C. Whisstock and Alex {de Marco}},\nkeywords = {Focused Ion Beam microscopy, Automation, Python, API, Microscopy, Controller},\nabstract = {This paper introduces OpenFIBSEM, a universal API to control Focused Ion Beam Scanning Electron Microscopes (FIBSEM). OpenFIBSEM aims to improve the programmability and automation of electron microscopy workflows in structural biology research. The API is designed to be cross-platform, composable, and extendable: allowing users to use any portion of OpenFIBSEM to develop or integrate with other software tools. The package provides core functionality such as imaging, movement, milling, and manipulator control, as well as system calibration, alignment, and image analysis modules. Further, a library of reusable user interface components integrated with napari is provided, ensuring easy and efficient application development. OpenFIBSEM currently supports ThermoFisher and TESCAN hardware, with support for other manufacturers planned. To demonstrate the improved automation capabilities enabled by OpenFIBSEM, several example applications that are compatible with multiple hardware manufacturers are discussed. We argue that OpenFIBSEM provides the foundation for a cross-platform operating system and development ecosystem for FIBSEM systems. The API and applications are open-source and available on GitHub (https://github.com/DeMarcoLab/fibsem).}\n}\n```\n\nenjoy :)\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": "",
@@ -30,7 +31,7 @@
       "Bug Tracker": "https://github.com/DeMarcoLab/fibsem/issues",
       "Homepage": "https://github.com/DeMarcoLab/fibsem"
     },
-    "release_url": "https://pypi.org/project/fibsem/0.2.5/",
+    "release_url": "https://pypi.org/project/fibsem/0.3.0/",
     "requires_dist": [
       "zarr >=2.13.6",
       "dask >=2023.3.0",
@@ -50,15 +51,16 @@
       "petname >=2.6",
       "plotly >=5.14.1",
       "kaleido ==0.2.0",
-      "matplotlib-scalebar >=0.8.1"
+      "matplotlib-scalebar >=0.8.1",
+      "transformers >=4.36.2"
     ],
     "requires_python": ">=3.9",
     "summary": "a universal api for fibsem control",
-    "version": "0.2.5",
+    "version": "0.3.0",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 21418458,
+  "last_serial": 21459130,
   "releases": {
     "0.2.1a0": [
       {
@@ -244,6 +246,50 @@
         "yanked_reason": null
       }
     ],
+    "0.3.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "05510a0cc14778c2ae7f68a601aa26821327fc35e08bc81546ba6e3d10bc704f",
+          "md5": "fec4cdc5d3f57f34a0c80cb69daaa797",
+          "sha256": "50552509956483316d1656eea067df4e46e55670886f1b76d0e239dac5773aba"
+        },
+        "downloads": -1,
+        "filename": "fibsem-0.3.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "fec4cdc5d3f57f34a0c80cb69daaa797",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 8440127,
+        "upload_time": "2024-01-17T05:52:09",
+        "upload_time_iso_8601": "2024-01-17T05:52:09.345521Z",
+        "url": "https://files.pythonhosted.org/packages/05/51/0a0cc14778c2ae7f68a601aa26821327fc35e08bc81546ba6e3d10bc704f/fibsem-0.3.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "fc2bfea39a412194d35634c6d7f2e0768021aa0f024b880a17251a3f377e1c5c",
+          "md5": "f1815331b85858d45787f2c7a62e8e0e",
+          "sha256": "0d76fd017c67b344c5d5d7431d4b43624037a57c21e4198504432ef8aaf0e616"
+        },
+        "downloads": -1,
+        "filename": "fibsem-0.3.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "f1815331b85858d45787f2c7a62e8e0e",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 8417264,
+        "upload_time": "2024-01-17T05:52:17",
+        "upload_time_iso_8601": "2024-01-17T05:52:17.625384Z",
+        "url": "https://files.pythonhosted.org/packages/fc/2b/fea39a412194d35634c6d7f2e0768021aa0f024b880a17251a3f377e1c5c/fibsem-0.3.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
     "0.3.0a0": [
       {
         "comment_text": "",
@@ -337,21 +383,42 @@
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "4313625dba2d4741c02a3e6c970399a725b644b9a058dadb2f5fea9e9420b4e3",
-        "md5": "762966f1707da26d684694be16d3a068",
-        "sha256": "e0012dcd17fdc3060fa7dfb0f372483a80a1da69010db103efbfdbff1c862617"
+        "blake2b_256": "05510a0cc14778c2ae7f68a601aa26821327fc35e08bc81546ba6e3d10bc704f",
+        "md5": "fec4cdc5d3f57f34a0c80cb69daaa797",
+        "sha256": "50552509956483316d1656eea067df4e46e55670886f1b76d0e239dac5773aba"
       },
       "downloads": -1,
-      "filename": "fibsem-0.2.5-py3-none-any.whl",
+      "filename": "fibsem-0.3.0-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "762966f1707da26d684694be16d3a068",
+      "md5_digest": "fec4cdc5d3f57f34a0c80cb69daaa797",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.9",
-      "size": 8460684,
-      "upload_time": "2023-10-18T04:25:49",
-      "upload_time_iso_8601": "2023-10-18T04:25:49.180740Z",
-      "url": "https://files.pythonhosted.org/packages/43/13/625dba2d4741c02a3e6c970399a725b644b9a058dadb2f5fea9e9420b4e3/fibsem-0.2.5-py3-none-any.whl",
+      "size": 8440127,
+      "upload_time": "2024-01-17T05:52:09",
+      "upload_time_iso_8601": "2024-01-17T05:52:09.345521Z",
+      "url": "https://files.pythonhosted.org/packages/05/51/0a0cc14778c2ae7f68a601aa26821327fc35e08bc81546ba6e3d10bc704f/fibsem-0.3.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "blake2b_256": "fc2bfea39a412194d35634c6d7f2e0768021aa0f024b880a17251a3f377e1c5c",
+        "md5": "f1815331b85858d45787f2c7a62e8e0e",
+        "sha256": "0d76fd017c67b344c5d5d7431d4b43624037a57c21e4198504432ef8aaf0e616"
+      },
+      "downloads": -1,
+      "filename": "fibsem-0.3.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "f1815331b85858d45787f2c7a62e8e0e",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.9",
+      "size": 8417264,
+      "upload_time": "2024-01-17T05:52:17",
+      "upload_time_iso_8601": "2024-01-17T05:52:17.625384Z",
+      "url": "https://files.pythonhosted.org/packages/fc/2b/fea39a412194d35634c6d7f2e0768021aa0f024b880a17251a3f377e1c5c/fibsem-0.3.0.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
