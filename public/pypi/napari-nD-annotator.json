@@ -21,7 +21,7 @@
       "Programming Language :: Python :: Implementation :: CPython",
       "Topic :: Software Development :: Testing"
     ],
-    "description": "# napari-nD-annotator\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-nD-annotator.svg?color=green)](https://github.com/bauerdavid/napari-nD-annotator/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-nD-annotator.svg?color=green)](https://pypi.org/project/napari-nD-annotator)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-nD-annotator.svg?color=green)](https://python.org)\n[![tests](https://github.com/bauerdavid/napari-nD-annotator/workflows/tests/badge.svg)](https://github.com/bauerdavid/napari-nD-annotator/actions)\n[![codecov](https://codecov.io/gh/bauerdavid/napari-nD-annotator/branch/main/graph/badge.svg)](https://codecov.io/gh/bauerdavid/napari-nD-annotator)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-nD-annotator)](https://napari-hub.org/plugins/napari-nD-annotator)\n\n**A toolbox for annotating objects one by one in nD.**\n\nThis plugin contains some tools to make 2D/3D (and technically any dimensional) annotation easier.\nMain features:\n * auto-filling labels\n * label slice interpolation (geometric mean, RPSV representation)\n * minimal contour segmentation\n\nIf the <code>[napari-bbox]</code> plugin is also installed (see [Installation](#installation)), you can also\n * list objects annotated with bounding boxes \n * visualize selected objects from different projections\n\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/plugins/index.html\n-->\n\n## Installation\n\nYou can install `napari-nD-annotator` via [pip]:\n\n    pip install napari-nD-annotator\n\nThe plugin is also available in [napari-hub], to install it directly from napari, please refer to\n[plugin installation instructions] at the official [napari] website.\n\n\n### Optional packages\nThere are some functionalities which require additional Python packages.\n\n#### Bounding boxes\nThe bounding box and object list functionality requires the <code>[napari-bbox]</code> Python package.\nIf you want to use these features, install <code>[napari-bbox]</code> separately either using [pip] or directly from napari.\nYou can also install it together with this plugin:\n```\npip install napari-nD-annotator[bbox]\n```\n> [!WARNING]\n> The <code>[napari-bbox]</code> plugin currently works only with `napari<=0.4.17`. Do not install it with newer versions.\n\n#### Minimal surface\nTo use the minimal surface method, you will need the <code>[minimal-surface]</code> Python package as well. Please install it using [pip]:\n\nSeparately:\n```\npip install minimal-surface\n```\n\nOr bundled with the plugin:\n```\npip install napari-nD-annotator[ms]\n```\n> [!WARNING]\n> The <code>[minimal-surface]</code> package is only available for Windows at the time. We are actively working on bringing it to Linux and Mac systems as well.\n\n#\n\nIf you would like to install all optional packages, use\n```\npip install napari-nD-annotator[all]\n```\n###\nIf any problems occur during installation or while using the plugin, please [file an issue].\n\n## Usage\nYou can start napari with the plugin's widgets already opened as:\n\n    napari -w napari-nD-annotator \"Object List\" \"Annotation Toolbox\"\n\n\n### Bounding boxes\nThe main idea is to create bounding boxes around objects we want to annotate, crop them, and annotate them one by one. This has mainly two advantages when visualizing in 3D:\n\n1. We don't have to load the whole data into memory\n2. The surrounding objects won't occlude the annotated ones, making it easier to check the annotation.\n\nBounding boxes can be created from the `Object list` widget. The dimensionality of the bounding box layer will be determined from the image layer. As bounding boxes are created, a small thumbnail will be displayed.\n\nThe proposed pipeline goes as follows:\n\n 1. Create a bounding box layer\n 2. Select data parts using the bounding boxes\n 3. Select an object from the object list\n 4. Annotate the object\n 5. Repeat from 3.\n\n### Slice interpolation\nThe `Interpolation` tab contains tools for estimating missing annotation slices from existing ones. There are multiple options:\n * Geometric: the interpolation will be determined by calculating the average of the corresponding contour points.\n * RPSV: A more sophisticated average contour calculation, see the preprint [here](https://arxiv.org/pdf/1901.02823.pdf).\n * Distance-based: a signed distance transform is applied to the annotations. The missing slices will be filled in using their \nweighted sum.\n\n> **Note**: Geometric and RPSV interpolation works only when there's a single connected mask on each slice. If you want to \n> interpolate disjoint objects (*e.g.* dividing cells), use distance based interpolation instead.\n\n> **Note**: Distance-based interpolation might give bad results if some masks are too far away from each other on the same slice\n> and there's a big offset compared to the other slice used in the interpolation. If you get unsatisfactory results, try\n> annotating more slices (skip less frames).\n\nhttps://user-images.githubusercontent.com/36735863/188876826-1771acee-93ba-4905-982e-bfb459329659.mp4\n\n### Minimal contour\nThis plugin can estimate a minimal contour, which is calculated from a point set on the edges of the object, which are provided by the user. This contour will follow some kind of image feature (pixels with high gradient or high/low intensity).\nFeatures:\n * With a single click a new point can be added to the set. This will also extend the contour with the curve shown in red\n * A double click will close the curve by adding both the red and gray curves to the minimal contour\n * When holding `Shift`, the gray and red highlight will be swapped, so the other curve can be added to the contour\n * With the `Ctrl` button down a straight line can be added instead of the minimal path\n * If the anchor points were misplaced, the last point can be removed by right-clicking, or the whole point set can be cleared by pressing `Esc`\n * The `Param` value at the widget will decide, how strongly should the contour follow edges on the image. Higher value means higher sensitivity to image data, while a lower value will be closer to straight lines.\n * Different features can be used, like image gradient or pixel intensities, and also user-defined features (using Python)\n   * the image is accessed as the `image` variable, and the features should be stored in the `features` variable in the small code editor widget\n\nThis functionality can be used by selecting the `Minimal Contour` tab in the `Annotation Toolbox` widget, which will create a new layer called `Anchors`.\n\n> **Warning**: Do not remove the `Anchors` layer!\n\n> **Warning**: Some utility layers appear in the layer list when using the plugin. These are marked with a lock (:lock:) symbol.\n> __Do not remove them or modify their data, as this will most probably break the plugin!__ However, you can change their appearance,\n> *e.g.* their color settings.\n\n#### Intensity-based:\n\nhttps://user-images.githubusercontent.com/36735863/191023482-0dfafb5c-003a-47f6-a21b-8582a4e3930f.mp4\n\n#### Gradient-based:\n\nhttps://user-images.githubusercontent.com/36735863/191024941-f20f63a0-8281-47d2-be22-d1ec34fe1f5d.mp4\n\n#### Custom feature:\n\nhttps://user-images.githubusercontent.com/36735863/191025028-3f807bd2-1f2e-40d2-800b-48af820a7dbe.mp4\n\n### Shortcuts\n\n| Action                                        | Mouse               | Keyboard       |\n|-----------------------------------------------|---------------------|----------------|\n| Increment selected label                      | `Shift + Wheel \u2b06\ufe0f`  | `E`            |\n| Decrement selected label                      | `Shift + Wheel \u2b07\ufe0f`  | `Q`            |\n| Previous slice                                | `Ctrl + Wheel \u2b06\ufe0f`\\* | `A`            |\n| Next slice                                    | `Ctrl + Wheel \u2b07\ufe0f`\\* | `D`            |\n| Increase paint brush size of labels layer     | `Alt + Wheel \u2b06\ufe0f`    | `W`            |\n| Decrease paint brush size of labels layer     | `Alt + Wheel \u2b07\ufe0f`    | `S`            |\n| Interpolate                                   | -                   | `Ctrl+I`       |\n| Change between 'Anchors' and the labels layer | -                   | `Ctrl+Tab`     |\n| Jump to layer `#i`                            | -                   | `Ctrl+'i'`\\*\\* |\n\n> *Built-in functionality of [napari]\n> \n> **`i`: 0-9\n\n> **Note**: you can check the list of available shortcuts by clicking the `?` button in the bottom right corner of the main widget.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-nD-annotator\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[napari-hub]: https://napari-hub.org/\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n[plugin installation instructions]: https://napari.org/plugins/find_and_install_plugin.html\n[file an issue]: https://github.com/bauerdavid/napari-nD-annotator/issues/new/choose\n[napari-bbox]: https://github.com/bauerdavid/napari-bbox\n[minimal-surface]: https://pypi.org/project/minimal-surface\n",
+    "description": "# napari-nD-annotator\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-nD-annotator.svg?color=green)](https://github.com/bauerdavid/napari-nD-annotator/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-nD-annotator.svg?color=green)](https://pypi.org/project/napari-nD-annotator)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-nD-annotator.svg?color=green)](https://python.org)\n[![tests](https://github.com/bauerdavid/napari-nD-annotator/workflows/tests/badge.svg)](https://github.com/bauerdavid/napari-nD-annotator/actions)\n[![codecov](https://codecov.io/gh/bauerdavid/napari-nD-annotator/branch/main/graph/badge.svg)](https://codecov.io/gh/bauerdavid/napari-nD-annotator)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-nD-annotator)](https://napari-hub.org/plugins/napari-nD-annotator)\n\n**A toolbox for annotating objects one by one in nD.**\n\nThis plugin contains some tools to make 2D/3D (and technically any dimensional) annotation easier.\nMain features:\n * auto-filling labels\n * label slice interpolation (geometric mean, RPSV representation)\n * minimal contour segmentation\n\nIf the <code>[napari-bbox]</code> plugin is also installed (see [Installation](#installation)), you can also\n * list objects annotated with bounding boxes \n * visualize selected objects from different projections\n\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/plugins/index.html\n-->\n\n## Installation\n\nYou can install `napari-nD-annotator` via [pip]:\n\n    pip install napari-nD-annotator\n\nThe plugin is also available in [napari-hub], to install it directly from napari, please refer to\n[plugin installation instructions] at the official [napari] website.\n\n> **Note**: The bounding box and object list functionality requires the <code>[napari-bbox]</code> Python package.\n> If you want to use bounding boxes, install <code>[napari-bbox]</code> separately either using [pip] or directly from napari.\n> You can also install it together with this plugin:\n> \n>     pip install napari-nD-annotator[all]\n\nIf any problems occur during installation or while using the plugin, please [file an issue].\n\n## Usage\nYou can start napari with the plugin's widgets already opened as:\n\n    napari -w napari-nD-annotator \"Object List\" \"Annotation Toolbox\"\n\n\n### Bounding boxes\nThe main idea is to create bounding boxes around objects we want to annotate, crop them, and annotate them one by one. This has mainly two advantages when visualizing in 3D:\n\n1. We don't have to load the whole data into memory\n2. The surrounding objects won't occlude the annotated ones, making it easier to check the annotation.\n\nBounding boxes can be created from the `Object list` widget. The dimensionality of the bounding box layer will be determined from the image layer. As bounding boxes are created, a small thumbnail will be displayed.\n\nThe proposed pipeline goes as follows:\n\n 1. Create a bounding box layer\n 2. Select data parts using the bounding boxes\n 3. Select an object from the object list\n 4. Annotate the object\n 5. Repeat from 3.\n\n### Slice interpolation\nThe `Interpolation` tab contains tools for estimating missing annotation slices from existing ones. There are multiple options:\n * Geometric: the interpolation will be determined by calculating the average of the corresponding contour points.\n * RPSV: A more sophisticated average contour calculation, see the preprint [here](https://arxiv.org/pdf/1901.02823.pdf).\n * Distance-based: a signed distance transform is applied to the annotations. The missing slices will be filled in using their \nweighted sum.\n\n> **Note**: Geometric and RPSV interpolation works only when there's a single connected mask on each slice. If you want to \n> interpolate disjoint objects (*e.g.* dividing cells), use distance based interpolation instead.\n\n> **Note**: Distance-based interpolation might give bad results if some masks are too far away from each other on the same slice\n> and there's a big offset compared to the other slice used in the interpolation. If you get unsatisfactory results, try\n> annotating more slices (skip less frames).\n\nhttps://user-images.githubusercontent.com/36735863/188876826-1771acee-93ba-4905-982e-bfb459329659.mp4\n\n### Minimal contour\nThis plugin can estimate a minimal contour, which is calculated from a point set on the edges of the object, which are provided by the user. This contour will follow some kind of image feature (pixels with high gradient or high/low intensity).\nFeatures:\n * With a single click a new point can be added to the set. This will also extend the contour with the curve shown in red\n * A double click will close the curve by adding both the red and gray curves to the minimal contour\n * When holding `Shift`, the gray and red highlight will be swapped, so the other curve can be added to the contour\n * With the `Ctrl` button down a straight line can be added instead of the minimal path\n * If the anchor points were misplaced, the last point can be removed by right-clicking, or the whole point set can be cleared by pressing `Esc`\n * The `Param` value at the widget will decide, how strongly should the contour follow edges on the image. Higher value means higher sensitivity to image data, while a lower value will be closer to straight lines.\n * Different features can be used, like image gradient or pixel intensities, and also user-defined features (using Python)\n   * the image is accessed as the `image` variable, and the features should be stored in the `features` variable in the small code editor widget\n\nThis functionality can be used by selecting the `Minimal Contour` tab in the `Annotation Toolbox` widget, which will create a new layer called `Anchors`.\n\n> **Warning**: Do not remove the `Anchors` layer!\n\n> **Warning**: Some utility layers appear in the layer list when using the plugin. These are marked with a lock (:lock:) symbol.\n> __Do not remove them or modify their data, as this will most probably break the plugin!__ However, you can change their appearance,\n> *e.g.* their color settings.\n\n#### Intensity-based:\n\nhttps://user-images.githubusercontent.com/36735863/191023482-0dfafb5c-003a-47f6-a21b-8582a4e3930f.mp4\n\n#### Gradient-based:\n\nhttps://user-images.githubusercontent.com/36735863/191024941-f20f63a0-8281-47d2-be22-d1ec34fe1f5d.mp4\n\n#### Custom feature:\n\nhttps://user-images.githubusercontent.com/36735863/191025028-3f807bd2-1f2e-40d2-800b-48af820a7dbe.mp4\n\n### Shortcuts\n\n| Action                                        | Mouse               | Keyboard       |\n|-----------------------------------------------|---------------------|----------------|\n| Increment selected label                      | `Shift + Wheel \u2b06\ufe0f`  | `E`            |\n| Decrement selected label                      | `Shift + Wheel \u2b07\ufe0f`  | `Q`            |\n| Previous slice                                | `Ctrl + Wheel \u2b06\ufe0f`\\* | `A`            |\n| Next slice                                    | `Ctrl + Wheel \u2b07\ufe0f`\\* | `D`            |\n| Increase paint brush size of labels layer     | `Alt + Wheel \u2b06\ufe0f`    | `W`            |\n| Decrease paint brush size of labels layer     | `Alt + Wheel \u2b07\ufe0f`    | `S`            |\n| Interpolate                                   | -                   | `Ctrl+I`       |\n| Change between 'Anchors' and the labels layer | -                   | `Ctrl+Tab`     |\n| Jump to layer `#i`                            | -                   | `Ctrl+'i'`\\*\\* |\n\n> *Built-in functionality of [napari]\n> \n> **`i`: 0-9\n\n> **Note**: you can check the list of available shortcuts by clicking the `?` button in the bottom right corner of the main widget.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-nD-annotator\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[napari-hub]: https://napari-hub.org/\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n[plugin installation instructions]: https://napari.org/plugins/find_and_install_plugin.html\n[file an issue]: https://github.com/bauerdavid/napari-nD-annotator/issues/new/choose\n[napari-bbox]: https://github.com/bauerdavid/napari-bbox\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": "",
@@ -45,7 +45,7 @@
       "Source Code": "https://github.com/bauerdavid/napari-nD-annotator",
       "User Support": "https://github.com/bauerdavid/napari-nD-annotator/issues"
     },
-    "release_url": "https://pypi.org/project/napari-nD-annotator/0.2.1/",
+    "release_url": "https://pypi.org/project/napari-nD-annotator/0.2.0/",
     "requires_dist": [
       "numpy",
       "magicgui",
@@ -69,11 +69,11 @@
     ],
     "requires_python": ">=3.8",
     "summary": "A toolbox for annotating objects one by one in nD",
-    "version": "0.2.1",
+    "version": "0.2.0",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 21801309,
+  "last_serial": 21805374,
   "releases": {
     "0.0.1": [
       {
@@ -1412,8 +1412,8 @@
         "upload_time": "2024-02-09T08:30:59",
         "upload_time_iso_8601": "2024-02-09T08:30:59.607396Z",
         "url": "https://files.pythonhosted.org/packages/d6/0b/cffaa5ddd8dfa91947f30e97c559700f9f7e6d35f7e8d5004804948d2e3b/napari_nD_annotator-0.2.1-cp310-cp310-macosx_10_9_x86_64.whl",
-        "yanked": false,
-        "yanked_reason": null
+        "yanked": true,
+        "yanked_reason": "errors due to persistent state"
       },
       {
         "comment_text": "",
@@ -1433,8 +1433,8 @@
         "upload_time": "2024-02-09T08:31:01",
         "upload_time_iso_8601": "2024-02-09T08:31:01.922033Z",
         "url": "https://files.pythonhosted.org/packages/a6/d9/1ed8ef17d40bb611544f1d8bd3e7431df867731c3c4cdcdfda3516667485/napari_nD_annotator-0.2.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
-        "yanked": false,
-        "yanked_reason": null
+        "yanked": true,
+        "yanked_reason": "errors due to persistent state"
       },
       {
         "comment_text": "",
@@ -1454,8 +1454,8 @@
         "upload_time": "2024-02-09T08:31:04",
         "upload_time_iso_8601": "2024-02-09T08:31:04.060368Z",
         "url": "https://files.pythonhosted.org/packages/23/2b/a08beff3003db28de0377b448ec3b2d6708c838ec18b987412e336437913/napari_nD_annotator-0.2.1-cp310-cp310-win_amd64.whl",
-        "yanked": false,
-        "yanked_reason": null
+        "yanked": true,
+        "yanked_reason": "errors due to persistent state"
       },
       {
         "comment_text": "",
@@ -1475,8 +1475,8 @@
         "upload_time": "2024-02-09T08:31:05",
         "upload_time_iso_8601": "2024-02-09T08:31:05.942551Z",
         "url": "https://files.pythonhosted.org/packages/04/ca/6ec51bd7e7fbc932dd34f739971a77ce381f24d80684bbcf1ce7d055439b/napari_nD_annotator-0.2.1-cp311-cp311-macosx_10_9_x86_64.whl",
-        "yanked": false,
-        "yanked_reason": null
+        "yanked": true,
+        "yanked_reason": "errors due to persistent state"
       },
       {
         "comment_text": "",
@@ -1496,8 +1496,8 @@
         "upload_time": "2024-02-09T08:31:07",
         "upload_time_iso_8601": "2024-02-09T08:31:07.860907Z",
         "url": "https://files.pythonhosted.org/packages/08/8e/cd63322f9f8f3babe53f70853bea88ae54bee359fef81046dfb5539405a6/napari_nD_annotator-0.2.1-cp311-cp311-manylinux_2_17_i686.manylinux2014_i686.whl",
-        "yanked": false,
-        "yanked_reason": null
+        "yanked": true,
+        "yanked_reason": "errors due to persistent state"
       },
       {
         "comment_text": "",
@@ -1517,8 +1517,8 @@
         "upload_time": "2024-02-09T08:31:09",
         "upload_time_iso_8601": "2024-02-09T08:31:09.888130Z",
         "url": "https://files.pythonhosted.org/packages/2b/90/9a41e207440ab1af6f061cadff377217738545fffd6f90763e92427ce74c/napari_nD_annotator-0.2.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
-        "yanked": false,
-        "yanked_reason": null
+        "yanked": true,
+        "yanked_reason": "errors due to persistent state"
       },
       {
         "comment_text": "",
@@ -1538,8 +1538,8 @@
         "upload_time": "2024-02-09T08:31:11",
         "upload_time_iso_8601": "2024-02-09T08:31:11.231464Z",
         "url": "https://files.pythonhosted.org/packages/85/18/37e34ef42185b4309a7d4dd2eda63f1326130969e3a4f4fe1045ab45b72d/napari_nD_annotator-0.2.1-cp311-cp311-win32.whl",
-        "yanked": false,
-        "yanked_reason": null
+        "yanked": true,
+        "yanked_reason": "errors due to persistent state"
       },
       {
         "comment_text": "",
@@ -1559,8 +1559,8 @@
         "upload_time": "2024-02-09T08:31:13",
         "upload_time_iso_8601": "2024-02-09T08:31:13.198800Z",
         "url": "https://files.pythonhosted.org/packages/50/69/0ac5eb894573d80349d5a660af99f2914018d6926ba14665f6e80b682413/napari_nD_annotator-0.2.1-cp311-cp311-win_amd64.whl",
-        "yanked": false,
-        "yanked_reason": null
+        "yanked": true,
+        "yanked_reason": "errors due to persistent state"
       },
       {
         "comment_text": "",
@@ -1580,8 +1580,8 @@
         "upload_time": "2024-02-09T08:31:14",
         "upload_time_iso_8601": "2024-02-09T08:31:14.538129Z",
         "url": "https://files.pythonhosted.org/packages/42/be/0aedb038ce0287f2db2bf2c893dffbee203ea15935a1361d9ef20b6ee048/napari_nD_annotator-0.2.1-cp312-cp312-macosx_10_9_x86_64.whl",
-        "yanked": false,
-        "yanked_reason": null
+        "yanked": true,
+        "yanked_reason": "errors due to persistent state"
       },
       {
         "comment_text": "",
@@ -1601,8 +1601,8 @@
         "upload_time": "2024-02-09T08:31:16",
         "upload_time_iso_8601": "2024-02-09T08:31:16.430386Z",
         "url": "https://files.pythonhosted.org/packages/d8/20/0c7d8ccfd5474c4c2a387f0bad852c4c70c3394c32ce5a296d418c445bde/napari_nD_annotator-0.2.1-cp312-cp312-manylinux_2_17_i686.manylinux2014_i686.whl",
-        "yanked": false,
-        "yanked_reason": null
+        "yanked": true,
+        "yanked_reason": "errors due to persistent state"
       },
       {
         "comment_text": "",
@@ -1622,8 +1622,8 @@
         "upload_time": "2024-02-09T08:31:18",
         "upload_time_iso_8601": "2024-02-09T08:31:18.497315Z",
         "url": "https://files.pythonhosted.org/packages/29/86/f19eeb6646e9081ee3741a55a02949deafb50afb00b43f3e4946feeeaf27/napari_nD_annotator-0.2.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
-        "yanked": false,
-        "yanked_reason": null
+        "yanked": true,
+        "yanked_reason": "errors due to persistent state"
       },
       {
         "comment_text": "",
@@ -1643,8 +1643,8 @@
         "upload_time": "2024-02-09T08:31:20",
         "upload_time_iso_8601": "2024-02-09T08:31:20.592259Z",
         "url": "https://files.pythonhosted.org/packages/96/89/fe0f58de782e8c005028c8a506fb5183568e71ff578dc6e11b6520e27116/napari_nD_annotator-0.2.1-cp312-cp312-win32.whl",
-        "yanked": false,
-        "yanked_reason": null
+        "yanked": true,
+        "yanked_reason": "errors due to persistent state"
       },
       {
         "comment_text": "",
@@ -1664,8 +1664,8 @@
         "upload_time": "2024-02-09T08:31:21",
         "upload_time_iso_8601": "2024-02-09T08:31:21.970124Z",
         "url": "https://files.pythonhosted.org/packages/26/59/fe315eb1646b1982417730fe744d907f1b7eaf1d0f6e2eb3ae9866944533/napari_nD_annotator-0.2.1-cp312-cp312-win_amd64.whl",
-        "yanked": false,
-        "yanked_reason": null
+        "yanked": true,
+        "yanked_reason": "errors due to persistent state"
       },
       {
         "comment_text": "",
@@ -1685,8 +1685,8 @@
         "upload_time": "2024-02-09T08:31:23",
         "upload_time_iso_8601": "2024-02-09T08:31:23.340803Z",
         "url": "https://files.pythonhosted.org/packages/af/3e/50828ddfe5443b429b4c0c67ba90dc67ccb99dc05a0d5eecf4a63b8fca00/napari_nD_annotator-0.2.1-cp38-cp38-macosx_10_9_x86_64.whl",
-        "yanked": false,
-        "yanked_reason": null
+        "yanked": true,
+        "yanked_reason": "errors due to persistent state"
       },
       {
         "comment_text": "",
@@ -1706,8 +1706,8 @@
         "upload_time": "2024-02-09T08:31:25",
         "upload_time_iso_8601": "2024-02-09T08:31:25.398832Z",
         "url": "https://files.pythonhosted.org/packages/31/bb/c3b40bdd1604bc28088935559caf54da308b6bb546c3220ff72bd15e9d13/napari_nD_annotator-0.2.1-cp38-cp38-manylinux_2_17_i686.manylinux2014_i686.whl",
-        "yanked": false,
-        "yanked_reason": null
+        "yanked": true,
+        "yanked_reason": "errors due to persistent state"
       },
       {
         "comment_text": "",
@@ -1727,8 +1727,8 @@
         "upload_time": "2024-02-09T08:31:27",
         "upload_time_iso_8601": "2024-02-09T08:31:27.507463Z",
         "url": "https://files.pythonhosted.org/packages/96/53/105145283db4882631a2553d544959906018c831a48841741297691c69b8/napari_nD_annotator-0.2.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
-        "yanked": false,
-        "yanked_reason": null
+        "yanked": true,
+        "yanked_reason": "errors due to persistent state"
       },
       {
         "comment_text": "",
@@ -1748,8 +1748,8 @@
         "upload_time": "2024-02-09T08:31:28",
         "upload_time_iso_8601": "2024-02-09T08:31:28.936663Z",
         "url": "https://files.pythonhosted.org/packages/b3/67/003bff997cc3db2802aae9f391ce741284d37e1bf6d6078f080ef1193ec3/napari_nD_annotator-0.2.1-cp38-cp38-win32.whl",
-        "yanked": false,
-        "yanked_reason": null
+        "yanked": true,
+        "yanked_reason": "errors due to persistent state"
       },
       {
         "comment_text": "",
@@ -1769,8 +1769,8 @@
         "upload_time": "2024-02-09T08:31:30",
         "upload_time_iso_8601": "2024-02-09T08:31:30.506950Z",
         "url": "https://files.pythonhosted.org/packages/17/62/4f40c1daf7688861eb12a65ca73d3bb152ae7484ee4af9019aea6ed06a77/napari_nD_annotator-0.2.1-cp38-cp38-win_amd64.whl",
-        "yanked": false,
-        "yanked_reason": null
+        "yanked": true,
+        "yanked_reason": "errors due to persistent state"
       },
       {
         "comment_text": "",
@@ -1790,8 +1790,8 @@
         "upload_time": "2024-02-09T08:31:32",
         "upload_time_iso_8601": "2024-02-09T08:31:32.378053Z",
         "url": "https://files.pythonhosted.org/packages/0c/93/c088624931f7b9e4f2a14540780528f4a47bf8e25be8eb10ab4607925c75/napari_nD_annotator-0.2.1-cp39-cp39-macosx_10_9_x86_64.whl",
-        "yanked": false,
-        "yanked_reason": null
+        "yanked": true,
+        "yanked_reason": "errors due to persistent state"
       },
       {
         "comment_text": "",
@@ -1811,8 +1811,8 @@
         "upload_time": "2024-02-09T08:31:33",
         "upload_time_iso_8601": "2024-02-09T08:31:33.741581Z",
         "url": "https://files.pythonhosted.org/packages/b6/0b/6c18cc4d312c200fba3e43c50e3fb95721decee4b629b50200e297ff3436/napari_nD_annotator-0.2.1-cp39-cp39-manylinux_2_17_i686.manylinux2014_i686.whl",
-        "yanked": false,
-        "yanked_reason": null
+        "yanked": true,
+        "yanked_reason": "errors due to persistent state"
       },
       {
         "comment_text": "",
@@ -1832,8 +1832,8 @@
         "upload_time": "2024-02-09T08:31:35",
         "upload_time_iso_8601": "2024-02-09T08:31:35.234489Z",
         "url": "https://files.pythonhosted.org/packages/43/f3/9a286e60e8fad3e67f9598719d65ef74ed935e7366e83f7c3eb4eb43018d/napari_nD_annotator-0.2.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
-        "yanked": false,
-        "yanked_reason": null
+        "yanked": true,
+        "yanked_reason": "errors due to persistent state"
       },
       {
         "comment_text": "",
@@ -1853,8 +1853,8 @@
         "upload_time": "2024-02-09T08:31:37",
         "upload_time_iso_8601": "2024-02-09T08:31:37.858575Z",
         "url": "https://files.pythonhosted.org/packages/e0/0b/324448b1c2dfe9a78b16f32d6cd0e25487bb675a686bc61eb67a8f075ad1/napari_nD_annotator-0.2.1-cp39-cp39-win32.whl",
-        "yanked": false,
-        "yanked_reason": null
+        "yanked": true,
+        "yanked_reason": "errors due to persistent state"
       },
       {
         "comment_text": "",
@@ -1874,8 +1874,8 @@
         "upload_time": "2024-02-09T08:31:39",
         "upload_time_iso_8601": "2024-02-09T08:31:39.160037Z",
         "url": "https://files.pythonhosted.org/packages/26/3c/097ea8ef80ec44006b6eeca424ed1526e48b37caa130c990d8d58f5ce612/napari_nD_annotator-0.2.1-cp39-cp39-win_amd64.whl",
-        "yanked": false,
-        "yanked_reason": null
+        "yanked": true,
+        "yanked_reason": "errors due to persistent state"
       },
       {
         "comment_text": "",
@@ -1895,8 +1895,8 @@
         "upload_time": "2024-02-09T08:31:41",
         "upload_time_iso_8601": "2024-02-09T08:31:41.077355Z",
         "url": "https://files.pythonhosted.org/packages/f9/4a/5502506893044d22c9547b8b46f2bcafe8cfea2f1f2beb1071e55235d427/napari-nD-annotator-0.2.1.tar.gz",
-        "yanked": false,
-        "yanked_reason": null
+        "yanked": true,
+        "yanked_reason": "errors due to persistent state"
       }
     ]
   },
@@ -1904,504 +1904,504 @@
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "d60bcffaa5ddd8dfa91947f30e97c559700f9f7e6d35f7e8d5004804948d2e3b",
-        "md5": "b560a6f7adef34bfff669cab10024722",
-        "sha256": "40aafc058bc52371a02a546baa4332d7e0c8976b1b6ad917bc597037d5cf61da"
+        "blake2b_256": "16b3be4feaa0bf75aeb8322aaa90c3608c9c7567f9a424c26ae50298aef880f9",
+        "md5": "2f9512d43da097e6d03c1d4ade0b2683",
+        "sha256": "f9181ad32cb20a3bea890b3f4a4666e6252cc1cde3b00151346dbdf47f783067"
       },
       "downloads": -1,
-      "filename": "napari_nD_annotator-0.2.1-cp310-cp310-macosx_10_9_x86_64.whl",
+      "filename": "napari_nD_annotator-0.2.0-cp310-cp310-macosx_10_9_x86_64.whl",
       "has_sig": false,
-      "md5_digest": "b560a6f7adef34bfff669cab10024722",
+      "md5_digest": "2f9512d43da097e6d03c1d4ade0b2683",
       "packagetype": "bdist_wheel",
       "python_version": "cp310",
       "requires_python": ">=3.8",
-      "size": 1382861,
-      "upload_time": "2024-02-09T08:30:59",
-      "upload_time_iso_8601": "2024-02-09T08:30:59.607396Z",
-      "url": "https://files.pythonhosted.org/packages/d6/0b/cffaa5ddd8dfa91947f30e97c559700f9f7e6d35f7e8d5004804948d2e3b/napari_nD_annotator-0.2.1-cp310-cp310-macosx_10_9_x86_64.whl",
+      "size": 1379401,
+      "upload_time": "2024-01-17T23:03:25",
+      "upload_time_iso_8601": "2024-01-17T23:03:25.996221Z",
+      "url": "https://files.pythonhosted.org/packages/16/b3/be4feaa0bf75aeb8322aaa90c3608c9c7567f9a424c26ae50298aef880f9/napari_nD_annotator-0.2.0-cp310-cp310-macosx_10_9_x86_64.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "a6d91ed8ef17d40bb611544f1d8bd3e7431df867731c3c4cdcdfda3516667485",
-        "md5": "4453053a7c1d7f6f69be27d7c73ee4ff",
-        "sha256": "9b6a4076cd98bd7fd3d683afd0a356be6fbbb02f102113e37e51cb7b321e76c5"
+        "blake2b_256": "b9ce09a6122fcb2950a4d35f18392137ff5b4c6581313a97d36f4605a1e06432",
+        "md5": "7ed9c72ef53dcb7b592b5a5f38c8755a",
+        "sha256": "dadf2710c29a330d8375531320fa99c9e42186bd898480bd279978537ccd5ce6"
       },
       "downloads": -1,
-      "filename": "napari_nD_annotator-0.2.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "filename": "napari_nD_annotator-0.2.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
       "has_sig": false,
-      "md5_digest": "4453053a7c1d7f6f69be27d7c73ee4ff",
+      "md5_digest": "7ed9c72ef53dcb7b592b5a5f38c8755a",
       "packagetype": "bdist_wheel",
       "python_version": "cp310",
       "requires_python": ">=3.8",
-      "size": 3196633,
-      "upload_time": "2024-02-09T08:31:01",
-      "upload_time_iso_8601": "2024-02-09T08:31:01.922033Z",
-      "url": "https://files.pythonhosted.org/packages/a6/d9/1ed8ef17d40bb611544f1d8bd3e7431df867731c3c4cdcdfda3516667485/napari_nD_annotator-0.2.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "size": 3194456,
+      "upload_time": "2024-01-17T23:03:27",
+      "upload_time_iso_8601": "2024-01-17T23:03:27.843463Z",
+      "url": "https://files.pythonhosted.org/packages/b9/ce/09a6122fcb2950a4d35f18392137ff5b4c6581313a97d36f4605a1e06432/napari_nD_annotator-0.2.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "232ba08beff3003db28de0377b448ec3b2d6708c838ec18b987412e336437913",
-        "md5": "0b0998106531a149850b3155129769d6",
-        "sha256": "b98e0bbef2399c242af161f05d2aa46decc3031c89f329ef975c5111014682d8"
+        "blake2b_256": "6f7ec45a85089527df5c0417e69ab2e6dd70915986f459f9eeb33c9b9f3d2efb",
+        "md5": "2df948d43f5eec4f6beb650592fa4431",
+        "sha256": "a56061d2f62feb0d1bbb7276eb6f10e684ff2989ec9e009e9dc147b336eed48b"
       },
       "downloads": -1,
-      "filename": "napari_nD_annotator-0.2.1-cp310-cp310-win_amd64.whl",
+      "filename": "napari_nD_annotator-0.2.0-cp310-cp310-win_amd64.whl",
       "has_sig": false,
-      "md5_digest": "0b0998106531a149850b3155129769d6",
+      "md5_digest": "2df948d43f5eec4f6beb650592fa4431",
       "packagetype": "bdist_wheel",
       "python_version": "cp310",
       "requires_python": ">=3.8",
-      "size": 984926,
-      "upload_time": "2024-02-09T08:31:04",
-      "upload_time_iso_8601": "2024-02-09T08:31:04.060368Z",
-      "url": "https://files.pythonhosted.org/packages/23/2b/a08beff3003db28de0377b448ec3b2d6708c838ec18b987412e336437913/napari_nD_annotator-0.2.1-cp310-cp310-win_amd64.whl",
+      "size": 982340,
+      "upload_time": "2024-01-17T23:03:29",
+      "upload_time_iso_8601": "2024-01-17T23:03:29.713076Z",
+      "url": "https://files.pythonhosted.org/packages/6f/7e/c45a85089527df5c0417e69ab2e6dd70915986f459f9eeb33c9b9f3d2efb/napari_nD_annotator-0.2.0-cp310-cp310-win_amd64.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "04ca6ec51bd7e7fbc932dd34f739971a77ce381f24d80684bbcf1ce7d055439b",
-        "md5": "7b79b806fece333b8ee6cbce9ca4c068",
-        "sha256": "00f644d3c8f1b867665940cf82c288a17824a6ba865393910895eb18db710f10"
+        "blake2b_256": "24031aacbc7030cac4c563cdfada899fe8ba43a994e2abf42817079a979c343b",
+        "md5": "53189609d82a9e8615601b1d010dbbd5",
+        "sha256": "f0b87a3be4386f1d564b142f86b2937b28722f42e1c89e5545871702636df43e"
       },
       "downloads": -1,
-      "filename": "napari_nD_annotator-0.2.1-cp311-cp311-macosx_10_9_x86_64.whl",
+      "filename": "napari_nD_annotator-0.2.0-cp311-cp311-macosx_10_9_x86_64.whl",
       "has_sig": false,
-      "md5_digest": "7b79b806fece333b8ee6cbce9ca4c068",
+      "md5_digest": "53189609d82a9e8615601b1d010dbbd5",
       "packagetype": "bdist_wheel",
       "python_version": "cp311",
       "requires_python": ">=3.8",
-      "size": 1384292,
-      "upload_time": "2024-02-09T08:31:05",
-      "upload_time_iso_8601": "2024-02-09T08:31:05.942551Z",
-      "url": "https://files.pythonhosted.org/packages/04/ca/6ec51bd7e7fbc932dd34f739971a77ce381f24d80684bbcf1ce7d055439b/napari_nD_annotator-0.2.1-cp311-cp311-macosx_10_9_x86_64.whl",
+      "size": 1380809,
+      "upload_time": "2024-01-18T09:46:44",
+      "upload_time_iso_8601": "2024-01-18T09:46:44.787983Z",
+      "url": "https://files.pythonhosted.org/packages/24/03/1aacbc7030cac4c563cdfada899fe8ba43a994e2abf42817079a979c343b/napari_nD_annotator-0.2.0-cp311-cp311-macosx_10_9_x86_64.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "088ecd63322f9f8f3babe53f70853bea88ae54bee359fef81046dfb5539405a6",
-        "md5": "dfa9d5f7b233e66ec6f4455c20133613",
-        "sha256": "4b1c30cc0a66c22427f049c07a5d46736bc90c1f46e7333f01a0f57375fa144b"
+        "blake2b_256": "6656ab9cc24bda1c87482f84b5669ca475edeee8bab8a07b8890f5f09669b4f7",
+        "md5": "d553e02142ed386664500a409d5b1a33",
+        "sha256": "0ce470efa5089fd676a2432b7706e919793ccc3d7c1f6f8957234b6e3d28658f"
       },
       "downloads": -1,
-      "filename": "napari_nD_annotator-0.2.1-cp311-cp311-manylinux_2_17_i686.manylinux2014_i686.whl",
+      "filename": "napari_nD_annotator-0.2.0-cp311-cp311-manylinux_2_17_i686.manylinux2014_i686.whl",
       "has_sig": false,
-      "md5_digest": "dfa9d5f7b233e66ec6f4455c20133613",
+      "md5_digest": "d553e02142ed386664500a409d5b1a33",
       "packagetype": "bdist_wheel",
       "python_version": "cp311",
       "requires_python": ">=3.8",
-      "size": 3224667,
-      "upload_time": "2024-02-09T08:31:07",
-      "upload_time_iso_8601": "2024-02-09T08:31:07.860907Z",
-      "url": "https://files.pythonhosted.org/packages/08/8e/cd63322f9f8f3babe53f70853bea88ae54bee359fef81046dfb5539405a6/napari_nD_annotator-0.2.1-cp311-cp311-manylinux_2_17_i686.manylinux2014_i686.whl",
+      "size": 3221608,
+      "upload_time": "2024-01-18T09:46:46",
+      "upload_time_iso_8601": "2024-01-18T09:46:46.410251Z",
+      "url": "https://files.pythonhosted.org/packages/66/56/ab9cc24bda1c87482f84b5669ca475edeee8bab8a07b8890f5f09669b4f7/napari_nD_annotator-0.2.0-cp311-cp311-manylinux_2_17_i686.manylinux2014_i686.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "2b909a41e207440ab1af6f061cadff377217738545fffd6f90763e92427ce74c",
-        "md5": "9d9f08f08dddc27b54afc93c09c4b4ea",
-        "sha256": "91ea260df2335903d60be1da8d89e0ced748aa222cd6ecfa82a4101da5c95da3"
+        "blake2b_256": "1a956067a6f339e265e6f03fc0289f60e2e0e4d563fcac49d0adb067dcfdec85",
+        "md5": "21dc17e008ea9e727a30799280a93e77",
+        "sha256": "f5e4cd27df694d679714138bc568e2d5ee927058b8ba538a929bce382bd88915"
       },
       "downloads": -1,
-      "filename": "napari_nD_annotator-0.2.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "filename": "napari_nD_annotator-0.2.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
       "has_sig": false,
-      "md5_digest": "9d9f08f08dddc27b54afc93c09c4b4ea",
+      "md5_digest": "21dc17e008ea9e727a30799280a93e77",
       "packagetype": "bdist_wheel",
       "python_version": "cp311",
       "requires_python": ">=3.8",
-      "size": 3340784,
-      "upload_time": "2024-02-09T08:31:09",
-      "upload_time_iso_8601": "2024-02-09T08:31:09.888130Z",
-      "url": "https://files.pythonhosted.org/packages/2b/90/9a41e207440ab1af6f061cadff377217738545fffd6f90763e92427ce74c/napari_nD_annotator-0.2.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "size": 3337885,
+      "upload_time": "2024-01-18T09:46:48",
+      "upload_time_iso_8601": "2024-01-18T09:46:48.621129Z",
+      "url": "https://files.pythonhosted.org/packages/1a/95/6067a6f339e265e6f03fc0289f60e2e0e4d563fcac49d0adb067dcfdec85/napari_nD_annotator-0.2.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "851837e34ef42185b4309a7d4dd2eda63f1326130969e3a4f4fe1045ab45b72d",
-        "md5": "57d1b7bb5854b734d08348f8df2527fa",
-        "sha256": "ba9ade25e03c7a395e7ed8308990a33672e3a632a339a7d7a445b1faa48ec524"
+        "blake2b_256": "06af639a07a15ef5fbc2c50207112f09a68035a6d97047ee7c45a69b10748fdd",
+        "md5": "7033f47e106809eed3d705706c71e3c0",
+        "sha256": "59f80205ee3905667c68f29ab26f47ea096a57b95eda449e422ee93fdcc0e574"
       },
       "downloads": -1,
-      "filename": "napari_nD_annotator-0.2.1-cp311-cp311-win32.whl",
+      "filename": "napari_nD_annotator-0.2.0-cp311-cp311-win32.whl",
       "has_sig": false,
-      "md5_digest": "57d1b7bb5854b734d08348f8df2527fa",
+      "md5_digest": "7033f47e106809eed3d705706c71e3c0",
       "packagetype": "bdist_wheel",
       "python_version": "cp311",
       "requires_python": ">=3.8",
-      "size": 943894,
-      "upload_time": "2024-02-09T08:31:11",
-      "upload_time_iso_8601": "2024-02-09T08:31:11.231464Z",
-      "url": "https://files.pythonhosted.org/packages/85/18/37e34ef42185b4309a7d4dd2eda63f1326130969e3a4f4fe1045ab45b72d/napari_nD_annotator-0.2.1-cp311-cp311-win32.whl",
+      "size": 941303,
+      "upload_time": "2024-01-18T09:46:50",
+      "upload_time_iso_8601": "2024-01-18T09:46:50.240910Z",
+      "url": "https://files.pythonhosted.org/packages/06/af/639a07a15ef5fbc2c50207112f09a68035a6d97047ee7c45a69b10748fdd/napari_nD_annotator-0.2.0-cp311-cp311-win32.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "50690ac5eb894573d80349d5a660af99f2914018d6926ba14665f6e80b682413",
-        "md5": "72559732cc5f48757c6756a88be03ce4",
-        "sha256": "bd916114c038332a8d026e2f8241da17b6e9c89a0bbc06cd89fe03e877bea284"
+        "blake2b_256": "105866a765e335263e8e517d5ce1d0d376581648051d9bea2ee6cffc76145971",
+        "md5": "5c1196d172a3e7953f4e91ab35839fb6",
+        "sha256": "1d5b53f79f7216e1d1fb8cba1d612a45379e7af49eced6cac9af3e96f6ae5a48"
       },
       "downloads": -1,
-      "filename": "napari_nD_annotator-0.2.1-cp311-cp311-win_amd64.whl",
+      "filename": "napari_nD_annotator-0.2.0-cp311-cp311-win_amd64.whl",
       "has_sig": false,
-      "md5_digest": "72559732cc5f48757c6756a88be03ce4",
+      "md5_digest": "5c1196d172a3e7953f4e91ab35839fb6",
       "packagetype": "bdist_wheel",
       "python_version": "cp311",
       "requires_python": ">=3.8",
-      "size": 985804,
-      "upload_time": "2024-02-09T08:31:13",
-      "upload_time_iso_8601": "2024-02-09T08:31:13.198800Z",
-      "url": "https://files.pythonhosted.org/packages/50/69/0ac5eb894573d80349d5a660af99f2914018d6926ba14665f6e80b682413/napari_nD_annotator-0.2.1-cp311-cp311-win_amd64.whl",
+      "size": 983123,
+      "upload_time": "2024-01-18T09:46:51",
+      "upload_time_iso_8601": "2024-01-18T09:46:51.752394Z",
+      "url": "https://files.pythonhosted.org/packages/10/58/66a765e335263e8e517d5ce1d0d376581648051d9bea2ee6cffc76145971/napari_nD_annotator-0.2.0-cp311-cp311-win_amd64.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "42be0aedb038ce0287f2db2bf2c893dffbee203ea15935a1361d9ef20b6ee048",
-        "md5": "86e971a43ca01ab97956a79a533670ff",
-        "sha256": "fd7e1a0de88c8967a7bd64942ca7341592e3650a690d0c6f22d0b820c5e8e0fc"
+        "blake2b_256": "35368c8f7c6377f14482cbd057ef07370b8d39c95180520103b0ab2947f6c03b",
+        "md5": "b0deecaaac124312725131f73ffa70bc",
+        "sha256": "bb855ea003fa6204358b3b9c86490e2bf7f509fcdb8f388a3990e6c332382b43"
       },
       "downloads": -1,
-      "filename": "napari_nD_annotator-0.2.1-cp312-cp312-macosx_10_9_x86_64.whl",
+      "filename": "napari_nD_annotator-0.2.0-cp312-cp312-macosx_10_9_x86_64.whl",
       "has_sig": false,
-      "md5_digest": "86e971a43ca01ab97956a79a533670ff",
+      "md5_digest": "b0deecaaac124312725131f73ffa70bc",
       "packagetype": "bdist_wheel",
       "python_version": "cp312",
       "requires_python": ">=3.8",
-      "size": 1350193,
-      "upload_time": "2024-02-09T08:31:14",
-      "upload_time_iso_8601": "2024-02-09T08:31:14.538129Z",
-      "url": "https://files.pythonhosted.org/packages/42/be/0aedb038ce0287f2db2bf2c893dffbee203ea15935a1361d9ef20b6ee048/napari_nD_annotator-0.2.1-cp312-cp312-macosx_10_9_x86_64.whl",
+      "size": 1346546,
+      "upload_time": "2024-01-18T09:46:53",
+      "upload_time_iso_8601": "2024-01-18T09:46:53.637108Z",
+      "url": "https://files.pythonhosted.org/packages/35/36/8c8f7c6377f14482cbd057ef07370b8d39c95180520103b0ab2947f6c03b/napari_nD_annotator-0.2.0-cp312-cp312-macosx_10_9_x86_64.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "d8200c7d8ccfd5474c4c2a387f0bad852c4c70c3394c32ce5a296d418c445bde",
-        "md5": "359219da111ae6e78e18e0565c5a35cf",
-        "sha256": "80b0d673fb19bd66cbcda50f3651b42cfe9446f7d368ceb18530846c58f1f058"
+        "blake2b_256": "7dc2dedfcc970f4c54bf9741586d3475d8e0d970da383bf7ffcc9a4012e71e29",
+        "md5": "977e9a61911e03ba30e3e0f8a59f5d88",
+        "sha256": "8c81191bd93a9f65878de2735e2ae09ea35f9d9f664a1ff91cdbe4f5bb19778a"
       },
       "downloads": -1,
-      "filename": "napari_nD_annotator-0.2.1-cp312-cp312-manylinux_2_17_i686.manylinux2014_i686.whl",
+      "filename": "napari_nD_annotator-0.2.0-cp312-cp312-manylinux_2_17_i686.manylinux2014_i686.whl",
       "has_sig": false,
-      "md5_digest": "359219da111ae6e78e18e0565c5a35cf",
+      "md5_digest": "977e9a61911e03ba30e3e0f8a59f5d88",
       "packagetype": "bdist_wheel",
       "python_version": "cp312",
       "requires_python": ">=3.8",
-      "size": 3200470,
-      "upload_time": "2024-02-09T08:31:16",
-      "upload_time_iso_8601": "2024-02-09T08:31:16.430386Z",
-      "url": "https://files.pythonhosted.org/packages/d8/20/0c7d8ccfd5474c4c2a387f0bad852c4c70c3394c32ce5a296d418c445bde/napari_nD_annotator-0.2.1-cp312-cp312-manylinux_2_17_i686.manylinux2014_i686.whl",
+      "size": 3199064,
+      "upload_time": "2024-01-18T09:46:55",
+      "upload_time_iso_8601": "2024-01-18T09:46:55.916259Z",
+      "url": "https://files.pythonhosted.org/packages/7d/c2/dedfcc970f4c54bf9741586d3475d8e0d970da383bf7ffcc9a4012e71e29/napari_nD_annotator-0.2.0-cp312-cp312-manylinux_2_17_i686.manylinux2014_i686.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "2986f19eeb6646e9081ee3741a55a02949deafb50afb00b43f3e4946feeeaf27",
-        "md5": "ff0d66cf066bc79b4fd7e99c81747000",
-        "sha256": "4f7367137999edb5673391d9d2d7a5584c71ffe3116ff12f841956bb0de3d3d2"
+        "blake2b_256": "2179d62f0f5420f66cc839b4c07eb6015e32b452242fbbe54ca62f02f4c861c9",
+        "md5": "291757f3daed6a38578d7736b71eb690",
+        "sha256": "7180f21c85f3fc19fbe2cf92b76548a138d7ad4ec2bea21ecfa4b9ae6207b6a8"
       },
       "downloads": -1,
-      "filename": "napari_nD_annotator-0.2.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "filename": "napari_nD_annotator-0.2.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
       "has_sig": false,
-      "md5_digest": "ff0d66cf066bc79b4fd7e99c81747000",
+      "md5_digest": "291757f3daed6a38578d7736b71eb690",
       "packagetype": "bdist_wheel",
       "python_version": "cp312",
       "requires_python": ">=3.8",
-      "size": 3339818,
-      "upload_time": "2024-02-09T08:31:18",
-      "upload_time_iso_8601": "2024-02-09T08:31:18.497315Z",
-      "url": "https://files.pythonhosted.org/packages/29/86/f19eeb6646e9081ee3741a55a02949deafb50afb00b43f3e4946feeeaf27/napari_nD_annotator-0.2.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "size": 3337927,
+      "upload_time": "2024-01-18T09:46:58",
+      "upload_time_iso_8601": "2024-01-18T09:46:58.401288Z",
+      "url": "https://files.pythonhosted.org/packages/21/79/d62f0f5420f66cc839b4c07eb6015e32b452242fbbe54ca62f02f4c861c9/napari_nD_annotator-0.2.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "9689fe0f58de782e8c005028c8a506fb5183568e71ff578dc6e11b6520e27116",
-        "md5": "cfaed481fcd7ac7fddefd8c373c0c559",
-        "sha256": "c670d8f4e1da02d76642b903e2266cdfc6b8925795947b7b9681959495230222"
+        "blake2b_256": "cb12aa89deea46fb8ec9a301ba15c68836abb3104a1ad0a265ee45a082a30e29",
+        "md5": "35804b987b8201f675c7c07089a45928",
+        "sha256": "fa1d9aa816b35313e115a62f50c04f709cd3026c6da2da2d3ca739be0565050c"
       },
       "downloads": -1,
-      "filename": "napari_nD_annotator-0.2.1-cp312-cp312-win32.whl",
+      "filename": "napari_nD_annotator-0.2.0-cp312-cp312-win32.whl",
       "has_sig": false,
-      "md5_digest": "cfaed481fcd7ac7fddefd8c373c0c559",
+      "md5_digest": "35804b987b8201f675c7c07089a45928",
       "packagetype": "bdist_wheel",
       "python_version": "cp312",
       "requires_python": ">=3.8",
-      "size": 935308,
-      "upload_time": "2024-02-09T08:31:20",
-      "upload_time_iso_8601": "2024-02-09T08:31:20.592259Z",
-      "url": "https://files.pythonhosted.org/packages/96/89/fe0f58de782e8c005028c8a506fb5183568e71ff578dc6e11b6520e27116/napari_nD_annotator-0.2.1-cp312-cp312-win32.whl",
+      "size": 932756,
+      "upload_time": "2024-01-18T09:47:00",
+      "upload_time_iso_8601": "2024-01-18T09:47:00.011351Z",
+      "url": "https://files.pythonhosted.org/packages/cb/12/aa89deea46fb8ec9a301ba15c68836abb3104a1ad0a265ee45a082a30e29/napari_nD_annotator-0.2.0-cp312-cp312-win32.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "2659fe315eb1646b1982417730fe744d907f1b7eaf1d0f6e2eb3ae9866944533",
-        "md5": "f28b571ca32562d6f577818ddcd26193",
-        "sha256": "8bb28c2207c7fd305d4cff03fcdaee35fa2ce8f76d5597ccb3577d856676dd69"
+        "blake2b_256": "41495b9fb36f05554328bb7b73493d15a86d4db463d17a04880b7d2e0560f2f2",
+        "md5": "dddbfc744258925505b5a3756bdffe7a",
+        "sha256": "046ef929360a262b7d8a193f23f9409e69f98345c191d127b34c849ffafaa137"
       },
       "downloads": -1,
-      "filename": "napari_nD_annotator-0.2.1-cp312-cp312-win_amd64.whl",
+      "filename": "napari_nD_annotator-0.2.0-cp312-cp312-win_amd64.whl",
       "has_sig": false,
-      "md5_digest": "f28b571ca32562d6f577818ddcd26193",
+      "md5_digest": "dddbfc744258925505b5a3756bdffe7a",
       "packagetype": "bdist_wheel",
       "python_version": "cp312",
       "requires_python": ">=3.8",
-      "size": 973264,
-      "upload_time": "2024-02-09T08:31:21",
-      "upload_time_iso_8601": "2024-02-09T08:31:21.970124Z",
-      "url": "https://files.pythonhosted.org/packages/26/59/fe315eb1646b1982417730fe744d907f1b7eaf1d0f6e2eb3ae9866944533/napari_nD_annotator-0.2.1-cp312-cp312-win_amd64.whl",
+      "size": 970607,
+      "upload_time": "2024-01-18T09:47:02",
+      "upload_time_iso_8601": "2024-01-18T09:47:02.073489Z",
+      "url": "https://files.pythonhosted.org/packages/41/49/5b9fb36f05554328bb7b73493d15a86d4db463d17a04880b7d2e0560f2f2/napari_nD_annotator-0.2.0-cp312-cp312-win_amd64.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "af3e50828ddfe5443b429b4c0c67ba90dc67ccb99dc05a0d5eecf4a63b8fca00",
-        "md5": "46480e07785f8db530b544587fd90893",
-        "sha256": "87353a906cea1d680ad6e4d767be8a1a23ed50fddb7cca809827f9fdb978e75b"
+        "blake2b_256": "ff495c94b32a623b20a8af3b8a15a24a265b8fa54ec9ad46f3bff8a44a7908b8",
+        "md5": "7b403dee5851941e9b315639678559a3",
+        "sha256": "fe8d081fb70b48ee14ff6d414cd4e33e2ef74e13818a46d7b35c3d0dc19375c8"
       },
       "downloads": -1,
-      "filename": "napari_nD_annotator-0.2.1-cp38-cp38-macosx_10_9_x86_64.whl",
+      "filename": "napari_nD_annotator-0.2.0-cp38-cp38-macosx_10_9_x86_64.whl",
       "has_sig": false,
-      "md5_digest": "46480e07785f8db530b544587fd90893",
+      "md5_digest": "7b403dee5851941e9b315639678559a3",
       "packagetype": "bdist_wheel",
       "python_version": "cp38",
       "requires_python": ">=3.8",
-      "size": 1379987,
-      "upload_time": "2024-02-09T08:31:23",
-      "upload_time_iso_8601": "2024-02-09T08:31:23.340803Z",
-      "url": "https://files.pythonhosted.org/packages/af/3e/50828ddfe5443b429b4c0c67ba90dc67ccb99dc05a0d5eecf4a63b8fca00/napari_nD_annotator-0.2.1-cp38-cp38-macosx_10_9_x86_64.whl",
+      "size": 1376452,
+      "upload_time": "2024-01-17T23:03:31",
+      "upload_time_iso_8601": "2024-01-17T23:03:31.532291Z",
+      "url": "https://files.pythonhosted.org/packages/ff/49/5c94b32a623b20a8af3b8a15a24a265b8fa54ec9ad46f3bff8a44a7908b8/napari_nD_annotator-0.2.0-cp38-cp38-macosx_10_9_x86_64.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "31bbc3b40bdd1604bc28088935559caf54da308b6bb546c3220ff72bd15e9d13",
-        "md5": "f7d5b07c509fe4f6a0d6edb7f8d10e2f",
-        "sha256": "4489bc0ac42792d81ed2d788563d0f8f5a62c6a781ae8c1fff6b845867d85059"
+        "blake2b_256": "0ae3e9c242cfa60da7e1b04bf9aebb67ecb9e61e21140efead3a1f8d30f6259f",
+        "md5": "01df5cb7745929e83f1c3b6763665382",
+        "sha256": "99bf9eac132c58bb832199e9b2891b99a12bdd9a0cbb7205c0967eb396afe016"
       },
       "downloads": -1,
-      "filename": "napari_nD_annotator-0.2.1-cp38-cp38-manylinux_2_17_i686.manylinux2014_i686.whl",
+      "filename": "napari_nD_annotator-0.2.0-cp38-cp38-manylinux_2_17_i686.manylinux2014_i686.whl",
       "has_sig": false,
-      "md5_digest": "f7d5b07c509fe4f6a0d6edb7f8d10e2f",
+      "md5_digest": "01df5cb7745929e83f1c3b6763665382",
       "packagetype": "bdist_wheel",
       "python_version": "cp38",
       "requires_python": ">=3.8",
-      "size": 3148414,
-      "upload_time": "2024-02-09T08:31:25",
-      "upload_time_iso_8601": "2024-02-09T08:31:25.398832Z",
-      "url": "https://files.pythonhosted.org/packages/31/bb/c3b40bdd1604bc28088935559caf54da308b6bb546c3220ff72bd15e9d13/napari_nD_annotator-0.2.1-cp38-cp38-manylinux_2_17_i686.manylinux2014_i686.whl",
+      "size": 3146512,
+      "upload_time": "2024-01-17T23:03:32",
+      "upload_time_iso_8601": "2024-01-17T23:03:32.864020Z",
+      "url": "https://files.pythonhosted.org/packages/0a/e3/e9c242cfa60da7e1b04bf9aebb67ecb9e61e21140efead3a1f8d30f6259f/napari_nD_annotator-0.2.0-cp38-cp38-manylinux_2_17_i686.manylinux2014_i686.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "9653105145283db4882631a2553d544959906018c831a48841741297691c69b8",
-        "md5": "46c231f28e3c557b023ecbcc9f8ef509",
-        "sha256": "821fa0d37a77f989acbb95aab8f6fc0e8dfe54244d113165189c12c0d41f99c1"
+        "blake2b_256": "b16d1baa51877bb87b48a538aa3bc02e51902e16507615ef7e65a5b4dc77ec9a",
+        "md5": "8c3174e1fa958236cc330634c2839e39",
+        "sha256": "3744ad6e6768f5afcb5f6ddfefe9be6e68cd82aa0e7a069bbd1e0eed089a223b"
       },
       "downloads": -1,
-      "filename": "napari_nD_annotator-0.2.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "filename": "napari_nD_annotator-0.2.0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
       "has_sig": false,
-      "md5_digest": "46c231f28e3c557b023ecbcc9f8ef509",
+      "md5_digest": "8c3174e1fa958236cc330634c2839e39",
       "packagetype": "bdist_wheel",
       "python_version": "cp38",
       "requires_python": ">=3.8",
-      "size": 3262063,
-      "upload_time": "2024-02-09T08:31:27",
-      "upload_time_iso_8601": "2024-02-09T08:31:27.507463Z",
-      "url": "https://files.pythonhosted.org/packages/96/53/105145283db4882631a2553d544959906018c831a48841741297691c69b8/napari_nD_annotator-0.2.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "size": 3260124,
+      "upload_time": "2024-01-17T23:03:34",
+      "upload_time_iso_8601": "2024-01-17T23:03:34.595182Z",
+      "url": "https://files.pythonhosted.org/packages/b1/6d/1baa51877bb87b48a538aa3bc02e51902e16507615ef7e65a5b4dc77ec9a/napari_nD_annotator-0.2.0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "b367003bff997cc3db2802aae9f391ce741284d37e1bf6d6078f080ef1193ec3",
-        "md5": "6b7b335ae8da798fbd76d4f940adf0b0",
-        "sha256": "e2d273230cef7e0f4a7553348a83f1bfaf0d187e296f3a5688ce32d4b31579b7"
+        "blake2b_256": "25fcda9dba9afd7515c29d48647d295829bd166c0ff044ce6966070d57947892",
+        "md5": "bf1403599efc8129a25b45e158fadb1c",
+        "sha256": "849f7bbceeba5675449b49f45e452a44c68913eabe3a0749187e3ff23d3360b0"
       },
       "downloads": -1,
-      "filename": "napari_nD_annotator-0.2.1-cp38-cp38-win32.whl",
+      "filename": "napari_nD_annotator-0.2.0-cp38-cp38-win32.whl",
       "has_sig": false,
-      "md5_digest": "6b7b335ae8da798fbd76d4f940adf0b0",
+      "md5_digest": "bf1403599efc8129a25b45e158fadb1c",
       "packagetype": "bdist_wheel",
       "python_version": "cp38",
       "requires_python": ">=3.8",
-      "size": 948958,
-      "upload_time": "2024-02-09T08:31:28",
-      "upload_time_iso_8601": "2024-02-09T08:31:28.936663Z",
-      "url": "https://files.pythonhosted.org/packages/b3/67/003bff997cc3db2802aae9f391ce741284d37e1bf6d6078f080ef1193ec3/napari_nD_annotator-0.2.1-cp38-cp38-win32.whl",
+      "size": 946412,
+      "upload_time": "2024-01-17T23:03:36",
+      "upload_time_iso_8601": "2024-01-17T23:03:36.567461Z",
+      "url": "https://files.pythonhosted.org/packages/25/fc/da9dba9afd7515c29d48647d295829bd166c0ff044ce6966070d57947892/napari_nD_annotator-0.2.0-cp38-cp38-win32.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "17624f40c1daf7688861eb12a65ca73d3bb152ae7484ee4af9019aea6ed06a77",
-        "md5": "df15504aafdc4c88c5530149b9212089",
-        "sha256": "9c2149e18630f11a8662bf1e5c5c080dd14354f352b882baf5905f88f939de2b"
+        "blake2b_256": "bdd82bfcafc0ac983da5527fddf6b92b6b4122ff049b9cae7829e322ac38bd50",
+        "md5": "8b1c66c1bc070737f540e1f60683fbe7",
+        "sha256": "f284b50b05975ba94f9a238b2d6e2df7199501e4419cd3a6918eab4aafcb6edd"
       },
       "downloads": -1,
-      "filename": "napari_nD_annotator-0.2.1-cp38-cp38-win_amd64.whl",
+      "filename": "napari_nD_annotator-0.2.0-cp38-cp38-win_amd64.whl",
       "has_sig": false,
-      "md5_digest": "df15504aafdc4c88c5530149b9212089",
+      "md5_digest": "8b1c66c1bc070737f540e1f60683fbe7",
       "packagetype": "bdist_wheel",
       "python_version": "cp38",
       "requires_python": ">=3.8",
-      "size": 989872,
-      "upload_time": "2024-02-09T08:31:30",
-      "upload_time_iso_8601": "2024-02-09T08:31:30.506950Z",
-      "url": "https://files.pythonhosted.org/packages/17/62/4f40c1daf7688861eb12a65ca73d3bb152ae7484ee4af9019aea6ed06a77/napari_nD_annotator-0.2.1-cp38-cp38-win_amd64.whl",
+      "size": 987265,
+      "upload_time": "2024-01-17T23:03:38",
+      "upload_time_iso_8601": "2024-01-17T23:03:38.389548Z",
+      "url": "https://files.pythonhosted.org/packages/bd/d8/2bfcafc0ac983da5527fddf6b92b6b4122ff049b9cae7829e322ac38bd50/napari_nD_annotator-0.2.0-cp38-cp38-win_amd64.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "0c93c088624931f7b9e4f2a14540780528f4a47bf8e25be8eb10ab4607925c75",
-        "md5": "f427b9b74d1fa8fb6b567844508b047e",
-        "sha256": "bcadef289895f33ba74b3491f83d3cc2e4ac75e435796ee969fdb9e711e373d5"
+        "blake2b_256": "99e260c47cbc745c42e3a7ca8b2abbce76df3318f274ecf40d7194f7e8fc0e3c",
+        "md5": "6eb5c1ab18a3e63cf9ca09377ab5166c",
+        "sha256": "edf77d6b3225c1934a0662c77576994c8ac0d717ad7cf3c6e43530a7ac624fed"
       },
       "downloads": -1,
-      "filename": "napari_nD_annotator-0.2.1-cp39-cp39-macosx_10_9_x86_64.whl",
+      "filename": "napari_nD_annotator-0.2.0-cp39-cp39-macosx_10_9_x86_64.whl",
       "has_sig": false,
-      "md5_digest": "f427b9b74d1fa8fb6b567844508b047e",
+      "md5_digest": "6eb5c1ab18a3e63cf9ca09377ab5166c",
       "packagetype": "bdist_wheel",
       "python_version": "cp39",
       "requires_python": ">=3.8",
-      "size": 1380552,
-      "upload_time": "2024-02-09T08:31:32",
-      "upload_time_iso_8601": "2024-02-09T08:31:32.378053Z",
-      "url": "https://files.pythonhosted.org/packages/0c/93/c088624931f7b9e4f2a14540780528f4a47bf8e25be8eb10ab4607925c75/napari_nD_annotator-0.2.1-cp39-cp39-macosx_10_9_x86_64.whl",
+      "size": 1377029,
+      "upload_time": "2024-01-17T23:03:40",
+      "upload_time_iso_8601": "2024-01-17T23:03:40.165058Z",
+      "url": "https://files.pythonhosted.org/packages/99/e2/60c47cbc745c42e3a7ca8b2abbce76df3318f274ecf40d7194f7e8fc0e3c/napari_nD_annotator-0.2.0-cp39-cp39-macosx_10_9_x86_64.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "b60b6c18cc4d312c200fba3e43c50e3fb95721decee4b629b50200e297ff3436",
-        "md5": "69129f7daf0686799dc507c94778d286",
-        "sha256": "bbdb10fb4700cd461142929abb706b9c3cb95de70f2f9b3e316997ef29e535f7"
+        "blake2b_256": "187d499554236bf203d8beb22259107fb8273f118db4508ce5908cc05b3b4392",
+        "md5": "4a7a96943d0fa741fb84e0759b7cb6b3",
+        "sha256": "27e309bb5fcaa3ca17c754aed97d243b3a15d91f6d4f05e1c301ec046d940f45"
       },
       "downloads": -1,
-      "filename": "napari_nD_annotator-0.2.1-cp39-cp39-manylinux_2_17_i686.manylinux2014_i686.whl",
+      "filename": "napari_nD_annotator-0.2.0-cp39-cp39-manylinux_2_17_i686.manylinux2014_i686.whl",
       "has_sig": false,
-      "md5_digest": "69129f7daf0686799dc507c94778d286",
+      "md5_digest": "4a7a96943d0fa741fb84e0759b7cb6b3",
       "packagetype": "bdist_wheel",
       "python_version": "cp39",
       "requires_python": ">=3.8",
-      "size": 3092243,
-      "upload_time": "2024-02-09T08:31:33",
-      "upload_time_iso_8601": "2024-02-09T08:31:33.741581Z",
-      "url": "https://files.pythonhosted.org/packages/b6/0b/6c18cc4d312c200fba3e43c50e3fb95721decee4b629b50200e297ff3436/napari_nD_annotator-0.2.1-cp39-cp39-manylinux_2_17_i686.manylinux2014_i686.whl",
+      "size": 3089742,
+      "upload_time": "2024-01-17T23:03:41",
+      "upload_time_iso_8601": "2024-01-17T23:03:41.850326Z",
+      "url": "https://files.pythonhosted.org/packages/18/7d/499554236bf203d8beb22259107fb8273f118db4508ce5908cc05b3b4392/napari_nD_annotator-0.2.0-cp39-cp39-manylinux_2_17_i686.manylinux2014_i686.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "43f39a286e60e8fad3e67f9598719d65ef74ed935e7366e83f7c3eb4eb43018d",
-        "md5": "f167575dea98dcdbdd25f02bb6a39df9",
-        "sha256": "2ff302200b1110938835a81a1f70d93a801875b9a466e066793d9360fc9850fc"
+        "blake2b_256": "c4881301276a0028ff2ccb9efa28a4b5522544cdd99d9a6ba9ea38d54863b717",
+        "md5": "24f43d8365a1ebe0d999ca9fa2c3712b",
+        "sha256": "689659ef3ed6294f1b47b399f8f048fc8f17c71fc3eaf6462998cd82a26c32ba"
       },
       "downloads": -1,
-      "filename": "napari_nD_annotator-0.2.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "filename": "napari_nD_annotator-0.2.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
       "has_sig": false,
-      "md5_digest": "f167575dea98dcdbdd25f02bb6a39df9",
+      "md5_digest": "24f43d8365a1ebe0d999ca9fa2c3712b",
       "packagetype": "bdist_wheel",
       "python_version": "cp39",
       "requires_python": ">=3.8",
-      "size": 3193917,
-      "upload_time": "2024-02-09T08:31:35",
-      "upload_time_iso_8601": "2024-02-09T08:31:35.234489Z",
-      "url": "https://files.pythonhosted.org/packages/43/f3/9a286e60e8fad3e67f9598719d65ef74ed935e7366e83f7c3eb4eb43018d/napari_nD_annotator-0.2.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "size": 3191970,
+      "upload_time": "2024-01-17T23:03:43",
+      "upload_time_iso_8601": "2024-01-17T23:03:43.333641Z",
+      "url": "https://files.pythonhosted.org/packages/c4/88/1301276a0028ff2ccb9efa28a4b5522544cdd99d9a6ba9ea38d54863b717/napari_nD_annotator-0.2.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "e00b324448b1c2dfe9a78b16f32d6cd0e25487bb675a686bc61eb67a8f075ad1",
-        "md5": "e700efe5906244647b81b1e5280691a7",
-        "sha256": "2d7fc7b9bd09e30fa766af16f46b7ace1579be7061649ef5f2227c73c9942ce0"
+        "blake2b_256": "cf8244d61f22d63858ca24215165830115c2d1ba5c958a4bb87a952dc4434a2b",
+        "md5": "db068cef36798613f90dd86fc2402a44",
+        "sha256": "5a0911a0c397ffbaff8f0362f2cfb9c79d02416d22c087f106082d7e71e1416c"
       },
       "downloads": -1,
-      "filename": "napari_nD_annotator-0.2.1-cp39-cp39-win32.whl",
+      "filename": "napari_nD_annotator-0.2.0-cp39-cp39-win32.whl",
       "has_sig": false,
-      "md5_digest": "e700efe5906244647b81b1e5280691a7",
+      "md5_digest": "db068cef36798613f90dd86fc2402a44",
       "packagetype": "bdist_wheel",
       "python_version": "cp39",
       "requires_python": ">=3.8",
-      "size": 943019,
-      "upload_time": "2024-02-09T08:31:37",
-      "upload_time_iso_8601": "2024-02-09T08:31:37.858575Z",
-      "url": "https://files.pythonhosted.org/packages/e0/0b/324448b1c2dfe9a78b16f32d6cd0e25487bb675a686bc61eb67a8f075ad1/napari_nD_annotator-0.2.1-cp39-cp39-win32.whl",
+      "size": 940429,
+      "upload_time": "2024-01-17T23:03:45",
+      "upload_time_iso_8601": "2024-01-17T23:03:45.431851Z",
+      "url": "https://files.pythonhosted.org/packages/cf/82/44d61f22d63858ca24215165830115c2d1ba5c958a4bb87a952dc4434a2b/napari_nD_annotator-0.2.0-cp39-cp39-win32.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "263c097ea8ef80ec44006b6eeca424ed1526e48b37caa130c990d8d58f5ce612",
-        "md5": "726f9e41f8e824b439b41c461553dad9",
-        "sha256": "63be87000398b4e977b79a4ca3a0bc543edb4394ea7db36e84d4f7dedb4b6a4a"
+        "blake2b_256": "479bffae42ea61d62e230733d9cbb87d8d2f568a1608aa22efb7c4c058811180",
+        "md5": "d757214ba0960ff7cbd6668b6a36192e",
+        "sha256": "0ceb256f393cc74dc16707ef49127c31feb7b8ef1f844d5772d8bb4b311f7f1a"
       },
       "downloads": -1,
-      "filename": "napari_nD_annotator-0.2.1-cp39-cp39-win_amd64.whl",
+      "filename": "napari_nD_annotator-0.2.0-cp39-cp39-win_amd64.whl",
       "has_sig": false,
-      "md5_digest": "726f9e41f8e824b439b41c461553dad9",
+      "md5_digest": "d757214ba0960ff7cbd6668b6a36192e",
       "packagetype": "bdist_wheel",
       "python_version": "cp39",
       "requires_python": ">=3.8",
-      "size": 982515,
-      "upload_time": "2024-02-09T08:31:39",
-      "upload_time_iso_8601": "2024-02-09T08:31:39.160037Z",
-      "url": "https://files.pythonhosted.org/packages/26/3c/097ea8ef80ec44006b6eeca424ed1526e48b37caa130c990d8d58f5ce612/napari_nD_annotator-0.2.1-cp39-cp39-win_amd64.whl",
+      "size": 979930,
+      "upload_time": "2024-01-17T23:03:47",
+      "upload_time_iso_8601": "2024-01-17T23:03:47.071925Z",
+      "url": "https://files.pythonhosted.org/packages/47/9b/ffae42ea61d62e230733d9cbb87d8d2f568a1608aa22efb7c4c058811180/napari_nD_annotator-0.2.0-cp39-cp39-win_amd64.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "f94a5502506893044d22c9547b8b46f2bcafe8cfea2f1f2beb1071e55235d427",
-        "md5": "14e563b560121af900136d0b2640d44f",
-        "sha256": "8aee0ca72e5f758e807989d0e10dfdad0d3e6b921f59aca60ce8d63f697b329a"
+        "blake2b_256": "7c286d2b629ddc8a37414391c532de040525e607a5720c1e915458f4cea6ff75",
+        "md5": "c02025328e49ecdc1cb2ff06f1865c87",
+        "sha256": "7be84e0384ae0fadf98df7317176f2a0fe2041a61a8caab3d6c958a3ee314ab9"
       },
       "downloads": -1,
-      "filename": "napari-nD-annotator-0.2.1.tar.gz",
+      "filename": "napari-nD-annotator-0.2.0.tar.gz",
       "has_sig": false,
-      "md5_digest": "14e563b560121af900136d0b2640d44f",
+      "md5_digest": "c02025328e49ecdc1cb2ff06f1865c87",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.8",
-      "size": 613250,
-      "upload_time": "2024-02-09T08:31:41",
-      "upload_time_iso_8601": "2024-02-09T08:31:41.077355Z",
-      "url": "https://files.pythonhosted.org/packages/f9/4a/5502506893044d22c9547b8b46f2bcafe8cfea2f1f2beb1071e55235d427/napari-nD-annotator-0.2.1.tar.gz",
+      "size": 611305,
+      "upload_time": "2024-01-17T23:03:48",
+      "upload_time_iso_8601": "2024-01-17T23:03:48.845121Z",
+      "url": "https://files.pythonhosted.org/packages/7c/28/6d2b629ddc8a37414391c532de040525e607a5720c1e915458f4cea6ff75/napari-nD-annotator-0.2.0.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
