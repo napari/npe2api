@@ -1,6 +1,6 @@
 {
   "name": "napari-rembg",
-  "display_name": "Napari Select foreground",
+  "display_name": "Napari Select Foreground",
   "visibility": "public",
   "icon": "",
   "categories": [],
@@ -10,9 +10,18 @@
   "contributions": {
     "commands": [
       {
-        "id": "napari-rembg.rembg",
+        "id": "napari-rembg.local",
         "title": "Select foreground",
-        "python_name": "napari_rembg:RemBGWidget",
+        "python_name": "napari_rembg:LocalPredictorWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-rembg.remote",
+        "title": "Select foreground (Web API)",
+        "python_name": "napari_rembg:RemotePredictorWidget",
         "short_title": null,
         "category": null,
         "icon": null,
@@ -23,8 +32,13 @@
     "writers": null,
     "widgets": [
       {
-        "command": "napari-rembg.rembg",
+        "command": "napari-rembg.local",
         "display_name": "Select foreground",
+        "autogenerate": false
+      },
+      {
+        "command": "napari-rembg.remote",
+        "display_name": "Select foreground (Web API)",
         "autogenerate": false
       }
     ],
@@ -45,12 +59,12 @@
   "package_metadata": {
     "metadata_version": "2.1",
     "name": "napari-rembg",
-    "version": "0.0.5",
+    "version": "0.0.6",
     "dynamic": null,
     "platform": null,
     "supported_platform": null,
     "summary": "AI-based foreground extraction in scientific and natural images.",
-    "description": "# napari-rembg\n\nSelect the foreground of images using AI in Napari. This plugin is based on the [rembg](https://github.com/danielgatis/rembg) project.\n\n<p align=\"center\">\n    <img src=\"https://github.com/EPFL-Center-for-Imaging/napari-rembg/blob/main/assets/demo.gif\" height=\"400\">\n</p>\n\n### Why use `napari-rembg`?\n- It runs **fast** even on a laptop's CPU (a few seconds per image).\n- It is **easy to install** compared to other AI tools for segmentation.\n- It is a **quick and easy** solution to automatically extract the foreground of scientific and natural images.\n\nThis plugin is primarily intended for analyzing **2D** and **2D (RGB)** images, however it can also be used to segment a particular slice in a **2D + time**, **2D + channel** or **3D** image.\n\n## New!\n\nRun `rembg` in individual regions of interest defined by bounding boxes to segment multiple objects:\n\n<p align=\"center\">\n    <img src=\"https://github.com/EPFL-Center-for-Imaging/napari-rembg/blob/main/assets/screenshot.gif\" height=\"400\">\n</p>\n\n- Insert a `Shapes` layer and **draw rectangles** to define regions of interest (ROIs) in which to run the foreground selection. You can choose to auto-increment the label index to distinguish objects in different ROIs.\n- Select the `Labels` layer in which to write the output of the foreground segmentation (or let the plugin create a `Labels` layer automatically).\n\n## Installation\n\nYou can install `napari-rembg` via [pip]:\n\n    pip install napari-rembg\n\n## Usage\n\nStart `napari-rembg` from the `Plugins` menu of Napari:\n\n```\nPlugins > Select foreground (napari-rembg)\n```\n\n## Contributing\n\nContributions are very welcome. Please get in touch if you'd like to be involved in improving or extending the package.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-rembg\" is free and open source software.\n\n## Issues\n\nIf you encounter any problems, please file an issue along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n",
+    "description": "![EPFL Center for Imaging logo](https://imaging.epfl.ch/resources/logo-for-gitlab.svg)\n# napari-rembg\n\nSegment images using a collection of fast and lightweight generalist segmentation models in Napari. This plugin is based on the [rembg](https://github.com/danielgatis/rembg) project.\n\n![demo](./assets/demo.gif)\n\n**Key features**\n\n- Choose among **five generalist segmentation models**, including SAM (Segment Anything Model).\n- Quickly annotate individual objects by drawing **bounding boxes** around them.\n- Possibility to generate predictions via a remote **web API** and keep the installation lightweight on client machines.\n- Compatible with 2D, RGB, 2D+t, and 3D images (slice by slice).\n\n## Installation\n\nYou can install `napari-rembg` via [pip]. If you wish to use your local machine for the predictions (most users):\n\n    pip install \"napari-rembg[local]\"\n\nIf you wish to generate predictions from a [web api](#running-the-segmentation-via-a-web-api), go for a minimal install:\n\n    pip install napari-rembg\n\n## Models\n\n- [u2net](https://github.com/xuebinqin/U-2-Net): A pre-trained model for general use cases.\n- [u2netp](https://github.com/xuebinqin/U-2-Net): A lightweight version of u2net.\n- [silueta](https://github.com/xuebinqin/U-2-Net/issues/295): Same as u2net with a size reduced to 43 Mb.\n- [isnet](https://github.com/xuebinqin/DIS): A pre-trained model for general use cases.\n- [sam](https://github.com/facebookresearch/segment-anything): Segment Anything Model pre-trained for any use cases (`vit_b`)\n\n![models](./assets/comparison.png)\n\nThe models automatically get downloaded in the user's home folder in the `.u2net` directory the first time inference is run.\n\n## Usage\n\nStart `napari-rembg` from the `Plugins` menu of Napari:\n\n```\nPlugins > Napari Select Foreground > Select foreground\n```\n\n### Segment an image loaded into Napari\n\nSelect your image in the `Image` dropdown and press `Run`. The output segmentation appears in the `Labels` layer selected in the `Mask` field (if no layer is selected, a new one is created).\n\n### Segment individual objects using bounding boxes\n\n- Click on the `Add` button next to the `ROI` field. This adds a `Shapes layer` to the viewer.\n- Click and drag bounding boxes around objects in the image. Each time you draw a bounding box a segmentation is generated in the region selected.\n\n![screenshot](./assets/screenshot.gif)\n\nYou can choose to auto-increment the label index to distinguish individual objects. Deselect that option to annotate a single foreground class.\n\n## Running the segmentation via a web API\n\nYou can run the `rembg` segmentation via a web API running in a `docker` container.\n\n**Advantages**\n- The segmentation can be run on a remote machine with optimization (e.g. GPU).\n- The segmentation models will be downloaded inside the docker container instead of the user's file system.\n- You can minimally install the package with `pip install napari-rembg` on the client's machine. This will *not* install the `rembg` library, which can solve potential dependency conflicts or bugs.\n\n**Setup**\n\nSee [these instructions](./src/rembg-api/README.md) on how to set up the docker container and web API.\n\n**Usage**\n\nStart `napari-rembg` from the `Plugins` menu of Napari:\n\n```\nPlugins > Napari Select Foreground > Select foreground (Web API)\n```\n\n## Related projects\n\nIf you are looking for similar generalist segmentation plugins, check out these related projects:\n\n- [napari-sam](https://github.com/MIC-DKFZ/napari-sam)\n- [napari-segment-anything](https://github.com/royerlab/napari-segment-anything)\n\n## Contributing\n\nContributions are very welcome. \n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-rembg\" is free and open source software.\n\n## Issues\n\nIf you encounter any problems, please file an issue along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n",
     "description_content_type": "text/markdown",
     "keywords": null,
     "home_page": "https://github.com/EPFL-Center-for-Imaging/napari-rembg.git",
@@ -78,8 +92,7 @@
       "magicgui",
       "qtpy",
       "napari[all] >=0.4.16",
-      "rembg",
-      "tox ; extra == 'testing'",
+      "rembg ; extra == 'local'",
       "pytest ; extra == 'testing'",
       "pytest-cov ; extra == 'testing'",
       "pytest-qt ; extra == 'testing'",
@@ -92,6 +105,7 @@
       "Source Code, https://github.com/EPFL-Center-for-Imaging/napari-rembg.git"
     ],
     "provides_extra": [
+      "local",
       "testing"
     ],
     "provides_dist": null,
