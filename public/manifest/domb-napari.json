@@ -11,8 +11,17 @@
     "commands": [
       {
         "id": "domb-napari.split_channels_widget",
-        "title": "Image Preprocessing",
+        "title": "Multichannel Image Preprocessing",
         "python_name": "domb_napari._widget:split_channels",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "domb-napari.split_sep_widget",
+        "title": "SEP Image Preprocessing",
+        "python_name": "domb_napari._widget:split_sep",
         "short_title": null,
         "category": null,
         "icon": null,
@@ -29,8 +38,17 @@
       },
       {
         "id": "domb-napari.up_mask_calc_widget",
-        "title": "Up Mask",
+        "title": "Up Masking",
         "python_name": "domb_napari._widget:up_mask_calc",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "domb-napari.mask_calc_widget",
+        "title": "Intensity Masking",
+        "python_name": "domb_napari._widget:mask_calc",
         "short_title": null,
         "category": null,
         "icon": null,
@@ -69,13 +87,23 @@
         "autogenerate": false
       },
       {
+        "command": "domb-napari.split_sep_widget",
+        "display_name": "SEP Preprocessing",
+        "autogenerate": false
+      },
+      {
         "command": "domb-napari.up_mask_calc_widget",
         "display_name": "Up Mask",
         "autogenerate": false
       },
       {
+        "command": "domb-napari.mask_calc_widget",
+        "display_name": "Intensity Masking",
+        "autogenerate": false
+      },
+      {
         "command": "domb-napari.labels_profiles_set_widget",
-        "display_name": "Individual Labels Profiles",
+        "display_name": "Individual Labels Profile",
         "autogenerate": false
       },
       {
@@ -94,12 +122,12 @@
   "package_metadata": {
     "metadata_version": "2.1",
     "name": "domb-napari",
-    "version": "2023.11.10",
+    "version": "2024.2.13",
     "dynamic": null,
     "platform": null,
     "supported_platform": null,
-    "summary": "Napari plugin implementing DoMB Tools for analyzing fluorescence-labeled proteins redistribution",
-    "description": "domb-napari\n===========\n## DoMB Tools for napari\n\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/domb-napari)](https://napari-hub.org/plugins/domb-napari)\n![PyPI - Version](https://img.shields.io/pypi/v/domb-napari)\n![PyPI - License](https://img.shields.io/pypi/l/domb-napari)\n![Website](https://img.shields.io/website?up_message=domb.bio%2Fnapari&up_color=%2323038C93&url=https%3A%2F%2Fdomb.bio%2Fnapari%2F)\n\nA napari plugin offers widgets to analyze fluorescence-labeled proteins redistribution in widefield epifluorescence time-lapse acquisitions. Useful for studying calcium-dependent translocation of neuronal calcium sensors, synaptic receptors traffic during long-term plasticity induction, membrane protein tracking, etc.\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/translocation.gif)\n__Hippocalcin (neuronal calcium sensor) redistributes in dendritic branches upon NMDA application__\n\n## Widgets\n### Image Preprocessing\nProvides functions for preprocessing multi-channel fluorescence acquisitions:\n- If the input image has 4 dimensions (time, channel, x-axis, y-axis), channels will be split into individual 3 dimensions images (time, x-axis, y-axis) with the `_ch%index%` suffix.\n- If the `gaussian blur` option is selected, the image will be blurred with a Gaussian filter using sigma=`gaussian sigma`.\n- If the `photobleaching correction` option is selected, the image will undergo correction with exponential (method `exp`) or bi-exponential (method `bi_exp`) fitting.\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/pic_0.png)\n\n### Red-Green Series\nPrimary method for detecting fluorescent-labeled targets redistribution in time. Returns a series of differential images representing the intensity difference between the current frame and the previous one as new image with the `_red-green` suffix.\n\nParameters:\n\n- `left frames` - number of previous frames for pixel-wise averaging.\n- `space frames` - number of frames between the last left and first right frames.\n- `right frames` - number of subsequent frames for pixel-wise averaging.\n- `save mask series` - if selected, a series of labels will be created for each frame of the differential image with the threshold `insertion threshold`.\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/pic_1.png)\n\n### Up Mask\nGenerates labels for insertion sites (regions with increasing intensity) based on `-red-green` images. Returns labels layer with `_up-labels` suffix.\n\nParameters:\n\n- `detection img index` - index of the frame from `-red-green` image used for insertion sites detection.\n- `insertion threshold` - threshold value for insertion site detection, intensity on selected `_red-green` frame normalized in -1 - 0 range.\n- `save mask` - if selected, a total up mask (containing all ROIs) will be created with the `_up-mask` suffix.\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/pic_2.png)\n\n### Individual Labels Profiles\nBuilds a plot with mean intensity profiles for each ROI in `labels` using absolute intensity (if `raw intensity` is selected) or relative intensities (\u0394F/F0).\n\nThe `time scale` sets the number of seconds between frames for x-axis scaling.\n\nThe baseline intensity for \u0394F/F0 profiles is estimated as the mean intensity of the initial profile points (`\u0394F win`).\n\nFilters ROIs by minimum (`min amplitude`) and maximum (`max amplitude`) intensity amplitudes.\n\n_Note: Intensity filtering is most relevant for \u0394F/F0 profiles._\n\nAdditionally, you can save ROI intensity profiles as .csv using the `save data frame` option and specifying the `saving path`. The output data frames `%img_name%_lab_prof.csv` will contain the following columns:\n\n- __id__ - unique image ID, the name of the input `napari.Image` object.\n- __roi__ - ROI number, consecutively numbered starting from 1.\n- __int__ - ROI mean intensity, raw or \u0394F/F0 according to the `raw intensity` option.\n- __time__ - frame time point according to the `time scale`.\n\n_Note: The data frame will contain information for all ROIs; filtering options pertain to plotting only._\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/pic_3.png)\n\n### Labels Profile\nBuilds a plot with the averaged intensity of all ROIs in `labels`. Can take two images (`img 0` and `img 1`) as input if `two profiles` are selected.\n\nThe `time scale` and `\u0394F win` are the same as in the __Individual Labels Profiles__.\n\nThe `stat method` provides methods for calculating intensity errors:\n\n- `se` - standard error of mean.\n- `iqr` - interquartile range.\n- `ci` - 95% confidence interval for t-distribution.\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/pic_4.png)\n",
+    "summary": "napari plugin offers widgets to analyze fluorescence-labeled proteins redistribution in widefield epifluorescence time-lapse acquisitions",
+    "description": "domb-napari\n===========\n\n[![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner2-direct.svg)](https://vshymanskyy.github.io/StandWithUkraine/)\n\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/domb-napari)](https://napari-hub.org/plugins/domb-napari)\n![PyPI - Version](https://img.shields.io/pypi/v/domb-napari)\n![PyPI - License](https://img.shields.io/pypi/l/domb-napari)\n![Website](https://img.shields.io/website?up_message=domb.bio%2Fnapari&up_color=%2323038C93&url=https%3A%2F%2Fdomb.bio%2Fnapari%2F)\n\n__napari Toolkit of Department of Molecular Biophysics <br /> Bogomoletz Institute of Physiology of NAS of Ukraine, Kyiv,  Ukraine__\n\nnapari plugin offers widgets to analyze fluorescence-labeled proteins redistribution in widefield epifluorescence time-lapse acquisitions. Useful for studying calcium-dependent translocation of neuronal calcium sensors, synaptic receptors traffic during long-term plasticity induction, membrane protein tracking, etc.\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/translocation.gif)\n__Hippocalcin (neuronal calcium sensor) redistributes in dendritic branches upon NMDA application__\n\n## Widgets\n### Image Preprocessing\nProvides functions for preprocessing multi-channel fluorescence acquisitions:\n- If the input image has 4 dimensions (time, channel, x-axis, y-axis), channels will be split into individual 3 dimensions images (time, x-axis, y-axis) with the `_ch%index%` suffix.\n- If the `gaussian blur` option is selected, the image will be blurred with a Gaussian filter using sigma=`gaussian sigma`.\n- If the `photobleaching correction` option is selected, the image will undergo correction with exponential (method `exp`) or bi-exponential (method `bi_exp`) fitting.\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/pic_0.png)\n\n### Red-Green Series\nPrimary method for detecting fluorescent-labeled targets redistribution in time. Returns a series of differential images representing the intensity difference between the current frame and the previous one as new image with the `_red-green` suffix.\n\nParameters:\n\n- `left frames` - number of previous frames for pixel-wise averaging.\n- `space frames` - number of frames between the last left and first right frames.\n- `right frames` - number of subsequent frames for pixel-wise averaging.\n- `save mask series` - if selected, a series of labels will be created for each frame of the differential image with the threshold `insertion threshold`.\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/pic_1.png)\n\n### Up Masking\nGenerates labels for insertion sites (regions with increasing intensity) based on `-red-green` images. Returns labels layer with `_up-labels` suffix.\n\nParameters:\n\n- `detection img index` - index of the frame from `-red-green` image used for insertion sites detection.\n- `insertion threshold` - threshold value for insertion site detection, intensity on selected `_red-green` frame normalized in -1 - 0 range.\n- `save mask` - if selected, a total up mask (containing all ROIs) will be created with the `_up-mask` suffix.\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/pic_2.png)\n\n### Individual Labels Profile\nBuilds a plot with mean intensity profiles for each ROI in `labels` using absolute intensity (if `raw intensity` is selected) or relative intensities (\u0394F/F0).\n\nThe `time scale` sets the number of seconds between frames for x-axis scaling.\n\nThe baseline intensity for \u0394F/F0 profiles is estimated as the mean intensity of the initial profile points (`\u0394F win`).\n\nFilters ROIs by minimum (`min amplitude`) and maximum (`max amplitude`) intensity amplitudes.\n\n_Note: Intensity filtering is most relevant for \u0394F/F0 profiles._\n\nAdditionally, you can save ROI intensity profiles as .csv using the `save data frame` option and specifying the `saving path`. The output data frames `%img_name%_lab_prof.csv` will contain the following columns:\n\n- __id__ - unique image ID, the name of the input `napari.Image` object.\n- __roi__ - ROI number, consecutively numbered starting from 1.\n- __int__ - ROI mean intensity, raw or \u0394F/F0 according to the `raw intensity` option.\n- __time__ - frame time point according to the `time scale`.\n\n_Note: The data frame will contain information for all ROIs; filtering options pertain to plotting only._\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/pic_3.png)\n\n### Labels Profile\nBuilds a plot with the averaged intensity of all ROIs in `labels`. Can take two images (`img 0` and `img 1`) as input if `two profiles` are selected.\n\nThe `time scale` and `\u0394F win` are the same as in the __Individual Labels Profiles__.\n\nThe `stat method` provides methods for calculating intensity errors:\n\n- `se` - standard error of mean.\n- `iqr` - interquartile range.\n- `ci` - 95% confidence interval for t-distribution.\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/pic_4.png)\n",
     "description_content_type": "text/markdown",
     "keywords": null,
     "home_page": null,
@@ -113,7 +141,10 @@
       "Framework :: napari",
       "Development Status :: 3 - Alpha",
       "License :: OSI Approved :: MIT License",
+      "Programming Language :: Python :: 3.8",
       "Programming Language :: Python :: 3.9",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
       "Operating System :: OS Independent",
       "Topic :: Scientific/Engineering :: Bio-Informatics",
       "Topic :: Scientific/Engineering :: Image Processing",
@@ -124,7 +155,7 @@
       "napari",
       "domb"
     ],
-    "requires_python": null,
+    "requires_python": ">=3.8",
     "requires_external": null,
     "project_url": [
       "Documentation, https://domb.bio/",
