@@ -14,10 +14,10 @@
       "Programming Language :: Python :: 3.8",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "# Red lionfish (RL) deconvolution\r\n\r\n*Richardson-Lucy deconvolution for fishes, scientists and engineers.*\r\n\r\n\r\nThis software is for filtering 3D data using the Richardson-Lucy deconvolution algorithm.\r\n\r\nRichardson-Lucy is an iterative deconvolution algorithm that is used to remove\r\npoint spread function (PSF) or optical transfer function (OTF) artifacts from experimental images.\r\n\r\nThe method was originally developed for astronomy to remove optical effects and simultaneously reduce poisson noise in 2D images.\r\n\r\n[Lucy, L. B. An iterative technique for the rectification of observed distributions. The Astronomical Journal 79, 745 (1974). DOI: 10.1086/111605](https://ui.adsabs.harvard.edu/abs/1974AJ.....79..745L/abstract)\r\n\r\nThe method can also be applied to 3D data. Nowadays this filtering technique is also widely used by microscopists.\r\n\r\nThe Richardson-Lucy deconvolution algorigthm is iterative. Each iteration involves the calculation of 2 convolutions, one element-wise multiplication and one element-wise division.\r\n\r\nWhen dealing with 3D data, the Richardson-Lucy algorithm is quite computional intensive primarly due to the calculation of the convolution, and can take a while to complete depending on the resources available. Convolution is significantly sped up using FFT compared to raw convolution.\r\n\r\nThis software was developed with the aim to make the R-L computation faster by exploiting GPU resources, and with the use of FFT convolution.\r\n\r\nTo make RedLionfish easily accessible, it is available through PyPi and anaconda (conda-forge channel). A useful plugin for Napari is also available.\r\n\r\nPlease note that this software only works with 3D data. For 2D data there are many alternatives such as the DeconvolutionLab2 in Fiji (ImageJ) and sckikit-image.\r\n\r\n## Napari plugin\r\n\r\nYou can now use the Napari's plugin installation in *Menu -> Plugins -> Install/Uninstall Plugins...*.\r\nHowever, if you chose to use this method, GPU acceleration may not be available and it will use the CPU backend. Better check.\r\n\r\n![](resources\\imag1.jpg)\r\n\r\nAlternatively, if you follow the installation instructions below, and install the napari in the same python environment\r\nthen the plugin should be immediately available in the *Menu -> Plugins -> RedLionfish*.\r\n\r\n\r\n## Installation\r\n\r\nPreviously there was a problem in installing using `pip`, because no PyOpenCL wheels for windows were avaiable. It is now avaialble. This package can be installed using pip or conda.\r\n\r\n### Conda install\r\n\r\nThis package is available in conda-forge channel.\r\nIt contains the precompiled libraries and it will install all the requirments for GPU-accelerated RL calculations.\r\n\r\n`conda install redlionfish -c conda-forge`\r\n\r\n### Install from PyPi\r\n\r\n```\r\npip install redlionfish\r\n```\r\n\r\nIn Linux , the package `ocl-icd-system` may also be useful.\r\n\r\n```\r\nconda install reikna pyopencl ocl-icd-system -c conda-forge\r\n```\r\n\r\n\r\n#### Manual installation using the conda package file.\r\n\r\nDownload the appropriate conda package .bz2 at [https://github.com/rosalindfranklininstitute/RedLionfish/releases](https://github.com/rosalindfranklininstitute/RedLionfish/releases)\r\n\r\nIn the command line, successively run:\r\n```\r\nconda install <filename.bz2>\r\nconda update --all -c conda-forge\r\n```\r\nThe second line is needed because you are installing from a local file, conda installer will not install dependencies. Right after this you should run the update command given.\r\n\r\n\r\n### Manual installation (advanced and for developers)\r\n\r\nPlease note that in order to use OpenCL GPU accelerations, PyOpenCL must be installed.\r\nThe best way to get it working is to install it under a conda environment.\r\n\r\nThe installation is similar to the previously described for PyPi.\r\n\r\n`conda install reikna pyopencl`\r\n\r\nor\r\n`conda install reikna pyopencl ocl-icd-system -c conda-forge` (Linux)\r\n\r\nClone/download from source [https://github.com/rosalindfranklininstitute/RedLionfish/](https://github.com/rosalindfranklininstitute/RedLionfish/)\r\n\r\nand run\r\n\r\n`python setup.py install`\r\n\r\n\r\n### Debug installation\r\nIf you want to test and modify the code then you should probably install in debug mode using:\r\n\r\n`python setup.py develop`\r\n\r\nor\r\n\r\n`pip install -e .`\r\n\r\n\r\n## More information\r\n\r\nThe software has algorithms for Richardson-Lucy deconvolution that use either CPU and GPU.\r\n\r\nThe CPU version is very similar to the [skimage.restoration.richardson_lucy](https://scikit-image.org/docs/dev/api/skimage.restoration.html#skimage.restoration.richardson_lucy) code, with improvments in speed.\r\nmajor differences are:\r\n\r\n- the convolution steps use FFT only.\r\n- PSF and PSF-flipped FFTs are precalculated before starting iterations.\r\n\r\nThe GPU version, was written in to use Reikna package, which does FFT using OpenCL, via PyOpenCL.\r\n\r\nUnfortunately, a major limitation in RAM usage exists with PyOpenCL.\r\nLarge 3D data volumes with cause out-of-memory error when trying to upload data to the GPU for FFT calculations.\r\nAs such, to overcome this problem, a block algorithm is used, which splits data into blocks with padded data.\r\nThe results are then combined together to give the final result.\r\nThis affects the perfomance of the calculation rather significantly, but with the advantage of being possible to handle large data volumes.\r\n\r\nIf Richardson-Lucy deconvolution using the GPU method fails, RedLionfish will falls back to CPU calculation. Check console output for messages.\r\n\r\nIf you are using the RedLionfish in your code, note that, by default, `def doRLDeconvolutionFromNpArrays()` method it uses the GPU OpenCL version.\r\n\r\n## Testing\r\n\r\nMany examples can be found in `/scripts' folder.\r\n\r\nA quick and benchmarking installation can be run from the proect root using the command:\r\n\r\n'python scripts/test_and_benchm.py'\r\n\r\nor in windows\r\n\r\n'python scripts\\test_and_benchm.py'\r\n\r\nThis will print out information about your GPU device (if available) and run some deconvolutions.\r\nIt initially creates some data programatically, convolutes with a gaussian PSF, and add Poisson noise.\r\nThen it executes executes the\r\nRichardson-Lucy deconvolution calculation using CPU and GPU methods, for 10 iterations.\r\nDuring the calculation it will print some information to the console/terminal, including the time it takes to run the calculation.\r\n\r\n\r\nComputer generated data and an experimental PSF can be found in `scripts\\testdata`\r\n\r\n### Testing Redlionfish in napari\r\n\r\nHere is an example testing the Redlionfish plugin in napari:\r\n\r\n1. load data `scripts/testdata/gendata_psfconv_poiss_large.tif` (can use draga and drop)\r\n2. load psf data `scripts/testdata/PSF_RFI_8bit.tif`\r\n3. In the RedLionfish side window ensure that 'gendata_psfconv_poiss_large' is selected in data dropdown widget, and `PSF_RFI_8bit` is selected in psfdata widget.\r\n4. Choose number of iterations (default=10)\r\n5. Click 'Go' button and wait until result shows as a new data layer.\r\n6. Use controls of the left panel to compare before and after RL deconvolution: select 'RL-deconvolution' layer and set colormap to red. Hide PSF_RFI_8bit. Make sure that both 'RL-deconvolution' and 'gendata-psfconv' are visible. Now, hide/unhide RL-deconvolution layer to see before and after deconvolution. Adjust contrast limits of each layer as desired.\r\n\r\n\r\n## GPU vs CPU\r\n\r\nYou may notice that choosing GPU does not make RL-calculation much faster compared with CPU, and sometimes is slower.\r\n\r\nWhich method runs the R-L deconvolution faster. That depends on the computer configuration/architecture.\r\n\r\nGPU calculations will be generally faster than CPU with bigger data volumes.\r\n\r\nGPU calculation will be significantly faster if using a dedicated GPU card.\r\n\r\nPlease see benchmark values that highlights significant variability in calculation speeds.\r\n\r\n\r\n## Coding\r\n\r\nPlease feel free to browse the `/scripts` folder for examples.\r\n\r\nIn your code, add the import.\r\n\r\n`import RedLionfishDeconv`\r\n\r\nin order to use the functions.\r\n\r\nThe most useful function is perhaps the following.\r\n\r\n`def doRLDeconvolutionFromNpArrays(data_np , psf_np ,*, niter=10, method='gpu', useBlockAlgorithm=False, callbkTickFunc=None, resAsUint8 = False) `\r\n\r\nThis will do the Richardson-Lucy deconvolution on the data_np (numpy, 3 dimensional data volume) using the provided PSF data volume, for 10 iterations. GPU method is generally faster but it may fail. If it does fail, the program will automatically use the CPU version that uses the scipy fft package.\r\n\r\n\r\n\r\n## Manually building the conda package\r\n\r\nFor this installation, ensure that the conda-build package is installed\r\n\r\n`conda install conda-build`\r\n\r\nIn windows, simply execute\r\n\r\n`conda-create-package.bat`\r\n\r\n\r\nOr, execute the following command-line to create the installation package.\r\n\r\n`conda-build --output-folder ./conda-built-packages -c conda-forge conda-recipe`\r\n\r\nand the conda package will be created in folder *conda-built-packages*.\r\n\r\nOtherwise, navigate to `conda-recipe`, and execute on the command-line `conda build .`\r\n\r\nIt will take a while to complete.\r\n\r\n## Contact\r\n\r\nReport issues and questions in project's github page, please. Please don't try to send emails as they may be igored or spam-filtered.\r\n\r\n",
+    "description": "![RedLionfish Logo](./redlionfish_logo.svg)\r\n\r\n# RedLionfish (RL) deconvolution\r\n\r\n*Richardson-Lucy deconvolution for fishes, scientists and engineers.*\r\n\r\n\r\nThis software is for filtering 3D data using the Richardson-Lucy deconvolution algorithm.\r\n\r\nRichardson-Lucy is an iterative deconvolution algorithm that is used to remove\r\npoint spread function (PSF) or optical transfer function (OTF) artifacts from experimental images.\r\n\r\nThe method was originally developed for astronomy to remove optical effects and simultaneously reduce poisson noise in 2D images.\r\n\r\n[Lucy, L. B. An iterative technique for the rectification of observed distributions. The Astronomical Journal 79, 745 (1974). DOI: 10.1086/111605](https://ui.adsabs.harvard.edu/abs/1974AJ.....79..745L/abstract)\r\n\r\nThe method can also be applied to 3D data. Nowadays this filtering technique is also widely used by microscopists.\r\n\r\nThe Richardson-Lucy deconvolution algorigthm is iterative. Each iteration involves the calculation of 2 convolutions, one element-wise multiplication and one element-wise division.\r\n\r\nWhen dealing with 3D data, the Richardson-Lucy algorithm is quite computional intensive primarly due to the calculation of the convolution, and can take a while to complete depending on the resources available. Convolution is significantly sped up using FFT compared to raw convolution.\r\n\r\nThis software was developed with the aim to make the R-L computation faster by exploiting GPU resources, and with the use of FFT convolution.\r\n\r\nTo make RedLionfish easily accessible, it is available through PyPi and anaconda (conda-forge channel). A useful plugin for Napari is also available.\r\n\r\nPlease note that this software only works with 3D data. For 2D data there are many alternatives such as the DeconvolutionLab2 in Fiji (ImageJ) and sckikit-image.\r\n\r\n## Napari plugin\r\n\r\nYou can now use the Napari's plugin installation in *Menu -> Plugins -> Install/Uninstall Plugins...*.\r\nHowever, if you chose to use this method, GPU acceleration may not be available and it will use the CPU backend. Better check.\r\n\r\n![](resources\\imag1.jpg)\r\n\r\nAlternatively, if you follow the installation instructions below, and install the napari in the same python environment\r\nthen the plugin should be immediately available in the *Menu -> Plugins -> RedLionfish*.\r\n\r\n\r\n## Installation\r\n\r\nPreviously there was a problem in installing using `pip`, because no PyOpenCL wheels for windows were avaiable. It is now avaialble.\r\n\r\nThis package can be installed using pip or conda.\r\n\r\nNapari plugin installation engine can also be used to install this package.\r\n\r\n\r\n### Install from PyPi\r\n\r\n```\r\npip install redlionfish\r\n```\r\n\r\n\r\n### Conda install\r\n\r\nThis package is available in conda-forge channel.\r\nIt contains the precompiled libraries and it will install all the requirments for GPU-accelerated RL calculations.\r\n\r\n`conda install redlionfish -c conda-forge`\r\n\r\nIn Linux , the package `ocl-icd-system` may also be useful.\r\n\r\n```\r\nconda install reikna pyopencl ocl-icd-system -c conda-forge\r\n```\r\n\r\n\r\n#### Manual installation using the conda package file.\r\n\r\nDownload the appropriate conda package .bz2 at [https://github.com/rosalindfranklininstitute/RedLionfish/releases](https://github.com/rosalindfranklininstitute/RedLionfish/releases)\r\n\r\nIn the command line, successively run:\r\n```\r\nconda install <filename.bz2>\r\nconda update --all -c conda-forge\r\n```\r\nThe second line is needed because you are installing from a local file, conda installer will not install dependencies. Right after this you should run the update command given.\r\n\r\n\r\n### Manual installation (advanced and for developers)\r\n\r\nPlease note that in order to use OpenCL GPU accelerations, PyOpenCL must be installed.\r\nThe best way to get it working is to install it under a conda environment.\r\n\r\nThe installation is similar to the previously described for PyPi.\r\n\r\n`conda install reikna pyopencl`\r\n\r\nor\r\n\r\n`conda install reikna pyopencl ocl-icd-system -c conda-forge` (Linux)\r\n\r\nClone/download from source [https://github.com/rosalindfranklininstitute/RedLionfish/](https://github.com/rosalindfranklininstitute/RedLionfish/)\r\n\r\nand run\r\n\r\n`python setup.py install`\r\n\r\n\r\n### Debug installation\r\nIf you want to test and modify the code then you should probably install in debug mode using:\r\n\r\n`python setup.py develop`\r\n\r\nor\r\n\r\n`pip install -e .`\r\n\r\n\r\n## More information\r\n\r\nThe software has algorithms for Richardson-Lucy deconvolution that use either CPU and GPU.\r\n\r\nThe CPU version is very similar to the [skimage.restoration.richardson_lucy](https://scikit-image.org/docs/dev/api/skimage.restoration.html#skimage.restoration.richardson_lucy) code, with improvments in speed.\r\nmajor differences are:\r\n\r\n- the convolution steps use FFT only.\r\n- PSF and PSF-flipped FFTs are precalculated before starting iterations.\r\n\r\nThe GPU version, was written in to use Reikna package, which does FFT using OpenCL, via PyOpenCL.\r\n\r\nUnfortunately, a major limitation in RAM usage exists with PyOpenCL.\r\nLarge 3D data volumes with cause out-of-memory error when trying to upload data to the GPU for FFT calculations.\r\nAs such, to overcome this problem, a block algorithm is used, which splits data into blocks with padded data.\r\nThe results are then combined together to give the final result.\r\nThis affects the perfomance of the calculation rather significantly, but with the advantage of being possible to handle large data volumes.\r\n\r\nIf Richardson-Lucy deconvolution using the GPU method fails, RedLionfish will fallback to CPU calculation. Check console output for messages.\r\n\r\nIf you are using the RedLionfish in your code, note that, by default, `def doRLDeconvolutionFromNpArrays()` method it uses the GPU OpenCL version.\r\n\r\n## Testing\r\n\r\nUse pytest to test the package. Test files are in `/test` folder\r\n\r\nMany examples can be found in `/scripts' folder.\r\n\r\nA useful way to test and benchmark the package installation can be run from the proect root using the command:\r\n\r\n'python scripts/test_and_benchm.py'\r\n\r\nor in windows\r\n\r\n'python scripts\\test_and_benchm.py'\r\n\r\nThis will print out information about your GPU device (if available) and run some deconvolutions.\r\nIt initially creates some data programatically, convolutes with a gaussian PSF, and add Poisson noise.\r\nThen it executes executes the\r\nRichardson-Lucy deconvolution calculation using CPU and GPU methods, for 10 iterations.\r\nDuring the calculation it will print some information to the console/terminal, including the time it takes to run the calculation.\r\n\r\n\r\nComputer generated data and an experimental PSF can be found in `scripts\\testdata`\r\n\r\n### Testing Redlionfish in napari\r\n\r\nHere is an example testing the Redlionfish plugin in napari:\r\n\r\n1. load data `scripts/testdata/gendata_psfconv_poiss_large.tif` (can use draga and drop)\r\n2. load psf data `scripts/testdata/PSF_RFI_8bit.tif`\r\n3. In the RedLionfish side window ensure that 'gendata_psfconv_poiss_large' is selected in data dropdown widget, and `PSF_RFI_8bit` is selected in psfdata widget.\r\n4. Choose number of iterations (default=10)\r\n5. Click 'Go' button and wait until result shows as a new data layer.\r\n6. Use controls of the left panel to compare before and after RL deconvolution: select 'RL-deconvolution' layer and set colormap to red. Hide PSF_RFI_8bit. Make sure that both 'RL-deconvolution' and 'gendata-psfconv' are visible. Now, hide/unhide RL-deconvolution layer to see before and after deconvolution. Adjust contrast limits of each layer as desired.\r\n\r\n\r\n## GPU vs CPU\r\n\r\nYou may notice that choosing GPU does not make RL-calculation much faster compared with CPU, and sometimes is slower.\r\n\r\nWhich method runs the R-L deconvolution faster. That depends on the computer configuration/architecture.\r\n\r\nGPU calculations will be generally faster than CPU with bigger data volumes.\r\n\r\nGPU calculation will be significantly faster if using a dedicated GPU card.\r\n\r\nPlease see benchmark values that highlights significant variability in calculation speeds.\r\n\r\n\r\n[benchmark_results.md](benchmark_results.md)\r\n\r\n\r\n## Coding\r\n\r\nPlease feel free to browse the `/scripts` folder for examples.\r\n\r\nIn order to use the functions, add the follwoing import to your code,\r\n\r\n`import RedLionfishDeconv`\r\n\r\nThe most useful function is perhaps the following.\r\n\r\n`def doRLDeconvolutionFromNpArrays(data_np , psf_np ,*, niter=10, method='gpu', useBlockAlgorithm=False, callbkTickFunc=None, resAsUint8 = False) `\r\n\r\nThis will do the Richardson-Lucy deconvolution on the data_np (numpy, 3 dimensional data volume) using the provided PSF data volume, for 10 iterations. GPU method is generally faster but it may fail. If it does fail, the program will automatically use the CPU version that uses the scipy fft package.\r\n\r\n\r\n\r\n## Manually building the conda package\r\n\r\nFor this installation, ensure that the conda-build package is installed\r\n\r\n`conda install conda-build`\r\n\r\nIn windows, simply execute\r\n\r\n`conda-create-package.bat`\r\n\r\n\r\nOr, execute the following command-line to create the installation package.\r\n\r\n`conda-build --output-folder ./conda-built-packages -c conda-forge conda-recipe`\r\n\r\nand the conda package will be created in folder *conda-built-packages*.\r\n\r\nOtherwise, navigate to `conda-recipe`, and execute on the command-line `conda build .`\r\n\r\nIt will take a while to complete.\r\n\r\n## Contact\r\n\r\nReport issues and questions in project's github page, please. Please don't try to send emails as they may be igored or spam-filtered.\r\n\r\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
-    "download_url": "",
+    "download_url": null,
     "downloads": {
       "last_day": -1,
       "last_month": -1,
@@ -25,10 +25,10 @@
     },
     "dynamic": null,
     "home_page": "https://github.com/rosalindfranklininstitute/RedLionfish",
-    "keywords": "",
+    "keywords": null,
     "license": "Apache License, Version 2.0",
-    "maintainer": "",
-    "maintainer_email": "",
+    "maintainer": null,
+    "maintainer_email": null,
     "name": "RedLionfish",
     "package_url": "https://pypi.org/project/RedLionfish/",
     "platform": null,
@@ -37,21 +37,65 @@
       "Homepage": "https://github.com/rosalindfranklininstitute/RedLionfish"
     },
     "provides_extra": null,
-    "release_url": "https://pypi.org/project/RedLionfish/0.9/",
+    "release_url": "https://pypi.org/project/RedLionfish/0.10/",
     "requires_dist": [
       "numpy",
       "scipy",
       "pyopencl",
       "reikna"
     ],
-    "requires_python": "",
+    "requires_python": null,
     "summary": "Fast Richardson-Lucy deconvolution of 3D volume data using GPU or CPU with napari plugin.",
-    "version": "0.9",
+    "version": "0.10",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 17110919,
+  "last_serial": 22443941,
   "releases": {
+    "0.10": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "484db4a733f86942df65d1e453ce914a822861f725d7163978520769930ef9b0",
+          "md5": "dec392aa071003cd9704c56d1dc9dc21",
+          "sha256": "fea18835e20fe3507d5916aaf6877e2975e7d22c97733fb46b864dc4dbf6c7b1"
+        },
+        "downloads": -1,
+        "filename": "RedLionfish-0.10-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "dec392aa071003cd9704c56d1dc9dc21",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": null,
+        "size": 26241,
+        "upload_time": "2024-03-22T15:59:02",
+        "upload_time_iso_8601": "2024-03-22T15:59:02.462641Z",
+        "url": "https://files.pythonhosted.org/packages/48/4d/b4a733f86942df65d1e453ce914a822861f725d7163978520769930ef9b0/RedLionfish-0.10-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "b0b9806a627411a18d3ead65687af8ce80cff4bcdac52df60a8cc988bbb18380",
+          "md5": "d78d83638467c8992b50c2630f3aa266",
+          "sha256": "c45da5abf9243ea6dc37b2095b7a233f95d3241d7dbcdab1b896e364641c15da"
+        },
+        "downloads": -1,
+        "filename": "RedLionfish-0.10.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d78d83638467c8992b50c2630f3aa266",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": null,
+        "size": 23739,
+        "upload_time": "2024-03-22T15:59:03",
+        "upload_time_iso_8601": "2024-03-22T15:59:03.844029Z",
+        "url": "https://files.pythonhosted.org/packages/b0/b9/806a627411a18d3ead65687af8ce80cff4bcdac52df60a8cc988bbb18380/RedLionfish-0.10.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
     "0.4": [
       {
         "comment_text": "",
@@ -300,42 +344,42 @@
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "3a424ee8c398f25df17ceef8327af6c295c8180892191bede0c36f6c0f340c3b",
-        "md5": "869d5210c839d6acc047ed1d206c11cc",
-        "sha256": "e46c253788ee508d2919894c4b6cc67e25a1aa485fcacfe9060955aa890bdaa1"
+        "blake2b_256": "484db4a733f86942df65d1e453ce914a822861f725d7163978520769930ef9b0",
+        "md5": "dec392aa071003cd9704c56d1dc9dc21",
+        "sha256": "fea18835e20fe3507d5916aaf6877e2975e7d22c97733fb46b864dc4dbf6c7b1"
       },
       "downloads": -1,
-      "filename": "RedLionfish-0.9-py3-none-any.whl",
+      "filename": "RedLionfish-0.10-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "869d5210c839d6acc047ed1d206c11cc",
+      "md5_digest": "dec392aa071003cd9704c56d1dc9dc21",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": null,
-      "size": 25654,
-      "upload_time": "2023-03-01T12:20:45",
-      "upload_time_iso_8601": "2023-03-01T12:20:45.697223Z",
-      "url": "https://files.pythonhosted.org/packages/3a/42/4ee8c398f25df17ceef8327af6c295c8180892191bede0c36f6c0f340c3b/RedLionfish-0.9-py3-none-any.whl",
+      "size": 26241,
+      "upload_time": "2024-03-22T15:59:02",
+      "upload_time_iso_8601": "2024-03-22T15:59:02.462641Z",
+      "url": "https://files.pythonhosted.org/packages/48/4d/b4a733f86942df65d1e453ce914a822861f725d7163978520769930ef9b0/RedLionfish-0.10-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "f0205f64ee6c13662e546bf1a1ef5d94636b5f9c1731501b75cb29a5c3bdd359",
-        "md5": "8616650cf4d2cc8eeb6017ab08456ba2",
-        "sha256": "82b76bf093851fc062448e8b764e846701bf890e64d7e82bf7cf11a7cf2c235b"
+        "blake2b_256": "b0b9806a627411a18d3ead65687af8ce80cff4bcdac52df60a8cc988bbb18380",
+        "md5": "d78d83638467c8992b50c2630f3aa266",
+        "sha256": "c45da5abf9243ea6dc37b2095b7a233f95d3241d7dbcdab1b896e364641c15da"
       },
       "downloads": -1,
-      "filename": "RedLionfish-0.9.tar.gz",
+      "filename": "RedLionfish-0.10.tar.gz",
       "has_sig": false,
-      "md5_digest": "8616650cf4d2cc8eeb6017ab08456ba2",
+      "md5_digest": "d78d83638467c8992b50c2630f3aa266",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": null,
-      "size": 23062,
-      "upload_time": "2023-03-01T12:20:47",
-      "upload_time_iso_8601": "2023-03-01T12:20:47.605992Z",
-      "url": "https://files.pythonhosted.org/packages/f0/20/5f64ee6c13662e546bf1a1ef5d94636b5f9c1731501b75cb29a5c3bdd359/RedLionfish-0.9.tar.gz",
+      "size": 23739,
+      "upload_time": "2024-03-22T15:59:03",
+      "upload_time_iso_8601": "2024-03-22T15:59:03.844029Z",
+      "url": "https://files.pythonhosted.org/packages/b0/b9/806a627411a18d3ead65687af8ce80cff4bcdac52df60a8cc988bbb18380/RedLionfish-0.10.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
