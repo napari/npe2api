@@ -6,7 +6,7 @@
     "classifiers": [
       "Framework :: napari"
     ],
-    "description": "# Nellie\r\n## Automated organelle segmentation, tracking, and hierarchical feature extraction in 2D/3D live-cell microscopy\r\n\r\n<img src=\"https://github.com/aelefebv/nellie/assets/26515909/96b7a113-be60-4028-bcd9-b444bdb943f6\" width=\"200px\" align=\"left\" /> *arXiv* \r\n\r\n  [Preprint Link](https://arxiv.org/abs/2403.13214) | [Cite](#reference)\r\n\r\n**Abstract:** The analysis of dynamic organelles remains a formidable challenge, though key to understanding biological processes. We introduce Nellie, an automated and unbiased pipeline for segmentation, tracking, and feature extraction of diverse intracellular structures. Nellie adapts to image metadata, eliminating user input. Nellie\u2019s preprocessing pipeline enhances structural contrast on multiple intracellular scales allowing for robust hierarchical segmentation of sub-organellar regions. Internal motion capture markers are generated and tracked via a radius-adaptive pattern matching scheme, and used as guides for sub-voxel flow interpolation. Nellie extracts a plethora of features at multiple hierarchical levels for deep and customizable analysis. Nellie features a Napari-based GUI that allows for code-free operation and visualization, while its modular open-source codebase invites customization by experienced users. \r\n\r\n**Nellie's pipeline and Napari plugin are both very much in early stages,** therefore [I highly encourage any and all feedback](#getting-help).\r\n\r\n## Example output intermediates\r\n\r\nhttps://github.com/aelefebv/nellie/assets/26515909/1df8bf1b-7116-4d19-b5fb-9658f744675b\r\n\r\n## Installation\r\n\r\n**Notes:** \r\n- It is recommended (but usually not required) to [create a new environment](https://docs.python.org/3/library/venv.html) for Nellie to avoid conflicts with other packages.\r\n- May take several minutes to install.\r\n- Choose one of the following methods, and only one!\r\n### Option 1. Via Napari plugin manager:\r\nIf not already installed, install Napari: https://napari.org/stable/tutorials/fundamentals/installation\r\n1. Open Napari\r\n2. Go to ```Plugins > Install/Uninstall Plugins...```\r\n3. Search for Nellie and click ```Install```\r\n### Option 2. Via PIP:\r\n```bash\r\npip install git+https://github.com/aelefebv/nellie.git\r\n```\r\n#### Option 2a for NVIDIA GPU acceleration, optional (Windows, Linux):\r\nTo use GPU acceleration via NVIDIA GPUs, you also need to install cupy:\r\n```bash\r\npip install cupy-cudaXXx\r\n```\r\n- replace ```cupy-cudaXXx``` with the [appropriate version](https://docs.cupy.dev/en/stable/install.html#installing-cupy) for your CUDA version.\r\n  - i.e. ```cupy-cuda11x``` for CUDA 11.x or ```cupy-cuda12x``` for CUDA 12.x\r\n- if you don't have CUDA installed, [go here](https://docs.cupy.dev/en/stable/install.html).\r\n- Mac Metal GPU-acceleration coming... eventually.\r\n\r\n## Usage\r\nThe sample dataset shown below is in the repo if you want to play around without, and can be downloaded [here](https://github.com/aelefebv/nellie/tree/main/sample_data).\r\n\r\nhttps://github.com/aelefebv/nellie/assets/26515909/05199fed-ed8c-4237-b3ba-0a3f4cdcb337\r\n\r\n### General data preparation\r\n- It is strongly recommended to have your data in a parsable format, such as .ome.tif, .nd2, or other raw data files from microscopes.\r\n  - Importing into ImageJ/FIJI and saving via BioFormats with the proper image dimensions should do the trick.\r\n  - If the metadata cannot be parsed, you will have to manually enter it.\r\n- It is also recommended to crop your image as much as possible to reduce processing time and memory usage. But really, unless you have massive lightsheet data, it should be pretty fast.\r\n\r\nhttps://github.com/aelefebv/nellie/assets/26515909/372d07a8-15a0-4926-8594-108dd4b97280\r\n\r\n### Running Nellie's processing pipeline\r\n1. Start Napari (open a Terminal and type napari)\r\n    ```bash\r\n    napari\r\n    ```\r\n2. Go to \r\n```Plugins > Nellie (nellie)``` then to the ```File select``` tab.\r\n3. Click ```Select File``` of ```Select Folder``` to select your image(s).\r\n   - If the metadata boxes do not fill in automatically and turn red, this means Nellie did not detect that metadata portion from your image, and you must manually enter it or reformat your image and try again.\r\n     - The metadata slot will appear green if it is in the correct format.\r\n   - *Note, if you are batch processing, the metadata must be the same for all images if any of them are in an incorrect format (this will be fixed eventually). If they are different, but all pass validation, then it will process fine.\r\n   - You can preview 2 time points of your image via the ```Open preview``` button once the metadata is filled in to ensure it looks correct.\r\n4. Click the ```Process``` tab.\r\n   - If you have multiple fluorescence channels, select the channel you want to process/analyze.\r\n   - If you only want to analyze up to a certain timepoint, you can set this in slider. By default it will run all timepoints.\r\n   - If you have odd noise on the edges of your image, check the ```Remove image edges``` checkbox.\r\n5. You can run the full pipeline with ```Run Nellie```, or run individual steps below.\r\n    - Steps can only be run once its previous step has been run.\r\n    - Likewise, visualizations in the ```Visualization``` tab can only be opened once its respective step has been run.\r\n6. All intermediate files and output csvs will be saved to ```[image_directory]/nellie_output/```.\r\n   - A separate .csv is created for each level of the organellar hierarchy.\r\n7. Once features have been exported, Nellie will automatically detect this, and allow analysis via the ```Analyze``` tab.\r\n   - Analysis at this point is optional, but can be helpful for visualizing, and selectively exporting data.\r\n\r\n### Using Nellie's visualization plugin\r\n1. Follow the previous processing steps, you only need to do this once per file as long as you don't move or delete the files.\r\n2. Open the ```Visualization``` tab\r\n3. Select a visualization from the list.\r\n   1. ```Raw```: Visualize the raw data for the processed channel.\r\n   2. ```Preprocessed```: Visualize the contrast-enhanced data.\r\n   3. ```Segmentation```: Visualize the organelle and branch instance segmentation masks.\r\n   4. ```Mocap Markers```: Visualize the mocap markers used for waypoints.\r\n   5. ```Reassigned Labels```: Visualize the organelle and branch instance segmentation masks where voxels are reassigned based on the first timepoint.\r\n4. To visualize tracks, open and select one of the segmentation layers.\r\n5. ```Alt+Click``` on a label to visualize the track of that selected organelle/branch across all timepoints.\r\n   - If the segmentation labels are selected, it will generate tracks for all voxels in the selected timepoint only.\r\n   - If the reassigned labels are selected, you can choose to generate tracks for all voxels across all timepoints.\r\n   - You can skip voxels to track so that the area is not too crowded by tracks.\r\n   - *Note: If you have a 3D image, toggle to 2D mode via the ```Toggle 2D/3D view``` at the bottom left before ```Alt+Click```ing (eventually I'll get it to work while in 3D mode).\r\n\r\n### Using Nellie's analysis plugin\r\n\r\nhttps://github.com/aelefebv/nellie/assets/26515909/7f4f09a4-3687-4635-988d-e1d16ad2a4af\r\n\r\n1. Follow the previous processing steps, you only need to do this once per file as long as you don't move or delete the files.\r\n2. Open the ```Analyze``` tab, select the hierarchy level you want to visualize from the dropdown.\r\n3. Select the level-specific feature you want to visualize from the new dropdown.\r\n4. A histogram of all the data will be displayed.\r\n   - This histogram can be directly exported via the ```Save graph``` button. A .png will be saved to ```[image_directory]/nellie_output/graphs/``` with the current datetime.\r\n   - The values of the histogram can be exported via the ```Export graph data``` button. A .csv will be saved to ```[image_directory]/nellie_output/graphs/``` with the current datetime.\r\n   - The histogram's x-axis can be viewed in log10 scale via the ```Log scale``` checkbox.\r\n   - By default, the histogram shows lines at the mean +/- 1 standard deviation. This can instead be switched to median and quartiles via the ```Median view``` checkbox.\r\n5. Press the ```Overlay mask``` button to colormap the organelle mask based on your selected feature.\r\n   - Once overlaid, toggle the ```Timepoint data``` checkbox to allow you to select a specific timepoint to visualize via the slider.\r\n\r\n## Other features\r\n- Nellie's plugin offers an ```Easy screenshot``` feature:\r\n  - Press the button under ```Easy screenshot``` or hit Ctrl/Cmd-Shift-E after clicking your image.\r\n  - The .png will be saved to ```[image_directory]/nellie_output/screenshots/``` with the current datetime.\r\n\r\n## Feedback / Getting Help\r\nA few options are available for providing feedback or getting help with Nellie:\r\n\r\n[Github Issues](https://github.com/aelefebv/nellie/issues/new) | [email](mailto:austin.e.lefebvre+nellie@gmail.com) | [X](https://twitter.com/Austin_Lefebvre) | wherever else you can find me!\r\n\r\nTo avoid any unnecessary back-and-forth, please include any/all (if possible) of the following information in your bug report:\r\n- What kind of computer do you have, and what are its specs?\r\n- Send me screenshots of what is not working.\r\n- Send me any error logs in your terminal.\r\n- Send me the file you ran (if possible).\r\n- Any other information that might be helpful\r\n\r\n## License\r\nNellie \u00a9 2024 by [Austin E. Y. T. Lefebvre](https://github.com/aelefebv) is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)\r\n\r\n## Reference\r\nIf you used Nelly or found this work useful in your own research, please cite our [arXiv preprint](https://arxiv.org/abs/2403.13214):\r\n\r\nLefebvre, A. E. Y. T., Sturm, G., et. al. Nellie: Automated organelle segmentation, tracking, and hierarchical feature extraction in 2D/3D live-cell microscopy, arXiv, 2024, https://arxiv.org/abs/2403.13214\r\n\r\n```\r\n@misc{lefebvre2024nellie,\r\n      title={Nellie: Automated organelle segmentation, tracking, and hierarchical feature extraction in 2D/3D live-cell microscopy}, \r\n      author={Austin E. Y. T. Lefebvre and Gabriel Sturm and Ting-Yu Lin and Emily Stoops and Magdalena Preciado Lopez and Benjamin Kaufmann-Malaga and Kayley Hake},\r\n      year={2024},\r\n      eprint={2403.13214},\r\n      archivePrefix={arXiv},\r\n      primaryClass={cs.CV}\r\n}\r\n```\r\n\r\n## More fun examples\r\n### Microtubule growing ends:\r\n\r\nhttps://github.com/aelefebv/nellie/assets/26515909/88578dc9-f5c5-4188-a0e2-4e37037a44a9\r\n\r\n### Endoplasmic reticulum:\r\n\r\nhttps://github.com/aelefebv/nellie/assets/26515909/db76d388-a9cc-4650-b93d-69d357ace418\r\n\r\n### Peroxisomes:\r\n\r\nhttps://github.com/aelefebv/nellie/assets/26515909/58bda3cb-6489-4620-8584-a3728cd6b2ec\r\n\r\n",
+    "description": "# Nellie\n## Automated organelle segmentation, tracking, and hierarchical feature extraction in 2D/3D live-cell microscopy\n\n<img src=\"https://github.com/aelefebv/nellie/assets/26515909/96b7a113-be60-4028-bcd9-b444bdb943f6\" width=\"200px\" align=\"left\" /> *arXiv* \n\n  [Preprint Link](https://arxiv.org/abs/2403.13214) | [Cite](#reference)\n\n**Abstract:** The analysis of dynamic organelles remains a formidable challenge, though key to understanding biological processes. We introduce Nellie, an automated and unbiased pipeline for segmentation, tracking, and feature extraction of diverse intracellular structures. Nellie adapts to image metadata, eliminating user input. Nellie\u2019s preprocessing pipeline enhances structural contrast on multiple intracellular scales allowing for robust hierarchical segmentation of sub-organellar regions. Internal motion capture markers are generated and tracked via a radius-adaptive pattern matching scheme, and used as guides for sub-voxel flow interpolation. Nellie extracts a plethora of features at multiple hierarchical levels for deep and customizable analysis. Nellie features a Napari-based GUI that allows for code-free operation and visualization, while its modular open-source codebase invites customization by experienced users. \n\n**Nellie's pipeline and Napari plugin are both very much in early stages,** therefore [I highly encourage any and all feedback](#getting-help).\n\n## Example output intermediates\n\nhttps://github.com/aelefebv/nellie/assets/26515909/1df8bf1b-7116-4d19-b5fb-9658f744675b\n\n## Installation\n\n**Notes:** \n- It is recommended (but usually not required) to [create a new environment](https://docs.python.org/3/library/venv.html) for Nellie to avoid conflicts with other packages.\n- May take several minutes to install.\n- Choose one of the following methods, and only one!\n### Option 1. Via Napari plugin manager:\nIf not already installed, install Napari: https://napari.org/stable/tutorials/fundamentals/installation\n1. Open Napari\n2. Go to ```Plugins > Install/Uninstall Plugins...```\n3. Search for Nellie and click ```Install```\n### Option 2. Via PIP:\n```bash\npip install nellie\n```\n#### Option 2a for NVIDIA GPU acceleration, optional (Windows, Linux):\nTo use GPU acceleration via NVIDIA GPUs, you also need to install cupy:\n```bash\npip install cupy-cudaXXx\n```\n- replace ```cupy-cudaXXx``` with the [appropriate version](https://docs.cupy.dev/en/stable/install.html#installing-cupy) for your CUDA version.\n  - i.e. ```cupy-cuda11x``` for CUDA 11.x or ```cupy-cuda12x``` for CUDA 12.x\n- if you don't have CUDA installed, [go here](https://docs.cupy.dev/en/stable/install.html).\n- Mac Metal GPU-acceleration coming... eventually.\n\n## Usage\nThe sample dataset shown below is in the repo if you want to play around without, and can be downloaded [here](https://github.com/aelefebv/nellie/tree/main/sample_data).\n\nhttps://github.com/aelefebv/nellie/assets/26515909/05199fed-ed8c-4237-b3ba-0a3f4cdcb337\n\n### General data preparation\n- It is strongly recommended to have your data in a parsable format, such as .ome.tif, .nd2, or other raw data files from microscopes.\n  - Importing into ImageJ/FIJI and saving via BioFormats with the proper image dimensions should do the trick.\n  - If the metadata cannot be parsed, you will have to manually enter it.\n- It is also recommended to crop your image as much as possible to reduce processing time and memory usage. But really, unless you have massive lightsheet data, it should be pretty fast.\n\nhttps://github.com/aelefebv/nellie/assets/26515909/372d07a8-15a0-4926-8594-108dd4b97280\n\n### Running Nellie's processing pipeline\n1. Start Napari (open a Terminal and type napari)\n    ```bash\n    napari\n    ```\n2. Go to \n```Plugins > Nellie (nellie)``` then to the ```File select``` tab.\n3. Click ```Select File``` of ```Select Folder``` to select your image(s).\n   - If the metadata boxes do not fill in automatically and turn red, this means Nellie did not detect that metadata portion from your image, and you must manually enter it or reformat your image and try again.\n     - The metadata slot will appear green if it is in the correct format.\n   - *Note, if you are batch processing, the metadata must be the same for all images if any of them are in an incorrect format (this will be fixed eventually). If they are different, but all pass validation, then it will process fine.\n   - You can preview 2 time points of your image via the ```Open preview``` button once the metadata is filled in to ensure it looks correct.\n4. Click the ```Process``` tab.\n   - If you have multiple fluorescence channels, select the channel you want to process/analyze.\n   - If you only want to analyze up to a certain timepoint, you can set this in slider. By default it will run all timepoints.\n   - If you have odd noise on the edges of your image, check the ```Remove image edges``` checkbox.\n5. You can run the full pipeline with ```Run Nellie```, or run individual steps below.\n    - Steps can only be run once its previous step has been run.\n    - Likewise, visualizations in the ```Visualization``` tab can only be opened once its respective step has been run.\n6. All intermediate files and output csvs will be saved to ```[image_directory]/nellie_output/```.\n   - A separate .csv is created for each level of the organellar hierarchy.\n7. Once features have been exported, Nellie will automatically detect this, and allow analysis via the ```Analyze``` tab.\n   - Analysis at this point is optional, but can be helpful for visualizing, and selectively exporting data.\n\n### Using Nellie's visualization plugin\n1. Follow the previous processing steps, you only need to do this once per file as long as you don't move or delete the files.\n2. Open the ```Visualization``` tab\n3. Select a visualization from the list.\n   1. ```Raw```: Visualize the raw data for the processed channel.\n   2. ```Preprocessed```: Visualize the contrast-enhanced data.\n   3. ```Segmentation```: Visualize the organelle and branch instance segmentation masks.\n   4. ```Mocap Markers```: Visualize the mocap markers used for waypoints.\n   5. ```Reassigned Labels```: Visualize the organelle and branch instance segmentation masks where voxels are reassigned based on the first timepoint.\n4. To visualize tracks, open and select one of the segmentation layers.\n5. ```Alt+Click``` on a label to visualize the track of that selected organelle/branch across all timepoints.\n   - If the segmentation labels are selected, it will generate tracks for all voxels in the selected timepoint only.\n   - If the reassigned labels are selected, you can choose to generate tracks for all voxels across all timepoints.\n   - You can skip voxels to track so that the area is not too crowded by tracks.\n   - *Note: If you have a 3D image, toggle to 2D mode via the ```Toggle 2D/3D view``` at the bottom left before ```Alt+Click```ing (eventually I'll get it to work while in 3D mode).\n\n### Using Nellie's analysis plugin\n\nhttps://github.com/aelefebv/nellie/assets/26515909/7f4f09a4-3687-4635-988d-e1d16ad2a4af\n\n1. Follow the previous processing steps, you only need to do this once per file as long as you don't move or delete the files.\n2. Open the ```Analyze``` tab, select the hierarchy level you want to visualize from the dropdown.\n3. Select the level-specific feature you want to visualize from the new dropdown.\n4. A histogram of all the data will be displayed.\n   - This histogram can be directly exported via the ```Save graph``` button. A .png will be saved to ```[image_directory]/nellie_output/graphs/``` with the current datetime.\n   - The values of the histogram can be exported via the ```Export graph data``` button. A .csv will be saved to ```[image_directory]/nellie_output/graphs/``` with the current datetime.\n   - The histogram's x-axis can be viewed in log10 scale via the ```Log scale``` checkbox.\n   - By default, the histogram shows lines at the mean +/- 1 standard deviation. This can instead be switched to median and quartiles via the ```Median view``` checkbox.\n5. Press the ```Overlay mask``` button to colormap the organelle mask based on your selected feature.\n   - Once overlaid, toggle the ```Timepoint data``` checkbox to allow you to select a specific timepoint to visualize via the slider.\n\n## Other features\n- Nellie's plugin offers an ```Easy screenshot``` feature:\n  - Press the button under ```Easy screenshot``` or hit Ctrl/Cmd-Shift-E after clicking your image.\n  - The .png will be saved to ```[image_directory]/nellie_output/screenshots/``` with the current datetime.\n\n## Feedback / Getting Help\nA few options are available for providing feedback or getting help with Nellie:\n\n[Github Issues](https://github.com/aelefebv/nellie/issues/new) | [email](mailto:austin.e.lefebvre+nellie@gmail.com) | [X](https://twitter.com/Austin_Lefebvre) | wherever else you can find me!\n\nTo avoid any unnecessary back-and-forth, please include any/all (if possible) of the following information in your bug report:\n- What kind of computer do you have, and what are its specs?\n- Send me screenshots of what is not working.\n- Send me any error logs in your terminal.\n- Send me the file you ran (if possible).\n- Any other information that might be helpful\n\n## License\nNellie \u00a9 2024 by [Austin E. Y. T. Lefebvre](https://github.com/aelefebv) is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)\n\n## Reference\nIf you used Nelly or found this work useful in your own research, please cite our [arXiv preprint](https://arxiv.org/abs/2403.13214):\n\nLefebvre, A. E. Y. T., Sturm, G., et. al. Nellie: Automated organelle segmentation, tracking, and hierarchical feature extraction in 2D/3D live-cell microscopy, arXiv, 2024, https://arxiv.org/abs/2403.13214\n\n```\n@misc{lefebvre2024nellie,\n      title={Nellie: Automated organelle segmentation, tracking, and hierarchical feature extraction in 2D/3D live-cell microscopy}, \n      author={Austin E. Y. T. Lefebvre and Gabriel Sturm and Ting-Yu Lin and Emily Stoops and Magdalena Preciado Lopez and Benjamin Kaufmann-Malaga and Kayley Hake},\n      year={2024},\n      eprint={2403.13214},\n      archivePrefix={arXiv},\n      primaryClass={cs.CV}\n}\n```\n\n## More fun examples\n### Microtubule growing ends:\n\nhttps://github.com/aelefebv/nellie/assets/26515909/88578dc9-f5c5-4188-a0e2-4e37037a44a9\n\n### Endoplasmic reticulum:\n\nhttps://github.com/aelefebv/nellie/assets/26515909/db76d388-a9cc-4650-b93d-69d357ace418\n\n### Peroxisomes:\n\nhttps://github.com/aelefebv/nellie/assets/26515909/58bda3cb-6489-4620-8584-a3728cd6b2ec\n\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -29,7 +29,7 @@
       "Homepage": "https://github.com/aelefebv/nellie"
     },
     "provides_extra": null,
-    "release_url": "https://pypi.org/project/nellie/0.1.1/",
+    "release_url": "https://pypi.org/project/nellie/0.1.3/",
     "requires_dist": [
       "numpy==1.26.4",
       "scipy==1.12.0",
@@ -42,11 +42,11 @@
     ],
     "requires_python": ">=3.9",
     "summary": "Automated organelle segmentation, tracking, and hierarchical feature extraction in 2D/3D live-cell microscopy",
-    "version": "0.1.1",
+    "version": "0.1.3",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 22416064,
+  "last_serial": 22451278,
   "releases": {
     "0.1.1": [
       {
@@ -91,48 +91,136 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.1.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "061bc0b15684613409d8762c4490f52ab1dc54768d4ed86531d9f0ddd6b8c00b",
+          "md5": "28e143c53e3f09e88dc72e209aee1e66",
+          "sha256": "9057ec6090585d94a4177cf7011b9d961244a7c455dd3da29a521479addf2b27"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.1.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "28e143c53e3f09e88dc72e209aee1e66",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 165319,
+        "upload_time": "2024-03-23T02:40:11",
+        "upload_time_iso_8601": "2024-03-23T02:40:11.204496Z",
+        "url": "https://files.pythonhosted.org/packages/06/1b/c0b15684613409d8762c4490f52ab1dc54768d4ed86531d9f0ddd6b8c00b/nellie-0.1.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "a87a210aa59545c7093f0ff32af04cca633e80a8cabc5c31813d09951c84c8e0",
+          "md5": "a105842a4bc064dfce1dfdd3f7099dff",
+          "sha256": "d671e7eedbdf81e5b6d042422a2dab1486e1a2fb4854a5297954f80f151f38be"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.1.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "a105842a4bc064dfce1dfdd3f7099dff",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 158916,
+        "upload_time": "2024-03-23T02:40:13",
+        "upload_time_iso_8601": "2024-03-23T02:40:13.653374Z",
+        "url": "https://files.pythonhosted.org/packages/a8/7a/210aa59545c7093f0ff32af04cca633e80a8cabc5c31813d09951c84c8e0/nellie-0.1.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.3": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "fcf5175135d48857b3677c75afcce19c8c2854e73aaa68b36780d5e028cd9684",
+          "md5": "1a1856139a35dc4a81d360b494f9bd5a",
+          "sha256": "6340241cd2e44c5c6ec090d8a56e778b481a7c2f5d4012207f0fdcacbf35e85b"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.1.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "1a1856139a35dc4a81d360b494f9bd5a",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 165571,
+        "upload_time": "2024-03-23T03:58:16",
+        "upload_time_iso_8601": "2024-03-23T03:58:16.473493Z",
+        "url": "https://files.pythonhosted.org/packages/fc/f5/175135d48857b3677c75afcce19c8c2854e73aaa68b36780d5e028cd9684/nellie-0.1.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "0fd860eb3ee9eb588399ffef3c95e4f19f63f7e09c15c20f39658f082f756e3c",
+          "md5": "ca043ad602573dfdf07fc7bf25f10922",
+          "sha256": "8009b4b2bc35f4363ce66151f48d966aeb1d3e7db362e2a3b001d7fdf8a4a256"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.1.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "ca043ad602573dfdf07fc7bf25f10922",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 159124,
+        "upload_time": "2024-03-23T03:58:18",
+        "upload_time_iso_8601": "2024-03-23T03:58:18.853689Z",
+        "url": "https://files.pythonhosted.org/packages/0f/d8/60eb3ee9eb588399ffef3c95e4f19f63f7e09c15c20f39658f082f756e3c/nellie-0.1.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "2e6425cf038a2ba172eaa24478ec3d3f421d283cb0ca3065dd3b5527eec5510d",
-        "md5": "9235acf25500308eb5ba1ab87f56f888",
-        "sha256": "4db7dcab254daa342d3b329724578834b4bb3f438fed54422de82e9a96462216"
+        "blake2b_256": "fcf5175135d48857b3677c75afcce19c8c2854e73aaa68b36780d5e028cd9684",
+        "md5": "1a1856139a35dc4a81d360b494f9bd5a",
+        "sha256": "6340241cd2e44c5c6ec090d8a56e778b481a7c2f5d4012207f0fdcacbf35e85b"
       },
       "downloads": -1,
-      "filename": "nellie-0.1.1-py3-none-any.whl",
+      "filename": "nellie-0.1.3-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "9235acf25500308eb5ba1ab87f56f888",
+      "md5_digest": "1a1856139a35dc4a81d360b494f9bd5a",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.9",
-      "size": 165868,
-      "upload_time": "2024-03-21T00:28:03",
-      "upload_time_iso_8601": "2024-03-21T00:28:03.765932Z",
-      "url": "https://files.pythonhosted.org/packages/2e/64/25cf038a2ba172eaa24478ec3d3f421d283cb0ca3065dd3b5527eec5510d/nellie-0.1.1-py3-none-any.whl",
+      "size": 165571,
+      "upload_time": "2024-03-23T03:58:16",
+      "upload_time_iso_8601": "2024-03-23T03:58:16.473493Z",
+      "url": "https://files.pythonhosted.org/packages/fc/f5/175135d48857b3677c75afcce19c8c2854e73aaa68b36780d5e028cd9684/nellie-0.1.3-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "a9d4e241cbfa3e09c8b5875d02b28ac6bf6b9c3a0ee7a274b8d4b442bd2e4f71",
-        "md5": "482f6bbe2838308f955545c77cd3a64d",
-        "sha256": "850643215d23afebe2d763d60fca2ba820d1b44d79272eee85ef5b81d7724996"
+        "blake2b_256": "0fd860eb3ee9eb588399ffef3c95e4f19f63f7e09c15c20f39658f082f756e3c",
+        "md5": "ca043ad602573dfdf07fc7bf25f10922",
+        "sha256": "8009b4b2bc35f4363ce66151f48d966aeb1d3e7db362e2a3b001d7fdf8a4a256"
       },
       "downloads": -1,
-      "filename": "nellie-0.1.1.tar.gz",
+      "filename": "nellie-0.1.3.tar.gz",
       "has_sig": false,
-      "md5_digest": "482f6bbe2838308f955545c77cd3a64d",
+      "md5_digest": "ca043ad602573dfdf07fc7bf25f10922",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.9",
-      "size": 159168,
-      "upload_time": "2024-03-21T00:28:06",
-      "upload_time_iso_8601": "2024-03-21T00:28:06.552828Z",
-      "url": "https://files.pythonhosted.org/packages/a9/d4/e241cbfa3e09c8b5875d02b28ac6bf6b9c3a0ee7a274b8d4b442bd2e4f71/nellie-0.1.1.tar.gz",
+      "size": 159124,
+      "upload_time": "2024-03-23T03:58:18",
+      "upload_time_iso_8601": "2024-03-23T03:58:18.853689Z",
+      "url": "https://files.pythonhosted.org/packages/0f/d8/60eb3ee9eb588399ffef3c95e4f19f63f7e09c15c20f39658f082f756e3c/nellie-0.1.3.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
