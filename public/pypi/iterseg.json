@@ -19,7 +19,7 @@
     "description": "# iterseg\n\n[![License](https://img.shields.io/pypi/l/iterseg.svg?color=green)](https://github.com/abigailmcgovern/iterseg/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/iterseg.svg?color=green)](https://pypi.org/project/iterseg)\n[![Python Version](https://img.shields.io/pypi/pyversions/iterseg.svg?color=green)](https://python.org)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/iterseg)](https://napari-hub.org/plugins/iterseg)\n\nnapari plugin for iteratively improving a deep learning-based unet-watershed segmentation. \n\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/docs/plugins/index.html\n-->\n\n## Installation\nInstall iterseg using pip. Assuming you have python and pip installed (e.g., via miniconda), you can install iterseg with only one line, typed into terminal (MacOS/Linux) or annaconda prompt (Windows). We recomend installing into a [new environment](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#) as some of our dependencies may not play well in the sandpit with certain versions of packages that may exist in a prexisting one. \n\n```bash\npip install iterseg napari\n```\n\n\n## Opening iterseg\nOnce `iterseg` is installed, you can access it through the napari viewer, which you can open from the command line (e.g., terminal (MacOS), anaconda prompt (Windows), git bash (Windows), etc.). To open napari simply type into the command line:\n```bash\nnapari\n```\n\n## Loading data\nOnce you've opened napari, you can load image, labels, or shapes data through the `load_data` widget. to open the widget go to **plugins/iterseg/load_data** at the top left of your screen (MacOS) or viewer (Windows). \n\n ![find the widgets](https://github.com/AbigailMcGovern/iterseg/blob/main/docs/images/load_data_find.png)\n\nOnce the widget appears at the right of the napari window, enter the name you want to give the data you are loading (this will appear in the layers pannel on the left of the window). Choose the type of layer you want to load (Image, Labels, or Shapes: segmentations are loaded as labels layer). You can load a folder of files or a zarr file using \"choose directory\" (zarrs are recognised as a folder of files) or you can load a tiff file using \"choose file\". You can tell the program what the scale of the 3D frames will be in (in the format (z, y, x)).\n\n ![load data](https://github.com/AbigailMcGovern/iterseg/blob/main/docs/images/load_data.png)\n\nIf you are using a single image file (3D, 4D, 5D - ctzyx) or a directory of 3D images (zyx), for \"data type\" choose \"individual frames\". If you are using a directory of 4D images (tzyx) choose \"image stacks\". If you are loading a file that is 4D or 5D and want to load time points (4D: tzyx, czyx) or channels (5D: ctzyx) as individual layers, select \"split channels\". \n\n## Segmenting images\n\nYou can segment data using the \"segment_data\" widget, which can be found at **plugins/iterseg/segment_data**. Once the widget appears, you can choose (1) the image layer you want to segment, (2) the folder into which to save the data, (3) the name you want to give the output file, (4) the type of segmentation to use, (5: optionally) the path to a neural network or configuration file, (6: optionally) a layer produced during training which contains metadata pointing to the trained neual network, (7) chunk size (the size of the neural network input), (8) margin (the margin of overlap between chunks). There is also an optional tickbox for debugging. If this is selected, errors will be easier to identify but you won't be able to interact with the viewer until the segmentation is done. \n\n ![segmentation in progress](https://github.com/AbigailMcGovern/iterseg/blob/main/docs/images/segmenting_in_progress.png)\n\n  ![segmented data](https://github.com/AbigailMcGovern/iterseg/blob/main/docs/images/segmented_data.png)\n\nSegmented images can be used to more quickly generate ground truth for training, to assess segmentation quality, or for downstream analyses. \n\n### Segmentation algorithms\n#### Affinity U-Net Watershed\nThe affinity U-net watershed is a feature based instance segmentation algorithm. A trained U-net predicts an edge affinity graph (basically boundaries in the x, y, and z axes), a map of centre points, and a mask that specifies which pixesl belong to objects. The feature map is fed to a modified watershed algorithm. The object centres are used to find seeds for the watershed and the affinity graph is used to find bounaries between objects. If you train a network using `iterseg`, you can select the outputted network file to segment. Otherwise, if one is not selected, a network we have trained to detect platelets will be used. This might be appropriate for small objects with high anisotropy. \n\n#### DoG Blob Segmentation\nThe DoG blob segmentation uses a difference of Gaussian (DoG) filter to find blob shaped objects. The DoG filter is used to find object seeds, a foreground mask, and is fed to a watershed to label objects. This algorithm cannot be trained but can be configured with a configuration file. An example configuration file can be seen in the example folder in this repository. Please see the Segmentation_config.md file for more details. \n\n## Generating ground truth\nWe include two tools that are useful for generating ground truth: \"save frames\" and \"ground truth from ROI\". \n\n### Save frames\n\nThe first tool is \"save frames\" can be found at **plugins/iterseg/save_frames**. It enables you to save frames of interest from a  series of segmented images or timeseries. \n\n ![save frames](https://github.com/AbigailMcGovern/iterseg/blob/main/docs/images/save_frames.png)\n\n### Ground truth from ROI\n\nThe \"ground truth from ROI\" tool can be found at **plugins/iterseg/ground_truth_from_ROI**. This tool enables you to take a small portion of corrected data and place it into a new frame, which can be used for training. The new data can be tiled in the new frame to overrepresent the data in the training data set. At present, the ROI must be selected by adding a shapes layer (added using the icon circled in orange), then adding a rectangle (blue circle).\n\n ![make an ROI](https://github.com/AbigailMcGovern/iterseg/blob/main/docs/images/generate_ROI.png)\n\n The rectangle will be used to select a region of the xy-plane. This can be seen in 3D below. \n\n ![2D ROI in 3D](https://github.com/AbigailMcGovern/iterseg/blob/main/docs/images/roi_before_3D.png)\n\n At present, the entire z stack above and below the rectangle will be used to generate ground truth. We aim to incorporate 3D bounding boxes in the future. If multiple ROIs are selected, multiple new image frames will be made, each with a single ROI. When you generate ground truth from the shapes layer, you are able to select the desired shapes layer, image layer, and labels layer. Additionally, you can choose how many times you want to tile the ROI and how much padding to leave between. Tiling will start at the top right and progress right before moving to the next row. You will also be able to choose the save name and the folder into which to save the data. \n\n ![ground truth from ROI](https://github.com/AbigailMcGovern/iterseg/blob/main/docs/images/gt_from_ROI.png)\n\n## Training a network\n`iterseg` includes a widget for training a u-net for the u-net affinity watershed. The training widget can be found at **plugins/iterseg/train_from_viewer**. Before training, you will need to load the images and ground truth you want to train from. The images and ground truth should each be a series of 3D frames that are stacked into a layer (we suggest loading from a series of frames in a directory). Once loaded, you are able to select a layer as the ground truth and a layer as the image data. You can tell the program what the scale of the output frames will be (in the format (z, y, x)). You can select what type of center prediction to use (we suggest centredness), what type of prediction to use for the mask, and what extent of affinities you want to train (if n = 1, the network will predict only the direct boundaries between objects in each axis, if greater than 1 the network will still predict the direct boundaires but will also predict where there is a new object n steps away - can be used as collateral learning to enhance training). Affinities extent is developmental. Please submit an issue for any problems. \n\n ![train from viewer](https://github.com/AbigailMcGovern/iterseg/blob/main/docs/images/train_from_viewer.png)\n\nFor the U-net training, we allow you to choose the learning rate for the [ADAM optimiser](https://arxiv.org/abs/1412.6980) used to train the network. You can also choose between binary cross entropy loss ([BCELoss](https://pytorch.org/docs/stable/generated/torch.nn.BCELoss.html)) and Dice loss ([DICELoss](https://arxiv.org/abs/1707.03237v3)). We have found in our data that BCE loss works better. You can also choose how many chunks of data are produced from each frame (n each) and how many epochs you want to train for the training will be done in n_each * n_frames batches with a minibatch size of 1. \n\nIn the future we hope to expand this training widget to enable training other types of networks. Please get involved if you feel you can help with this. \n\n## Assessing segmentations\n`iterseg` includes widgets for assessing and comparing segmentations. If you want to assess segmentation quality, you will need to load a ground truth and a segmentation to assess. Once loaded, you can select the ground truth and segmentation (model segmentation) using the widget found in **plugins/iterseg/assess_segmentation**. You can select which metrics you want to assess. The metrics we enable are:\n- **Variation of information (VI):** VI is a two part measure. It includes a measure of undersegmentation and oversegmentation. Undersegmentation is a measure of the amount of new information you get from looking at the ground truth if you have already seen the segmentation. It can be interpreted as the proportion of objects that are incorrectly merged. Oversegmentation is a measure of the amount of new information you get from looking at the segmentation if you have already seen the ground truth. It can be interpreted as the proportion of objects that are incorrectly split. For more info please see the [scikit-image documentation](https://scikit-image.org/docs/stable/api/skimage.metrics.html#skimage.metrics.variation_of_information). \n- **Object count difference (OD):** Object count difference is simply the difference in number of objects between a ground truth and the assessed segmentation (card(ground truth) - card(segmentation)). \n- **Average precision (AP):** Average precision  Average precision is a combined measure of how accurate the model is at finding true positive (real) objects (we call this precision) and how many of ground truth real objects it found (this is called recall). The assessment of whether an object is TP, FP, and FN depends on the threashold of overlap between objects. Here we use the intersection of union (IoU), which is the proportion of overlap between the bounding boxes of ground truth and model segemented objects. AP is assessed using different IoU thresholds (from 0.35-0.95). The resultant data will be plotted as IoU by AP. \n\n  - Precision = TP / (TP + FP)Recall = TP / (TP + FN). \n  - Abbreviations: FN, false negative; TP, true positive; FP, false \n\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"iterseg\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[file an issue]: https://github.com/abigailmcgovern/iterseg/issues\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
-    "download_url": "",
+    "download_url": null,
     "downloads": {
       "last_day": -1,
       "last_month": -1,
@@ -27,10 +27,10 @@
     },
     "dynamic": null,
     "home_page": "https://github.com/abigailmcgovern/iterseg",
-    "keywords": "",
+    "keywords": null,
     "license": "BSD-3-Clause",
-    "maintainer": "",
-    "maintainer_email": "",
+    "maintainer": null,
+    "maintainer_email": null,
     "name": "iterseg",
     "package_url": "https://pypi.org/project/iterseg/",
     "platform": null,
@@ -43,7 +43,7 @@
       "User Support": "https://github.com/abigailmcgovern/iterseg/issues"
     },
     "provides_extra": null,
-    "release_url": "https://pypi.org/project/iterseg/0.2.1/",
+    "release_url": "https://pypi.org/project/iterseg/0.3.0/",
     "requires_dist": [
       "numpy",
       "dask",
@@ -61,11 +61,11 @@
     ],
     "requires_python": ">=3.7",
     "summary": "napari plugin for iteratively improving unet-watershed segmentation",
-    "version": "0.2.1",
+    "version": "0.3.0",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 22388809,
+  "last_serial": 22461030,
   "releases": {
     "0.0.7": [
       {
@@ -374,48 +374,92 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.3.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "1dd2c1d78c8b625059ec99dd63a25bf53b03a472659925496a4d30d98f05f657",
+          "md5": "29d5ccb8f6a242d3093188af8d080dfc",
+          "sha256": "160b4e85c2b45c12b39e47a85706b849d32efb45980d95f48cd679d428a368ba"
+        },
+        "downloads": -1,
+        "filename": "iterseg-0.3.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "29d5ccb8f6a242d3093188af8d080dfc",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 37208873,
+        "upload_time": "2024-03-24T08:42:20",
+        "upload_time_iso_8601": "2024-03-24T08:42:20.689554Z",
+        "url": "https://files.pythonhosted.org/packages/1d/d2/c1d78c8b625059ec99dd63a25bf53b03a472659925496a4d30d98f05f657/iterseg-0.3.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "df0d597f02c26839ee3623765f4322e6afab65d82456a2396b5bd96a4f3315a6",
+          "md5": "acf25c8a40e1bb91640e22fcd364bfd1",
+          "sha256": "02529b488c60d49e6e1e189a772fe9926d7981708a449f4335e1ea3707e8e96b"
+        },
+        "downloads": -1,
+        "filename": "iterseg-0.3.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "acf25c8a40e1bb91640e22fcd364bfd1",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 37209136,
+        "upload_time": "2024-03-24T08:42:23",
+        "upload_time_iso_8601": "2024-03-24T08:42:23.986765Z",
+        "url": "https://files.pythonhosted.org/packages/df/0d/597f02c26839ee3623765f4322e6afab65d82456a2396b5bd96a4f3315a6/iterseg-0.3.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "761cd7e5c80d0dc21eb49a1d9346dd44b027e025d8b3484b3660e009a4d90c35",
-        "md5": "27ecb7ef055b2ba8db1f06445ca373fc",
-        "sha256": "4fb2dcc2a42bdf56af0ce76cf60e836bba15d0c55b37420cf62c4c52616d251f"
+        "blake2b_256": "1dd2c1d78c8b625059ec99dd63a25bf53b03a472659925496a4d30d98f05f657",
+        "md5": "29d5ccb8f6a242d3093188af8d080dfc",
+        "sha256": "160b4e85c2b45c12b39e47a85706b849d32efb45980d95f48cd679d428a368ba"
       },
       "downloads": -1,
-      "filename": "iterseg-0.2.1-py3-none-any.whl",
+      "filename": "iterseg-0.3.0-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "27ecb7ef055b2ba8db1f06445ca373fc",
+      "md5_digest": "29d5ccb8f6a242d3093188af8d080dfc",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.7",
-      "size": 37208161,
-      "upload_time": "2024-03-19T12:47:50",
-      "upload_time_iso_8601": "2024-03-19T12:47:50.863241Z",
-      "url": "https://files.pythonhosted.org/packages/76/1c/d7e5c80d0dc21eb49a1d9346dd44b027e025d8b3484b3660e009a4d90c35/iterseg-0.2.1-py3-none-any.whl",
+      "size": 37208873,
+      "upload_time": "2024-03-24T08:42:20",
+      "upload_time_iso_8601": "2024-03-24T08:42:20.689554Z",
+      "url": "https://files.pythonhosted.org/packages/1d/d2/c1d78c8b625059ec99dd63a25bf53b03a472659925496a4d30d98f05f657/iterseg-0.3.0-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "e90b3987b56d2d6367975b660df4cb9cd7cba4936746f17764fe01326ea7d165",
-        "md5": "2e17490f7b0b4d071bd177167a5ba1e6",
-        "sha256": "46b2a5b7073b23cc56a7456155cdce3b2492e3886cd16c27a2af39d562ccb2b9"
+        "blake2b_256": "df0d597f02c26839ee3623765f4322e6afab65d82456a2396b5bd96a4f3315a6",
+        "md5": "acf25c8a40e1bb91640e22fcd364bfd1",
+        "sha256": "02529b488c60d49e6e1e189a772fe9926d7981708a449f4335e1ea3707e8e96b"
       },
       "downloads": -1,
-      "filename": "iterseg-0.2.1.tar.gz",
+      "filename": "iterseg-0.3.0.tar.gz",
       "has_sig": false,
-      "md5_digest": "2e17490f7b0b4d071bd177167a5ba1e6",
+      "md5_digest": "acf25c8a40e1bb91640e22fcd364bfd1",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.7",
-      "size": 37208698,
-      "upload_time": "2024-03-19T12:47:55",
-      "upload_time_iso_8601": "2024-03-19T12:47:55.051516Z",
-      "url": "https://files.pythonhosted.org/packages/e9/0b/3987b56d2d6367975b660df4cb9cd7cba4936746f17764fe01326ea7d165/iterseg-0.2.1.tar.gz",
+      "size": 37209136,
+      "upload_time": "2024-03-24T08:42:23",
+      "upload_time_iso_8601": "2024-03-24T08:42:23.986765Z",
+      "url": "https://files.pythonhosted.org/packages/df/0d/597f02c26839ee3623765f4322e6afab65d82456a2396b5bd96a4f3315a6/iterseg-0.3.0.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
