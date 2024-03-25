@@ -1,6 +1,6 @@
 {
   "info": {
-    "author": "",
+    "author": null,
     "author_email": "\"Adam Tyson, Charly Rousseau, Stephen Lenzi\" <code@adamltyson.com>",
     "bugtrack_url": null,
     "classifiers": [
@@ -17,18 +17,18 @@
     "description": "[![Python Version](https://img.shields.io/pypi/pyversions/brainreg.svg)](https://pypi.org/project/brainreg)\n[![PyPI](https://img.shields.io/pypi/v/brainreg.svg)](https://pypi.org/project/brainreg)\n[![Wheel](https://img.shields.io/pypi/wheel/brainreg.svg)](https://pypi.org/project/brainreg)\n[![Development Status](https://img.shields.io/pypi/status/brainreg.svg)](https://github.com/brainglobe/brainreg)\n[![Tests](https://img.shields.io/github/actions/workflow/status/brainglobe/brainreg/test_and_deploy.yml?branch=main)](https://github.com/brainglobe/brainreg/actions)\n[![codecov](https://codecov.io/gh/brainglobe/brainreg/branch/master/graph/badge.svg?token=FbPgwBIGnd)](https://codecov.io/gh/brainglobe/brainreg)\n[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)\n\n# brainreg\n\nbrainreg is an update to [amap](https://github.com/SainsburyWellcomeCentre/amap_python) (which is itself a port\nof the [original Java software](https://www.nature.com/articles/ncomms11879)) to include multiple registration backends, and to support the many atlases provided by [brainglobe-atlasapi](https://github.com/brainglobe/brainglobe-atlasapi).\nIt also comes with an optional [napari plugin](https://github.com/brainglobe/brainreg-napari) if you'd rather use brainreg with through graphical interface.\n\nDocumentation for both the command-line tool and graphical interface can be found [here](https://brainglobe.info/documentation/brainreg/index.html).\nIf you have any issues, please get in touch [on the forum](https://forum.image.sc/tag/brainglobe), [on Zulip](https://brainglobe.zulipchat.com/), or by\n[raising an issue](https://github.com/brainglobe/brainreg/issues).\n\nFor segmentation of bulk structures in 3D space (e.g. injection sites, Neuropixels probes), please see [brainglobe-segmentation](https://github.com/brainglobe/brainglobe-segmentation).\n\n## Details\n\nThe aim of brainreg is to register the template brain (e.g. from the [Allen Reference Atlas](https://mouse.brain-map.org/static/atlas)) to the sample image.\nOnce this is complete, any other image in the template space can be aligned with the sample (such as region annotations, for segmentation of the sample image).\nThe template to sample transformation can also be inverted, allowing sample images to be aligned in a common coordinate space.\n\nTo do this, the template and sample images are filtered, and then registered in a three step process (reorientation, affine registration, and freeform registration).\nThe resulting transform from template to standard space is then applied to the atlas.\n\nFull details of the process are in the [original aMAP paper](https://www.nature.com/articles/ncomms11879).\n\n![An illustrated overview of the registration process](https://user-images.githubusercontent.com/13147259/143553945-a046e918-7614-4211-814c-fc840bb0159d.png)\n\n## Installation\n\nTo install both the command line tool and the napari plugin, run\n\n```bash\npip install brainreg[napari]\n```\n\nin your desired Python environment.\nTo only install the command line tool with no GUI (e.g. to run brainreg on an HPC cluster), just run:\n\n```bash\npip install brainreg\n```\n\n### Installing on macOS\n\nIf you are using macOS, please run\n\n```bash\nconda install -c conda-forge niftyreg\n```\n\nin your environment before installing, to ensure all dependencies are installed.\n\n## Command line usage\n\n### Basic usage\n\n```bash\nbrainreg /path/to/raw/data /path/to/output/directory -v 5 2 2 --orientation psl\n```\n\nFull command-line arguments are available with `brainreg -h`, but please\n[get in touch](mailto:code@adamltyson.com?subject=brainreg) if you have any questions.\n\n### Mandatory arguments\n\n- Path to the directory of the images. This can also be a text file pointing to the files.\n- Output directory for all intermediate and final results.\n- You must also specify the voxel sizes with the `-v` flag, see [specifying voxel size](https://brainglobe.info/documentation/general/image-definition.html#voxel-sizes) for details.\n\n### Atlas\n\nBy default, brainreg will use the 25um version of the [Allen Mouse Brain Atlas](https://mouse.brain-map.org/).\nTo use another atlas (e.g. for another species, or another resolution), you must use the `--atlas` flag, followed by the string describing the atlas, e.g.:\n\n```bash\n--atlas allen_mouse_50um\n```\n\nTo find out which atlases are available, once brainreg is installed, please run `brainglobe list`.\nThe name of the resulting atlases is the string to pass with the `--atlas` flag.\n\n### Input data orientation\n\nIf your data does not match the BrainGlobe default orientation (the origin voxel is the most anterior, superior, left-most voxel), then you must specify the orientation by using the `--orientation` flag.\nWhat follows must be a string in the [brainglobe-space](https://github.com/brainglobe/brainglobe-space) \"initials\" form, to describe the origin voxel.\n\nIf the origin of your data (first, top left voxel) is the most anterior, superior, left part of the brain, then the orientation string would be \"asl\" (anterior, superior, left), and you would use:\n\n```bash\n--orientation asl\n```\n\n### Registration options\n\nTo change how the actual registration performs, see [registration parameters](https://brainglobe.info/documentation/brainreg/user-guide/parameters.html)\n\n### Additional options\n\n- `-a` or `--additional` Paths to N additional channels to downsample to the same coordinate space.\n- `--sort-input-file` If set to true, the input text file will be sorted using natural sorting. This means that the file paths will be sorted as would be expected by a human and not purely alphabetically.\n- `--brain_geometry` Can be one of `full` (default) for full brain registration, `hemisphere_l` for left hemisphere data-set and `hemisphere_r` for right hemisphere data-set.\n\n### Misc options\n\n- `--n-free-cpus` The number of CPU cores on the machine to leave unused by the program to spare resources.\n- `--debug` Debug mode. Will increase verbosity of logging and save all intermediate files for diagnosis of software issues.\n- `--save-original-orientation` Option to save the registered atlas with the same orientation as the input data.\n\n## Visualising results\n\nIf you have installed the optional [napari](https://github.com/napari/napari) plugin, you can use napari to view your data.\nThe plugin automatically fetches the [brainglobe-napari-io](https://github.com/brainglobe/brainglobe-napari-io) which provides this functionality.\nIf you have installed only the command-line tool you can still manually install [brainglobe-napari-io](https://github.com/brainglobe/brainglobe-napari-io) and follow the steps below.\n\n### Sample space\n\nOpen napari and drag your brainreg output directory (the one with the log file) onto the napari window.\n\nVarious images should then open, including:\n\n- `Registered image` - the image used for registration, downsampled to atlas resolution\n- `atlas_name` - e.g. `allen_mouse_25um` the atlas labels, warped to your sample brain\n- `Boundaries` - the boundaries of the atlas regions\n\nIf you downsampled additional channels, these will also be loaded.\nMost of these images will not be visible by default - click the little eye icon to toggle visibility.\n\n**Note:** If you use a high resolution atlas (such as `allen_mouse_10um`), then the files can take a little while to load.\n\n![GIF illustration of loading brainreg output into napari for visualisation](https://raw.githubusercontent.com/brainglobe/napari-brainreg/master/resources/sample_space.gif)\n\n## Contributing\n\nContributions to brainreg are more than welcome.\nPlease see the [developers guide](https://brainglobe.info/developers/index.html).\n\n## Citing brainreg\n\nIf you find brainreg useful, and use it in your research, please let us know and also cite the paper:\n\n> Tyson, A. L., V&eacute;lez-Fort, M.,  Rousseau, C. V., Cossell, L., Tsitoura, C., Lenzi, S. C., Obenhaus, H. A., Claudi, F., Branco, T.,  Margrie, T. W. (2022). Accurate determination of marker location within whole-brain microscopy images. Scientific Reports, 12, 867 [doi.org/10.1038/s41598-021-04676-9](https://doi.org/10.1038/s41598-021-04676-9)\n\nPlease also cite aMAP (the original pipeline from which this software is based):\n\n>Niedworok, C.J., Brown, A.P.Y., Jorge Cardoso, M., Osten, P., Ourselin, S., Modat, M. and Margrie, T.W., (2016). AMAP is a validated pipeline for registration and segmentation of high-resolution mouse brain data. Nature Communications. 7, 1\u20139. <https://doi.org/10.1038/ncomms11879>\n\nLastly, if you can, please cite the BrainGlobe Atlas API that provided the atlas:\n\n>Claudi, F., Petrucco, L., Tyson, A. L., Branco, T., Margrie, T. W. and Portugues, R. (2020). BrainGlobe Atlas API: a common interface for neuroanatomical atlases. Journal of Open Source Software, 5(54), 2668, <https://doi.org/10.21105/joss.02668>\n\nFinally, **don't forget to cite the developers of the atlas that you used (e.g. the Allen Brain Atlas)!**\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
-    "download_url": "",
+    "download_url": null,
     "downloads": {
       "last_day": -1,
       "last_month": -1,
       "last_week": -1
     },
     "dynamic": null,
-    "home_page": "",
-    "keywords": "",
+    "home_page": null,
+    "keywords": null,
     "license": "BSD 3-Clause License  Copyright (c) 2020, University College London All rights reserved.  Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:  * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.  * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.  * Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. ",
-    "maintainer": "",
-    "maintainer_email": "",
+    "maintainer": null,
+    "maintainer_email": null,
     "name": "brainreg",
     "package_url": "https://pypi.org/project/brainreg/",
     "platform": null,
@@ -42,39 +42,40 @@
       "User support": "https://forum.image.sc/tag/brainglobe"
     },
     "provides_extra": null,
-    "release_url": "https://pypi.org/project/brainreg/1.0.6/",
+    "release_url": "https://pypi.org/project/brainreg/1.0.7/",
     "requires_dist": [
-      "brainglobe-atlasapi >=2.0.1",
-      "brainglobe-space >=1.0.0",
-      "brainglobe-utils >=0.4.0",
+      "brainglobe-atlasapi>=2.0.1",
+      "brainglobe-space>=1.0.0",
+      "brainglobe-utils>=0.4.2",
       "fancylog",
       "numpy",
       "scikit-image",
-      "black ; extra == 'dev'",
-      "check-manifest ; extra == 'dev'",
-      "gitpython ; extra == 'dev'",
-      "napari[pyqt5] ; extra == 'dev'",
-      "pre-commit ; extra == 'dev'",
-      "pytest-cov ; extra == 'dev'",
-      "pytest-qt ; extra == 'dev'",
-      "pytest ; extra == 'dev'",
-      "setuptools-scm ; extra == 'dev'",
-      "tox ; extra == 'dev'",
-      "brainglobe-napari-io >=0.3.2 ; extra == 'napari'",
-      "brainglobe-segmentation >=1.0.0 ; extra == 'napari'",
-      "magicgui ; extra == 'napari'",
-      "napari-plugin-engine >=0.1.4 ; extra == 'napari'",
-      "napari[pyqt5] ; extra == 'napari'",
-      "pooch >1 ; extra == 'napari'",
-      "qtpy ; extra == 'napari'"
+      "black; extra == \"dev\"",
+      "check-manifest; extra == \"dev\"",
+      "gitpython; extra == \"dev\"",
+      "napari[pyqt5]; extra == \"dev\"",
+      "pre-commit; extra == \"dev\"",
+      "pytest-cov; extra == \"dev\"",
+      "pytest-qt; extra == \"dev\"",
+      "pytest-mock; extra == \"dev\"",
+      "pytest; extra == \"dev\"",
+      "setuptools-scm; extra == \"dev\"",
+      "tox; extra == \"dev\"",
+      "brainglobe-napari-io>=0.3.2; extra == \"napari\"",
+      "brainglobe-segmentation>=1.0.0; extra == \"napari\"",
+      "magicgui; extra == \"napari\"",
+      "napari-plugin-engine>=0.1.4; extra == \"napari\"",
+      "napari[pyqt5]; extra == \"napari\"",
+      "pooch>1; extra == \"napari\"",
+      "qtpy; extra == \"napari\""
     ],
     "requires_python": ">=3.9",
     "summary": "Automated multi-atlas whole-brain microscopy registration",
-    "version": "1.0.6",
+    "version": "1.0.7",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 22057665,
+  "last_serial": 22476019,
   "releases": {
     "0.0.1a0": [
       {
@@ -1902,48 +1903,92 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "1.0.7": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "ba7e16bb1b5635c5378078a62efd1333894c77152bfc7c156e3379ee4ec95fae",
+          "md5": "d1c02a9e99222a22f5191e0a5c0ef9e9",
+          "sha256": "8ba254c2521becd99f438c09a5ac0ec512f489dee01f52cfd75272458149431a"
+        },
+        "downloads": -1,
+        "filename": "brainreg-1.0.7-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "d1c02a9e99222a22f5191e0a5c0ef9e9",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 13434984,
+        "upload_time": "2024-03-25T14:56:38",
+        "upload_time_iso_8601": "2024-03-25T14:56:38.704254Z",
+        "url": "https://files.pythonhosted.org/packages/ba/7e/16bb1b5635c5378078a62efd1333894c77152bfc7c156e3379ee4ec95fae/brainreg-1.0.7-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "815b79601ca1c1724a9bca9fd7807599219293d8767fcce649813d5a25fe7ace",
+          "md5": "4b8b649e6b446cf4703a776f491bfd33",
+          "sha256": "efd5b2cd11a5f5abc39c049e33dd6ce94249c82bd398f24b035f733e4cc96420"
+        },
+        "downloads": -1,
+        "filename": "brainreg-1.0.7.tar.gz",
+        "has_sig": false,
+        "md5_digest": "4b8b649e6b446cf4703a776f491bfd33",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 13371783,
+        "upload_time": "2024-03-25T14:56:43",
+        "upload_time_iso_8601": "2024-03-25T14:56:43.020542Z",
+        "url": "https://files.pythonhosted.org/packages/81/5b/79601ca1c1724a9bca9fd7807599219293d8767fcce649813d5a25fe7ace/brainreg-1.0.7.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "554aa2d27d982a760ca782fc7e27a9fc98a39955d49ed889f405ecc89f828938",
-        "md5": "e0526a3ccd226692687fe7cec18b1e59",
-        "sha256": "28304d74e3d078c7bab35fc8f201b6c035bc63822b474a3f51604dfd099e3827"
+        "blake2b_256": "ba7e16bb1b5635c5378078a62efd1333894c77152bfc7c156e3379ee4ec95fae",
+        "md5": "d1c02a9e99222a22f5191e0a5c0ef9e9",
+        "sha256": "8ba254c2521becd99f438c09a5ac0ec512f489dee01f52cfd75272458149431a"
       },
       "downloads": -1,
-      "filename": "brainreg-1.0.6-py3-none-any.whl",
+      "filename": "brainreg-1.0.7-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "e0526a3ccd226692687fe7cec18b1e59",
+      "md5_digest": "d1c02a9e99222a22f5191e0a5c0ef9e9",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.9",
-      "size": 13435476,
-      "upload_time": "2024-02-27T10:57:36",
-      "upload_time_iso_8601": "2024-02-27T10:57:36.428333Z",
-      "url": "https://files.pythonhosted.org/packages/55/4a/a2d27d982a760ca782fc7e27a9fc98a39955d49ed889f405ecc89f828938/brainreg-1.0.6-py3-none-any.whl",
+      "size": 13434984,
+      "upload_time": "2024-03-25T14:56:38",
+      "upload_time_iso_8601": "2024-03-25T14:56:38.704254Z",
+      "url": "https://files.pythonhosted.org/packages/ba/7e/16bb1b5635c5378078a62efd1333894c77152bfc7c156e3379ee4ec95fae/brainreg-1.0.7-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "fe35581f5962a63bc8c8577ee96e66660fdd92367953847139fed413b17a76a6",
-        "md5": "f5f348eb28b73b5965f0cb2853839257",
-        "sha256": "7d80f7c2e6369d93062c0188bfa159ea5a1ebaa7b0df900f57fc303975dd2b50"
+        "blake2b_256": "815b79601ca1c1724a9bca9fd7807599219293d8767fcce649813d5a25fe7ace",
+        "md5": "4b8b649e6b446cf4703a776f491bfd33",
+        "sha256": "efd5b2cd11a5f5abc39c049e33dd6ce94249c82bd398f24b035f733e4cc96420"
       },
       "downloads": -1,
-      "filename": "brainreg-1.0.6.tar.gz",
+      "filename": "brainreg-1.0.7.tar.gz",
       "has_sig": false,
-      "md5_digest": "f5f348eb28b73b5965f0cb2853839257",
+      "md5_digest": "4b8b649e6b446cf4703a776f491bfd33",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.9",
-      "size": 13371990,
-      "upload_time": "2024-02-27T10:57:39",
-      "upload_time_iso_8601": "2024-02-27T10:57:39.838756Z",
-      "url": "https://files.pythonhosted.org/packages/fe/35/581f5962a63bc8c8577ee96e66660fdd92367953847139fed413b17a76a6/brainreg-1.0.6.tar.gz",
+      "size": 13371783,
+      "upload_time": "2024-03-25T14:56:43",
+      "upload_time_iso_8601": "2024-03-25T14:56:43.020542Z",
+      "url": "https://files.pythonhosted.org/packages/81/5b/79601ca1c1724a9bca9fd7807599219293d8767fcce649813d5a25fe7ace/brainreg-1.0.7.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
