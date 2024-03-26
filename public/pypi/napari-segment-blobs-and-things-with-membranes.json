@@ -20,7 +20,7 @@
     "description": "# napari-segment-blobs-and-things-with-membranes (nsbatwm)\r\n\r\n[![License](https://img.shields.io/pypi/l/napari-segment-blobs-and-things-with-membranes.svg?color=green)](https://github.com/haesleinhuepf/napari-segment-blobs-and-things-with-membranes/raw/master/LICENSE)\r\n[![PyPI](https://img.shields.io/pypi/v/napari-segment-blobs-and-things-with-membranes.svg?color=green)](https://pypi.org/project/napari-segment-blobs-and-things-with-membranes)\r\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-segment-blobs-and-things-with-membranes.svg?color=green)](https://python.org)\r\n[![tests](https://github.com/haesleinhuepf/napari-segment-blobs-and-things-with-membranes/workflows/tests/badge.svg)](https://github.com/haesleinhuepf/napari-segment-blobs-and-things-with-membranes/actions)\r\n[![codecov](https://codecov.io/gh/haesleinhuepf/napari-segment-blobs-and-things-with-membranes/branch/master/graph/badge.svg)](https://codecov.io/gh/haesleinhuepf/napari-segment-blobs-and-things-with-membranes)\r\n[![Development Status](https://img.shields.io/pypi/status/napari-segment-blobs-and-things-with-membranes.svg)](https://en.wikipedia.org/wiki/Software_release_life_cycle#Alpha)\r\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-segment-blobs-and-things-with-membranes)](https://napari-hub.org/plugins/napari-segment-blobs-and-things-with-membranes)\r\n[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7027634.svg)](https://doi.org/10.5281/zenodo.7027634)\r\n\r\nThis napari-plugin is based on scikit-image and allows segmenting nuclei and cells based on fluorescence microscopy images with high intensity in nuclei and/or membranes.\r\n\r\n## Usage\r\n\r\nThis plugin populates image processing operations to the `Tools` menu in napari.\r\nYou can recognize them with their suffix `(nsbatwm)` in brackets.\r\nFurthermore, it can be used from the [napari-assistant](https://www.napari-hub.org/plugins/napari-assistant) graphical user interface. \r\nTherefore, just click the menu `Tools > Utilities > Assistant (na)` or run `naparia` from the command line.\r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-segment-blobs-and-things-with-membranes/raw/main/docs/tools_menu_screenshot.png)\r\n\r\nYou can also call these functions as shown in [the demo notebook](https://github.com/haesleinhuepf/napari-segment-blobs-and-things-with-membranes/blob/main/docs/demo.ipynb).\r\n\r\n### Voronoi-Otsu-Labeling\r\n\r\nThis algorithm uses [Otsu's thresholding method](https://ieeexplore.ieee.org/document/4310076) in combination with \r\n[Gaussian blur](https://scikit-image.org/docs/dev/api/skimage.filters.html#skimage.filters.gaussian) and a \r\n[Voronoi-Tesselation](https://en.wikipedia.org/wiki/Voronoi_diagram) \r\napproach to label bright objects such as nuclei in an intensity image. The alogrithm has two sigma parameters which allow\r\nyou to fine-tune where objects should be cut (`spot_sigma`) and how smooth outlines should be (`outline_sigma`).\r\nThis implementation aims to be similar to [Voronoi-Otsu-Labeling in clesperanto](https://github.com/clEsperanto/pyclesperanto_prototype/blob/master/demo/segmentation/voronoi_otsu_labeling.ipynb).\r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-segment-blobs-and-things-with-membranes/raw/main/docs/voronoi_otsu_labeling.png)\r\n\r\n### Seeded Watershed\r\n\r\nStarting from an image showing high-intensity membranes and a seed-image where objects have been labeled (e.g. using Voronoi-Otsu-Labeling),\r\nobjects are labeled that are constrained by the membranes.\r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-segment-blobs-and-things-with-membranes/raw/main/docs/seeded_watershed.png)\r\n\r\n### Seeded Watershed with mask\r\n\r\nIf there is additionally a mask image available, one can use the `Seeded Watershed with mask`, to constraint the flooding \r\non a membrane image (1), starting from nuclei (2), limited by a mask image (3) to produce a cell segmentation within the mask (4).\r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-segment-blobs-and-things-with-membranes/raw/main/docs/seeded_watershed_with_mask.png)\r\n\r\n### Seeded Watershed using local minima as starting points\r\n\r\nSimilar to the Seeded Watershed and Voronoi-Otsu-Labeling explained above, you can use this tool to segment an image\r\nshowing membranes without an additional image showing nuclei. The two sigma parameters allow to fine tune how close \r\nobjects can be and how precise their boundaries are detected.\r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-segment-blobs-and-things-with-membranes/raw/main/docs/local_minima_seeded_watershed.png)\r\n\r\n### Gaussian blur\r\n\r\nApplies a [Gaussian blur](https://scikit-image.org/docs/dev/api/skimage.filters.html#skimage.filters.gaussian) to an\r\nimage. This might be useful for denoising, e.g. before applying the Threshold-Otsu method.\r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-segment-blobs-and-things-with-membranes/raw/main/docs/gaussian_blur.png)\r\n\r\n### Subtract background\r\n\r\nSubtracts background using [scikit-image's rolling-ball algorithm](https://scikit-image.org/docs/stable/auto_examples/segmentation/plot_rolling_ball.html). \r\nThis might be useful, for example to make intensity of membranes more similar in different regions of an image.\r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-segment-blobs-and-things-with-membranes/raw/main/docs/subtract_background.png)\r\n\r\n### Threshold Otsu\r\n\r\nBinarizes an image using [scikit-image's threshold Otsu algorithm](https://scikit-image.org/docs/dev/auto_examples/segmentation/plot_thresholding.html), also known as \r\n[Otsu's method](https://ieeexplore.ieee.org/document/4310076).\r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-segment-blobs-and-things-with-membranes/raw/main/docs/threshold_otsu.png)\r\n\r\n### Split touching objects (formerly known as binary watershed).\r\n\r\nIn case objects stick together after thresholding, this tool might help.\r\nIt aims to deliver similar results as [ImageJ's watershed implementation](https://imagej.nih.gov/ij/docs/menus/process.html#watershed).\r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-segment-blobs-and-things-with-membranes/raw/main/docs/binary_watershed.png)\r\n\r\n### Connected component labeling\r\n\r\nTakes a binary image and produces a label image with all separated objects labeled differently. Under the hood, it uses\r\n[scikit-image's label function](https://scikit-image.org/docs/dev/auto_examples/segmentation/plot_label.html).\r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-segment-blobs-and-things-with-membranes/raw/main/docs/connected_component_labeling.png)\r\n\r\n### Manual split and merge labels\r\n\r\nSplit and merge labels in napari manually via the `Tools > Utilities menu`:\r\n\r\n![](https://github.com/haesleinhuepf/napari-segment-blobs-and-things-with-membranes/raw/main/docs/split_and_merge_demo.gif)\r\n\r\n----------------------------------\r\n\r\nThis [napari] plugin was generated with [Cookiecutter] using with [@napari]'s [cookiecutter-napari-plugin] template.\r\n\r\n## Installation\r\n\r\nThis plugin is part of devbio-napari. To install it, please follow its [installation instructions](https://github.com/haesleinhuepf/devbio-napari#installation).\r\n\r\n## Contributing\r\n\r\nContributions are very welcome. Tests can be run with [tox], please ensure\r\nthe coverage at least stays the same before you submit a pull request.\r\n\r\n## License\r\n\r\nDistributed under the terms of the [BSD-3] license,\r\n\"napari-segment-blobs-and-things-with-membranes\" is free and open source software\r\n\r\n## Issues\r\n\r\nIf you encounter any problems, please create a thread on [image.sc] along with a detailed description and tag [@haesleinhuepf].\r\n\r\n[napari]: https://github.com/napari/napari\r\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\r\n[@napari]: https://github.com/napari\r\n[MIT]: http://opensource.org/licenses/MIT\r\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\r\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\r\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\r\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\r\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\r\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\r\n\r\n[file an issue]: https://github.com/haesleinhuepf/napari-segment-blobs-and-things-with-membranes/issues\r\n\r\n[napari]: https://github.com/napari/napari\r\n[tox]: https://tox.readthedocs.io/en/latest/\r\n[pip]: https://pypi.org/project/pip/\r\n[PyPI]: https://pypi.org/\r\n\r\n[image.sc]: https://image.sc\r\n[@haesleinhuepf]: https://twitter.com/haesleinhuepf\r\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
-    "download_url": "",
+    "download_url": null,
     "downloads": {
       "last_day": -1,
       "last_month": -1,
@@ -28,10 +28,10 @@
     },
     "dynamic": null,
     "home_page": "https://github.com/haesleinhuepf/napari-segment-blobs-and-things-with-membranes",
-    "keywords": "",
+    "keywords": null,
     "license": "BSD-3-Clause",
-    "maintainer": "",
-    "maintainer_email": "",
+    "maintainer": null,
+    "maintainer_email": null,
     "name": "napari-segment-blobs-and-things-with-membranes",
     "package_url": "https://pypi.org/project/napari-segment-blobs-and-things-with-membranes/",
     "platform": null,
@@ -44,24 +44,24 @@
       "User Support": "https://github.com/haesleinhuepf/napari-segment-blobs-and-things-with-membranes/issues"
     },
     "provides_extra": null,
-    "release_url": "https://pypi.org/project/napari-segment-blobs-and-things-with-membranes/0.3.7/",
+    "release_url": "https://pypi.org/project/napari-segment-blobs-and-things-with-membranes/0.3.8/",
     "requires_dist": [
-      "napari-plugin-engine >=0.1.4",
+      "napari-plugin-engine>=0.1.4",
       "numpy",
       "scikit-image",
       "scipy",
-      "napari-tools-menu >=0.1.17",
-      "napari-time-slicer >=0.4.8",
+      "napari-tools-menu>=0.1.17",
+      "napari-time-slicer>=0.4.8",
       "napari-assistant",
-      "stackview >=0.3.2"
+      "stackview>=0.3.2"
     ],
     "requires_python": ">=3.8",
     "summary": "A plugin based on scikit-image for segmenting nuclei and cells based on fluorescent microscopy images with high intensity in nuclei and/or membranes",
-    "version": "0.3.7",
+    "version": "0.3.8",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 19743912,
+  "last_serial": 22487907,
   "releases": {
     "0.1.0": [
       {
@@ -1558,48 +1558,92 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.3.8": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "f8e0ee7811666cab2c3869d5a9bab777c386cbb1a05622f4c0846d0c98a8dffe",
+          "md5": "9ebb7c14056275301ad4936090a9e88f",
+          "sha256": "8fdc8033b442b0c3884fa77ffa9e13f486fdff13dba9b5ab4c903c808fe2b982"
+        },
+        "downloads": -1,
+        "filename": "napari_segment_blobs_and_things_with_membranes-0.3.8-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "9ebb7c14056275301ad4936090a9e88f",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 15080,
+        "upload_time": "2024-03-26T07:51:43",
+        "upload_time_iso_8601": "2024-03-26T07:51:43.256661Z",
+        "url": "https://files.pythonhosted.org/packages/f8/e0/ee7811666cab2c3869d5a9bab777c386cbb1a05622f4c0846d0c98a8dffe/napari_segment_blobs_and_things_with_membranes-0.3.8-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "06d842d6306260abb6bac28b17231d9c860a8a9c3c10a2e04920c4df93be368a",
+          "md5": "b687f46264b381b3597cfae891ec2c80",
+          "sha256": "30118dba486e94339ed074742d571f380691b102d504a920a40533fb3fc6f76f"
+        },
+        "downloads": -1,
+        "filename": "napari-segment-blobs-and-things-with-membranes-0.3.8.tar.gz",
+        "has_sig": false,
+        "md5_digest": "b687f46264b381b3597cfae891ec2c80",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 16686,
+        "upload_time": "2024-03-26T07:51:44",
+        "upload_time_iso_8601": "2024-03-26T07:51:44.627684Z",
+        "url": "https://files.pythonhosted.org/packages/06/d8/42d6306260abb6bac28b17231d9c860a8a9c3c10a2e04920c4df93be368a/napari-segment-blobs-and-things-with-membranes-0.3.8.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "4c19621f358ad7df65d6d02bfc4e91ae3ecc254bfff666940830132cc112579f",
-        "md5": "62400b12e82829f0f17689631b43215e",
-        "sha256": "f0bb1bf34df90502b67108a353d48c98827acb1dd715965bb762513b2e2b32e1"
+        "blake2b_256": "f8e0ee7811666cab2c3869d5a9bab777c386cbb1a05622f4c0846d0c98a8dffe",
+        "md5": "9ebb7c14056275301ad4936090a9e88f",
+        "sha256": "8fdc8033b442b0c3884fa77ffa9e13f486fdff13dba9b5ab4c903c808fe2b982"
       },
       "downloads": -1,
-      "filename": "napari_segment_blobs_and_things_with_membranes-0.3.7-py3-none-any.whl",
+      "filename": "napari_segment_blobs_and_things_with_membranes-0.3.8-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "62400b12e82829f0f17689631b43215e",
+      "md5_digest": "9ebb7c14056275301ad4936090a9e88f",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.8",
-      "size": 14418,
-      "upload_time": "2023-09-14T08:31:46",
-      "upload_time_iso_8601": "2023-09-14T08:31:46.541949Z",
-      "url": "https://files.pythonhosted.org/packages/4c/19/621f358ad7df65d6d02bfc4e91ae3ecc254bfff666940830132cc112579f/napari_segment_blobs_and_things_with_membranes-0.3.7-py3-none-any.whl",
+      "size": 15080,
+      "upload_time": "2024-03-26T07:51:43",
+      "upload_time_iso_8601": "2024-03-26T07:51:43.256661Z",
+      "url": "https://files.pythonhosted.org/packages/f8/e0/ee7811666cab2c3869d5a9bab777c386cbb1a05622f4c0846d0c98a8dffe/napari_segment_blobs_and_things_with_membranes-0.3.8-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "7c70e2532b3ac4ad05d6a56b4530f040e39b82059176259f531f6ff32cc0a964",
-        "md5": "0564a8095228e91b713deab34298a5c5",
-        "sha256": "7decc02f61d8499094a61cde6f69c1af5669815b5c8d4f1854ac1536c8e76862"
+        "blake2b_256": "06d842d6306260abb6bac28b17231d9c860a8a9c3c10a2e04920c4df93be368a",
+        "md5": "b687f46264b381b3597cfae891ec2c80",
+        "sha256": "30118dba486e94339ed074742d571f380691b102d504a920a40533fb3fc6f76f"
       },
       "downloads": -1,
-      "filename": "napari-segment-blobs-and-things-with-membranes-0.3.7.tar.gz",
+      "filename": "napari-segment-blobs-and-things-with-membranes-0.3.8.tar.gz",
       "has_sig": false,
-      "md5_digest": "0564a8095228e91b713deab34298a5c5",
+      "md5_digest": "b687f46264b381b3597cfae891ec2c80",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.8",
-      "size": 15930,
-      "upload_time": "2023-09-14T08:31:48",
-      "upload_time_iso_8601": "2023-09-14T08:31:48.110138Z",
-      "url": "https://files.pythonhosted.org/packages/7c/70/e2532b3ac4ad05d6a56b4530f040e39b82059176259f531f6ff32cc0a964/napari-segment-blobs-and-things-with-membranes-0.3.7.tar.gz",
+      "size": 16686,
+      "upload_time": "2024-03-26T07:51:44",
+      "upload_time_iso_8601": "2024-03-26T07:51:44.627684Z",
+      "url": "https://files.pythonhosted.org/packages/06/d8/42d6306260abb6bac28b17231d9c860a8a9c3c10a2e04920c4df93be368a/napari-segment-blobs-and-things-with-membranes-0.3.8.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
