@@ -17,10 +17,10 @@
       "Programming Language :: Python :: 3.9",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "# in silico fate mapping\n\n[![License BSD-3](https://img.shields.io/pypi/l/in-silico-fate-mapping.svg?color=green)](https://github.com/royerlab/in-silico-fate-mapping/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/in-silico-fate-mapping.svg?color=green)](https://pypi.org/project/in-silico-fate-mapping)\n[![Python Version](https://img.shields.io/pypi/pyversions/in-silico-fate-mapping.svg?color=green)](https://python.org)\n[![tests](https://github.com/royerlab/in-silico-fate-mapping/workflows/tests/badge.svg)](https://github.com/royerlab/in-silico-fate-mapping/actions)\n[![codecov](https://codecov.io/gh/royerlab/in-silico-fate-mapping/branch/main/graph/badge.svg)](https://codecov.io/gh/royerlab/in-silico-fate-mapping)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/in-silico-fate-mapping)](https://napari-hub.org/plugins/in-silico-fate-mapping)\n\n\nInteractive in silico fate mapping from tracking data.\n\nThis napari plugin estimates the cell fates from tracking data by building a radial regression model per time point. The user can select an area of interest using a `Points` layer; the algorithm will advent the probed coordinates forward (or backward) in time, showing the estimated fate.\n\nVideo example below:\n\nhttps://user-images.githubusercontent.com/21022743/216478216-89c1c35f-2ce4-44e8-adb8-9aeea75b5833.mp4\n\n## Installation\n\nYou can install `in-silico-fate-mapping` via [pip]:\n\n    pip install in-silico-fate-mapping\n\n\nTo install the latest development version :\n\n    pip install git+https://github.com/royerlab/in-silico-fate-mapping.git\n\n\n## IO file format\n\nThis plugin does not depend on a specific file format, the only requirement is using a `Track` layer from napari.\n\nDespite this, we ship a reader and writer interface. It supports `.csv` files with the following reader `TrackID, t, (z), y, x`, `z` is optional.\nSuch that each tracklet has a unique `TrackID` and it's composed of a sequence o time and spatial coordinates.\n\nThis is extremely similar to how napari store tracks, more information can be found [here](https://napari.org/stable/howtos/layers/tracks.html).\n\nDivisions are not supported at the moment.\n\n## Usage Example\n\n### Minimal example\n\nMinimal example using a track file following the convention described above.\n\n```python3\nimport napari\nimport pandas as pd\nfrom in_silico_fate_mapping.fate_mapping import FateMapping\n\ntracks = pd.read_csv(\"tracks.csv\")\n\nfate_map = FateMapping(radius=5, n_samples=25, bind_to_existing=False, sigma=1)\nfate_map.data = tracks[[\"TrackID\", \"t\", \"z\", \"y\", \"x\"]]\n\nsource = tracks[tracks[\"t\"] == 0].sample(n=1)\n\ntracks = fate_map(source[[\"t\", \"z\", \"y\", \"x\"]])\n\nnapari.view_tracks(tracks)\nnapari.run()\n```\n\n### Zebrahub example\n\nZebrafish embryo tail example. This example requires the package `napari-ome-zarr`.\n\n```python3\nimport napari\nimport pandas as pd\nfrom in_silico_fate_mapping import FateMappingWidget\n\nimage_path = \"http://public.czbiohub.org/royerlab/zebrahub/imaging/single-objective/ZSNS001_tail.ome.zarr\"\ntracks_path = \"http://public.czbiohub.org/royerlab/zebrahub/imaging/single-objective/ZSNS001_tail_tracks.csv\"\n\nviewer = napari.Viewer()\nviewer.window.add_dock_widget(FateMappingWidget(viewer))\n\nviewer.open(image_path, plugin=\"napari-ome-zarr\")\n\ntracks = pd.read_csv(tracks_path)\nviewer.add_tracks(tracks[[\"TrackID\", \"t\", \"z\", \"y\", \"x\"]])\nviewer.add_points(name=\"Markers\")\n\nnapari.run()\n```\n\n## Citing\n\nIf used please cite:\n\n```\n@article{lange2023zebrahub,\n  title={Zebrahub-Multimodal Zebrafish Developmental Atlas Reveals the State Transition Dynamics of Late Vertebrate Pluripotent Axial Progenitors},\n  author={Lange, Merlin and Granados, Alejandro and VijayKumar, Shruthi and Bragantini, Jordao and Ancheta, Sarah and Santhosh, Sreejith and Borja, Michael and Kobayashi, Hirofumi and McGeever, Erin and Solak, Ahmet Can and others},\n  journal={bioRxiv},\n  pages={2023--03},\n  year={2023},\n  publisher={Cold Spring Harbor Laboratory}\n}\n```\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[file an issue]: https://github.com/royerlab/in-silico-fate-mapping/issues\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description": "# in silico fate mapping\n\n[![License BSD-3](https://img.shields.io/pypi/l/in-silico-fate-mapping.svg?color=green)](https://github.com/royerlab/in-silico-fate-mapping/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/in-silico-fate-mapping.svg?color=green)](https://pypi.org/project/in-silico-fate-mapping)\n[![Python Version](https://img.shields.io/pypi/pyversions/in-silico-fate-mapping.svg?color=green)](https://python.org)\n[![tests](https://github.com/royerlab/in-silico-fate-mapping/workflows/tests/badge.svg)](https://github.com/royerlab/in-silico-fate-mapping/actions)\n[![codecov](https://codecov.io/gh/royerlab/in-silico-fate-mapping/branch/main/graph/badge.svg)](https://codecov.io/gh/royerlab/in-silico-fate-mapping)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/in-silico-fate-mapping)](https://napari-hub.org/plugins/in-silico-fate-mapping)\n\n\nInteractive in silico fate mapping from tracking data.\n\nThis napari plugin estimates the cell fates from tracking data by building a radial regression model per time point. The user can select an area of interest using a `Points` layer; the algorithm will advent the probed coordinates forward (or backward) in time, showing the estimated fate.\n\nVideo example below:\n\nhttps://user-images.githubusercontent.com/21022743/216478216-89c1c35f-2ce4-44e8-adb8-9aeea75b5833.mp4\n\n## Installation\n\nWe suggest you create a fresh conda environment to avoid conflicts with your existing package.\nTo do this, you need to:\n\n    conda create -n fatemap python=3.11\n    conda activate fatemap\n\nAnd then, you can install `in-silico-fate-mapping` via [pip] and other additional useful packages:\n\n    pip install ultrack napari-ome-zarr napari[all] in-silicio-fate-mapping\n\nTo install the latest development version :\n\n    pip install git+https://github.com/royerlab/in-silico-fate-mapping.git\n\n\n## IO file format\n\nThis plugin does not depend on a specific file format, the only requirement is using a `Track` layer from napari.\n\nDespite this, we ship a reader and writer interface. It supports `.csv` files with the following reader `TrackID, t, (z), y, x`, `z` is optional.\nSuch that each tracklet has a unique `TrackID` and it's composed of a sequence o time and spatial coordinates.\n\nThis is extremely similar to how napari store tracks, more information can be found [here](https://napari.org/stable/howtos/layers/tracks.html).\n\nDivisions are not supported at the moment.\n\n## Usage Example\n\n### Minimal example\n\nMinimal example using a track file following the convention described above.\n\n```python3\nimport napari\nimport pandas as pd\nfrom in_silico_fate_mapping.fate_mapping import FateMapping\n\ntracks = pd.read_csv(\"tracks.csv\")\n\nfate_map = FateMapping(radius=5, n_samples=25, bind_to_existing=False, sigma=1)\nfate_map.data = tracks[[\"TrackID\", \"t\", \"z\", \"y\", \"x\"]]\n\nsource = tracks[tracks[\"t\"] == 0].sample(n=1)\n\ntracks = fate_map(source[[\"t\", \"z\", \"y\", \"x\"]])\n\nnapari.view_tracks(tracks)\nnapari.run()\n```\n\n### Zebrahub example\n\nZebrafish embryo tail example. This example requires the package `napari-ome-zarr`.\n\n```python3\nimport napari\nimport pandas as pd\nfrom in_silico_fate_mapping import FateMappingWidget\n\nimage_path = \"http://public.czbiohub.org/royerlab/zebrahub/imaging/single-objective/ZSNS001_tail.ome.zarr\"\ntracks_path = \"http://public.czbiohub.org/royerlab/zebrahub/imaging/single-objective/ZSNS001_tail_tracks.csv\"\n\nviewer = napari.Viewer()\nviewer.window.add_dock_widget(FateMappingWidget(viewer))\n\nviewer.open(image_path, plugin=\"napari-ome-zarr\")\n\ntracks = pd.read_csv(tracks_path)\nviewer.add_tracks(tracks[[\"TrackID\", \"t\", \"z\", \"y\", \"x\"]])\nviewer.add_points(name=\"Markers\", ndim=4)\n\nnapari.run()\n```\n\n## Citing\n\nIf used please cite:\n\n```\n@article{lange2023zebrahub,\n  title={Zebrahub-Multimodal Zebrafish Developmental Atlas Reveals the State Transition Dynamics of Late Vertebrate Pluripotent Axial Progenitors},\n  author={Lange, Merlin and Granados, Alejandro and VijayKumar, Shruthi and Bragantini, Jordao and Ancheta, Sarah and Santhosh, Sreejith and Borja, Michael and Kobayashi, Hirofumi and McGeever, Erin and Solak, Ahmet Can and others},\n  journal={bioRxiv},\n  pages={2023--03},\n  year={2023},\n  publisher={Cold Spring Harbor Laboratory}\n}\n```\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[file an issue]: https://github.com/royerlab/in-silico-fate-mapping/issues\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
-    "download_url": "",
+    "download_url": null,
     "downloads": {
       "last_day": -1,
       "last_month": -1,
@@ -28,10 +28,10 @@
     },
     "dynamic": null,
     "home_page": "https://github.com/royerlab/in-silico-fate-mapping",
-    "keywords": "",
+    "keywords": null,
     "license": "BSD-3-Clause",
-    "maintainer": "",
-    "maintainer_email": "",
+    "maintainer": null,
+    "maintainer_email": null,
     "name": "in-silico-fate-mapping",
     "package_url": "https://pypi.org/project/in-silico-fate-mapping/",
     "platform": null,
@@ -44,7 +44,7 @@
       "User Support": "https://github.com/royerlab/in-silico-fate-mapping/issues"
     },
     "provides_extra": null,
-    "release_url": "https://pypi.org/project/in-silico-fate-mapping/0.1.1/",
+    "release_url": "https://pypi.org/project/in-silico-fate-mapping/0.1.2/",
     "requires_dist": [
       "numpy",
       "pandas",
@@ -54,19 +54,19 @@
       "qtpy",
       "napari",
       "click",
-      "tox ; extra == 'testing'",
-      "pytest ; extra == 'testing'",
-      "pytest-cov ; extra == 'testing'",
-      "pytest-qt ; extra == 'testing'",
-      "pyqt5 ; extra == 'testing'"
+      "tox; extra == \"testing\"",
+      "pytest; extra == \"testing\"",
+      "pytest-cov; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "pyqt5; extra == \"testing\""
     ],
     "requires_python": ">=3.8",
     "summary": "TODO",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 17758361,
+  "last_serial": 22705307,
   "releases": {
     "0.1.0": [
       {
@@ -134,48 +134,92 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.1.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "2188aadce88286125f8e48d0e49da1c8aed7506e909442c85814bafd833e3ae4",
+          "md5": "278767b709640b6507ce4c27c173b129",
+          "sha256": "f37560ba1ccfe3d3efdd091b3848ba6ba5bc620212f41d89f5c8b5773c156056"
+        },
+        "downloads": -1,
+        "filename": "in_silico_fate_mapping-0.1.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "278767b709640b6507ce4c27c173b129",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 22939,
+        "upload_time": "2024-04-10T17:05:03",
+        "upload_time_iso_8601": "2024-04-10T17:05:03.135978Z",
+        "url": "https://files.pythonhosted.org/packages/21/88/aadce88286125f8e48d0e49da1c8aed7506e909442c85814bafd833e3ae4/in_silico_fate_mapping-0.1.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "298a92f42f23ab7cb5296971e685301f6a547e8ab55d88baf36e6895a078b865",
+          "md5": "54acb2410a2f0779538c69e46188bc75",
+          "sha256": "57782845a88c05bed888d53dd2a2cd6dd940001e8c3745297c4a9dd8a8931a68"
+        },
+        "downloads": -1,
+        "filename": "in-silico-fate-mapping-0.1.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "54acb2410a2f0779538c69e46188bc75",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 24564,
+        "upload_time": "2024-04-10T17:05:04",
+        "upload_time_iso_8601": "2024-04-10T17:05:04.815369Z",
+        "url": "https://files.pythonhosted.org/packages/29/8a/92f42f23ab7cb5296971e685301f6a547e8ab55d88baf36e6895a078b865/in-silico-fate-mapping-0.1.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "d8003d13a14d2a720b68cba8951e1d34629ba9ce7d54a9029fe3ba738af768e1",
-        "md5": "064dc00d1ba056c46ee0345da9c0727f",
-        "sha256": "2913a4bb9f1f5efb9ee6524c7b560a7103ab1e7fda2a05b7a497740e01a18bdf"
+        "blake2b_256": "2188aadce88286125f8e48d0e49da1c8aed7506e909442c85814bafd833e3ae4",
+        "md5": "278767b709640b6507ce4c27c173b129",
+        "sha256": "f37560ba1ccfe3d3efdd091b3848ba6ba5bc620212f41d89f5c8b5773c156056"
       },
       "downloads": -1,
-      "filename": "in_silico_fate_mapping-0.1.1-py3-none-any.whl",
+      "filename": "in_silico_fate_mapping-0.1.2-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "064dc00d1ba056c46ee0345da9c0727f",
+      "md5_digest": "278767b709640b6507ce4c27c173b129",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.8",
-      "size": 22551,
-      "upload_time": "2023-04-18T16:14:30",
-      "upload_time_iso_8601": "2023-04-18T16:14:30.169110Z",
-      "url": "https://files.pythonhosted.org/packages/d8/00/3d13a14d2a720b68cba8951e1d34629ba9ce7d54a9029fe3ba738af768e1/in_silico_fate_mapping-0.1.1-py3-none-any.whl",
+      "size": 22939,
+      "upload_time": "2024-04-10T17:05:03",
+      "upload_time_iso_8601": "2024-04-10T17:05:03.135978Z",
+      "url": "https://files.pythonhosted.org/packages/21/88/aadce88286125f8e48d0e49da1c8aed7506e909442c85814bafd833e3ae4/in_silico_fate_mapping-0.1.2-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "9877e2bb134fa0b40bbf5e348647714323a2bb06311513c1ed2c51b3d962add2",
-        "md5": "278718c1a0252bd431600e7ea6f49313",
-        "sha256": "80e678fb438a05520327621b688c28bc98c38a4c5bcb3bb91db3e17a9a1679fd"
+        "blake2b_256": "298a92f42f23ab7cb5296971e685301f6a547e8ab55d88baf36e6895a078b865",
+        "md5": "54acb2410a2f0779538c69e46188bc75",
+        "sha256": "57782845a88c05bed888d53dd2a2cd6dd940001e8c3745297c4a9dd8a8931a68"
       },
       "downloads": -1,
-      "filename": "in-silico-fate-mapping-0.1.1.tar.gz",
+      "filename": "in-silico-fate-mapping-0.1.2.tar.gz",
       "has_sig": false,
-      "md5_digest": "278718c1a0252bd431600e7ea6f49313",
+      "md5_digest": "54acb2410a2f0779538c69e46188bc75",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.8",
-      "size": 24040,
-      "upload_time": "2023-04-18T16:14:32",
-      "upload_time_iso_8601": "2023-04-18T16:14:32.093842Z",
-      "url": "https://files.pythonhosted.org/packages/98/77/e2bb134fa0b40bbf5e348647714323a2bb06311513c1ed2c51b3d962add2/in-silico-fate-mapping-0.1.1.tar.gz",
+      "size": 24564,
+      "upload_time": "2024-04-10T17:05:04",
+      "upload_time_iso_8601": "2024-04-10T17:05:04.815369Z",
+      "url": "https://files.pythonhosted.org/packages/29/8a/92f42f23ab7cb5296971e685301f6a547e8ab55d88baf36e6895a078b865/in-silico-fate-mapping-0.1.2.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
