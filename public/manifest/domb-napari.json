@@ -11,8 +11,17 @@
     "commands": [
       {
         "id": "domb-napari.split_channels_widget",
-        "title": "Multichannel image preprocessing",
+        "title": "Multichannel stack preprocessing",
         "python_name": "domb_napari._widget:split_channels",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "domb-napari.dw_registration_widget",
+        "title": "Dual-view stack registration",
+        "python_name": "domb_napari._widget:dw_registration",
         "short_title": null,
         "category": null,
         "icon": null,
@@ -22,6 +31,15 @@
         "id": "domb-napari.split_sep_widget",
         "title": "SEP image preprocessing",
         "python_name": "domb_napari._widget:split_sep",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "domb-napari.e_app_widget",
+        "title": "E-FRET estimation",
+        "python_name": "domb_napari._widget:e_app_calc",
         "short_title": null,
         "category": null,
         "icon": null,
@@ -56,7 +74,7 @@
       },
       {
         "id": "domb-napari.labels_profiles_set_widget",
-        "title": "Individual labels profiles",
+        "title": "ROIs profiles",
         "python_name": "domb_napari._widget:labels_profile_line",
         "short_title": null,
         "category": null,
@@ -65,7 +83,7 @@
       },
       {
         "id": "domb-napari.labels_profile_widget",
-        "title": "Labels stat profiles",
+        "title": "Stat profiles",
         "python_name": "domb_napari._widget:labels_profile_stat",
         "short_title": null,
         "category": null,
@@ -77,18 +95,28 @@
     "writers": null,
     "widgets": [
       {
-        "command": "domb-napari.split_channels_widget",
-        "display_name": "Image preprocessing",
+        "command": "domb-napari.dw_registration_widget",
+        "display_name": "Dual-view stack registration",
         "autogenerate": false
       },
       {
-        "command": "domb-napari.split_sep_widget",
-        "display_name": "SEP preprocessing",
+        "command": "domb-napari.split_channels_widget",
+        "display_name": "Multichannel stack preprocessing",
         "autogenerate": false
       },
       {
         "command": "domb-napari.der_series_widget",
         "display_name": "Red-green series",
+        "autogenerate": false
+      },
+      {
+        "command": "domb-napari.e_app_widget",
+        "display_name": "E-FRET estimation",
+        "autogenerate": false
+      },
+      {
+        "command": "domb-napari.split_sep_widget",
+        "display_name": "SEP preprocessing",
         "autogenerate": false
       },
       {
@@ -103,12 +131,12 @@
       },
       {
         "command": "domb-napari.labels_profiles_set_widget",
-        "display_name": "Individual labels profiles",
+        "display_name": "ROIs profiles",
         "autogenerate": false
       },
       {
         "command": "domb-napari.labels_profile_widget",
-        "display_name": "Labels stat profiles",
+        "display_name": "Stat profiles",
         "autogenerate": false
       }
     ],
@@ -122,12 +150,12 @@
   "package_metadata": {
     "metadata_version": "2.1",
     "name": "domb-napari",
-    "version": "0.1.3.1",
+    "version": "0.2.0",
     "dynamic": null,
     "platform": null,
     "supported_platform": null,
     "summary": "napari plugin for analyzing fluorescence-labeled proteins redistribution",
-    "description": "domb-napari\n===========\n\n[![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner-direct-single.svg)](https://stand-with-ukraine.pp.ua)\n\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/domb-napari)](https://napari-hub.org/plugins/domb-napari)\n![PyPI - Version](https://img.shields.io/pypi/v/domb-napari)\n![PyPI - License](https://img.shields.io/pypi/l/domb-napari)\n![Website](https://img.shields.io/website?up_message=domb.bio%2Fnapari&up_color=%2323038C93&url=https%3A%2F%2Fdomb.bio%2Fnapari%2F)\n\n__napari Toolkit of Department of Molecular Biophysics <br /> Bogomoletz Institute of Physiology of NAS of Ukraine, Kyiv,  Ukraine__\n\nnapari plugin for analyzing fluorescence-labeled proteins redistribution. Offers widgets designed for analyzing the redistribution of fluorescence-labeled proteins in widefield epifluorescence time-lapse acquisitions. Particularly useful for studying various phenomena such as calcium-dependent translocation of neuronal calcium sensors, synaptic receptor traffic during long-term plasticity induction, and membrane protein tracking.\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/translocation.gif)\n__Hippocalcin (neuronal calcium sensor) redistributes in dendritic branches upon NMDA application__\n\n---\n\n## Detection of fluorescence redistributions\nA set of widgets designed for detecting fluorescence intensity redistribution through the analysis of differential image series (red-green detection).\n\nInspired by [Dovgan et al., 2010](https://pubmed.ncbi.nlm.nih.gov/20704590/) and [Osypenko et al., 2019](https://www.sciencedirect.com/science/article/pii/S0969996119301974?via%3Dihub).\n\n### Image preprocessing\nProvides functions for preprocessing multi-channel fluorescence acquisitions:\n- If the input image has 4 dimensions (time, channel, x-axis, y-axis), channels will be split into individual 3 dimensions images (time, x-axis, y-axis) with the `_ch%index%` suffix.\n- If the `gaussian blur` option is selected, the image will be blurred with a Gaussian filter using sigma=`gaussian sigma`.\n- If the `photobleaching correction` option is selected, the image will undergo correction with exponential (method `exp`) or bi-exponential (method `bi_exp`) fitting.\n- If the `crop ch` option is selected, only a selected range of channel frames will be saved (corresponding to start and stop indexes from `crop range`).\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/pic_00.png)\n\n### Red-green series\nPrimary method for detecting fluorescent-labeled targets redistribution in time. Returns a series of differential images representing the intensity difference between the current frame and the previous one as new image with the `_red-green` suffix.\n\nParameters:\n\n- `left frames` - number of previous frames for pixel-wise averaging.\n- `space frames` - number of frames between the last left and first right frames.\n- `right frames` - number of subsequent frames for pixel-wise averaging.\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/pic_11.png)\n\n### Up masking\nGenerates labels for insertion sites (regions with increasing intensity) based on `-red-green` images. Returns labels layer with `_up-labels` suffix.\n\nParameters:\n\n- `detection img index` - index of the frame from `-red-green` image used for insertion sites detection.\n- `insertion threshold` - threshold value for insertion site detection, intensity on selected `_red-green` frame normalized in -1 - 0 range.\n- `opening footprint` - footprint size in pixels for mask filtering with morphology opening (disabled if 0).\n- `save mask` - if selected, a total up mask (containing all ROIs) will be created with the `_up-mask` suffix.\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/pic_22.png)\n\n### Intensity masking\nExtension of __Up Masking__ widget. Detects regions with increasing (`masking mode` - `up`) or decreasing (`masking mode` - `down`) intensity in `-red-green` images. Returns a labels layer with either `_up-labels` or `_down-labels` suffix, depending on the mode.\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/pic_33.png)\n\n---\n\n## Exo-/endo-cytosis monitoring with pH-sensitive tag\nA collection of widgets designed for the analysis of image series containing the pH-sensitive fluorescence protein Superecliptic pHluorin (SEP).\n\nInsipred by [Fujii et al., 2017](https://pubmed.ncbi.nlm.nih.gov/28474392/) and [Sposini et al., 2020](https://www.nature.com/articles/s41596-020-0371-z).\n\n### SEP image preprocessing\nProcesses image series obtained through repetitive pH exchange methods (such as U-tube or ppH approaches). `pH 1st frame` option indicates the 1st frame pH. By default frames with odd indexes, including index 0, are interpreted as images acquired at pH 7.0, representing total fluorescence intensity (saved with the suffix `_total`). Even frames are interpreted as images obtained at acidic pH (5.5-6.0), representing intracellular fluorescence only (saved with the suffix `_intra`).\n\nIf `calc surface img` is selected, an additional total fluorescence image with subtracted intracellular intensity will be saved as the cell surface fluorescence fraction (suffix `_surface`). The input image should be a 3-dimensional single-channel time-lapse.\n\nThe `calc projections` option allows obtaining individual pH series projections (pixel-wise series MIP - pixel-wise series average) for the detection of individual exo/endocytosis events.\n\n---\n\n## Intensty profiles building and data frame saving\n### Individual labels profiles\nBuilds a plot with mean intensity profiles for each ROI in `labels` using absolute intensity (if `absolute intensity` is selected) or relative intensities (\u0394F/F0).\n\nThe `time scale` sets the number of seconds between frames for x-axis scaling.\n\nThe baseline intensity for \u0394F/F0 profiles is estimated as the mean intensity of the initial profile points (`\u0394F win`). You could filter ROIs by minimum and maximum \u0394F/F0 amplitudes with the `\u0394F aplitude lim` option.\n\n_Note: amplitude filtering working with \u0394F/F0 profiles only._\n\nIf the `profiles crop` option is selected, only a selected range of intensity profiles indexes will be plotted (corresponding to start and stop indexes from `profiles range`).\n\nAdditionally, you can save ROI intensity profiles as .csv using the `save data frame` option and specifying the `saving path`. The output data frames `%img_name%_lab_prof.csv` will contain the following columns:\n\n- __id__ - unique image ID, the name of the input `napari.Image` object.\n- __roi__ - ROI number, consecutively numbered starting from 1.\n- __int__ - ROI mean intensity, raw or \u0394F/F0 according to the `raw intensity` option.\n- __index__ - frame index\n- __time__ - frame time point according to the `time scale`.\n\n_Note: The data frame will contain information for all ROIs; amplitude filtering and crop options pertain to plotting only._\n\nAbsolute intensity         | ![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/pic_44.png)\n:-------------------------:|:-------------------------:\n__\u0394F/F0__|![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/pic_55.png)\n\n\n### Labels stat profiles\nBuilds a plot with the averaged intensity of all ROIs in `labels`. Can take two images (`img 0` and `img 1`) as input if `two profiles` are selected.\n\nThe `time scale` and `\u0394F win` are the same as in the __Individual Labels Profiles__.\n\nThe `stat method` provides methods for estimation intensity and errors:\n\n- `se` - standard error of mean.\n- `iqr` - interquartile range.\n- `ci` - 95% confidence interval for t-distribution.\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/pic_66.png)\n",
+    "description": "domb-napari\n===========\n\n[![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner-direct-single.svg)](https://stand-with-ukraine.pp.ua)\n\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/domb-napari)](https://napari-hub.org/plugins/domb-napari)\n![PyPI - Version](https://img.shields.io/pypi/v/domb-napari)\n![PyPI - License](https://img.shields.io/pypi/l/domb-napari)\n![Website](https://img.shields.io/website?up_message=domb.bio%2Fnapari&up_color=%2323038C93&url=https%3A%2F%2Fdomb.bio%2Fnapari%2F)\n\n__napari Toolkit of Department of Molecular Biophysics <br /> Bogomoletz Institute of Physiology of NAS of Ukraine, Kyiv,  Ukraine__\n\nThis plugin offers widgets specifically designed to analyze the redistribution of fluorescence-labeled proteins in widefield epifluorescence time-lapse acquisitions. It is particularly useful for studying various phenomena, including:\n- Calcium-dependent translocation of neuronal calcium sensors.\n- Synaptic receptor traffic during long-term plasticity induction.\n- Membrane protein tracking.\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/translocation.gif)\n__Hippocalcin (neuronal calcium sensor) redistributes in dendritic branches upon NMDA application__\n\n---\n\n## Detection of fluorescence redistributions\nA set of widgets designed for preprocessing multispectral image stacks and detecting redistributions in fluorescence intensity. These widgets specifically analyze differential \"red-green\" image series to identify changes in fluorescence intensity.\n\nInspired by [Dovgan et al., 2010](https://pubmed.ncbi.nlm.nih.gov/20704590/) and [Osypenko et al., 2019](https://www.sciencedirect.com/science/article/pii/S0969996119301974?via%3Dihub).\n\n### Dual-view stack registration\nRegistration of four-channel image stacks, including two excitation wavelengths and two emission pathbands, acquired with a dual-view beam splitter. This setup detects different spectral pathbands using distinct sides of the CCD matrix.\n\n- `offset img` - input for a four-channel time-lapse image stack.\n- `reference img` - an optional four-channel reference image (e.g., fluorescence beads image), used for offset estimation if `use reference img` is selected.\n- `input crop` - number of pixels that will be deleted from each side of input stack frames to discard misalignment artifacts from the dual-view system.\n- `output crop` - number of pixels that will be deleted from each side of output stack frames to discard registration artifacts.\n\n\n### Multichannel stack preprocessing\n- `stack order` - Represents the order of axes in the input data array (T - time, C - color, X and Y - image dimensions). If the input image stack has four dimensions (time, channel, x-axis, y-axis), channels will be split into individual three-dimensional images (time, x-axis, y-axis), each with the `_ch%index%` suffix.\n- `median filter` - provides frame-by-frame image smoothing using a kernel of size specified in `median kernel`.\n- `background subtraction` - compensates for background fluorescence intensity. Background intensity is estimated frame by frame as the mean intensity value outside of a simple Otsu mask.\n- If the `photobleaching correction` option is selected, the image will undergo correction using either an exponential (method `exp`) or bi-exponential (method `bi_exp`) fitting.\n- Image stacks can be cropped according to start and stop indexes specified in `frames range` if `drop frames` is selected.\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/stack_preprocessing.png)\n\n\n### Red-green series\nPrimary method for detecting fluorescence-labeled targets redistribution. This widget returns a series of differential images, each representing the intensity difference between the current frame and the previous one, output image labeled with the `_red-green` suffix.\n\nParameters:\n\n- `left frames` - specifies the number of previous frames used for pixel-wise averaging.\n- `space frames` - determines the number of frames between the last left frame and the first right frame.\n- `right frames` - specifies the number of subsequent frames used for pixel-wise averaging.\n\n`normalize by int`  function normalizes the differential images relative to the absolute intensity of the input image stack, which helps to reduce background noise amplitude.\n\nIf `save MIP` is selected, the maximal intensity projection (MIP) of the differential image stack will be saved with the `_red-green-MIP` suffix.\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/rg_series.png)\n\n### Up masking\nGenerates labels for insertion sites (regions with increasing intensity) based on `-red-green` images. Returns labels layer with `_up-labels` suffix.\n\nParameters:\n\n- `detection img index` - index of the frame from `-red-green` image used for insertion sites detection.\n- `insertion threshold` - threshold value for insertion site detection, intensity on selected `_red-green` frame normalized in -1 - 0 range.\n- `opening footprint` - footprint size in pixels for mask filtering with morphology opening (disabled if 0).\n- `save mask` - if selected, a total up mask (containing all ROIs) will be created with the `_up-mask` suffix.\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/up_masking.png)\n\n### Intensity masking\nExtension of __Up Masking__ widget. Detects regions with increasing (`masking mode` - `up`) or decreasing (`masking mode` - `down`) intensity in `-red-green` images. Returns a labels layer with either `_up-labels` or `_down-labels` suffix, depending on the mode.\n\n![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/int_masking.png)\n\n---\n\n## FRET detection\nWidgets for detection and analysis of F\u00f6rster resonance energy transfer multispectral image stacks.\n\nBased on [Zal and Gascoigne, 2004](https://pubmed.ncbi.nlm.nih.gov/15189889/), [Chen et al., 2006](https://pubmed.ncbi.nlm.nih.gov/16815904/) and [Kamino et al., 2023](https://pubmed.ncbi.nlm.nih.gov/37014867/)\n\n_Under development: calculation of crosstalk coefficients and G-factor, B-FRET estimation._\n\n### E-FRET estimation\nE-FRET estimation with 3-cube approach.\n\nThis method utilizes default values for `a` and `d` coefficients and the `G`-factor, optimized for the pair EYFP and ECFP in our experimental setup:\n- Microscope Olympus IX71\n- Cube Chroma 69008\n- Dual-view system with Chroma 505DCXR beam splitter\n- Donor excitation wavelength 435 nm\n- Acceptor excitation wavelength 505 nm\n\nParameters:\n- `DD img` - donor emission channel image acquired with the donor excitation wavelength.\n- `AD img` - Acceptor emission channel image acquired with the donor excitation wavelength.\n- `AA img` - Acceptor emission channel image acquired with the acceptor excitation wavelength.\n- `output type` - Type of output image: sensitized emission (Fc), apparent FRET efficiency (Eapp), or FRET efficiency with photobleaching correction (Ecorr).\n\nIf the `save normalized` option is selected, an additional image will be saved. This image is normalized to the absolute intensity of the `AA img`, resulting in reduced background noise amplitude.\n\nRaw Eapp| ![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/fret_raw.png)\n:-:|:-:\n__Normalized Eapp__|![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/fret_norm.png)\n\n---\n\n## Exo-/endo-cytosis monitoring with pH-sensitive tag\nA set of widgets designed for the analysis of image series containing the pH-sensitive fluorescence protein Superecliptic pHluorin (SEP).\n\nInsipred by [Fujii et al., 2017](https://pubmed.ncbi.nlm.nih.gov/28474392/) and [Sposini et al., 2020](https://www.nature.com/articles/s41596-020-0371-z).\n\n### SEP image preprocessing\nProcesses image series obtained through repetitive pH exchange methods (such as U-tube or ppH approaches). `pH 1st frame` option indicates the 1st frame pH. By default frames with odd indexes, including index 0, are interpreted as images acquired at pH 7.0, representing total fluorescence intensity (saved with the suffix `_total`). Even frames are interpreted as images obtained at acidic pH (5.5-6.0), representing intracellular fluorescence only (saved with the suffix `_intra`).\n\nIf `calc surface img` is selected, an additional total fluorescence image with subtracted intracellular intensity will be saved as the cell surface fluorescence fraction (suffix `_surface`). The input image should be a 3-dimensional single-channel time-lapse.\n\nThe `calc projections` option allows obtaining individual pH series projections (pixel-wise series MIP - pixel-wise series average) for the detection of individual exo/endocytosis events.\n\n---\n\n## Intensty profiles building and data frame saving\n### ROIs profiles\nThis widget builds a plot with mean intensity profiles for each Region of Interest (ROI) in labels. It uses either absolute intensity (if `absolute intensity` is selected) or relative intensities (\u0394F/F0).\n\n- `time scale` - sets the number of seconds between frames for x-axis scaling.\n- `\u0394F win` - the baseline intensity for \u0394F/F0 profiles is estimated as the mean intensity of the specified number of initial profile points.\n- `\u0394F amplitude lim` - allows filtering of ROIs by minimum and maximum \u0394F/F0 amplitudes. Note: Amplitude filtering works with \u0394F/F0 profiles only.\n- `profiles crop` - if selected, only a specified range of intensity profile indexes will be plotted, corresponding to the start and stop indexes from `profiles range`.\n\nAdditionally, you can save ROI intensity profiles as .csv files using the save data frame option and specifying the `saving path`. The output data frames named %img_name%_lab_prof.csv will include the following columns:\n\n- `id` - Unique image ID, the name of the input napari.Image object.\n- `roi` - ROI number, consecutively numbered starting from 1.\n- `int` - ROI mean intensity, either raw or \u0394F/F0, according to the selected intensity option.\n- `index` - Frame index.\n- `time` - Frame time point, adjusted according to the time scale.\n\n_Note: The data frame will contain information for all ROIs; amplitude filtering and crop options pertain to plotting only._\n\nAbsolute intensity         | ![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/rois_abs.png)\n:-------------------------:|:-------------------------:\n__\u0394F/F0__|![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/rois_df.png)\n\n\n### Stat profiles\nThis widget builds a plot displaying the averaged intensity of all Regions of Interest (ROI) specified in labels. It can handle up to three images (img 0, img 1, and img 2) as inputs, depending on the selected profiles num.\n\n`time scale`, `\u0394F win`, and `absolute intensity` parameters are identical as described in the __ROIs profiles__ widget.\n\nThe `stat method` allows for the estimation of intensity and associated errors through the following methods:\n- `se` - mean +/- standard error of the mean.\n- `iqr` - median +/- interquartile range.\n- `ci` - mean +/- 95% confidence interval based on the t-distribution.\n\nAbsolute intensity         | ![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/stat_abs.png)\n:-------------------------:|:-------------------------:\n__\u0394F/F0__|![](https://raw.githubusercontent.com/wisstock/domb-napari/master/images/stat_df.png)\n",
     "description_content_type": "text/markdown",
     "keywords": null,
     "home_page": null,
@@ -153,7 +181,8 @@
     ],
     "requires_dist": [
       "napari",
-      "domb"
+      "domb",
+      "dipy"
     ],
     "requires_python": ">=3.8",
     "requires_external": null,
