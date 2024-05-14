@@ -17,7 +17,7 @@
       "Topic :: Scientific/Engineering :: Information Analysis",
       "Topic :: Scientific/Engineering :: Visualization"
     ],
-    "description": "# tracktour\n\n[![License](https://img.shields.io/pypi/l/tracktour.svg?color=green)](https://github.com/DragaDoncila/tracktour/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/tracktour.svg?color=green)](https://pypi.org/project/tracktour)\n[![Python Version](https://img.shields.io/pypi/pyversions/tracktour.svg?color=green)](https://python.org)\n[![CI](https://github.com/DragaDoncila/tracktour/actions/workflows/ci.yml/badge.svg)](https://github.com/DragaDoncila/tracktour/actions/workflows/ci.yml)\n\ntracktour is a simple object tracker based on a network flow linear model. tracktour takes a dataframe of detected objects and solves a linear program\n(currently using Gurobi, but we will soon add an open source solver interface) to produce tracking results.\n\ntracktour is rapidly changing and its API will change without deprecation warnings.\n\n## Usage\n\nThe `Tracker` object is the interface for producing tracking solutions. Below is a toy example with explicitly defined detections.\n\n```python\ncoords = [\n    (0, 50.0, 50.0),\n    (0, 40, 50),\n    (0, 30, 57),\n    (1, 50, 52),\n    (1, 38, 51),\n    (1, 29, 60),\n    (2, 52, 53),\n    (2, 37, 53),\n    (2, 28, 64),\n]\ncoords = pd.DataFrame(coords, columns=[\"t\", \"y\", \"x\"])\n\n# initialize Tracker object\ntracker = Tracker(\n    im_shape=(100, 100),    # size of the image detections come from. Affects cost of detections appearing/disappearing\n    k_neighbours=2          # number of neighbours to consider for assignment in the next frame (default=10)\n)\n# solve\ntracked = tracker.solve(coords)\n```\n\nThe `Tracked` object contains a copy of the detections, potentially reindexed, and a dataframe of edges that make up the solution.\nColumns `u` and `v` in `tracked_edges` are direct indices into `tracked_detections`.\n\n```python\nprint(tracked.tracked_detections)\nprint(tracked.tracked_edges)\n```\n\nYou may want to convert the solution into a networkx graph for easier manipulation.\n\n```python\nsolution_graph = tracked.as_nx_digraph()\n```\n\n### Extracting Detections\n\nIf you're starting from an image segmentation, you can use the `get_im_centers` or `extract_im_centers` functions.\n\nIf your segmentation is already loaded into a numpy array, use `extract_im_centers`. The returned `detections` DataFrame is ready for use with the `Tracker`.\n\n```python\ndetections, min_t, max_t, corners = extract_im_centers(segmentation)\n```\n\nIf your segmentation is in Cell Tracking Challenge format and lives in single tiffs per frame in a directory, use `get_im_centers`. This will also return\nthe segmentation as a numpy array.\n\n```python\nseg, detections, min_t, max_t, corners = get_im_centers('path/to/01_RES/')\n```\n\n### CLI Tool - Cell Tracking Challenge\n\nIf you're working with Cell Tracking Challenge formatted datasets, you can use the CLI to extract detections, run tracktour, and save output in CTC format.\n\n```sh\n$ tracktour ctc /path/to/seg/ /path/to/save/ -k 8\n```\n\n## Support\n\nPlease feel free to open issues with feature requests, bug reports, questions on usage, etc.\n",
+    "description": "# tracktour\n\n[![License](https://img.shields.io/pypi/l/tracktour.svg?color=green)](https://github.com/DragaDoncila/tracktour/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/tracktour.svg?color=green)](https://pypi.org/project/tracktour)\n[![Python Version](https://img.shields.io/pypi/pyversions/tracktour.svg?color=green)](https://python.org)\n[![CI](https://github.com/DragaDoncila/tracktour/actions/workflows/ci.yml/badge.svg)](https://github.com/DragaDoncila/tracktour/actions/workflows/ci.yml)\n\n`tracktour` is a simple object tracker based on a network flow linear model. `tracktour` takes a dataframe of detected objects and solves a linear program\n(currently using Gurobi, but we will soon add an open source solver interface) to produce tracking results.\n\n`tracktour` is rapidly changing and its API will change without deprecation warnings.\n\n## About `tracktour`\n\n`tracktour` is a purely discrete-optimization-based tracker. It takes the coordinates of detected objects as input, and associates\nthese objects over time to create complete trajectories, including divisions. Tracktour's only parameter is `k` - the number of\nneighbours to consider for possible assignment in the next frame. Using this parameter and very simple distance based cost,\na candidate graph is created, and passed to Gurobi for solving. Once solved, the detected objects and edges that make up the tracks are\nreturned to the user for inspection.\n\n## Installation\n\n`tracktour` is available as a pip-installable Python package. Running `pip install tracktour` in a virtual environment will install all\nrequired dependencies, but you will need a separate Gurobi Optimizer installation (instructions [here](https://support.gurobi.com/hc/en-us/articles/4534161999889-How-do-I-install-Gurobi-Optimizer)).\n\n`tracktour` is tested with all Python versions >=3.8.\n\n**Note** - If you wish to visualize data with `napari` (e.g. as per the Cell Tracking Challenge [example](./examples/build_and_solve_ctc.ipynb)), you will need to separately install it.\n\n## Support\n\nPlease feel free to open issues with feature requests, bug reports, questions on usage, etc.\n\n## Usage\n\nThe `Tracker` object is the interface for producing tracking solutions. Below is a toy example with explicitly defined detections.\n\n```python\n# define the coordinates of ten detections across three frames.\ncoords = [\n    (0, 50.0, 50.0),\n    (0, 40, 50),\n    (0, 30, 57),\n    (1, 50, 52),\n    (1, 38, 51),\n    (1, 29, 60),\n    (2, 52, 53),\n    (2, 37, 53),\n    (2, 28, 64),\n]\ncoords = pd.DataFrame(coords, columns=[\"t\", \"y\", \"x\"])\n\n# initialize Tracker object\ntracker = Tracker(\n    im_shape=(100, 100),    # size of the image detections come from. Affects cost of detections appearing/disappearing\n    k_neighbours=2          # number of neighbours to consider for assignment in the next frame (default=10)\n)\n# solve\ntracked = tracker.solve(coords)\n```\n\nThe `Tracked` object contains a copy of the detections, potentially reindexed, and a dataframe of edges that make up the solution.\nColumns `u` and `v` in `tracked_edges` are direct indices into `tracked_detections`.\n\n```python\nprint(tracked.tracked_detections)\nprint(tracked.tracked_edges)\n```\n\nYou may want to convert the solution into a networkx graph for easier manipulation.\n\n```python\nsolution_graph = tracked.as_nx_digraph()\n```\n\nSee the [toy example](./examples/toy.py) for a complete script, and the [CTC example](./examples/build_and_solve_ctc.ipynb) for visualization in `napari`.\n\n### Extracting Detections\n\nIf you're starting from an image segmentation, you can use the `get_im_centers` or `extract_im_centers` functions.\n\nIf your segmentation is already loaded into a numpy array, use `extract_im_centers`. The returned `detections` DataFrame is ready for use with the `Tracker`.\n\n```python\ndetections, min_t, max_t, corners = extract_im_centers(segmentation)\n```\n\nIf your segmentation is in Cell Tracking Challenge format and lives in single tiffs per frame in a directory, use `get_im_centers`. This will also return\nthe segmentation as a numpy array.\n\n```python\nseg, detections, min_t, max_t, corners = get_im_centers('path/to/01_RES/')\n```\n\n**Note:** If using the `ctc` utilities, detections will be extracted for you.\n\n### Cell Tracking Challenge\n\nIf you're working with Cell Tracking Challenge formatted datasets, see [the example notebook](./examples/build_and_solve_ctc.ipynb) for producing and visualizing tracks.\n\nYou can also use the CLI at the command-line to extract detections, run tracktour, and save output in CTC format.\n\n```sh\n# run tracktour with k-neighbours=8\n$ tracktour ctc /path/to/seg/ /path/to/save/ -k 8\n```\n\n**Note**: Tracktour was recently submitted to the Cell Tracking Challenge. To use the submission version specifically, install `tracktour==0.0.4`.\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -41,7 +41,7 @@
       "repository": "https://github.com/DragaDoncila/tracktour"
     },
     "provides_extra": null,
-    "release_url": "https://pypi.org/project/tracktour/0.0.4/",
+    "release_url": "https://pypi.org/project/tracktour/0.0.5/",
     "requires_dist": [
       "gurobipy",
       "imagecodecs",
@@ -49,6 +49,7 @@
       "numpy",
       "pandas",
       "pydantic",
+      "pyyaml",
       "scikit-image",
       "scipy",
       "tifffile",
@@ -62,11 +63,11 @@
     ],
     "requires_python": ">=3.8",
     "summary": "Network flow based tracker with guided error correction",
-    "version": "0.0.4",
+    "version": "0.0.5",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 22469354,
+  "last_serial": 23195645,
   "releases": {
     "0.0.3": [
       {
@@ -243,48 +244,136 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.0.5": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "3f9f48195a498ca7d0eafc3f461e27b57169e74047f05c4830dc3ae157106885",
+          "md5": "eccfb79836eba4c998d81df04a8d5e64",
+          "sha256": "ed23e0525357b5b97eb309ef0efe341fc159daaf9b7bd1bb23bedccc1db12c98"
+        },
+        "downloads": -1,
+        "filename": "tracktour-0.0.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "eccfb79836eba4c998d81df04a8d5e64",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 28302,
+        "upload_time": "2024-05-14T04:26:26",
+        "upload_time_iso_8601": "2024-05-14T04:26:26.846820Z",
+        "url": "https://files.pythonhosted.org/packages/3f/9f/48195a498ca7d0eafc3f461e27b57169e74047f05c4830dc3ae157106885/tracktour-0.0.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "177dc44f0e03cd6c74fa676c87cc53a9211022c257d77518ce2b54d648effcf9",
+          "md5": "733c588157c4d8fbeb0a1396cc2a9957",
+          "sha256": "74fd66bdbb3136686bb081c37175ca2e02a1ac70f37c821fa35b87cacd777d31"
+        },
+        "downloads": -1,
+        "filename": "tracktour-0.0.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "733c588157c4d8fbeb0a1396cc2a9957",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 13042570,
+        "upload_time": "2024-05-14T04:26:28",
+        "upload_time_iso_8601": "2024-05-14T04:26:28.790226Z",
+        "url": "https://files.pythonhosted.org/packages/17/7d/c44f0e03cd6c74fa676c87cc53a9211022c257d77518ce2b54d648effcf9/tracktour-0.0.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.5rc1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "63692b78e7391c0abb28e84192d7ed4814096d0f0beeb7b88f1a9a72c24c08ef",
+          "md5": "e8adb7e69d4c44782a69da1906cb0ba7",
+          "sha256": "fda2b7d8a7ef120ecf0fe44379ae7401bf54386eb9abe293fa7feda410664e53"
+        },
+        "downloads": -1,
+        "filename": "tracktour-0.0.5rc1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "e8adb7e69d4c44782a69da1906cb0ba7",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 28335,
+        "upload_time": "2024-05-14T04:22:32",
+        "upload_time_iso_8601": "2024-05-14T04:22:32.982302Z",
+        "url": "https://files.pythonhosted.org/packages/63/69/2b78e7391c0abb28e84192d7ed4814096d0f0beeb7b88f1a9a72c24c08ef/tracktour-0.0.5rc1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "0695b2b49e43662568ea7aa8d49196b8ff1ab3076b9cc8207643a0d0d83ecce0",
+          "md5": "e70b449a3b15d5ca9490bc9026db20db",
+          "sha256": "bc18073f0a5dba2bc47a9b4b3565b79cc720fece28b9e26263ec8ea5a9687c00"
+        },
+        "downloads": -1,
+        "filename": "tracktour-0.0.5rc1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e70b449a3b15d5ca9490bc9026db20db",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 13042685,
+        "upload_time": "2024-05-14T04:22:34",
+        "upload_time_iso_8601": "2024-05-14T04:22:34.599538Z",
+        "url": "https://files.pythonhosted.org/packages/06/95/b2b49e43662568ea7aa8d49196b8ff1ab3076b9cc8207643a0d0d83ecce0/tracktour-0.0.5rc1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "51efcf4d4f9f7561deefc2033924df52455cf5b1ed342c7d45843538ba3cac52",
-        "md5": "4714869ab75f1fefd2268115050010a2",
-        "sha256": "7ee5db3e7bf354fa959bb4d9ba0fbfb6b79b81ced73ac868f468a8894a871c4e"
+        "blake2b_256": "3f9f48195a498ca7d0eafc3f461e27b57169e74047f05c4830dc3ae157106885",
+        "md5": "eccfb79836eba4c998d81df04a8d5e64",
+        "sha256": "ed23e0525357b5b97eb309ef0efe341fc159daaf9b7bd1bb23bedccc1db12c98"
       },
       "downloads": -1,
-      "filename": "tracktour-0.0.4-py3-none-any.whl",
+      "filename": "tracktour-0.0.5-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "4714869ab75f1fefd2268115050010a2",
+      "md5_digest": "eccfb79836eba4c998d81df04a8d5e64",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.8",
-      "size": 25861,
-      "upload_time": "2024-03-25T03:17:24",
-      "upload_time_iso_8601": "2024-03-25T03:17:24.359302Z",
-      "url": "https://files.pythonhosted.org/packages/51/ef/cf4d4f9f7561deefc2033924df52455cf5b1ed342c7d45843538ba3cac52/tracktour-0.0.4-py3-none-any.whl",
+      "size": 28302,
+      "upload_time": "2024-05-14T04:26:26",
+      "upload_time_iso_8601": "2024-05-14T04:26:26.846820Z",
+      "url": "https://files.pythonhosted.org/packages/3f/9f/48195a498ca7d0eafc3f461e27b57169e74047f05c4830dc3ae157106885/tracktour-0.0.5-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "44adbcdb0fb33518e37f516cf0d93e1b2a022dc3a358182dd86536b464c05d4b",
-        "md5": "cbbd49919e9602f14381e928c154d268",
-        "sha256": "36a11a87db0a7f049524836b87f54d35176bd638dd9c11cba602964f4e3b6a76"
+        "blake2b_256": "177dc44f0e03cd6c74fa676c87cc53a9211022c257d77518ce2b54d648effcf9",
+        "md5": "733c588157c4d8fbeb0a1396cc2a9957",
+        "sha256": "74fd66bdbb3136686bb081c37175ca2e02a1ac70f37c821fa35b87cacd777d31"
       },
       "downloads": -1,
-      "filename": "tracktour-0.0.4.tar.gz",
+      "filename": "tracktour-0.0.5.tar.gz",
       "has_sig": false,
-      "md5_digest": "cbbd49919e9602f14381e928c154d268",
+      "md5_digest": "733c588157c4d8fbeb0a1396cc2a9957",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.8",
-      "size": 25651,
-      "upload_time": "2024-03-25T03:17:26",
-      "upload_time_iso_8601": "2024-03-25T03:17:26.181950Z",
-      "url": "https://files.pythonhosted.org/packages/44/ad/bcdb0fb33518e37f516cf0d93e1b2a022dc3a358182dd86536b464c05d4b/tracktour-0.0.4.tar.gz",
+      "size": 13042570,
+      "upload_time": "2024-05-14T04:26:28",
+      "upload_time_iso_8601": "2024-05-14T04:26:28.790226Z",
+      "url": "https://files.pythonhosted.org/packages/17/7d/c44f0e03cd6c74fa676c87cc53a9211022c257d77518ce2b54d648effcf9/tracktour-0.0.5.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
