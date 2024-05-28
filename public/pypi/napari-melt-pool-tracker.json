@@ -17,51 +17,57 @@
       "Programming Language :: Python :: 3.9",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "# napari-melt-pool-tracker\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-melt-pool-tracker.svg?color=green)](https://github.com/faymanns/napari-melt-pool-tracker/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-melt-pool-tracker.svg?color=green)](https://pypi.org/project/napari-melt-pool-tracker)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-melt-pool-tracker.svg?color=green)](https://python.org)\n[![tests](https://github.com/faymanns/napari-melt-pool-tracker/workflows/tests/badge.svg)](https://github.com/faymanns/napari-melt-pool-tracker/actions)\n[![codecov](https://codecov.io/gh/faymanns/napari-melt-pool-tracker/branch/main/graph/badge.svg)](https://codecov.io/gh/faymanns/napari-melt-pool-tracker)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-melt-pool-tracker)](https://napari-hub.org/plugins/napari-melt-pool-tracker)\n\nPlugin for tracking the width and depth of the melt pool and keyhole in x-ray images of laser powder bed fusion experiments.\n\n----------------------------------\n\n## Installation\n\nYou can install `napari-melt-pool-tracker` via [pip]:\n\n    pip install napari-melt-pool-tracker\n\n# Getting Started with napari-melt-pool-tracker\n\n## Reading Data\n\n- The `napari-melt-pool-tracker` plugin can read h5 files from the ID19 and TOMCAT beam lines.\n- When opening an h5 file in napari, select the \"Melt Pool Tracker\" as the reader for the mentioned beamlines.\n- Once the data is loaded, you have the option to save the layer as a tif file if needed.\n\n## Pre-processing\n\n- For large images, it is recommended to crop them in both time and space to include only the relevant parts of the image stack.\n\n## 1. Determine Laser Speed and Position\n\n- This step helps identify the laser in the images for later reslicing the stack with a moving window following the laser.\n- It generates a projection of the stack along the y-axis, creating an x-t image where the laser's position appears as an oblique line in the projection.\n\n**To perform this step:**\n\n1. Select the stack you want to work on using the \"Input\" drop-down menu.\n2. Choose one of three projection modes:\n   - Default: Maximum projection along y.\n   - Pre mean: Divide each frame by the mean projection along the t-axis (to remove background) and then perform a maximum projection along y.\n   - Post median: Perform a maximum projection along y and then divide the projected images by a median-filtered version in the x-direction (to remove horizontal strips).\n3. Click \"Run\" to generate a new layer with the projected image and a shapes layer with a line.\n4. Select the line layer, use the \"Select vertices\" tool to match the line with the laser in the projected image.\n\n## 2. Reslice with Moving Window\n\n- This step reslices the stack with a moving window that follows the laser's position.\n\n**To perform this step:**\n\n1. Select the input stack using the \"Stack\" drop-down menu.\n2. Choose the line layer with the laser's position using the \"Line\" drop-down menu.\n3. Adjust the \"Left margin\" and \"Right margin\" sliders to set the size of the window to the left and right of the laser's position.\n4. Click \"Run\" to create three new layers: a resliced stack, a shapes layer indicating the laser's position based on your previous annotation, and a shapes layer with lines indicating the window's position in the original image.\n5. If the window size doesn't fit the melt pool correctly, adjust it using the margin sliders. Disable the \"Auto run\" checkbox for large stacks to control when reslicing occurs.\n\n## 3. Filter Image\n\n- This step aims to reduce noise in the images by applying a median filter.\n\n**To filter the image:**\n\n- Select the resliced layer as the input.\n- Use the \"Kernel\" sliders to set the size of the median filter along different axes.\n- Disable \"Auto run\" for large stacks due to the computational cost. After median filtering, the function applies Otsu thresholding to remove the background. Adjust the contrast as needed.\n\n## 4. Calculate Radial Gradient\n\n- This step calculates the gray value gradient in the radial direction with respect to a point on the surface, forming the origin. You can set the horizontal position of the origin using the position slider.\n\n**To calculate the radial gradient:**\n\n- Select the resliced and filtered stack as input.\n- Adjust the contrast for the new radial gradient layer.\n\n## 5. Annotate\n\n- Annotation of points is done using the [napari-cursor-tracker](https://www.napari-hub.org/plugins/napari-cursor-tracker) plugin.\n\n**To annotate points:**\n\n- Select any of the resliced layers as your reference image.\n- Change the name in the \"Name of the tracked point\" text box to define the point you want to track, e.g., 'MP depth'.\n- Click \"Add new layer\" to create a new points layer with the specified name, automatically selected as the active layer.\n- Start tracking by pressing 't' on your keyboard. Enable \"Auto play when tracking is started\" for automatic playback.\n- Adjust playback parameters as needed. Setting \"Loop mode\" to 'once' is advised to prevent overwriting tracked points. You can track points manually by scrolling through slices/frames (hold down `ctrl`) and saving your cursor positions at each index change.\n\n## Saving and Processing Results\n\n- You can save the 'window_coordinates' layer and point layers with tracked points as CSV files for further processing with external software.\n\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-melt-pool-tracker\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description": "<img style=\"float: right;\" src=\"https://imaging.epfl.ch/resources/logo-for-gitlab.svg\">\n\n\n# napari-melt-pool-tracker\nDeveloped by the [EPFL Center for Imaging](https://imaging.epfl.ch/) for the [Thermomechanical Metallurgy Laboratory](https://www.epfl.ch/labs/lmtm/) in Sep 2023.\nPlugin for tracking the width and depth of the melt pool and keyhole in x-ray images of laser powder bed fusion experiments.\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-melt-pool-tracker.svg?color=green)](https://github.com/EPFL-Center-for-Imaging/napari-melt-pool-tracker/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-melt-pool-tracker.svg?color=green)](https://pypi.org/project/napari-melt-pool-tracker)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-melt-pool-tracker.svg?color=green)](https://python.org)\n[![tests](https://github.com/EPFL-Center-for-Imaging/napari-melt-pool-tracker/workflows/tests/badge.svg)](https://github.com/EPFL-Center-for-Imaging/napari-melt-pool-tracker/actions)\n[![codecov](https://codecov.io/gh/EPFL-Center-for-Imaging/napari-melt-pool-tracker/branch/main/graph/badge.svg)](https://codecov.io/gh/EPFL-Center-for-Imaging/napari-melt-pool-tracker)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-melt-pool-tracker)](https://napari-hub.org/plugins/napari-melt-pool-tracker)\n\n\n----------------------------------\n\n## Installation\n\nYou can install `napari-melt-pool-tracker` via [pip]:\n\n    pip install napari-melt-pool-tracker\n\n# Getting Started with napari-melt-pool-tracker\n\n## Reading Data\n\n- The `napari-melt-pool-tracker` plugin can read h5 files from the ID19 and TOMCAT beam lines.\n- When opening an h5 file in napari, select the \"Melt Pool Tracker\" as the reader for the mentioned beamlines.\n- Once the data is loaded, you have the option to save the layer as a tif file if needed.\n\n## Pre-processing\n\n- For large images, it is recommended to crop them in both time and space to include only the relevant parts of the image stack.\n\n## 1. Determine Laser Speed and Position\n\n- This step helps identify the laser in the images for later reslicing the stack with a moving window following the laser.\n- It generates a projection of the stack along the y-axis, creating an x-t image where the laser's position appears as an oblique line in the projection.\n\n**To perform this step:**\n\n1. Select the stack you want to work on using the \"Input\" drop-down menu.\n2. Choose one of three projection modes:\n   - Default: Maximum projection along y.\n   - Pre mean: Divide each frame by the mean projection along the t-axis (to remove background) and then perform a maximum projection along y.\n   - Post median: Perform a maximum projection along y and then divide the projected images by a median-filtered version in the x-direction (to remove horizontal strips).\n3. Click \"Run\" to generate a new layer with the projected image and a shapes layer with a line.\n4. Select the line layer, use the \"Select vertices\" tool to match the line with the laser in the projected image.\n\n## 2. Reslice with Moving Window\n\n- This step reslices the stack with a moving window that follows the laser's position.\n\n**To perform this step:**\n\n1. Select the input stack using the \"Stack\" drop-down menu.\n2. Choose the line layer with the laser's position using the \"Line\" drop-down menu.\n3. Adjust the \"Left margin\" and \"Right margin\" sliders to set the size of the window to the left and right of the laser's position.\n4. Click \"Run\" to create three new layers: a resliced stack, a shapes layer indicating the laser's position based on your previous annotation, and a shapes layer with lines indicating the window's position in the original image.\n5. If the window size doesn't fit the melt pool correctly, adjust it using the margin sliders. Disable the \"Auto run\" checkbox for large stacks to control when reslicing occurs.\n\n## 3. Filter Image\n\n- This step aims to reduce noise in the images by applying a median filter.\n\n**To filter the image:**\n\n- Select the resliced layer as the input.\n- Use the \"Kernel\" sliders to set the size of the median filter along different axes.\n- Disable \"Auto run\" for large stacks due to the computational cost. After median filtering, the function applies Otsu thresholding to remove the background. Adjust the contrast as needed.\n\n## 4. Calculate Radial Gradient\n\n- This step calculates the gray value gradient in the radial direction with respect to a point on the surface, forming the origin. You can set the horizontal position of the origin using the position slider.\n\n**To calculate the radial gradient:**\n\n- Select the resliced and filtered stack as input.\n- Adjust the contrast for the new radial gradient layer.\n\n## 5. Annotate\n\n- Annotation of points is done using the [napari-cursor-tracker](https://www.napari-hub.org/plugins/napari-cursor-tracker) plugin.\n\n**To annotate points:**\n\n- Select any of the resliced layers as your reference image.\n- Change the name in the \"Name of the tracked point\" text box to define the point you want to track, e.g., 'MP depth'.\n- Click \"Add new layer\" to create a new points layer with the specified name, automatically selected as the active layer.\n- Start tracking by pressing 't' on your keyboard. Enable \"Auto play when tracking is started\" for automatic playback.\n- Adjust playback parameters as needed. Setting \"Loop mode\" to 'once' is advised to prevent overwriting tracked points. You can track points manually by scrolling through slices/frames (hold down `ctrl`) and saving your cursor positions at each index change.\n\n## Saving and Processing Results\n\n- You can save the 'window_coordinates' layer and point layers with tracked points as CSV files for further processing with external software.\n\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-melt-pool-tracker\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
-    "download_url": "",
+    "download_url": null,
     "downloads": {
       "last_day": -1,
       "last_month": -1,
       "last_week": -1
     },
     "dynamic": null,
-    "home_page": "https://github.com/faymanns/napari-melt-pool-tracker",
-    "keywords": "",
+    "home_page": "https://github.com/EPFL-Center-for-Imaging/napari-melt-pool-tracker",
+    "keywords": null,
     "license": "BSD-3-Clause",
-    "maintainer": "",
-    "maintainer_email": "",
+    "maintainer": null,
+    "maintainer_email": null,
     "name": "napari-melt-pool-tracker",
     "package_url": "https://pypi.org/project/napari-melt-pool-tracker/",
     "platform": null,
     "project_url": "https://pypi.org/project/napari-melt-pool-tracker/",
     "project_urls": {
-      "Homepage": "https://github.com/faymanns/napari-melt-pool-tracker"
+      "Homepage": "https://github.com/EPFL-Center-for-Imaging/napari-melt-pool-tracker"
     },
-    "provides_extra": null,
-    "release_url": "https://pypi.org/project/napari-melt-pool-tracker/0.1.1/",
+    "provides_extra": [
+      "testing"
+    ],
+    "release_url": "https://pypi.org/project/napari-melt-pool-tracker/0.1.2/",
     "requires_dist": [
       "numpy",
       "magicgui",
       "qtpy",
       "h5py",
-      "scikit-learn",
       "napari-cursor-tracker",
-      "tox ; extra == 'testing'",
-      "pytest ; extra == 'testing'",
-      "pytest-cov ; extra == 'testing'",
-      "pytest-qt ; extra == 'testing'",
-      "napari ; extra == 'testing'",
-      "pyqt5 ; extra == 'testing'"
+      "napari",
+      "pandas",
+      "scikit-image",
+      "tifffile",
+      "scipy",
+      "tox; extra == \"testing\"",
+      "pytest; extra == \"testing\"",
+      "pytest-cov; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "napari; extra == \"testing\"",
+      "pyqt5; extra == \"testing\""
     ],
     "requires_python": ">=3.8",
     "summary": "Plugin for tracking the width and depth of the melt pool and keyhole in x-ray images of laser powder bed fusion experiments.",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 20451977,
+  "last_serial": 23407141,
   "releases": {
     "0.1.0": [
       {
@@ -150,48 +156,92 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.1.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "9145a7041eea806c2cb7562aceefbc882ae85014636a52f23300d7b0ada50469",
+          "md5": "4943d500b30d582e682929c9c12ac5ab",
+          "sha256": "faff3e68f9bd46aaa736125afd5660d3b94989ca4c9db6b25f78c15fdd383bf0"
+        },
+        "downloads": -1,
+        "filename": "napari_melt_pool_tracker-0.1.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "4943d500b30d582e682929c9c12ac5ab",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 13962709,
+        "upload_time": "2024-05-28T07:37:07",
+        "upload_time_iso_8601": "2024-05-28T07:37:07.892407Z",
+        "url": "https://files.pythonhosted.org/packages/91/45/a7041eea806c2cb7562aceefbc882ae85014636a52f23300d7b0ada50469/napari_melt_pool_tracker-0.1.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "fba7a048d28d8e7d93021c365cc71dc3f1eafdbe6df87c006b525c7191a64685",
+          "md5": "a1a15a46d41e2c42ceea3deccef5628a",
+          "sha256": "b4e3a14672cff64eb3ff643e9c63b1b591d682e6d5ad14e481e2c1be3ffc21a6"
+        },
+        "downloads": -1,
+        "filename": "napari_melt_pool_tracker-0.1.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "a1a15a46d41e2c42ceea3deccef5628a",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 13939831,
+        "upload_time": "2024-05-28T07:37:11",
+        "upload_time_iso_8601": "2024-05-28T07:37:11.025584Z",
+        "url": "https://files.pythonhosted.org/packages/fb/a7/a048d28d8e7d93021c365cc71dc3f1eafdbe6df87c006b525c7191a64685/napari_melt_pool_tracker-0.1.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "060552076647756526c7db340831fd0004f22339687ca252ffa64cf98385270d",
-        "md5": "ea452e94f7bbd84157c7fdcbb464b577",
-        "sha256": "71a1c1fd64fb26881c2516aeb170cc744c37a442bd08ec918dcdec68a80c0c90"
+        "blake2b_256": "9145a7041eea806c2cb7562aceefbc882ae85014636a52f23300d7b0ada50469",
+        "md5": "4943d500b30d582e682929c9c12ac5ab",
+        "sha256": "faff3e68f9bd46aaa736125afd5660d3b94989ca4c9db6b25f78c15fdd383bf0"
       },
       "downloads": -1,
-      "filename": "napari_melt_pool_tracker-0.1.1-py3-none-any.whl",
+      "filename": "napari_melt_pool_tracker-0.1.2-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "ea452e94f7bbd84157c7fdcbb464b577",
+      "md5_digest": "4943d500b30d582e682929c9c12ac5ab",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.8",
-      "size": 13962552,
-      "upload_time": "2023-11-02T14:38:28",
-      "upload_time_iso_8601": "2023-11-02T14:38:28.311256Z",
-      "url": "https://files.pythonhosted.org/packages/06/05/52076647756526c7db340831fd0004f22339687ca252ffa64cf98385270d/napari_melt_pool_tracker-0.1.1-py3-none-any.whl",
+      "size": 13962709,
+      "upload_time": "2024-05-28T07:37:07",
+      "upload_time_iso_8601": "2024-05-28T07:37:07.892407Z",
+      "url": "https://files.pythonhosted.org/packages/91/45/a7041eea806c2cb7562aceefbc882ae85014636a52f23300d7b0ada50469/napari_melt_pool_tracker-0.1.2-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "f76691a66b2ec9d0fdb288abfa6d849d26226f8a517e874b1c3e042574f7e6f5",
-        "md5": "278e4ee67f2c8546217e7204a2fb1be6",
-        "sha256": "8202ef2c0def0727094255adff0a53d548b97ec6d682e23b0d9ba04553d57871"
+        "blake2b_256": "fba7a048d28d8e7d93021c365cc71dc3f1eafdbe6df87c006b525c7191a64685",
+        "md5": "a1a15a46d41e2c42ceea3deccef5628a",
+        "sha256": "b4e3a14672cff64eb3ff643e9c63b1b591d682e6d5ad14e481e2c1be3ffc21a6"
       },
       "downloads": -1,
-      "filename": "napari-melt-pool-tracker-0.1.1.tar.gz",
+      "filename": "napari_melt_pool_tracker-0.1.2.tar.gz",
       "has_sig": false,
-      "md5_digest": "278e4ee67f2c8546217e7204a2fb1be6",
+      "md5_digest": "a1a15a46d41e2c42ceea3deccef5628a",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.8",
-      "size": 13939508,
-      "upload_time": "2023-11-02T14:38:31",
-      "upload_time_iso_8601": "2023-11-02T14:38:31.544349Z",
-      "url": "https://files.pythonhosted.org/packages/f7/66/91a66b2ec9d0fdb288abfa6d849d26226f8a517e874b1c3e042574f7e6f5/napari-melt-pool-tracker-0.1.1.tar.gz",
+      "size": 13939831,
+      "upload_time": "2024-05-28T07:37:11",
+      "upload_time_iso_8601": "2024-05-28T07:37:11.025584Z",
+      "url": "https://files.pythonhosted.org/packages/fb/a7/a048d28d8e7d93021c365cc71dc3f1eafdbe6df87c006b525c7191a64685/napari_melt_pool_tracker-0.1.2.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
