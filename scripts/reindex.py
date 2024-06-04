@@ -191,7 +191,7 @@ if __name__ == "__main__":
                 vs, key=Version, reverse=True
             ),
         }
-        for pkg in PYPI_INDEX if len(vs := active_pypi_versions.get(pkg["name"], []) > 0)
+        for pkg in PYPI_INDEX if len(vs := active_pypi_versions.get(pkg["name"], [])) > 0
     ]
 
     # now check conda for each package and write data to public/conda/{package}.json
