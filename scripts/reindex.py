@@ -159,6 +159,7 @@ if __name__ == "__main__":
                 "name": name,
                 "version": meta["version"],
                 "display_name": data["display_name"],
+                "visibility": data["visibility"],
                 "summary": meta["summary"],
                 "author": meta["author"],
                 "license": meta["license"],
@@ -187,10 +188,10 @@ if __name__ == "__main__":
         {
             **pkg,
             "pypi_versions": sorted(
-                active_pypi_versions.get(pkg["name"], []), key=Version, reverse=True
+                vs, key=Version, reverse=True
             ),
         }
-        for pkg in PYPI_INDEX
+        for pkg in PYPI_INDEX if len(vs := active_pypi_versions.get(pkg["name"], []) > 0)
     ]
 
     # now check conda for each package and write data to public/conda/{package}.json
