@@ -1,0 +1,171 @@
+{
+  "name": "napari-fast4dreg",
+  "display_name": "Fast4DReg",
+  "visibility": "public",
+  "icon": "",
+  "categories": [
+    "Annotation",
+    "Segmentation",
+    "Acquisition"
+  ],
+  "schema_version": "0.2.0",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-fast4dreg.get_reader",
+        "title": "Open data with Fast4DReg",
+        "python_name": "napari_fast4dreg._reader:napari_get_reader",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-fast4dreg.write_multiple",
+        "title": "Save multi-layer data with Fast4DReg",
+        "python_name": "napari_fast4dreg._writer:write_multiple",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-fast4dreg.write_single_image",
+        "title": "Save image data with Fast4DReg",
+        "python_name": "napari_fast4dreg._writer:write_single_image",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-fast4dreg.make_sample_data",
+        "title": "Load sample data from Fast4DReg",
+        "python_name": "napari_fast4dreg._sample_data:make_sample_data",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-fast4dreg.make_function_widget",
+        "title": "Make threshold function widget",
+        "python_name": "napari_fast4dreg:Fast4DReg_widget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": [
+      {
+        "command": "napari-fast4dreg.get_reader",
+        "filename_patterns": [
+          "*.npy"
+        ],
+        "accepts_directories": false
+      }
+    ],
+    "writers": [
+      {
+        "command": "napari-fast4dreg.write_multiple",
+        "layer_types": [
+          "image*",
+          "labels*"
+        ],
+        "filename_extensions": [],
+        "display_name": ""
+      },
+      {
+        "command": "napari-fast4dreg.write_single_image",
+        "layer_types": [
+          "image"
+        ],
+        "filename_extensions": [
+          ".npy"
+        ],
+        "display_name": ""
+      }
+    ],
+    "widgets": [
+      {
+        "command": "napari-fast4dreg.make_function_widget",
+        "display_name": "fast4dreg",
+        "autogenerate": true
+      }
+    ],
+    "sample_data": [
+      {
+        "command": "napari-fast4dreg.make_sample_data",
+        "key": "unique_id.1",
+        "display_name": "Fast4DReg"
+      }
+    ],
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.1",
+    "name": "napari-fast4dreg",
+    "version": "0.0.1",
+    "dynamic": null,
+    "platform": null,
+    "supported_platform": null,
+    "summary": "Dask empowered multidim, rigid registration for volumetric measurements",
+    "description": "# napari-fast4dreg\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-fast4dreg.svg?color=green)](https://github.com/Macl-I/napari-fast4dreg/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-fast4dreg.svg?color=green)](https://pypi.org/project/napari-fast4dreg)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-fast4dreg.svg?color=green)](https://python.org)\n[![tests](https://github.com/Macl-I/napari-fast4dreg/workflows/tests/badge.svg)](https://github.com/Macl-I/napari-fast4dreg/actions)\n[![codecov](https://codecov.io/gh/Macl-I/napari-fast4dreg/branch/main/graph/badge.svg)](https://codecov.io/gh/Macl-I/napari-fast4dreg)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-fast4dreg)](https://napari-hub.org/plugins/napari-fast4dreg)\n\nDask empowered multi-dimensional, registration for volumetric measurements.\nThis is a python port of the original Fast4DReg Fiji Plugin, with added rotation correction in lateral direction and support for out of memory processing.\nThe original paper can be found here:\nhttps://journals.biologists.com/jcs/article/136/4/jcs260728/287682/Fast4DReg-fast-registration-of-4D-microscopy\n\n----------------------------------\n\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/stable/plugins/index.html\n-->\n\n## Installation\n\nYou can install `napari-fast4dreg` via [pip]:\n\n    pip install napari-fast4dreg\n\n## Usage \n\nIt's easy! \n1) Just drag and drop your image, or the test image from this repository, into napari and open it normally. \nDon't worry if your file is big, napari already internally uses dask to open even the biggest images (although it might hurt the performance).\n2) Open the napari-fast4dreg plugin from the plugin menu.\n3) In the image row, make sure your image is selected in the image drop down menu.\n4) In the axes row, choose the structure of your input image. If your axis orientation is correct in ImageJ choose the standard TZCYX (ImageJ) orientation. If you are using python to process the image you probabbly are using the alternatively availabe CTZYX orientation. In this case just select CTZYX in the drop down menu instead.\n5) Select the reference channel used for the registration. The drift will be determined for this reference channel and applied to all other channels. Counting begins by 0. In case for the test image we select the nuclear signal in channel 1.\n6) Select the corrections that you want to apply on your image. Note that the crop function reduces only in xy, according to the previously determined drift. (e.g. drift = -5 in x --> drop 5 pixels from the left hand side of the registered stack.)\n7) Wait for output (this may take a while, so go and get a coffe or tea).\n8) Enjoy your registered image.\n\n\n## Example Outcome\nThe output will consist of the following (if chosen): \n- registered.tif: The registered file, output of this image registration pipeline.\n- tmp_data: This folder was used for temporary data saving and stores at the end the registered image in a chunked manner (can be deleted or dragged into napari for a greater data versatility)\n- drifts.csv: csv table, home to the drift of all corrected variables, if you prefer your own plotting style, here is where you find the pure drift table.\n- XY-Drift.svg: Vector based graphic, visualising the drift in lateral direction. The svg format can be opened by your web browser or directly imported to powerpoint. Key advantage of .svg instead of .png: You can resize any way you like without loss of image quality.\n- Z-Drift.svg: Vector based graphic, visualising the drift in axial direction.\n- Rotation-Drift.svg: Showing rotation correction of the image in lateral direction.\n  \n![3D_MIP_registration](./media/3D_registration.gif)\n![3D_plane](./media/3D_plane_registration.gif)\n![XY-Drift](./media/XY-Drift.svg)\n![Z-Drift](./media/Z-Drift.svg)\n![Rotation-Drift](./media/Rotation-Drift.svg)\n\n## Contributing\n\nContributions are very welcome. Just send me an E-mail: marcel.issler@kuleuven.be or directly submit a pull request.\n\n## Credit \nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-fast4dreg\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": null,
+    "download_url": null,
+    "author": "Marcel Issler",
+    "author_email": "marcel.issler@kuleuven.be, marcel.issler@vib.be",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "BSD-3-Clause",
+    "classifier": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Programming Language :: Python :: 3.10",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "requires_dist": [
+      "numpy",
+      "magicgui",
+      "qtpy",
+      "scikit-image",
+      "matplotlib",
+      "zarr",
+      "tqdm",
+      "scipy",
+      "pandas",
+      "tox ; extra == 'testing'",
+      "pytest ; extra == 'testing'",
+      "pytest-cov ; extra == 'testing'",
+      "pytest-qt ; extra == 'testing'",
+      "napari ; extra == 'testing'",
+      "pyqt5 ; extra == 'testing'"
+    ],
+    "requires_python": ">=3.8",
+    "requires_external": null,
+    "project_url": null,
+    "provides_extra": [
+      "testing"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}
