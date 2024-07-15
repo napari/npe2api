@@ -1,0 +1,81 @@
+{
+  "name": "napari-timelapse-processor",
+  "display_name": "Timelapse Processor",
+  "visibility": "public",
+  "icon": "",
+  "categories": [
+    "Annotation",
+    "Segmentation",
+    "Acquisition"
+  ],
+  "schema_version": "0.2.0",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": null,
+    "readers": null,
+    "writers": null,
+    "widgets": null,
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.1",
+    "name": "napari-timelapse-processor",
+    "version": "0.0.1",
+    "dynamic": null,
+    "platform": null,
+    "supported_platform": null,
+    "summary": "meta plugin to ease processing timelapse image data",
+    "description": "# napari-timelapse-processor\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-timelapse-processor.svg?color=green)](https://github.com/jo-mueller/napari-timelapse-processor/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-timelapse-processor.svg?color=green)](https://pypi.org/project/napari-timelapse-processor)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-timelapse-processor.svg?color=green)](https://python.org)\n[![tests](https://github.com/jo-mueller/napari-timelapse-processor/workflows/tests/badge.svg)](https://github.com/jo-mueller/napari-timelapse-processor/actions)\n[![codecov](https://codecov.io/gh/jo-mueller/napari-timelapse-processor/branch/main/graph/badge.svg)](https://codecov.io/gh/jo-mueller/napari-timelapse-processor)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-timelapse-processor)](https://napari-hub.org/plugins/napari-timelapse-processor)\n\nmeta plugin to ease processing timelapse image data\n\n## API\n\nThis plugin exposes two principal funcionalities:\n\n### TimelapseConverter\n\nThe `TimelapseConverter` class allows you to stack or unstack any of the supported napari layers from 4D data into a list of 3D layers or vice versa. Currently supported layers are:\n\n- `napari.layers.Image`\n- `napari.layers.Labels`\n- `napari.layers.Points`\n- `napari.layers.Vectors`\n- `napari.layers.Surface`\n\n`napari.layers.Tracks` are intrinsically 4D and thus not supported.\n\n**Unstacking example usage:**\n\n```python\nfrom napari_timelapse_processor import TimelapseConverter\nimport numpy as np\n\nimage_4d = np.random.rand(10, 32, 32, 32)  # 10 timepoints of 32x32x32 data\nconverter = TimelapseConverter()\nlist_of_images = converter.unstack(image_4d, layertype='napari.types.ImageData')\n```\n\n**Stacking example usage:**\n\n```python\nfrom napari_timelapse_processor import TimelapseConverter\nimport numpy as np\n\nrandom_points = [np.random.rand(10, 3)  for _ in range(10)]  # 10 timepoints of 10 random 3D points\nconverter = TimelapseConverter()\n\n# stack the points into a single 4D layer\nstacked_points = converter.stack(random_points, layertype='napari.types.PointsData')\n```\n\nThe `TimeLapseConverter` class also supports (un)stacking the `napari.layers.Layer` type (and its above-listed subclasses). Importantly, `features` that are associated with the respective layer are also (un)stacked.\n\n**Layer example usage**\n\n```python\nfrom napari_timelapse_processor import TimelapseConverter\nimport numpy as np\nfrom napari.layers import Points\nimport pandas as pd\n\nrandom_points = [np.random.rand(10, 3)  for _ in range(10)]  # 10 timepoints of 10 random 3D points\nrandom_features = [pd.DataFrame(np.random.rand(10)) for _ in range(10)]  # 10 timepoints of 10 random feature values\n\n# create a list of 10 Points layers\npoints = [Points(random_points[i], properties=random_features[i]) for i in range(10)]\n\nconverter = TimelapseConverter()\nstacked_points = converter.stack(points, layertype='napari.layers.Points')\n```\n\n## frame_by_frame\n\nThe frame-by-frame functionality provides a decorator that will inspect the decorated function for `TimelapseConverter`-compatible arguments and, if a 4D value is passed as argument, will automatically (un)stack the data before and after the function call. This allows for a more intuitive API when working with timelapse data. Currently supported type annotations are:\n\n- `napari.types.ImageData`\n- `napari.types.LabelsData`\n- `napari.types.PointsData`\n- `napari.types.VectorsData`\n- `napari.types.SurfaceData`\n- `napari.layers.Layer`\n- `napari.layers.Image`\n- `napari.layers.Labels`\n- `napari.layers.Points`\n- `napari.layers.Vectors`\n- `napari.layers.Surface`\n\nAdditionally, the `frame_by_frame` supports parallelization with [dask.distributed](https://distributed.dask.org/en/latest/). To use it, simply pass the `use_dask=True` argument to the decorated function, even if the function itself does not require this argument. The decorater will then automatically parallelize the function call over the time-axis and remove the `use_dask` argument when calling the function.\n\n**Example interactive code usage:** If you want to use the `frame_by_frame` functionality in, say, a Jupyter notebook, use it like this:\n\n```python\n\nfrom napari_timelapse_processor import frame_by_frame\nimport numpy as np\n\ndef my_function(image: 'napari.types.ImageData') -> 'napari.types.ImageData':\n    return 2 * image\n\nimage_4d = np.random.rand(10, 32, 32, 32)  # 10 timepoints of 32x32x32 data\n\nimage_4d_processed = frame_by_frame(my_function)(image_4d)  # without dask\nimage_4d_processed = frame_by_frame(my_function)(image_4d, use_dask=True)  # with dask\n```\n\n**Example napari code** If you want to use the `frame_by_frame` functionality in a napari plugin, use it like this:\n\n```python\nfrom napari_timelapse_processor import frame_by_frame\n\n@frame_by_frame\ndef my_function(image: 'napari.types.ImageData') -> 'napari.types.ImageData':\n    return 2 * image\n```\n\n**Hint:** The `frame_by_frame` functionality runs under the assumption that input napari-data (e.g., an Image, a Surface, Points, etc) are *always* arguments and any other parameters are *always* keyword arguments. If this is not the case, the decorator will not work as intended.\n\n```python\n\n# This works\nframe_by_frame(my_function)(image_4d, some_parameter=2, use_dask=True)\n\n# This does not work\nframe_by_frame(my_function)(image=image_4d, some_parameter=2, use_dask=True)\n```\n\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/stable/plugins/index.html\n-->\n\n## Installation\n\nYou can install `napari-timelapse-processor` via [pip]:\n\n    pip install napari-timelapse-processor\n\n\n\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-timelapse-processor\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": null,
+    "download_url": null,
+    "author": "Johannes Soltwedel",
+    "author_email": "johannes_richard.soltwedel@tu-dresden.de",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "\nCopyright (c) 2024, Johannes Soltwedel\nAll rights reserved.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n\n* Redistributions of source code must retain the above copyright notice, this\n  list of conditions and the following disclaimer.\n\n* Redistributions in binary form must reproduce the above copyright notice,\n  this list of conditions and the following disclaimer in the documentation\n  and/or other materials provided with the distribution.\n\n* Neither the name of copyright holder nor the names of its\n  contributors may be used to endorse or promote products derived from\n  this software without specific prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\"\nAND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\nIMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\nDISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE\nFOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\nDAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR\nSERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER\nCAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,\nOR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\nOF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n",
+    "classifier": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.9",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "requires_dist": [
+      "numpy",
+      "tqdm",
+      "napari",
+      "dask",
+      "distributed",
+      "tox ; extra == 'testing'",
+      "pytest ; extra == 'testing'",
+      "pytest-cov ; extra == 'testing'"
+    ],
+    "requires_python": ">=3.9",
+    "requires_external": null,
+    "project_url": [
+      "Repository, https://github.com/jo-mueller/napari-timelapse-processor.git"
+    ],
+    "provides_extra": [
+      "testing"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}
