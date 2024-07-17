@@ -16,7 +16,7 @@
       "Programming Language :: Python :: 3.9",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "# bia-bob\r\n\r\nBIA `bob` is a Jupyter-based assistant for interacting with data using large language models which generate python code for Bio-Image Analysis (BIA). \r\nIt can make use of [OpenAI's chatGPT](https://openai.com/blog/openai-api), [Google's Gemini](https://blog.google/technology/ai/google-gemini-ai/), [Anthropic's Claude](https://www.anthropic.com/api), [Helmholtz' blablador](https://helmholtz-blablador.fz-juelich.de/) and [Ollama](https://ollama.com). \r\nYou need an OpenAI API account or a Google Cloud account or a Helmholtz ID account to use it.\r\nUsing it with Ollama is free but requires running an Ollama server locally.\r\n\r\n`bob` can write short Python code snippets and entire Jupyter notebooks. The default LLM (gpt-4 omni) has vision capabilities and thus, you can show images to `bob` and it will write code for segmenting the structures of interest - in case it recognizes them.\r\n\r\n![img.png](https://github.com/haesleinhuepf/bia-bob/raw/main/docs/images/generate_notebook.gif)\r\n\r\n> [!CAUTION]\r\n> When using the OpenAI, Google Gemini, Anthropic or any other endpoint via BiA-Bob, you are bound to the terms of service \r\n> of the respective companies or organizations.\r\n> The prompts you enter are transferred to their servers and may be processed and stored there. \r\n> Make sure to not submit any sensitive, confidential or personal data. Also using these services may cost money.\r\n\r\n## Usage\r\n\r\nYou can initialize `bob` like this:\r\n```\r\nfrom bia_bob import bob\r\n```\r\n\r\n### Code generation\r\n\r\nYou can ask Bob to generate code like this:\r\n```\r\n%bob Load blobs.tif and show it\r\n```\r\n\r\nIt will then respond with a python code snippet that you can execute ([see full example](https://github.com/haesleinhuepf/bia-bob/blob/main/demo/analysis_workflow.ipynb)):\r\n\r\n![img.png](https://github.com/haesleinhuepf/bia-bob/raw/main/docs/images/load_and_show_blobs.png)\r\n\r\n### Notebook generation\r\n\r\nAs shown above, when asking Bob explicitly to generate a notebook, it will put a new notebook file in the current directory with the generated code ([See full example](https://github.com/haesleinhuepf/bia-bob/blob/main/demo/generate_notebooks.ipynb)). You can then open it in Jupyter lab.\r\n\r\n### Notebook modification\r\n\r\nYou can also ask Bob to modify an existing notebook, e.g. to introduce explanatory markdown cells ([See full example](https://github.com/haesleinhuepf/bia-bob/blob/main/demo/modifying_notebooks/modifying_notebooks.ipynb)):\r\n\r\n![img.png](https://github.com/haesleinhuepf/bia-bob/raw/main/docs/images/modify_notebook.png)\r\n\r\nFurthermore, one can translate Jupyter notebooks to other languages, e.g. by prompting `%bob translate the filename.ipynb to <language>`.\r\n\r\n![img.png](https://github.com/haesleinhuepf/bia-bob/raw/main/docs/images/translate.png)\r\n\r\n\r\n### Bug fixing\r\n\r\nBob can fix simple bugs in code you executed. Just add `%%fix` on top of the cell right after the error happened.\r\n\r\n![img.png](https://github.com/haesleinhuepf/bia-bob/raw/main/docs/images/bug_fixing_mini.gif)\r\n\r\n### Code documentation\r\n\r\nUsing the `%%doc` magic, you can generate documentation for a given code cell.\r\n\r\n![img.png](https://github.com/haesleinhuepf/bia-bob/raw/main/docs/images/documenting_mini.gif)\r\n\r\n### GPU-acceleration\r\n\r\nUsing the `%%acc` magic, you can replace common image processing functions with GPU-accelerated functions. It is recommended to check if the image processing results remain the same. You can see an example in [this notebook](https://github.com/haesleinhuepf/bia-bob/blob/main/demo/accelerate.ipynb).\r\n\r\n![img.png](https://github.com/haesleinhuepf/bia-bob/raw/main/docs/images/accelerate.png)\r\n\r\n### Example notebooks\r\n\r\n* [Examples](https://github.com/haesleinhuepf/bia-bob/tree/main/demo\r\n\r\n## Known issues\r\n\r\nIf you want to ask `bob` a question, you need to put a space before the `?`.\r\n\r\n```\r\n%bob What do you know about blobs.tif ?\r\n```\r\n\r\n## Installation\r\n\r\nYou can install `bia-bob` using pip. it is recommended to install it into via conda/mamba environment. If you have never used conda before, please [read this guide first](https://biapol.github.io/blog/mara_lampert/getting_started_with_mambaforge_and_python/readme.html).  \r\n\r\nIt is recommended to install `bia-bob` in a conda-environment together with useful tools for bio-image analysis. \r\n\r\n```\r\nmamba env create -f https://github.com/haesleinhuepf/bia-bob/raw/main/environment.yml\r\n```\r\n\r\nYou can then activate this environment...\r\n\r\n```\r\nmamba activate bob_env\r\n```\r\n\r\nAlternatively, you can install `bia-bob` using pip:\r\n\r\n```\r\npip install bia-bob \r\n```\r\n\r\n\r\n### Using OpenAI as backend\r\n\r\nCreate an OpenAI API Key and add it to your environment variables named `OPENAI_API_KEY` as explained on [this page](https://help.openai.com/en/articles/5112595-best-practices-for-api-key-safety).\r\n\r\n### Using Anthropic / claude\r\n\r\nCreate an Anthropic API Key and add it to your environment variables named `ANTHROPIC_API_KEY`.\r\n\r\n### Using custom endpoints\r\n\r\nCustom endpoints can be used as well if they support the OpenAI API. Examples are [blablador](https://login.helmholtz.de/oauth2-as/oauth2-authz-web-entry) and [ollama](https://ollama.com/).\r\nAn example is shown in [this notebook](https://github.com/haesleinhuepf/bia-bob/blob/main/demo/custom_endpoints.ipynb):\r\n\r\nFor this, just install the openai backend as explained above (tested version: 1.5.0).\r\n* If you want to use ollama and e.g. the `codellama` model, you must run `ollama serve` from a separate terminal and then initialize bob like this:\r\n```\r\nbob.initialize(endpoint='ollama', model='codellama')\r\n```\r\n* If you want to use blablador, which is free for German academics, just get an API key as explained on\r\n[this page](https://sdlaml.pages.jsc.fz-juelich.de/ai/guides/blablador_api_access/) and store it int your environment as `BLABLADOR_API_KEY` variable.\r\n```\r\nbob.initialize(\r\n    endpoint='blablador', \r\n    model='Mistral-7B-Instruct-v0.2')\r\n```\r\n* Custom end points can be used as well, for example like this:\r\n```\r\nbob.initialize(\r\n    endpoint='http://localhost:11434/v1', \r\n    api_key='my_key',\r\n    model='codellama')\r\n```\r\n\r\n### Using Google's Cloud AI API as backend\r\n\r\n```\r\npip install bia-bob google-cloud-aiplatform\r\n```\r\n(Recommended google-cloud-aiplatform version >= 1.38.1)\r\n\r\nTo make use of the Google Cloud API, you need to create a Google Cloud account [here](https://console.cloud.google.com/welcome/) and\r\na project within the Google cloud (for billing) [here](https://console.cloud.google.com/projectcreate). \r\nYou need to store authentication details locally as explained [here](https://cloud.google.com/docs/authentication/provide-credentials-adc#local-dev). \r\nThis requires installing [Google Cloud CLI](https://cloud.google.com/sdk/docs/install). In very short: run the installer and when asked, activate the \"Run gcloud init' checkbox. Or run 'gcloud init' from the terminal yourself. Restart the terminal window.\r\nAfter installing Google Cloud CLI, start a terminal and authenticate using: \r\n```\r\ngcloud auth application-default login\r\n```\r\nFollow the instructions in the browser. Enter your Project ID (not the name). If it worked the terminal should approximately look like this:\r\n\r\n![img.png](https://github.com/haesleinhuepf/bia-bob/raw/main/docs/images/gcloud_auth.png)\r\n\r\n## Development\r\n\r\nIf you want to contribute to `bia-bob`, you can install it in development mode like this:\r\n\r\n```\r\ngit clone https://github.com/haesleinhuepf/bia-bob.git\r\ncd bia-bob\r\npip install -e .\r\n```\r\n\r\n## Extensibility\r\n\r\nIf you are maintainer of a Python library and want to make BiA-bob aware of functions in your library, you can extend Bob's knowledge using [entry-points](https://packaging.python.org/en/latest/specifications/entry-points/). Add this to your library `setup.cfg`:\r\n```\r\n\r\n[options.entry_points]\r\nbia_bob_plugins =\r\n    plugin1 = your_library._bia_bob_plugins:list_bia_bob_plugins\r\n\r\n```\r\n\r\nIn the above mentioned `_bia_bob_plugins.py` define this function (and feel to rename the function and the Python file):\r\n```\r\ndef list_bia_bob_plugins():\r\n    \"\"\"List of function hints for bia_bob\"\"\"\r\n    return \"\"\"\r\n    * Computes the sum of a and b\r\n    your_library.compute_sum(a:int,b:int) -> int\r\n    \r\n    * Determines the difference between a and b\r\n    your_library.compute_difference(a:int, b:int) -> int\r\n    \r\n    \"\"\"\r\n```\r\n\r\nNote that the syntax should be pretty much as shown above: A bullet point with a short description and a code-snippet just below. \r\nYou can also generate the `list_bia_bob_plugins` function as demonstrated in [this notebook](https://github.com/haesleinhuepf/stackview/blob/c87b59b896aeef9c0b60928b169027d1480c14e9/docs/generate_bia_bob_connector.ipynb).\r\nPlease only list the most important functions. If the list of all plugins extending BiA-Bob becomes too long, the prompt will exceed the maximum prompt length.\r\n\r\nList of known Python libraries that provide extensions to Bob:\r\n* [pyclesperanto-prototype](https://github.com/clEsperanto/pyclesperanto_prototype)\r\n* [stackview](https://github.com/haesleinhuepf/stackview)\r\n\r\n(Feel free to extend this list by sending a pull-request)\r\n\r\n\r\n## Similar projects\r\n\r\nThere are similar projects:\r\n* [jupyter-ai](https://github.com/jupyterlab/jupyter-ai)\r\n* [chatGPT-jupyter-extension](https://github.com/jflam/chat-gpt-jupyter-extension)\r\n* [chapyter](https://github.com/chapyter/chapyter/)\r\n* [napari-chatGPT](https://github.com/royerlab/napari-chatgpt)\r\n* [bioimageio-chatbot](https://github.com/bioimage-io/bioimageio-chatbot)\r\n\r\n## Issues\r\n\r\nIf you encounter any problems or want to provide feedback or suggestions, please create a thread on [image.sc](https://image.sc) along with a detailed description and tag @haesleinhuepf .\r\n\r\n\r\n\r\n\r\n\r\n",
+    "description": "# bia-bob\r\n[![PyPI](https://img.shields.io/pypi/v/bia-bob.svg?color=green)](https://pypi.org/project/bia-bob)\r\n[![Contributors](https://img.shields.io/github/contributors-anon/haesleinhuepf/bia-bob)](https://github.com/haesleinhuepf/bia-bob/graphs/contributors)\r\n[![PyPI - Downloads](https://img.shields.io/pypi/dm/bia-bob)](https://pypistats.org/packages/bia-bob)\r\n[![GitHub stars](https://img.shields.io/github/stars/haesleinhuepf/bia-bob?style=social)](https://github.com/haesleinhuepf/bia-bob/)\r\n[![GitHub forks](https://img.shields.io/github/forks/haesleinhuepf/bia-bob?style=social)](https://github.com/haesleinhuepf/bia-bob/)\r\n[![License](https://img.shields.io/pypi/l/bia-bob.svg?color=green)](https://github.com/haesleinhuepf/bia-bob/raw/main/LICENSE)\r\n\r\nBIA `bob` is a Jupyter-based assistant for interacting with data using large language models which generate python code for Bio-Image Analysis (BIA). \r\nIt can make use of [OpenAI's chatGPT](https://openai.com/blog/openai-api), [Google's Gemini](https://blog.google/technology/ai/google-gemini-ai/), [Anthropic's Claude](https://www.anthropic.com/api), [Helmholtz' blablador](https://helmholtz-blablador.fz-juelich.de/) and [Ollama](https://ollama.com). \r\nYou need an OpenAI API account or a Google Cloud account or a Helmholtz ID account to use it.\r\nUsing it with Ollama is free but requires running an Ollama server locally.\r\n\r\n`bob` can write short Python code snippets and entire Jupyter notebooks. The default LLM (gpt-4 omni) has vision capabilities and thus, you can show images to `bob` and it will write code for segmenting the structures of interest - in case it recognizes them.\r\n\r\n![img.png](https://github.com/haesleinhuepf/bia-bob/raw/main/docs/images/generate_notebook.gif)\r\n\r\n> [!CAUTION]\r\n> When using the OpenAI, Google Gemini, Anthropic or any other endpoint via BiA-Bob, you are bound to the terms of service \r\n> of the respective companies or organizations.\r\n> The prompts you enter are transferred to their servers and may be processed and stored there. \r\n> Make sure to not submit any sensitive, confidential or personal data. Also using these services may cost money.\r\n\r\n## Usage\r\n\r\nYou can initialize `bob` like this:\r\n```\r\nfrom bia_bob import bob\r\n```\r\n\r\n### Code generation\r\n\r\nYou can ask Bob to generate code like this:\r\n```\r\n%bob Load blobs.tif and show it\r\n```\r\n\r\nIt will then respond with a python code snippet that you can execute ([see full example](https://github.com/haesleinhuepf/bia-bob/blob/main/demo/analysis_workflow.ipynb)):\r\n\r\n![img.png](https://github.com/haesleinhuepf/bia-bob/raw/main/docs/images/load_and_show_blobs.png)\r\n\r\nUse `%bob`if you want to write in the same line and `%%bob` if you want to write below.\r\n\r\nIf you want to continue using a variable in the next code cell, you need to specify the name of the variable in the following prompt.\r\n\r\n### Notebook generation\r\n\r\nAs shown above, when asking Bob explicitly to generate a notebook, it will put a new notebook file in the current directory with the generated code ([See full example](https://github.com/haesleinhuepf/bia-bob/blob/main/demo/generate_notebooks.ipynb)). You can then open it in Jupyter lab.\r\n\r\n### Notebook modification\r\n\r\nYou can also ask Bob to modify an existing notebook, e.g. to introduce explanatory markdown cells ([See full example](https://github.com/haesleinhuepf/bia-bob/blob/main/demo/modifying_notebooks/modifying_notebooks.ipynb)):\r\n\r\n![img.png](https://github.com/haesleinhuepf/bia-bob/raw/main/docs/images/modify_notebook.png)\r\n\r\nFurthermore, one can translate Jupyter notebooks to other languages, e.g. by prompting `%bob translate the filename.ipynb to <language>`.\r\n\r\n![img.png](https://github.com/haesleinhuepf/bia-bob/raw/main/docs/images/translate.png)\r\n\r\n\r\n### Bug fixing\r\n\r\nBob can fix simple bugs in code you executed. Just add `%%fix` on top of the cell right after the error happened.\r\n\r\n![img.png](https://github.com/haesleinhuepf/bia-bob/raw/main/docs/images/bug_fixing_mini.gif)\r\n\r\n### Code documentation\r\n\r\nUsing the `%%doc` magic, you can generate documentation for a given code cell.\r\n\r\n![img.png](https://github.com/haesleinhuepf/bia-bob/raw/main/docs/images/documenting_mini.gif)\r\n\r\n### GPU-acceleration\r\n\r\nUsing the `%%acc` magic, you can replace common image processing functions with GPU-accelerated functions. It is recommended to check if the image processing results remain the same. You can see an example in [this notebook](https://github.com/haesleinhuepf/bia-bob/blob/main/demo/accelerate.ipynb).\r\n\r\n![img.png](https://github.com/haesleinhuepf/bia-bob/raw/main/docs/images/accelerate.png)\r\n\r\n### Example notebooks\r\n\r\n* [Examples](https://github.com/haesleinhuepf/bia-bob/tree/main/demo\r\n\r\n### Command line interface\r\n\r\nYou can use `bia-bob` from the terminal. This is recommended for creating notebooks for example like this:\r\n```\r\nbia-bob Please create a Jupyter Notebook that opens blobs.tif, segments the bright objects and shows the resulting label image on top of the original image with a curtain.\r\n```\r\n\r\n![img_1.png](https://github.com/haesleinhuepf/bia-bob/raw/main/docs/images/cli_create_notebooks.png)\r\n\r\nThis can also be used to create other files, e.g. CSV files.\r\n\r\n![img.png](https://github.com/haesleinhuepf/bia-bob/raw/main/docs/images/cli_csv_files.png)\r\n\r\n\r\n## Known issues\r\n\r\nIf you want to ask `bob` a question, you need to put a space before the `?`.\r\n\r\n```\r\n%bob What do you know about blobs.tif ?\r\n```\r\n\r\n## Installation\r\n\r\nYou can install `bia-bob` using pip. it is recommended to install it into via conda/mamba environment. If you have never used conda before, please [read this guide first](https://biapol.github.io/blog/mara_lampert/getting_started_with_mambaforge_and_python/readme.html).  \r\n\r\nIt is recommended to install `bia-bob` in a conda-environment together with useful tools for bio-image analysis. \r\n\r\n```\r\nconda env create -f https://github.com/haesleinhuepf/bia-bob/raw/main/environment.yml\r\n```\r\n\r\nYou can then activate this environment...\r\n\r\n```\r\nconda activate bob_env\r\n```\r\n\r\n\r\n### Using OpenAI as backend\r\n\r\nCreate an OpenAI API Key and add it to your environment variables named `OPENAI_API_KEY` as explained on [this page](https://help.openai.com/en/articles/5112595-best-practices-for-api-key-safety).\r\n\r\n### Using Anthropic / claude\r\n\r\nCreate an Anthropic API Key and add it to your environment variables named `ANTHROPIC_API_KEY`.\r\n\r\n### Using custom endpoints\r\n\r\nCustom endpoints can be used as well if they support the OpenAI API. Examples are [blablador](https://login.helmholtz.de/oauth2-as/oauth2-authz-web-entry) and [ollama](https://ollama.com/).\r\nAn example is shown in [this notebook](https://github.com/haesleinhuepf/bia-bob/blob/main/demo/custom_endpoints.ipynb):\r\n\r\nFor this, just install the openai backend as explained above (tested version: 1.5.0).\r\n* If you want to use ollama and e.g. the `codellama` model, you must run `ollama serve` from a separate terminal and then initialize bob like this:\r\n```\r\nbob.initialize(endpoint='ollama', model='codellama')\r\n```\r\n* If you want to use blablador, which is free for German academics, just get an API key as explained on\r\n[this page](https://sdlaml.pages.jsc.fz-juelich.de/ai/guides/blablador_api_access/) and store it int your environment as `BLABLADOR_API_KEY` variable.\r\n```\r\nbob.initialize(\r\n    endpoint='blablador', \r\n    model='Mistral-7B-Instruct-v0.2')\r\n```\r\n* Custom end points can be used as well, for example like this:\r\n```\r\nbob.initialize(\r\n    endpoint='http://localhost:11434/v1', \r\n    api_key='my_key',\r\n    model='codellama')\r\n```\r\n\r\n### Using Google's Cloud AI API as backend\r\n\r\n```\r\npip install bia-bob google-cloud-aiplatform\r\n```\r\n(Recommended google-cloud-aiplatform version >= 1.38.1)\r\n\r\nTo make use of the Google Cloud API, you need to create a Google Cloud account [here](https://console.cloud.google.com/welcome/) and\r\na project within the Google cloud (for billing) [here](https://console.cloud.google.com/projectcreate). \r\nYou need to store authentication details locally as explained [here](https://cloud.google.com/docs/authentication/provide-credentials-adc#local-dev). \r\nThis requires installing [Google Cloud CLI](https://cloud.google.com/sdk/docs/install). In very short: run the installer and when asked, activate the \"Run gcloud init' checkbox. Or run 'gcloud init' from the terminal yourself. Restart the terminal window.\r\nAfter installing Google Cloud CLI, start a terminal and authenticate using: \r\n```\r\ngcloud auth application-default login\r\n```\r\nFollow the instructions in the browser. Enter your Project ID (not the name). If it worked the terminal should approximately look like this:\r\n\r\n![img.png](https://github.com/haesleinhuepf/bia-bob/raw/main/docs/images/gcloud_auth.png)\r\n\r\n## Development\r\n\r\nIf you want to contribute to `bia-bob`, you can install it in development mode like this:\r\n\r\n```\r\ngit clone https://github.com/haesleinhuepf/bia-bob.git\r\ncd bia-bob\r\npip install -e .\r\n```\r\n\r\n## Extensibility\r\n\r\nIf you are maintainer of a Python library and want to make BiA-bob aware of functions in your library, you can extend Bob's knowledge using [entry-points](https://packaging.python.org/en/latest/specifications/entry-points/). Add this to your library `setup.cfg`:\r\n```\r\n\r\n[options.entry_points]\r\nbia_bob_plugins =\r\n    plugin1 = your_library._bia_bob_plugins:list_bia_bob_plugins\r\n\r\n```\r\n\r\nIn the above mentioned `_bia_bob_plugins.py` define this function (and feel to rename the function and the Python file):\r\n```\r\ndef list_bia_bob_plugins():\r\n    \"\"\"List of function hints for bia_bob\"\"\"\r\n    return \"\"\"\r\n    * Computes the sum of a and b\r\n    your_library.compute_sum(a:int,b:int) -> int\r\n    \r\n    * Determines the difference between a and b\r\n    your_library.compute_difference(a:int, b:int) -> int\r\n    \r\n    \"\"\"\r\n```\r\n\r\nNote that the syntax should be pretty much as shown above: A bullet point with a short description and a code-snippet just below. \r\nYou can also generate the `list_bia_bob_plugins` function as demonstrated in [this notebook](https://github.com/haesleinhuepf/stackview/blob/c87b59b896aeef9c0b60928b169027d1480c14e9/docs/generate_bia_bob_connector.ipynb).\r\nPlease only list the most important functions. If the list of all plugins extending BiA-Bob becomes too long, the prompt will exceed the maximum prompt length.\r\n\r\nList of known Python libraries that provide extensions to Bob:\r\n* [pyclesperanto-prototype](https://github.com/clEsperanto/pyclesperanto_prototype)\r\n* [stackview](https://github.com/haesleinhuepf/stackview)\r\n\r\n(Feel free to extend this list by sending a pull-request)\r\n\r\n\r\n## Similar projects\r\n\r\nThere are similar projects:\r\n* [jupyter-ai](https://github.com/jupyterlab/jupyter-ai)\r\n* [chatGPT-jupyter-extension](https://github.com/jflam/chat-gpt-jupyter-extension)\r\n* [chapyter](https://github.com/chapyter/chapyter/)\r\n* [napari-chatGPT](https://github.com/royerlab/napari-chatgpt)\r\n* [bioimageio-chatbot](https://github.com/bioimage-io/bioimageio-chatbot)\r\n\r\n## Issues\r\n\r\nIf you encounter any problems or want to provide feedback or suggestions, please create a thread on [image.sc](https://image.sc) along with a detailed description and tag @haesleinhuepf .\r\n\r\n\r\n\r\n\r\n\r\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -45,7 +45,7 @@
     "provides_extra": [
       "testing"
     ],
-    "release_url": "https://pypi.org/project/bia-bob/0.19.0/",
+    "release_url": "https://pypi.org/project/bia-bob/0.20.0/",
     "requires_dist": [
       "numpy",
       "ipython",
@@ -54,17 +54,18 @@
       "Pillow",
       "openai>=1.30.1",
       "anthropic>=0.30.1",
+      "ipynbname>=2024.1.0.0",
       "tox; extra == \"testing\"",
       "pytest; extra == \"testing\"",
       "pytest-cov; extra == \"testing\""
     ],
     "requires_python": ">=3.9",
     "summary": "A Jupyter-based assistant for data analysis tasks",
-    "version": "0.19.0",
+    "version": "0.20.0",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 24072206,
+  "last_serial": 24170653,
   "releases": {
     "0.1.0": [
       {
@@ -1145,6 +1146,50 @@
         "yanked_reason": null
       }
     ],
+    "0.20.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "61f1998805d3070f035c7807064148ff743a65d8187d0f9a5c9000595ef5eb69",
+          "md5": "a8c42d179ed822fc2702603c0e50c69c",
+          "sha256": "e8c1a3953a9629cfa9c0d19bbffa9cb12763ff9619e90f2407c28e679720ffff"
+        },
+        "downloads": -1,
+        "filename": "bia_bob-0.20.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "a8c42d179ed822fc2702603c0e50c69c",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 22697,
+        "upload_time": "2024-07-17T09:44:02",
+        "upload_time_iso_8601": "2024-07-17T09:44:02.720581Z",
+        "url": "https://files.pythonhosted.org/packages/61/f1/998805d3070f035c7807064148ff743a65d8187d0f9a5c9000595ef5eb69/bia_bob-0.20.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "73ae8a192ac2a35adbff01847405c516e2c53be25ec1d21392bf8b8e1a2240f6",
+          "md5": "cb83cb2e60ca4cdcf886338a14bdaebc",
+          "sha256": "a25397eae00cefe9fd8a96e65bd659f63a6cf0ac1c69171e71ffc3e8f36a5e73"
+        },
+        "downloads": -1,
+        "filename": "bia_bob-0.20.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "cb83cb2e60ca4cdcf886338a14bdaebc",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 24589,
+        "upload_time": "2024-07-17T09:44:04",
+        "upload_time_iso_8601": "2024-07-17T09:44:04.768465Z",
+        "url": "https://files.pythonhosted.org/packages/73/ae/8a192ac2a35adbff01847405c516e2c53be25ec1d21392bf8b8e1a2240f6/bia_bob-0.20.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
     "0.3.0": [
       {
         "comment_text": "",
@@ -1590,42 +1635,42 @@
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "344359acea52dfd841447a4279f0ff6a1ead00c9b4c40447c36e0829ab8df3f5",
-        "md5": "7cfe7fe3a82a06a8fc99b27bc18ee7a4",
-        "sha256": "cd2da2ff1aa1818c4018cae879ea0ab490830cb77e988c65781acf27beb458a6"
+        "blake2b_256": "61f1998805d3070f035c7807064148ff743a65d8187d0f9a5c9000595ef5eb69",
+        "md5": "a8c42d179ed822fc2702603c0e50c69c",
+        "sha256": "e8c1a3953a9629cfa9c0d19bbffa9cb12763ff9619e90f2407c28e679720ffff"
       },
       "downloads": -1,
-      "filename": "bia_bob-0.19.0-py3-none-any.whl",
+      "filename": "bia_bob-0.20.0-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "7cfe7fe3a82a06a8fc99b27bc18ee7a4",
+      "md5_digest": "a8c42d179ed822fc2702603c0e50c69c",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.9",
-      "size": 20890,
-      "upload_time": "2024-07-10T15:41:27",
-      "upload_time_iso_8601": "2024-07-10T15:41:27.814713Z",
-      "url": "https://files.pythonhosted.org/packages/34/43/59acea52dfd841447a4279f0ff6a1ead00c9b4c40447c36e0829ab8df3f5/bia_bob-0.19.0-py3-none-any.whl",
+      "size": 22697,
+      "upload_time": "2024-07-17T09:44:02",
+      "upload_time_iso_8601": "2024-07-17T09:44:02.720581Z",
+      "url": "https://files.pythonhosted.org/packages/61/f1/998805d3070f035c7807064148ff743a65d8187d0f9a5c9000595ef5eb69/bia_bob-0.20.0-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "a52a8d9a1d7d4bfc4c9b0c77852bec39bc378363374bfb7300acfd10ac752182",
-        "md5": "7f97828aad4f5b3d84f912773b9f16df",
-        "sha256": "45808894d79014667259e797b79040a4944cad424de051e167c1041adf4f4a53"
+        "blake2b_256": "73ae8a192ac2a35adbff01847405c516e2c53be25ec1d21392bf8b8e1a2240f6",
+        "md5": "cb83cb2e60ca4cdcf886338a14bdaebc",
+        "sha256": "a25397eae00cefe9fd8a96e65bd659f63a6cf0ac1c69171e71ffc3e8f36a5e73"
       },
       "downloads": -1,
-      "filename": "bia_bob-0.19.0.tar.gz",
+      "filename": "bia_bob-0.20.0.tar.gz",
       "has_sig": false,
-      "md5_digest": "7f97828aad4f5b3d84f912773b9f16df",
+      "md5_digest": "cb83cb2e60ca4cdcf886338a14bdaebc",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.9",
-      "size": 22764,
-      "upload_time": "2024-07-10T15:41:29",
-      "upload_time_iso_8601": "2024-07-10T15:41:29.691031Z",
-      "url": "https://files.pythonhosted.org/packages/a5/2a/8d9a1d7d4bfc4c9b0c77852bec39bc378363374bfb7300acfd10ac752182/bia_bob-0.19.0.tar.gz",
+      "size": 24589,
+      "upload_time": "2024-07-17T09:44:04",
+      "upload_time_iso_8601": "2024-07-17T09:44:04.768465Z",
+      "url": "https://files.pythonhosted.org/packages/73/ae/8a192ac2a35adbff01847405c516e2c53be25ec1d21392bf8b8e1a2240f6/bia_bob-0.20.0.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
