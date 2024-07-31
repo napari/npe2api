@@ -1,0 +1,158 @@
+{
+  "info": {
+    "author": "Qiqi Lu",
+    "author_email": "136303971@qq.com",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-kld\r\n\r\n[![License](https://img.shields.io/pypi/l/napari-kld.svg?color=green)](https://github.com/qiqi-lu/napari-kld/LICENSE)\r\n[![PyPI](https://img.shields.io/pypi/v/napari-kld.svg?color=green)](https://pypi.org/project/napari-kld)\r\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-kld.svg?color=green)](https://python.org)\r\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-kld)](https://napari-hub.org/plugins/napari-kld)\r\n\r\n<font color=red> **This plugin is not completed.** </font>\r\n\r\n----\r\n### Kernel Learning Deconvolution (KLD)\r\n\r\nKernel learning deconvolution  is a rapid deconvolution algorithm for fluorescence microscopic image, which learns the forward and backward kernels in Richardson-Lucy Deconvolution (KLD) from paired low-/high-resolution images.\r\n\r\nIt only requires one sample to training the model, and two iteration to achieve a superior deconvolution perfromance compared to RLD and its variants using unmatched backward projection.\r\n\r\n----------------------------------\r\n\r\nThis [napari] plugin was generated with [copier] using the [napari-plugin-template].\r\n\r\n<!--\r\nDon't miss the full getting started guide to set up your new package:\r\nhttps://github.com/napari/napari-plugin-template#getting-started\r\n\r\nand review the napari docs for plugin developers:\r\nhttps://napari.org/stable/plugins/index.html\r\n-->\r\n\r\n## Installation\r\n\r\nYou can install `napari-kld` via [pip]:\r\n\r\n    pip install napari-kld\r\n\r\n\r\n## Instruction\r\nThis plugin includes two part:\r\n\r\n- `RL Deconvolution` : Conventional RLD algorithm using different type of backward kernels (including matched backward kernel [`Traditional`] and unmatched backward kernels [`Guassian`, `Butterworth`, `Wiener-Butterworth`]). The forward kernel (i.e., PSF) must to be known.\r\n\r\n- `KL Deconvolution` : KLD using learned forward/backward kernels.\r\n\r\n## RL Deconvolution\r\n\r\n## KL Deconvolution\r\n\r\n### When only with Point Spread Function (PSF)\r\n\r\nWhen you only have a PSF to do deconvolution, you can train the model using simulated data.\r\n\r\n1. Generate simulaiton data\r\n\r\n2. Train the model under supervised mode\r\n\r\n3. Apply the trained model on real data\r\n\r\n#### Simulation data generation\r\n\r\n1. Load `napari-kld` plugin: `Plugins` > `Kernel Learning Deconvolution` > `KL Deconvolution`\r\n\r\n2. Choose `Simulation` tab.\r\n\r\n3. Choose the `Output directory` of the generated simulation data, such as `\"napari-kld\\src\\napari_kld\\_tests\\work_directory\\data\\simulation\"`.\r\n\r\n4. Choose the `PSF directory` (only support 2D/3D PSF file save as .tif, axes = (z, y, x)), such as `\"D:\\GitHub\\napari-kld\\src\\napari_kld\\_tests\\work_directory\\data\\simulation\\PSF.tif\"`.\r\n\r\n5. Adjust the parameters as needed.\r\n    - `Image shape` : the shape of simulated image, when `z=1`, 2D images will be generated.\r\n\r\n    - `PSF crop` : when the input PSF is too large, you can crop the PSF to acuqire a smaller PSF, which is normalized after cropping. All the PSF will be converted to have an odd shape.\r\n\r\n    - `Num of simulation` : number of generated images.\r\n\r\n    - `Gaussian (std)` : The standard deviation of Gaussian noise added in the generated low-resolution raw images. The mean of Gaussian noise = 0. Default: 0 (i.e., without gaussian noise).\r\n\r\n    - `Poisson` : whether to add Poisson noise, if `True`, make the `Enable` checked.\r\n\r\n    - `Ratio` : the ratio multiply on ground truth (GT) image to control the level of Poisson noise, thus\r\n\r\n    $$ RAW = Possion((GT \\cdot Ratio)\\times PSF) + Gaussian $$\r\n\r\n    - `Scale factor` : downsampling scale factor. Default: 1.\r\n\r\n6. Press `run` button.\r\n\r\n7. Wait the `progress bar` to reach 100%.\r\n\r\nThe generated simulation data will be save in `Output directory`, such as: `\"D:\\GitHub\\napari-kld\\src\\napari_kld\\_tests\\work_directory\\data\\simulation\\data\\train\"`\r\n\r\n- `\"data\\train\\gt\"` save the GT images.\r\n- `\"data\\train\\raw\"` save the RAW images with blur and noise.\r\n- `\"data\\train\\parameters.json\"` is the dictionary of parameter used to generate the simulated data.\r\n- `\"data\\train\\psf.tif\"` is the psf used in generation of simulation data (as the original PSF may be cropped)\r\n- `\"data\\train\\train.txt` save all the image used to train the model.\r\n\r\n*You may need to adjust the noise level in the image accordding to the real acuqired data.*\r\n\r\nAfter you generate simulated data, you can use them to train the model.\r\n\r\n#### Training with known PSF and simulated data\r\n\r\nThe simulated data should be those generated using the known PSF.\r\n\r\n1. Load `napari-kld` plugin: `Plugins` > `Kernel Learning Deconvolution` > `KL Deconvolution`\r\n\r\n2. Choose `Training` tab.\r\n\r\n3. Choose `Data Directory ` (such as `\"D:/GitHub/napari-kld/src/napari_kld/_tests/work_directory/data/simulation/data/train\"`) which saves the data used to train the model in should include:\r\n    - A `gt` folder saves the GT images\r\n    - A `raw` folder save the low-resolution raw input images with the same file name of GT images\r\n    - A `train.txt` file saves all the file name used to train the model (does not need to list all the file in `gt`/`raw` folder).\r\n\r\n4. Choose a `Output Directory` to save the model checkpoints, such as `\"D:/GitHub/napari-kld/src/napari_kld/_tests/work_directory/data/simulation\"`.\r\n\r\n5. Choose `PSF Directory` of the PSF used to generate the data, such as `\"D:/GitHub/napari-kld/src/napari_kld/_tests/work_directory/data/simulation/data/train/psf.tif\"`. Then the `Forward Projection` group box will be invisible as we do not need to learn the forward kernel when we know the PSF. Just use the PSF as the froward kernel.\r\n\r\n6. Set the `Image Channels` and the `Dimension` of input data.\r\n\r\n7. Then set parameters to learn the backward kernel.\r\n\r\n    - `Training strategy` : `supervised` training or `self-supervised` training. Set as `supervised`, as we have the GT images.\r\n    - `Iteration (RL)` : The number of iterations of RL iterative procedure. Default: 2.\r\n    - `Epoch` : The number fo epochs used to traing the model.\r\n    - `Batch Size` : The batch size used to training the model.\r\n    - `Kernel Size (z, xy)`: The size of backward kernel, `x` and `y` have the same size.\r\n    - `FP directory` : the directory of the forward projeciton model. Here, it is empty (i.e., `\"\"`) as the PSF is known.\r\n    - `Learning Rate` : The learning rate used to trianing the model.\r\n\r\n8. Press `run` button. You can press the `stop` button to end the training.\r\n\r\n9. Wait the `progress bar` to reach 100%.\r\n\r\n10. Training finished.\r\n\r\nWhen the training finished, a checkpoints folder will be created in Ouput Directory such as `\"D:/GitHub/napari-kld/src/napari_kld/_tests/work_directory/data/simulation/checkpoints\"`.\r\n\r\nThe models is save in `/checkpoints` folder, which is named as `\"backward_bs_{batch size}_lr_{learning rate}_iter_{num of RL iterations}_ks_{kernel size (z)}_{kernel size (xy)}\"`, such as `\"/checkpoints/backward_bs_1_lr_1e-06_iter_2_ks_1_31\"`, consists of:\r\n\r\n- A `log` folder saved the `Tensorboard` log, which can be open with `Tensorboard`.\r\n- Many model checkpoints, named as `epoch_{epoch}.pt`.\r\n- A `parameters.json` file saving the parameters used to training the model.\r\n\r\n### When only with paired low-resolution (LR) image (as RAW) and high-resolution (HR) image (as GT)\r\n\r\nWhen we only have paired LR image and HR image, we can first learned the forward kernel and then learn the backward kernel in a supervised strategy.\r\n\r\n#### Training of Forward Projection\r\n\r\n1. Load `napari-kld` plugin: `Plugins` > `Kernel Learning Deconvolution` > `KL Deconvolution`\r\n\r\n2. Choose `Training` tab.\r\n\r\n3. Choose `Data Directory`, such as `\"D:/GitHub/napari-kld/src/napari_kld/_tests/work_directory/data/real/train\"`.\r\n\r\n4. Choose `Output Directory`, such as `\"D:/GitHub/napari-kld/src/napari_kld/_tests/work_directory/data/real\"`.\r\n\r\n5. `PSF Directory` is no required as the PSF is unknown.\r\n\r\n6. Set parameter of parameters about data.\r\n    - `Image Channel` : the channel of input image.\r\n    - `Dimension` : dimension of input image.\r\n\r\n7. In the `Forward Projection` box, set the parameters of training:\r\n    - `Epoch` : number of epochs of training.\r\n    - `Batch Size` : batch size of training data used during training.\r\n    - `Kernel size (z, xy)` : the size of forward kernel to learned.\r\n    - `Learning Rate` : learning rate of training.\r\n\r\n8. Press `run` button. You can press the `stop` button to end the training.\r\n\r\n9. Wait the `progress bar` to reach 100%.\r\n\r\n10. Training finished.\r\n\r\nAfter the training of forward projection, the results will be save in the `/checkpoints` folder in `Output Directory`, the model was named as `forward_bs_{batch size}_lr_{learning rate}_ks_{kernel size (z)}_{kernel size (xy)}`, such as `\"D:/GitHub/napari-kld/src/napari_kld/_tests/work_directory/data/real/checkpoints/forward_bs_1_lr_0.001_ks_1_31\"`, which consists of:\r\n- a `log` folder saved the `Tensorboard` log, which can be opened with `Tensorboard`.\r\n- many model checkpoints, named as `epoch_{epoch}.pt`.\r\n- a `parameters.json` file saving the parameters used to training the model.\r\n\r\n#### Training of Backward Projection\r\nAfter training of dorward projeciton, we can freeze the forward projeciton and then train the backward projeciton.\r\n\r\n1. Load `napari-kld` plugin: `Plugins` > `Kernel Learning Deconvolution` > `KL Deconvolution`\r\n\r\n2. Choose `Training` tab.\r\n\r\n3. Choose `Data Directory`, such as `\"D:/GitHub/napari-kld/src/napari_kld/_tests/work_directory/data/real/train\"`.\r\n\r\n4. Choose `Output Directory`, such as `\"D:/GitHub/napari-kld/src/napari_kld/_tests/work_directory/data/real\"`.\r\n\r\n5. `PSF Directory` is no required as the PSF is unknown.\r\n\r\n6. set parameter of parameters about data.\r\n    - `Image Channel` : the channel of input image.\r\n    - `Dimension` : dimension of input image.\r\n\r\n7. In the `Backward Projeciton` box, set parameters for the trianing of backward projeciton.\r\n\r\n    - `Training strategy` : `supervised` training or `self-supervised` training. Set as `supervised`, as we have the GT images.\r\n    - `Iteration (RL)` : The number of iterations of RL iterative procedure. Default: 2.\r\n    - `Epoch` : The number fo epochs used to traing the model.\r\n    - `Batch Size` : The batch size used to training the model.\r\n    - `Kernel Size (z, xy)`: The size of backward kernel, `x` and `y` have the same size.\r\n    - `FP directory` : the directory of the forward projeciton model, such as `\"D:/GitHub/napari-kld/src/napari_kld/_tests/work_directory/data/real/checkpoints/forward_bs_1_lr_0.001_ks_1_31/epoch_100.pt\"`\r\n    - `Learning Rate` : The learning rate used to trianing the model.\r\n\r\n8. Press `run` button. You can press the `stop` button to end the training.\r\n\r\n9. Wait the `progress bar` to reach 100%.\r\n\r\n10. Training finished.\r\n\r\nWhen the training finishes, the results will be save in the `/checkpoints` folder in `Output Directory`, the model was named as `backward_bs_{batch size}_lr_{learning rate}_iter_{num of RL iterations}_ks_{kernel size (z)}_{kernel size (xy)}`, such as `\"D:/GitHub/napari-kld/src/napari_kld/_tests/work_directory/checkpoints/backward_bs_1_lr_1e-05_iter_2_ks_1_31\"`, which consists of:\r\n- a `log` folder saved the `Tensorboard` log, which can be opened with `Tensorboard`.\r\n- many model checkpoints, named as `epoch_{epoch}.pt`.\r\n- a `parameters.json` file saving the parameters used to training the model.\r\n\r\nNow we get the learned forward projection and backward projection.\r\n\r\n### When only with LR image and corresponding PSF\r\nWhen we only have LR image and its PSF, we can traing the backward projection through supervised training using simulation data as introduced above. The plugin also provide an alternative self-supervised training stratergy to learn the backward kernel.\r\n\r\n1. load `napari-kld` plugin: `Plugins` > `Kernel Learning Deconvolution` > `KL Deconvolution`\r\n\r\n2. choose `Training` tab.\r\n\r\n3. choose `Data Directory`, such as `\"D:/GitHub/napari-kld/src/napari_kld/_tests/work_directory/data/real/train\"`.\r\n\r\n4. choose `Output Directory`, such as `\"D:/GitHub/napari-kld/src/napari_kld/_tests/work_directory/data/real\"`.\r\n\r\n5. choose `PSF Directory`. Now the Forward Projection box will be invisiable.\r\n\r\n6. set parameter of parameters about data.\r\n    - `Image Channel` : the channel of input image.\r\n    - `Dimension` : dimension of input image.\r\n\r\n7. In the `Backward Projeciton` box, set parameters for the trianing of backward projeciton.\r\n\r\n    - `Training strategy` : `supervised` training or `self-supervised` training. Set as `self-supervised`, as we do not have the GT images.\r\n    - `Iteration (RL)` : The number of iterations of RL iterative procedure. Default: 2.\r\n    - `Epoch` : The number fo epochs used to traing the model.\r\n    - `Batch Size` : The batch size used to training the model.\r\n    - `Kernel Size (z, xy)`: The size of backward kernel, `x` and `y` have the same size.\r\n    - `FP directory` is not required as the PSF is known.\r\n    - `Learning Rate` : The learning rate used to trianing the model.\r\n\r\n8. Press `run` button. You can press the `stop` button to end the training.\r\n\r\n9. Wait the `progress bar` to reach 100%.\r\n\r\n10. Training finished.\r\n\r\nWhen the training finishes, the results will be save in the `/checkpoints` folder in `Output Directory`, the model was named as `backward_bs_{batch size}_lr_{learning rate}_iter_{num of RL iterations}_ks_{kernel size (z)}_{kernel size (xy)}_ss`, such as `\"D:/GitHub/napari-kld/src/napari_kld/_tests/work_directory/checkpoints/backward_bs_1_lr_1e-05_iter_2_ks_31_31_ss\"`, which consists of:\r\n- a `log` folder saved the `Tensorboard` log, which can be opened with `Tensorboard`.\r\n- many model checkpoints, named as `epoch_{epoch}.pt`.\r\n- a `parameters.json` file saving the parameters used to training the model.\r\n\r\n### Prediction\r\nUse the learned forward/backward kernel to do deconvolution.\r\n\r\n1. load `napari-kld` plugin: `Plugins` > `Kernel Learning Deconvolution` > `KL Deconvolution`\r\n\r\n2. choose `Prediction` tab.\r\n\r\n3. load raw input low-resolution image through `napari`: `File` > `Open File(s)` > `[choose the image to be deconvolved]` > `[the image will appear in the layer list of napari]`, such as `\"F:\\Datasets\\BioSR\\F-actin_Nonlinear\\raw_noise_9\\16.tif\"`.\r\n\r\n4. choose the loaded image in `Input RAW data` box, e.g., `16`.\r\n\r\n5. if the PSF is known, choose the `PSF directory`.\r\n\r\n6. if the PSF is unknown, choose the `Forward Projection` directory.*\r\n\r\n7. choose the Backward Projeciton directory.\r\n\r\n8. set the number of RL iterations at `Iterations (RL)`. Default: 2.\r\n\r\n9. Press run to do deconvolution.\r\n\r\n10. Wait the progress bar to reach 100%.\r\n\r\nThe deconvolved image will directly shwo in the `layer list` of `napari`, named as `\"{input data name}_deconvo_iter_{number of RL iterations}\"`, e.g., `\"16_deconv_iter_2\"`. You can save it as needed.\r\n\r\n\r\n**If both the directories of PSF and Forward Projeciton is choosen, KLD will directly use the PSF selected.*\r\n\r\n\r\n### Others\r\nThe `log` tab print the message during running.\r\nPress `clean` button will clean all the text in the `log` box.\r\n\r\n### Notice\r\n- *The training time may be very long if we set the kernel size or the number of epoches too large, especially for 3D images.*\r\n\r\n- *Now the plugin is runned on CPU. We have try to run the training on GPU, but the training time did not decrease (maybe it is because the covnlution based on FFT was not optimized on GPU). We are trying to make improvements.*\r\n\r\n\r\n## Contributing\r\n\r\nContributions are very welcome. Tests can be run with [tox], please ensure\r\nthe coverage at least stays the same before you submit a pull request.\r\n\r\n## License\r\n\r\nMIT LICENSE\r\n\r\n## Issues\r\n\r\nIf you encounter any problems, please [file an issue] along with a detailed description.\r\n\r\n[napari]: https://github.com/napari/napari\r\n[copier]: https://copier.readthedocs.io/en/stable/\r\n[@napari]: https://github.com/napari\r\n[MIT]: http://opensource.org/licenses/MIT\r\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\r\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\r\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\r\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\r\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\r\n[napari-plugin-template]: https://github.com/napari/napari-plugin-template\r\n\r\n[napari]: https://github.com/napari/napari\r\n[tox]: https://tox.readthedocs.io/en/latest/\r\n[pip]: https://pypi.org/project/pip/\r\n[PyPI]: https://pypi.org/\r\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": null,
+    "home_page": null,
+    "keywords": null,
+    "license": " Copyright (c) 2024, Qiqi Lu All rights reserved.  Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:  * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.  * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.  * Neither the name of copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. ",
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-kld",
+    "package_url": "https://pypi.org/project/napari-kld/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-kld/",
+    "project_urls": null,
+    "provides_extra": [
+      "testing"
+    ],
+    "release_url": "https://pypi.org/project/napari-kld/1.0.0/",
+    "requires_dist": [
+      "numpy==1.26.4",
+      "magicgui",
+      "qtpy",
+      "scikit-image",
+      "torch",
+      "torchvision",
+      "fft-conv-pytorch",
+      "tox; extra == \"testing\"",
+      "pytest; extra == \"testing\"",
+      "pytest-cov; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "napari; extra == \"testing\"",
+      "pyqt5; extra == \"testing\""
+    ],
+    "requires_python": ">=3.9",
+    "summary": "Kernel learning deconvolution (KLD) is a rapid deconvolution algorithm for fluorescence microscopic image, which learns the forward and backward kernels in Richardson-Lucy Deconvolution (KLD) from paired low-/high-resolution images.",
+    "version": "1.0.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 24370889,
+  "releases": {
+    "1.0.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "63b421abc062a86bac286db144f29890bdf586106b8b3466c3a3de588c8d0dfa",
+          "md5": "6654ddd123d6de6911279845a25d028a",
+          "sha256": "1d701ce9d33b1406f0987ce8adce9f34c4709d65876d2104caa0a5050f6312ce"
+        },
+        "downloads": -1,
+        "filename": "napari_kld-1.0.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "6654ddd123d6de6911279845a25d028a",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 51398,
+        "upload_time": "2024-07-31T16:16:39",
+        "upload_time_iso_8601": "2024-07-31T16:16:39.749957Z",
+        "url": "https://files.pythonhosted.org/packages/63/b4/21abc062a86bac286db144f29890bdf586106b8b3466c3a3de588c8d0dfa/napari_kld-1.0.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "3c699709388589ff617a7750664e0c661f0be12bd9ef7768a172728ef51371e1",
+          "md5": "63593550bfa46c867381b04312670870",
+          "sha256": "8b849ea33cf64c71adda2dfe77b1d1274513fb77f4f5a2c6bbe5b913bdaea7f4"
+        },
+        "downloads": -1,
+        "filename": "napari_kld-1.0.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "63593550bfa46c867381b04312670870",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 53071,
+        "upload_time": "2024-07-31T16:16:41",
+        "upload_time_iso_8601": "2024-07-31T16:16:41.881268Z",
+        "url": "https://files.pythonhosted.org/packages/3c/69/9709388589ff617a7750664e0c661f0be12bd9ef7768a172728ef51371e1/napari_kld-1.0.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "blake2b_256": "63b421abc062a86bac286db144f29890bdf586106b8b3466c3a3de588c8d0dfa",
+        "md5": "6654ddd123d6de6911279845a25d028a",
+        "sha256": "1d701ce9d33b1406f0987ce8adce9f34c4709d65876d2104caa0a5050f6312ce"
+      },
+      "downloads": -1,
+      "filename": "napari_kld-1.0.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "6654ddd123d6de6911279845a25d028a",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.9",
+      "size": 51398,
+      "upload_time": "2024-07-31T16:16:39",
+      "upload_time_iso_8601": "2024-07-31T16:16:39.749957Z",
+      "url": "https://files.pythonhosted.org/packages/63/b4/21abc062a86bac286db144f29890bdf586106b8b3466c3a3de588c8d0dfa/napari_kld-1.0.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "blake2b_256": "3c699709388589ff617a7750664e0c661f0be12bd9ef7768a172728ef51371e1",
+        "md5": "63593550bfa46c867381b04312670870",
+        "sha256": "8b849ea33cf64c71adda2dfe77b1d1274513fb77f4f5a2c6bbe5b913bdaea7f4"
+      },
+      "downloads": -1,
+      "filename": "napari_kld-1.0.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "63593550bfa46c867381b04312670870",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.9",
+      "size": 53071,
+      "upload_time": "2024-07-31T16:16:41",
+      "upload_time_iso_8601": "2024-07-31T16:16:41.881268Z",
+      "url": "https://files.pythonhosted.org/packages/3c/69/9709388589ff617a7750664e0c661f0be12bd9ef7768a172728ef51371e1/napari_kld-1.0.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
