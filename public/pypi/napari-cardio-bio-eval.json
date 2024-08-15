@@ -17,7 +17,7 @@
       "Programming Language :: Python :: 3.12",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "# Cardio biosensor evaluaton in Napari\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-cardio-bio-eval.svg?color=green)](https://github.com/Nanobiosensorics/napari-cardio-bio-eval/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-cardio-bio-eval.svg?color=green)](https://pypi.org/project/napari-cardio-bio-eval)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-cardio-bio-eval.svg?color=green)](https://python.org)\n[![tests](https://github.com/Nanobiosensorics/napari-cardio-bio-eval/workflows/tests/badge.svg)](https://github.com//Nanobiosensorics/napari-cardio-bio-eval/actions)\n[![codecov](https://codecov.io/gh/Nanobiosensorics/napari-cardio-bio-eval/branch/main/graph/badge.svg)](https://codecov.io/gh/Nanobiosensorics/napari-cardio-bio-eval)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-cardio-bio-eval)](https://napari-hub.org/plugins/napari-cardio-bio-eval)\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n\n----------------------------------\n\nThe plugin provides a widget which can load, preprocess, annotate and export cardio biosensor data.  \n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/stable/plugins/index.html\n-->\n\n## Installation\n\nYou can install `napari-cardio-bio-eval` via [pip]:\n\n    pip install napari-cardio-bio-eval\n\nOr use the Napari plugin manager and search for `napari-cardio-bio-eval`.\n\n<!--\nFirst install a fresh conda enviroment (or other python enviroment) and activate it:\n\n    conda create -y -n napari-env -c conda-forge python=3.10\n    conda activate napari-env\n\nThen you can pip install the plugin from the github repository and it will also downloads the necessary packages:\n\n    pip install git+https://github.com/Nanobiosensorics/napari-cardio-bio-eval\n\nThen you can start napari with a simple command:\n\n    napari\n-->\n# Usage\n\nYou can open the plugin's widgets from the **Plugins** menu after the installation of the plugin.\n\n![image](https://github.com/Nanobiosensorics/napari-cardio-bio-eval/assets/78443646/5d209fb5-c921-45d6-bb63-c5e3ff1fb1f8)\n\n## Data loading and preprocessing\n\nAt the top of the widget, you need to select the directory, which contains the data you want to examine and process. To successfully load the data the directory have to contain the following files:\n- *_wl_power.file: which contains the starting values of the measurement\n- DRM directory: which contains the difference from the previous measurement point \n- *_avg.file: which contains additional biosensor data\n\n#### Import parameters:  \n- Flipping: horizontal and vertical mirroring of the biosensor recording\n- Signal range type: with this you can choose how do you want to select a smaller range of the measurement in the next field *Ranges*\n    - measurement phase: you can give the index of the phases you want to see, for example with 0-1 you can view the measurement from the start to the first pause\n    - individual point: you can select any given frames in an interval, for example with selecting 34 and 275 you can view the measurement from frame 34 to frame 275\n- Ranges: if you choose measurement phase then give the range of the phases you want to see and if you choose individual point then select the starting and end frames. The label above helps as it shows the phrases (except the last one) and the full time of the measurement. The minimum frame or phase must be smaller than the maximum.\n- Drift correction threshold: Ranges between 25 and 500.\n- Filter method: mean or median\n\n![image](https://github.com/Nanobiosensorics/napari-cardio-bio-eval/assets/78443646/28b5f563-1c5e-4591-bdf6-2ece936becac)\n\n![image](https://github.com/Nanobiosensorics/napari-cardio-bio-eval/assets/78443646/a6004667-deac-4ff8-8729-0fcb8bc35f7f)\n\nAfter selecting the source directory and the optional fliping you can load in the data with the ***Load Data*** button. After the raw data is loaded you can select the slice of the measurement you want to work with and some other parameters. Then by clicking the ***Preprocess Data*** button you start the processing and after a few seconds the well images will appear on the viewer.  \n\n![image](https://github.com/Nanobiosensorics/napari-cardio-bio-eval/assets/78443646/23e38c70-d058-41cc-9e9e-f2d34ea553e0)\n\nEach well has its own layer. You can turn the layers visible or invisible by clicking the small eye icon on each layer.\n\nIf the selected range is not what you wanted then you can change the parameters and preprocess again. But if you moved on to the next step (manual background selection or peak detection) then you need to restart Napari to load other data or preprocess with different parameters.\n\nAfter you see the wells you can proceed to the next step or if the automatic background correction is not good enough you can click the ***Select Background Points Manually*** button and it will show the automatically selected background points for each well, which you can move to better background coordinates and in the next peak detection step these points will be used by the background correction algorithm. After the first export these points will be saved so if the same directory is loaded a second time the preprocessing will use these points.\n\nDuring the background selection do NOT delete any layers.\n\n![image](https://github.com/Nanobiosensorics/napari-cardio-bio-eval/assets/78443646/133fd74a-b53b-4540-bdf9-209c325e2b4b)\n\n## Selecting the cells\n\nIn this step you can also set some parameters for the peak detection algorithm and then click the ***Detect Signal Peaks*** button to start the process. After a few seconds the wells with the potential cells will show on the window.\n\n#### Detection parameters:  \n- Threshold range: 25-5000\n- Neighbourhood size: 1-10\n- Error mask filtering:\n\n![image](https://github.com/Nanobiosensorics/napari-cardio-bio-eval/assets/78443646/842ad2e3-32dd-4d6c-8e98-47c137a7029b)\n\nHere you can delete, add or move the points on each points layer. There are keyboard shortcuts for easier use! \nAdditionally by double clicking on any point of the image you can examine the time-signal diagram of the selected point under the widget. Be sure to select the correct layer!  \n\nIf you do not need any of the wells, then you can delete the layer and it won't be exported. If you either delete an image or peak points layer belonging to a well, the well will not be included in the export!  \nAfter selecting the needed cells and wells (and deleting the unnecessary ones) you can export plots and additional information about them.\n\n## Exporting\n\nYou can select what kind of data do you want to export and click the ***Export Data*** button. The data will be exported to the source directory into a *result* sub-directory.\n\n#### Export options:\n- Coordinates: the coordinates of the selected cells\n- Preprocessed signals: \n- Raw signals:\n- Average signal: \n- Breakdown signal: \n- Max well: \n- Plot signals with well:  \n- Plot well with coordinates: \n- Plot cells individually: \n- Signal parts by phases: \n- Max centered signals: \n\n## Segmentation widget\n\nThe data loading and preprocessing is the same but it uses a deep learning model to segment the cells.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-cardio-bio-eval\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please file an issue along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description": "# Cardio biosensor evaluaton in Napari\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-cardio-bio-eval.svg?color=green)](https://github.com/Nanobiosensorics/napari-cardio-bio-eval/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-cardio-bio-eval.svg?color=green)](https://pypi.org/project/napari-cardio-bio-eval)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-cardio-bio-eval.svg?color=green)](https://python.org)\n[![tests](https://github.com/Nanobiosensorics/napari-cardio-bio-eval/workflows/tests/badge.svg)](https://github.com//Nanobiosensorics/napari-cardio-bio-eval/actions)\n<!--[![codecov](https://codecov.io/gh/Nanobiosensorics/napari-cardio-bio-eval/branch/main/graph/badge.svg)](https://codecov.io/gh/Nanobiosensorics/napari-cardio-bio-eval)-->\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-cardio-bio-eval)](https://napari-hub.org/plugins/napari-cardio-bio-eval)\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n\n----------------------------------\n\nThe plugin provides a widget which can load, preprocess, annotate and export cardio biosensor data.  \n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/stable/plugins/index.html\n-->\n\n## Installation\n\nYou can install `napari-cardio-bio-eval` via [pip]:\n\n    pip install napari-cardio-bio-eval\n\nOr use the Napari plugin manager and search for `napari-cardio-bio-eval`.\n\n<!--\nFirst install a fresh conda enviroment (or other python enviroment) and activate it:\n\n    conda create -y -n napari-env -c conda-forge python=3.10\n    conda activate napari-env\n\nThen you can pip install the plugin from the github repository and it will also downloads the necessary packages:\n\n    pip install git+https://github.com/Nanobiosensorics/napari-cardio-bio-eval\n\nThen you can start napari with a simple command:\n\n    napari\n-->\n# Usage\n\nYou can open the plugin's widgets from the **Plugins** menu after the installation of the plugin.\n\n![image](https://github.com/Nanobiosensorics/napari-cardio-bio-eval/assets/78443646/5d209fb5-c921-45d6-bb63-c5e3ff1fb1f8)\n\n## Data loading and preprocessing\n\nAt the top of the widget, you need to select the directory, which contains the data you want to examine and process. To successfully load the data the directory have to contain the following files:\n- *_wl_power.file: which contains the starting values of the measurement\n- DRM directory: which contains the difference from the previous measurement point \n- *_avg.file: which contains additional biosensor data\n\n#### Import parameters:  \n- Flipping: horizontal and vertical mirroring of the biosensor recording\n- Signal range type: with this you can choose how do you want to select a smaller range of the measurement in the next field *Ranges*\n    - measurement phase: you can give the index of the phases you want to see, for example with 0-1 you can view the measurement from the start to the first pause\n    - individual point: you can select any given frames in an interval, for example with selecting 34 and 275 you can view the measurement from frame 34 to frame 275\n- Ranges: if you choose measurement phase then give the range of the phases you want to see and if you choose individual point then select the starting and end frames. The label above helps as it shows the phrases (except the last one) and the full time of the measurement. The minimum frame or phase must be smaller than the maximum.\n- Drift correction threshold: Ranges between 25 and 500.\n- Filter method: mean or median\n\n![image](https://github.com/Nanobiosensorics/napari-cardio-bio-eval/assets/78443646/28b5f563-1c5e-4591-bdf6-2ece936becac)\n\n![image](https://github.com/Nanobiosensorics/napari-cardio-bio-eval/assets/78443646/a6004667-deac-4ff8-8729-0fcb8bc35f7f)\n\nAfter selecting the source directory and the optional fliping you can load in the data with the ***Load Data*** button. After the raw data is loaded you can select the slice of the measurement you want to work with and some other parameters. Then by clicking the ***Preprocess Data*** button you start the processing and after a few seconds the well images will appear on the viewer.  \n\n![image](https://github.com/Nanobiosensorics/napari-cardio-bio-eval/assets/78443646/23e38c70-d058-41cc-9e9e-f2d34ea553e0)\n\nEach well has its own layer. You can turn the layers visible or invisible by clicking the small eye icon on each layer.\n\nIf the selected range is not what you wanted then you can change the parameters and preprocess again. But if you moved on to the next step (manual background selection or peak detection) then you need to restart Napari to load other data or preprocess with different parameters.\n\nAfter you see the wells you can proceed to the next step or if the automatic background correction is not good enough you can click the ***Select Background Points Manually*** button and it will show the automatically selected background points for each well, which you can move to better background coordinates and in the next peak detection step these points will be used by the background correction algorithm. After the first export these points will be saved so if the same directory is loaded a second time the preprocessing will use these points.\n\nDuring the background selection do NOT delete any layers.\n\n![image](https://github.com/Nanobiosensorics/napari-cardio-bio-eval/assets/78443646/133fd74a-b53b-4540-bdf9-209c325e2b4b)\n\n## Selecting the cells\n\nIn this step you can also set some parameters for the peak detection algorithm and then click the ***Detect Signal Peaks*** button to start the process. After a few seconds the wells with the potential cells will show on the window.\n\n#### Detection parameters:  \n- Threshold range: 25-5000\n- Neighbourhood size: 1-10\n- Error mask filtering:\n\n![image](https://github.com/Nanobiosensorics/napari-cardio-bio-eval/assets/78443646/842ad2e3-32dd-4d6c-8e98-47c137a7029b)\n\nHere you can delete, add or move the points on each points layer. There are keyboard shortcuts for easier use! \nAdditionally by double clicking on any point of the image you can examine the time-signal diagram of the selected point under the widget. Be sure to select the correct layer!  \n\nIf you do not need any of the wells, then you can delete the layer and it won't be exported. If you either delete an image or peak points layer belonging to a well, the well will not be included in the export!  \nAfter selecting the needed cells and wells (and deleting the unnecessary ones) you can export plots and additional information about them.\n\n## Exporting\n\nYou can select what kind of data do you want to export and click the ***Export Data*** button. The data will be exported to the source directory into a *result* sub-directory.\n\n#### Export options:\n- Coordinates: the coordinates of the selected cells\n- Preprocessed signals: \n- Raw signals:\n- Average signal: \n- Breakdown signal: \n- Max well: \n- Plot signals with well:  \n- Plot well with coordinates: \n- Plot cells individually: \n- Signal parts by phases: \n- Max centered signals: \n\n## Segmentation widget\n\nThe data loading and preprocessing is the same but it uses a deep learning model to segment the cells.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-cardio-bio-eval\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please file an issue along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -40,7 +40,7 @@
     "provides_extra": [
       "testing"
     ],
-    "release_url": "https://pypi.org/project/napari-cardio-bio-eval/0.0.1/",
+    "release_url": "https://pypi.org/project/napari-cardio-bio-eval/0.1.3/",
     "requires_dist": [
       "matplotlib",
       "opencv-python-headless",
@@ -57,11 +57,11 @@
     ],
     "requires_python": ">=3.10",
     "summary": "The evaluation of the epic cardio biosensor integrated into napari",
-    "version": "0.0.1",
+    "version": "0.1.3",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 24580842,
+  "last_serial": 24581680,
   "releases": {
     "0.0.1": [
       {
@@ -106,48 +106,136 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.1.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "5880b5b5fa0230aa9a293a1e168f1bb553efbede0d29d588f169a2df263f5014",
+          "md5": "0a218b5a8a80fc4e86a6eee35802ac38",
+          "sha256": "84db89413b7c6688e0bbfc588f95f83f2afcede30c0ecadb14d331302ce741eb"
+        },
+        "downloads": -1,
+        "filename": "napari_cardio_bio_eval-0.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "0a218b5a8a80fc4e86a6eee35802ac38",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 21492,
+        "upload_time": "2024-08-15T12:26:22",
+        "upload_time_iso_8601": "2024-08-15T12:26:22.714588Z",
+        "url": "https://files.pythonhosted.org/packages/58/80/b5b5fa0230aa9a293a1e168f1bb553efbede0d29d588f169a2df263f5014/napari_cardio_bio_eval-0.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "d9342397242cee0a33267fb31e08b7aa70f0ba08e6585a9fdc6f45c01e7f6f56",
+          "md5": "fe66dd6ef57afebfabd21adf6afbd784",
+          "sha256": "80d157b3e0ef587637a3848f0d571edeac52f2c74a5bf7712f575ba6ae23af83"
+        },
+        "downloads": -1,
+        "filename": "napari_cardio_bio_eval-0.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "fe66dd6ef57afebfabd21adf6afbd784",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 21709,
+        "upload_time": "2024-08-15T12:26:24",
+        "upload_time_iso_8601": "2024-08-15T12:26:24.083974Z",
+        "url": "https://files.pythonhosted.org/packages/d9/34/2397242cee0a33267fb31e08b7aa70f0ba08e6585a9fdc6f45c01e7f6f56/napari_cardio_bio_eval-0.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.3": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "3e638805c06db745bfbee53b5e73a248679dad88125a97dfb0b612247528f9f5",
+          "md5": "33223dc113baa3fcec68fcdf0fd2db7b",
+          "sha256": "eb2157b099c0d7ac58c9cd1ea1ad78b2cdb2c29a5e4db691d71719fa0473f0d3"
+        },
+        "downloads": -1,
+        "filename": "napari_cardio_bio_eval-0.1.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "33223dc113baa3fcec68fcdf0fd2db7b",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 50599,
+        "upload_time": "2024-08-15T13:03:06",
+        "upload_time_iso_8601": "2024-08-15T13:03:06.648158Z",
+        "url": "https://files.pythonhosted.org/packages/3e/63/8805c06db745bfbee53b5e73a248679dad88125a97dfb0b612247528f9f5/napari_cardio_bio_eval-0.1.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "1af1fe4e8730e6554ff58fd49dde95ff6b7becbe9e7ff37ebb75ddb15570e835",
+          "md5": "09a023a05a12884617e66a5450208b5e",
+          "sha256": "ce9c93b0b66173024c7a707a43431a1374c60a3396d2ca39149e878aea3391a0"
+        },
+        "downloads": -1,
+        "filename": "napari_cardio_bio_eval-0.1.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "09a023a05a12884617e66a5450208b5e",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 44936,
+        "upload_time": "2024-08-15T13:03:07",
+        "upload_time_iso_8601": "2024-08-15T13:03:07.918598Z",
+        "url": "https://files.pythonhosted.org/packages/1a/f1/fe4e8730e6554ff58fd49dde95ff6b7becbe9e7ff37ebb75ddb15570e835/napari_cardio_bio_eval-0.1.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "c4a95157d1a43a8e79143cb43e6d0bab0de3b23f641cfda7fe9a691e626a07d6",
-        "md5": "8375e0312f14ee69740f265044236911",
-        "sha256": "eec82c40a0668631aeae1f6bdc21b254ebc0bf0bcd4778ba684226edead3c187"
+        "blake2b_256": "3e638805c06db745bfbee53b5e73a248679dad88125a97dfb0b612247528f9f5",
+        "md5": "33223dc113baa3fcec68fcdf0fd2db7b",
+        "sha256": "eb2157b099c0d7ac58c9cd1ea1ad78b2cdb2c29a5e4db691d71719fa0473f0d3"
       },
       "downloads": -1,
-      "filename": "napari_cardio_bio_eval-0.0.1-py3-none-any.whl",
+      "filename": "napari_cardio_bio_eval-0.1.3-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "8375e0312f14ee69740f265044236911",
+      "md5_digest": "33223dc113baa3fcec68fcdf0fd2db7b",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.10",
-      "size": 21484,
-      "upload_time": "2024-08-15T11:36:22",
-      "upload_time_iso_8601": "2024-08-15T11:36:22.666239Z",
-      "url": "https://files.pythonhosted.org/packages/c4/a9/5157d1a43a8e79143cb43e6d0bab0de3b23f641cfda7fe9a691e626a07d6/napari_cardio_bio_eval-0.0.1-py3-none-any.whl",
+      "size": 50599,
+      "upload_time": "2024-08-15T13:03:06",
+      "upload_time_iso_8601": "2024-08-15T13:03:06.648158Z",
+      "url": "https://files.pythonhosted.org/packages/3e/63/8805c06db745bfbee53b5e73a248679dad88125a97dfb0b612247528f9f5/napari_cardio_bio_eval-0.1.3-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "5528a29f1116c5b9ade9372c253c7e346851bbe8f5d7ebd464b6c807ead3943c",
-        "md5": "c24931bc8eb0551428f12678dab2e86a",
-        "sha256": "8ede389067450a8efae38aadd51e0c4020b148ddc77a67224bb2396e040d9ca2"
+        "blake2b_256": "1af1fe4e8730e6554ff58fd49dde95ff6b7becbe9e7ff37ebb75ddb15570e835",
+        "md5": "09a023a05a12884617e66a5450208b5e",
+        "sha256": "ce9c93b0b66173024c7a707a43431a1374c60a3396d2ca39149e878aea3391a0"
       },
       "downloads": -1,
-      "filename": "napari_cardio_bio_eval-0.0.1.tar.gz",
+      "filename": "napari_cardio_bio_eval-0.1.3.tar.gz",
       "has_sig": false,
-      "md5_digest": "c24931bc8eb0551428f12678dab2e86a",
+      "md5_digest": "09a023a05a12884617e66a5450208b5e",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.10",
-      "size": 21672,
-      "upload_time": "2024-08-15T11:36:24",
-      "upload_time_iso_8601": "2024-08-15T11:36:24.190204Z",
-      "url": "https://files.pythonhosted.org/packages/55/28/a29f1116c5b9ade9372c253c7e346851bbe8f5d7ebd464b6c807ead3943c/napari_cardio_bio_eval-0.0.1.tar.gz",
+      "size": 44936,
+      "upload_time": "2024-08-15T13:03:07",
+      "upload_time_iso_8601": "2024-08-15T13:03:07.918598Z",
+      "url": "https://files.pythonhosted.org/packages/1a/f1/fe4e8730e6554ff58fd49dde95ff6b7becbe9e7ff37ebb75ddb15570e835/napari_cardio_bio_eval-0.1.3.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
