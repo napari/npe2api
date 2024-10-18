@@ -16,7 +16,7 @@
       "Programming Language :: Python :: 3.10",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "# Allencell-segmenter-ml\n\n[![Test and lint](https://github.com/AllenCell/allencell-segmenter-ml/actions/workflows/test_lint.yaml/badge.svg?branch=main&event=push)](https://github.com/AllenCell/allencell-segmenter-ml/actions/workflows/test_lint.yaml)\n\n\n\n\n## What is Allen Cell Segmenter ML\nA deep learning-based segmentation Napari plugin to curate datasets, train your own model (UNET), and run inference on 2D and 3D cell data. \n\n\n##  \ud83d\udcf0 News\n\n - **[2024.09.24]** :tada: Initial release of the plugin and Megaseg models!\n\n\n\n## :hammer_and_wrench: Installation\n\n### System Requirements\n\nWe currently support `Windows`, `MacOS`, and `Linux` operating systems. The minimum system requirements are:\n\n- 8GB of RAM\n- 8 CPU Cores\n- 1 NVIDIA GPU with 8GB of VRAM (optional)\n\n**NOTE:** If you plan to use the plugin _without_ a GPU, training will default to using your CPU and will be significantly slower. A GPU is highly recommended for training models. Depending on how large your images are---2D vs 3D, resolution, model size---running inference may also be slow without a GPU.\n\n### Pre-Installation\n\n##### STEP 1. Install Python\n\nBefore installing the plugin, please make sure you have the following installed:\n\n- Python 3.10 or later\n\n__New to `Python`?__ We recommend installing `Python 3.10` through the official [`Python` website](https://www.python.org/downloads/). This will include the `pip` package manager, which is required to install the plugin.\n\nIf you are unsure if you have Python installed or which version you may have, you can check by running the following command in your terminal or powershell:\n\n```bash\n# Check version of python\npython --version\n\n# If the above does not work, try this one\npython3 --version\n\n# Specifically check for Python 3.10\npython3.10 --version\n```\n\n\n\n##### STEP 2. Create a Virtual Environment\n\nNext we will create a new `Python` environment to install the plugin. This will help avoid conflicts with other packages you may have installed by creating an isolated environment for the plugin to live in. In general, it is good practice to choose a name for your environment that is related to either the project you are working on or the software you are installing. In this case, we use `venv-allen-segmenter-ml` where `venv` stands for __virtual environment__.\n\nNavigate to where you want to create a new environment (_Example._ `Documents`), run the following command in your terminal or powershell:\n\n```bash\n# Create a new environment\npython3.10 -m venv venv-allen-segmenter-ml\n\n# Activate the environment\nsource venv-allen-segmenter-ml/bin/activate\n```\n#### Confirm Virtual Environment is Activated\n\nTo confirm that the virtual environment has been successfully activated, you can follow these steps:\n\n\n1. Check that the prompt includes the name of your virtual environment, `venv-allen-segmenter-ml`. It should look something like this:\n\n    ```bash\n    (venv-allen-segmenter-ml) $\n\n    # Example on a Windows machine\n    (venv-allen-segmenter-ml) PS C:\\Users\\Administrator\\Documents> \n    ```\n\n2. Run the following command to verify `Python 3.10` is being used within the virtual environment:\n\n    ```bash\n    python --version\n    \n    # Python 3.10.11   <-- Example output\n    ```\n\n\n\n\n\n\n## Install the Plugin\n\nTo install the latest version of the plugin:\n```bash\npip install allencell-segmenter-ml\n```\n\n### :rotating_light: Post-Installation :rotating_light:\n\n> :memo: __NOTE:__ This section is specifically for users with at least one NVIDIA GPU installed on their machine. Not sure if you have an NVIDIA GPU? You can check by running `nvidia-smi` as shown [below](#step-1-checking-cuda-version). If you __do not__ have an NVIDIA GPU system, you can skip this section.\n\nRequired Package\n\n- `torch` ([PyTorch]) 2.0 or later\n\nAfter installing the plugin, you need to install a PyTorch version that is compatible with your system. PyTorch is a deep learning library that is used to train and run the models in the plugin. We understand that everyone manages CUDA drivers and PyTorch versions differently depending on their system and use cases, and we want to respect those decisions because CUDA drivers can be a pain. \n\n##### STEP 1. Checking CUDA Version\n\nTo check your CUDA version, you can run the following command in your terminal or powershell:\n\n```bash\nnvidia-smi\n```\n\nAs an example, the output will look similar to this. My `CUDA Version` is `11.8`:\n\n```bash\nPS C:\\Users\\Administrator> nvidia-smi\nFri Sep 13 03:22:15 2024\n+-----------------------------------------------------------------------------+\n| NVIDIA-SMI 522.06       Driver Version: 522.06       CUDA Version: 11.8     |\n|-------------------------------+----------------------+----------------------+\n| GPU  Name            TCC/WDDM | Bus-Id        Disp.A | Volatile Uncorr. ECC |\n| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |\n|                               |                      |               MIG M. |\n|===============================+======================+======================|\n|   0  Tesla T4           TCC   | 00000000:00:1E.0 Off |                    0 |\n| N/A   27C    P8     9W /  70W |      0MiB / 15360MiB |      0%      Default |\n|                               |                      |                  N/A |\n+-------------------------------+----------------------+----------------------+\n\n+-----------------------------------------------------------------------------+\n| Processes:                                                                  |\n|  GPU   GI   CI        PID   Type   Process name                  GPU Memory |\n|        ID   ID                                                   Usage      |\n|=============================================================================|\n|  No running processes found                                                 |\n+-----------------------------------------------------------------------------+\n```\n\n---\n\n##### STEP 2. PyTorch Installation\n\n__To Install PyTorch__, please visit the [__PyTorch website__](https://pytorch.org/get-started/locally/) and select the appropriate installation options for your system. An example is provided below.\n\n\n\n<img width=\"828\" alt=\"torch-install\" src=\"https://github.com/user-attachments/assets/1d8789c0-1f2c-4b11-841b-666f540601e6\">\n\n> __PyTorch Installation__ for Windows, MacOS, and Linux\n\n##### Example\n\nFor instance, if I am using\n\n- `Windows` workstation\n- `pip` package manager\n- `Python` (3.10)\n- `CUDA 11.8` \n\nThen the command for me would be:\n\n```bash\npip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118\n```\n\nIf the installation is successful, let's test just to be sure that your GPU is detected by PyTorch. Run the following command in your terminal or powershell:\n\n```bash\npython -c \"import torch; print(torch.cuda.is_available())\"\n```\n\nYou should see `True` if your GPU is detected (see below). If you see `False`, then PyTorch is not detecting your GPU. You may need to reinstall PyTorch or check your CUDA drivers. Double check that your virtual environement is activated (`venv-allen-segmenter-ml`).\n\n```bash\n(venv-allen-segmenter-ml) PS C:\\Users\\Administrator\\Documents> python -c \"import torch; print(torch.cuda.is_available())\"\nTrue\n```\n\n\n:tada: You have successfully installed the plugin and PyTorch. You are now ready to use the plugin!\n\n---\n\n## Running the Plugin\n\nTo run the plugin (and verify the installation), you can use the following command in your terminal or powershell:\n\n```bash\nnapari\n```\n\nYou should see the below window pop up. To start using the plugin, click on the `Plugins` tab and select `Allen Cell Segmenter ML`:\n\n<img width=\"1084\" alt=\"plugin\" src=\"https://github.com/user-attachments/assets/7238c7a2-5741-4d1f-8a3d-b8c133e9bb27\">\n\n> __Allen Cell Segmenter ML__ Launching the Plugin.\n\n## Models\n\n| Model    | Model Name            | Available in Plugin | Model Size (MB)  | Supported Magnifications| \n|----------|-----------------------|----------------------------------|----------------------------------------|:-------------------------:|\n| MegaSeg-S  | `megaseg_light`      | \u2705        | 4.8MB      |       `100X`         |          \n| MegaSeg-M  | `megaseg_medium`     | Coming soon!       |  TBD     |       TBD       |           \n| MegaSeg-L  | `megaseg_large`      | \u2705        | 191MB       |       `20X, 40X, 67X, 100X`        |  \n\n\n\n### Download and using the Megaseg Models\n\nTo use the MegaSeg models in the plugin, you can download them from the dropdown menu shown below:\n\n![download-model](https://github.com/user-attachments/assets/03cc500e-ff74-40c3-bf9e-c40e58d3e47c)\n\n> __Download the MegaSeg Model__ for use in the Plugin\n\nA popup window will appear and you can select which model you would like to download. Once the download is complete, another popup will let you know the download was successful and where the model was downloaded.\n\n<img width=\"1275\" alt=\"select-megaseg\" src=\"https://github.com/user-attachments/assets/0a26a31a-49eb-46cf-a550-47f1fa55c9c3\">\n\n > __Select the MegaSeg model__ to Run Inference\n\n To use the model for inference on your images, choose `Select an existing model`, select the megaseg model you downloaded, and click `Apply`. You can now use the model to segment your images!\n\n## License\n\nDistributed under the terms of the [Allen Institute Software License] license.\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[@napari]: https://github.com/napari\n[Allen Institute Software License]: https://github.com/AllenCell/allencell-segmenter-ml/blob/main/LICENSE\n[file an issue]: https://github.com/AllenCell/allencell-ml-segmenter/issues\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n[PyTorch]: https://pytorch.org/get-started/locally/\n",
+    "description": "# Allencell-segmenter-ml\n\n[![Test and lint](https://github.com/AllenCell/allencell-segmenter-ml/actions/workflows/test_lint.yaml/badge.svg?branch=main&event=push)](https://github.com/AllenCell/allencell-segmenter-ml/actions/workflows/test_lint.yaml)\n\n## This version is a release candidate currently undergoing testing and development.\n[Please report any bugs here](https://github.com/AllenCell/allencell-segmenter-ml/issues/new/choose)\n\n\n## What is Allen Cell Segmenter ML\nA deep learning-based segmentation Napari plugin to curate datasets, train your own model (UNET), and run inference on 2D and 3D cell data. \n\n\n##  \ud83d\udcf0 News\n\n - **[2024.09.24]** :tada: Initial release of the plugin and Megaseg models!\n\n\n\n## :hammer_and_wrench: Installation\n\n### System Requirements\n\nWe currently support `Windows`, `MacOS`, and `Linux` operating systems. The minimum system requirements are:\n\n- 8GB of RAM\n- 8 CPU Cores\n- 1 NVIDIA GPU with 8GB of VRAM (optional)\n\n**NOTE:** If you plan to use the plugin _without_ a GPU, training will default to using your CPU and will be significantly slower. A GPU is highly recommended for training models. Depending on how large your images are---2D vs 3D, resolution, model size---running inference may also be slow without a GPU.\n\n### Pre-Installation\n\n##### STEP 1. Install Python\n\nBefore installing the plugin, please make sure you have the following installed:\n\n- Python 3.10 or later\n\n__New to `Python`?__ We recommend installing `Python 3.10` through the official [`Python` website](https://www.python.org/downloads/). This will include the `pip` package manager, which is required to install the plugin.\n\nIf you are unsure if you have Python installed or which version you may have, you can check by running the following command in your terminal or powershell:\n\n```bash\n# Check version of python\npython --version\n\n# If the above does not work, try this one\npython3 --version\n\n# Specifically check for Python 3.10\npython3.10 --version\n```\n\n\n\n##### STEP 2. Create a Virtual Environment\n\nNext we will create a new `Python` environment to install the plugin. This will help avoid conflicts with other packages you may have installed by creating an isolated environment for the plugin to live in. In general, it is good practice to choose a name for your environment that is related to either the project you are working on or the software you are installing. In this case, we use `venv-allen-segmenter-ml` where `venv` stands for __virtual environment__.\n\nNavigate to where you want to create a new environment (_Example._ `Documents`), run the following command in your terminal or powershell:\n\n```bash\n# Create a new environment\npython3.10 -m venv venv-allen-segmenter-ml\n\n# Activate the environment\nsource venv-allen-segmenter-ml/bin/activate\n```\n#### Confirm Virtual Environment is Activated\n\nTo confirm that the virtual environment has been successfully activated, you can follow these steps:\n\n\n1. Check that the prompt includes the name of your virtual environment, `venv-allen-segmenter-ml`. It should look something like this:\n\n    ```bash\n    (venv-allen-segmenter-ml) $\n\n    # Example on a Windows machine\n    (venv-allen-segmenter-ml) PS C:\\Users\\Administrator\\Documents> \n    ```\n\n2. Run the following command to verify `Python 3.10` is being used within the virtual environment:\n\n    ```bash\n    python --version\n    \n    # Python 3.10.11   <-- Example output\n    ```\n\n\n\n\n\n\n## Install the Plugin\n\nTo install the latest version of the plugin:\n```bash\npip install allencell-segmenter-ml\n```\n\n### :rotating_light: Post-Installation :rotating_light:\n\n> :memo: __NOTE:__ This section is specifically for users with at least one NVIDIA GPU installed on their machine. Not sure if you have an NVIDIA GPU? You can check by running `nvidia-smi` as shown [below](#step-1-checking-cuda-version). If you __do not__ have an NVIDIA GPU system, you can skip this section.\n\nRequired Package\n\n- `torch` ([PyTorch]) 2.0 or later\n\nAfter installing the plugin, you need to install a PyTorch version that is compatible with your system. PyTorch is a deep learning library that is used to train and run the models in the plugin. We understand that everyone manages CUDA drivers and PyTorch versions differently depending on their system and use cases, and we want to respect those decisions because CUDA drivers can be a pain. \n\n##### STEP 1. Checking CUDA Version\n\nTo check your CUDA version, you can run the following command in your terminal or powershell:\n\n```bash\nnvidia-smi\n```\n\nAs an example, the output will look similar to this. My `CUDA Version` is `11.8`:\n\n```bash\nPS C:\\Users\\Administrator> nvidia-smi\nFri Sep 13 03:22:15 2024\n+-----------------------------------------------------------------------------+\n| NVIDIA-SMI 522.06       Driver Version: 522.06       CUDA Version: 11.8     |\n|-------------------------------+----------------------+----------------------+\n| GPU  Name            TCC/WDDM | Bus-Id        Disp.A | Volatile Uncorr. ECC |\n| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |\n|                               |                      |               MIG M. |\n|===============================+======================+======================|\n|   0  Tesla T4           TCC   | 00000000:00:1E.0 Off |                    0 |\n| N/A   27C    P8     9W /  70W |      0MiB / 15360MiB |      0%      Default |\n|                               |                      |                  N/A |\n+-------------------------------+----------------------+----------------------+\n\n+-----------------------------------------------------------------------------+\n| Processes:                                                                  |\n|  GPU   GI   CI        PID   Type   Process name                  GPU Memory |\n|        ID   ID                                                   Usage      |\n|=============================================================================|\n|  No running processes found                                                 |\n+-----------------------------------------------------------------------------+\n```\n\n---\n\n##### STEP 2. PyTorch Installation\n\n__To Install PyTorch__, please visit the [__PyTorch website__](https://pytorch.org/get-started/locally/) and select the appropriate installation options for your system. An example is provided below.\n\n\n\n<img width=\"828\" alt=\"torch-install\" src=\"https://github.com/user-attachments/assets/1d8789c0-1f2c-4b11-841b-666f540601e6\">\n\n> __PyTorch Installation__ for Windows, MacOS, and Linux\n\n##### Example\n\nFor instance, if I am using\n\n- `Windows` workstation\n- `pip` package manager\n- `Python` (3.10)\n- `CUDA 11.8` \n\nThen the command for me would be:\n\n```bash\npip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118\n```\n\nIf the installation is successful, let's test just to be sure that your GPU is detected by PyTorch. Run the following command in your terminal or powershell:\n\n```bash\npython -c \"import torch; print(torch.cuda.is_available())\"\n```\n\nYou should see `True` if your GPU is detected (see below). If you see `False`, then PyTorch is not detecting your GPU. You may need to reinstall PyTorch or check your CUDA drivers. Double check that your virtual environement is activated (`venv-allen-segmenter-ml`).\n\n```bash\n(venv-allen-segmenter-ml) PS C:\\Users\\Administrator\\Documents> python -c \"import torch; print(torch.cuda.is_available())\"\nTrue\n```\n\n\n:tada: You have successfully installed the plugin and PyTorch. You are now ready to use the plugin!\n\n---\n\n## Running the Plugin\n\nTo run the plugin (and verify the installation), you can use the following command in your terminal or powershell:\n\n```bash\nnapari\n```\n\nYou should see the below window pop up. To start using the plugin, click on the `Plugins` tab and select `Allen Cell Segmenter ML`:\n\n<img width=\"1084\" alt=\"plugin\" src=\"https://github.com/user-attachments/assets/7238c7a2-5741-4d1f-8a3d-b8c133e9bb27\">\n\n> __Allen Cell Segmenter ML__ Launching the Plugin.\n\n## Models\n\n| Model    | Model Name            | Available in Plugin | Model Size (MB)  | Supported Magnifications| \n|----------|-----------------------|----------------------------------|----------------------------------------|:-------------------------:|\n| MegaSeg-S  | `megaseg_light`      | \u2705        | 4.8MB      |       `100X`         |          \n| MegaSeg-M  | `megaseg_medium`     | Coming soon!       |  TBD     |       TBD       |           \n| MegaSeg-L  | `megaseg_large`      | \u2705        | 191MB       |       `20X, 40X, 67X, 100X`        |  \n\n\n\n### Download and using the Megaseg Models\n\nTo use the MegaSeg models in the plugin, you can download them from the dropdown menu shown below:\n\n![download-model](https://github.com/user-attachments/assets/03cc500e-ff74-40c3-bf9e-c40e58d3e47c)\n\n> __Download the MegaSeg Model__ for use in the Plugin\n\nA popup window will appear and you can select which model you would like to download. Once the download is complete, another popup will let you know the download was successful and where the model was downloaded.\n\n<img width=\"1275\" alt=\"select-megaseg\" src=\"https://github.com/user-attachments/assets/0a26a31a-49eb-46cf-a550-47f1fa55c9c3\">\n\n > __Select the MegaSeg model__ to Run Inference\n\n To use the model for inference on your images, choose `Select an existing model`, select the megaseg model you downloaded, and click `Apply`. You can now use the model to segment your images!\n\n## License\n\nDistributed under the terms of the [Allen Institute Software License] license.\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[@napari]: https://github.com/napari\n[Allen Institute Software License]: https://github.com/AllenCell/allencell-segmenter-ml/blob/main/LICENSE\n[file an issue]: https://github.com/AllenCell/allencell-ml-segmenter/issues\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n[PyTorch]: https://pytorch.org/get-started/locally/\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -45,7 +45,7 @@
       "dev",
       "test-lint"
     ],
-    "release_url": "https://pypi.org/project/allencell-segmenter-ml/0.1.16rc1/",
+    "release_url": "https://pypi.org/project/allencell-segmenter-ml/0.1.16rc2/",
     "requires_dist": [
       "napari>=0.4.18",
       "npe2>=0.6.2",
@@ -78,11 +78,11 @@
     ],
     "requires_python": "<3.11,>=3.10",
     "summary": "A plugin to leverage ML segmentation in napari",
-    "version": "0.1.16rc1",
+    "version": "0.1.16rc2",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 25179453,
+  "last_serial": 25554453,
   "releases": {
     "0.1.16rc0": [
       {
@@ -171,48 +171,92 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.1.16rc2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "827b995d610bfd2e92e3aa4f6c8f1a6f00ed97da88381972f80ca7dcf456a276",
+          "md5": "453df3d428ef141ce9782e0a562722f9",
+          "sha256": "6e6c40821226fc33bb12991172d2456f7ef60b03bb5a9293caa358e6b7c1dfa0"
+        },
+        "downloads": -1,
+        "filename": "allencell_segmenter_ml-0.1.16rc2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "453df3d428ef141ce9782e0a562722f9",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.11,>=3.10",
+        "size": 243497,
+        "upload_time": "2024-10-18T19:42:24",
+        "upload_time_iso_8601": "2024-10-18T19:42:24.131645Z",
+        "url": "https://files.pythonhosted.org/packages/82/7b/995d610bfd2e92e3aa4f6c8f1a6f00ed97da88381972f80ca7dcf456a276/allencell_segmenter_ml-0.1.16rc2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "1d907ac3e27e8665ea55ce1750e17061465b4456953803f9a3ddd2bad4e488dc",
+          "md5": "06f41a4c294dcae53c8630ce34e31e54",
+          "sha256": "575782712918a536fba96cc50f421ec423074f51932ae62944c2eb736b256cf3"
+        },
+        "downloads": -1,
+        "filename": "allencell_segmenter_ml-0.1.16rc2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "06f41a4c294dcae53c8630ce34e31e54",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.11,>=3.10",
+        "size": 4225987,
+        "upload_time": "2024-10-18T19:42:25",
+        "upload_time_iso_8601": "2024-10-18T19:42:25.397437Z",
+        "url": "https://files.pythonhosted.org/packages/1d/90/7ac3e27e8665ea55ce1750e17061465b4456953803f9a3ddd2bad4e488dc/allencell_segmenter_ml-0.1.16rc2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "3b9a9e24b8d23ba38d648a6fd0c2255da8903b25018cc28333dfedc356380281",
-        "md5": "0f39bcfb6dd99745dde81a4624ff78ec",
-        "sha256": "d8c0e99a6fa6359174919004814ea296d717caa6b042ee3435f102e2efe67b18"
+        "blake2b_256": "827b995d610bfd2e92e3aa4f6c8f1a6f00ed97da88381972f80ca7dcf456a276",
+        "md5": "453df3d428ef141ce9782e0a562722f9",
+        "sha256": "6e6c40821226fc33bb12991172d2456f7ef60b03bb5a9293caa358e6b7c1dfa0"
       },
       "downloads": -1,
-      "filename": "allencell_segmenter_ml-0.1.16rc1-py3-none-any.whl",
+      "filename": "allencell_segmenter_ml-0.1.16rc2-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "0f39bcfb6dd99745dde81a4624ff78ec",
+      "md5_digest": "453df3d428ef141ce9782e0a562722f9",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": "<3.11,>=3.10",
-      "size": 243430,
-      "upload_time": "2024-09-24T22:45:16",
-      "upload_time_iso_8601": "2024-09-24T22:45:16.104527Z",
-      "url": "https://files.pythonhosted.org/packages/3b/9a/9e24b8d23ba38d648a6fd0c2255da8903b25018cc28333dfedc356380281/allencell_segmenter_ml-0.1.16rc1-py3-none-any.whl",
+      "size": 243497,
+      "upload_time": "2024-10-18T19:42:24",
+      "upload_time_iso_8601": "2024-10-18T19:42:24.131645Z",
+      "url": "https://files.pythonhosted.org/packages/82/7b/995d610bfd2e92e3aa4f6c8f1a6f00ed97da88381972f80ca7dcf456a276/allencell_segmenter_ml-0.1.16rc2-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "751e3aa091f1016d51b95a8be5717bf11cbcaf600a95b078105e56e9cd873de8",
-        "md5": "ae0490e2859d1d9820c045b3e2ed8d9c",
-        "sha256": "3ea85d765cf983b439f5a7fad37e60f3ee2aba8348bb19727d43275fb62dea8e"
+        "blake2b_256": "1d907ac3e27e8665ea55ce1750e17061465b4456953803f9a3ddd2bad4e488dc",
+        "md5": "06f41a4c294dcae53c8630ce34e31e54",
+        "sha256": "575782712918a536fba96cc50f421ec423074f51932ae62944c2eb736b256cf3"
       },
       "downloads": -1,
-      "filename": "allencell_segmenter_ml-0.1.16rc1.tar.gz",
+      "filename": "allencell_segmenter_ml-0.1.16rc2.tar.gz",
       "has_sig": false,
-      "md5_digest": "ae0490e2859d1d9820c045b3e2ed8d9c",
+      "md5_digest": "06f41a4c294dcae53c8630ce34e31e54",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": "<3.11,>=3.10",
-      "size": 4225911,
-      "upload_time": "2024-09-24T22:45:18",
-      "upload_time_iso_8601": "2024-09-24T22:45:18.301571Z",
-      "url": "https://files.pythonhosted.org/packages/75/1e/3aa091f1016d51b95a8be5717bf11cbcaf600a95b078105e56e9cd873de8/allencell_segmenter_ml-0.1.16rc1.tar.gz",
+      "size": 4225987,
+      "upload_time": "2024-10-18T19:42:25",
+      "upload_time_iso_8601": "2024-10-18T19:42:25.397437Z",
+      "url": "https://files.pythonhosted.org/packages/1d/90/7ac3e27e8665ea55ce1750e17061465b4456953803f9a3ddd2bad4e488dc/allencell_segmenter_ml-0.1.16rc2.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
