@@ -1,0 +1,149 @@
+{
+  "info": {
+    "author": null,
+    "author_email": "Rubin Zhao <beanli161514@gmail.com>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Framework :: napari",
+      "Programming Language :: Python :: 3"
+    ],
+    "description": "# NeuroFly: A framework for single neuron reconstruction at whole-brain scale\n\nThis package provides tools for semi-automatic neuron reconstruction. Features based on deep learning, like image segmentation and deconvolution are implemented in [tinygrad](https://github.com/tinygrad/tinygrad), which can run on almost any GPU (NVIDIA, AMD, Apple, Qualcomm, Intel).\n\n<img src=\"assets/main.png\" width=\"640\">\n\n## Installation\n\n```\npip install --upgrade git+https://github.com/beanli161514/neurofly.git\n```\n\n## Dataset\n\nWe provide several expert-proofread reconstruction results for testing, model training, and evaluation. [Zenodo Link](https://zenodo.org/records/13328867)\n\n\n### Content of samples\n| name           | size  | species | label type  | imaging |\n|----------------|-------|---------|-------------|---------|\n| rm009_labeled  | 629MB | macaque | skeleton    | VISoR   |\n| mouse_labeled  | 260MB | mouse   | skeleton    | VISoR   |\n| z002_labeled   | 204MB | mouse   | skeleton    | VISoR   |\n| fmost_labeled  | 370MB | mouse   | skeleton    | fMOST   |\n| RM009_noisy_1  | 65MB  | macaque | morphology  | VISoR   |\n| RM009_noisy_2  | 65MB  | macaque | morphology  | VISoR   |\n| fmost_test     | 65MB  | mouse   | morphology  | fMOST   |\n| z002_dendrites | 768MB | mouse   | morphology  | VISoR   |\n| RM009_arbor_1  | 288MB | macaque | morphology  | VISoR   |\n| RM009_axons_1  | 600MB | macaque | morphology  | VISoR   |\n| RM009_axons_2  | 600MB | macaque | morphology  | VISoR   |\n| z002           | 8.92G | mouse   | morphology* | VISoR   |\n\n$*$ annotation in progress\n### Label format\nMorphology labels are graphs saved in SQLite database with 3 tables:\n|    segments    |  nodes  |  edges  |\n|:--------------:|:-------:|:-------:|\n|       sid      |   nid   |   src   |\n|     points     |  coord  |   des   |\n| sampled_points | creator |   date  |\n|                |  status | creator |\n|                |   type  |         |\n|                |   date  |         |\n|                | checked |         |\n\nSegments are results of the segmentation stage, they are used to generate initial nodes and edges.\n\n\n## Basic usage example\n\n<img src=\"assets/pipeline.png\" width=\"640\">\n\nNeuroFly packaged 4 napari plugins for image browsing, image segmentation, and data annotation.\n\n<img src=\"assets/menu.png\" width=\"320\">\n\n### Segmentation\n\nNeuroFly supports whole brain image saved in hierarchical data structures(ims, h5, and zarr) in [Imaris File Format](https://imaris.oxinst.com/support/imaris-file-format) and small image volumes saved in single-channel tiff format. Here we use a mouse brain in our dataset named z002.ims as example.\n\nThis brain is sparsely labeled, which means only a tiny puny part of neurons are lighted and imaged. To extract these foreground singals, you can use the provided command line interface 'seg'. We provide a default weight trained on images captured by VISoR and fMOST.\n```\nseg -i z002.ims -vis -d z002.db\n```\nor use the graphical interface\n\n<img align src=\"assets/neuron_seger.png\" width=\"200\">\n\n\nThis process may take about 10 hours depending on your you hardware configuration. When finished, you should see the extracted segments and a database file named z002.db in your working dictionary.\n\n\nAn image block with severe contamination and the segmentation result\n\n<img align src=\"assets/segmentation.gif\" width=\"640\">\n\n\n### Manual connection and proofreading\n\nLaunch annotation tool from napari menu, Plugin -> neurofly -> Segs Annotator\n\n#### Load data\nLoad image file (z002.ims) and database file (z002.db), then click **refresh panorama** button to show the panorama view.\n\n<img src=\"assets/overall.png\" width=\"600\">\n\n\n#### Select one node as start point of annotation\nIn panorama mode, you can easily identify sparse, bright signals that are promising for reconstruction. The silde bars 'short segs filter', 'length thres', and 'point size' can be adjusted to hide noise and short segments. \n\nIf you can clearly identify foreground segments, click on one of the conspicuous segments to select it as start point of annotation. Once selected, the id of picked node will be displayed at **node selection**. Then click 'switch mode' to switch to labeling mode, and the tasks will be generated automatically.\n\n\n#### Task generation\nGiven a selected node, task generator analyses its connected component and extract all unchecked terminal nodes. The tasks are designed very simple: Connect the center node with the surrounding nodes if there should be an edge. The criterion is whether the edge aligns well with the imaged neuron fibers.\n\n<img src=\"assets/task_generation.png\" width=\"480\">\n\n\n#### Node operations\n<img src=\"assets/labeling_mode.png\" width=\"480\">\n\nIn each task, a center node and nearby segments are rendered, you can add/remove nodes and edges to get a reasonable local structure.\n\n\nLeft click on nodes to add/remove an edge between it and the center node\n\n<img src=\"assets/add_edges.gif\" width=\"480\">\n\nRight click to remove a node\n\n<img src=\"assets/remove_nodes.gif\" width=\"480\">\n\nPress 'g' or use left panel to switch to 'image' layer, then right click to add points\n\n<img src=\"assets/add_nodes.gif\" width=\"480\">\n\nUse dropdown selection in right panel to add type label for center node.\n\n<img src=\"assets/change_type.gif\" width=\"480\">\n\n#### Deconvolution\n\nPress 'i' or click on 'deconvolution' to deconvolve the image\n\n<img src=\"assets/deconv.gif\" width=\"640\">\n\n\n#### Proofreading\n\nIf you find something wrong when labeling, for example, two somas are connected together. You can use proofreading mode to check the neuron branch by branch.\n<img src=\"assets/proofreading.gif\" width=\"640\">\n\n\n\n### Export as swc file\nSwitch to panorama mode, adjust 'length_thres' to filter out short segments and keep only complete neurons. Then press 'export swc files', each neuron will be saved as one .swc file in your working dictionary.\n<img src=\"assets/export.jpg\" width=\"640\">\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": null,
+    "home_page": null,
+    "keywords": null,
+    "license": "GPL-3.0-or-later",
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "neurofly",
+    "package_url": "https://pypi.org/project/neurofly/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/neurofly/",
+    "project_urls": {
+      "Homepage": "https://github.com/beanli161514/neurofly"
+    },
+    "provides_extra": null,
+    "release_url": "https://pypi.org/project/neurofly/0.1.0/",
+    "requires_dist": [
+      "PyQt5",
+      "napari",
+      "Rtree",
+      "networkx",
+      "tqdm",
+      "magicgui",
+      "brightest-path-lib",
+      "tifffile",
+      "scikit-image",
+      "scipy",
+      "torch",
+      "tinygrad>=0.9.2",
+      "pathlib",
+      "h5py",
+      "zarr"
+    ],
+    "requires_python": ">=3.8",
+    "summary": "A framework to annotate single neurons at whole-brain scale",
+    "version": "0.1.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 25742931,
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "67634b757527d9dba3bc9267ae8961b071c034e64174192f5e1b9042c470d618",
+          "md5": "667e9cd9498e702c4bb45ecbfdc59f80",
+          "sha256": "c8df285fe010c298872d64681cd849aa8bff20b73b3a59c4a2a4d37484d76d31"
+        },
+        "downloads": -1,
+        "filename": "neurofly-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "667e9cd9498e702c4bb45ecbfdc59f80",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 24186976,
+        "upload_time": "2024-10-30T13:10:43",
+        "upload_time_iso_8601": "2024-10-30T13:10:43.085143Z",
+        "url": "https://files.pythonhosted.org/packages/67/63/4b757527d9dba3bc9267ae8961b071c034e64174192f5e1b9042c470d618/neurofly-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "417d7d21bbe4ef16ae87a92c7c44dfa05b7a7beedcb3737a783a176187d6eac3",
+          "md5": "3ca187c2badfac57e1a2e96e798bf1af",
+          "sha256": "a494825d40e469049e86670942e6cb6292be1e8a17f64e45d1178d805eaeb319"
+        },
+        "downloads": -1,
+        "filename": "neurofly-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "3ca187c2badfac57e1a2e96e798bf1af",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 24183116,
+        "upload_time": "2024-10-30T13:10:46",
+        "upload_time_iso_8601": "2024-10-30T13:10:46.518128Z",
+        "url": "https://files.pythonhosted.org/packages/41/7d/7d21bbe4ef16ae87a92c7c44dfa05b7a7beedcb3737a783a176187d6eac3/neurofly-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "blake2b_256": "67634b757527d9dba3bc9267ae8961b071c034e64174192f5e1b9042c470d618",
+        "md5": "667e9cd9498e702c4bb45ecbfdc59f80",
+        "sha256": "c8df285fe010c298872d64681cd849aa8bff20b73b3a59c4a2a4d37484d76d31"
+      },
+      "downloads": -1,
+      "filename": "neurofly-0.1.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "667e9cd9498e702c4bb45ecbfdc59f80",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.8",
+      "size": 24186976,
+      "upload_time": "2024-10-30T13:10:43",
+      "upload_time_iso_8601": "2024-10-30T13:10:43.085143Z",
+      "url": "https://files.pythonhosted.org/packages/67/63/4b757527d9dba3bc9267ae8961b071c034e64174192f5e1b9042c470d618/neurofly-0.1.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "blake2b_256": "417d7d21bbe4ef16ae87a92c7c44dfa05b7a7beedcb3737a783a176187d6eac3",
+        "md5": "3ca187c2badfac57e1a2e96e798bf1af",
+        "sha256": "a494825d40e469049e86670942e6cb6292be1e8a17f64e45d1178d805eaeb319"
+      },
+      "downloads": -1,
+      "filename": "neurofly-0.1.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "3ca187c2badfac57e1a2e96e798bf1af",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.8",
+      "size": 24183116,
+      "upload_time": "2024-10-30T13:10:46",
+      "upload_time_iso_8601": "2024-10-30T13:10:46.518128Z",
+      "url": "https://files.pythonhosted.org/packages/41/7d/7d21bbe4ef16ae87a92c7c44dfa05b7a7beedcb3737a783a176187d6eac3/neurofly-0.1.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
