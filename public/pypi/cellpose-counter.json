@@ -17,7 +17,7 @@
       "Programming Language :: Python :: 3.12",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "# cellpose-counter\n\n[![License BSD-3](https://img.shields.io/pypi/l/cellpose-counter.svg?color=green)](https://github.com/szablowskilab/cellpose-counter/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/cellpose-counter.svg?color=green)](https://pypi.org/project/cellpose-counter)\n[![Python Version](https://img.shields.io/pypi/pyversions/cellpose-counter.svg?color=green)](https://python.org)\n[![tests](https://github.com/szablowskilab/cellpose-counter/workflows/tests/badge.svg)](https://github.com/szablowskilab/cellpose-counter/actions)\n[![codecov](https://codecov.io/gh/szablowskilab/cellpose-counter/branch/main/graph/badge.svg)](https://codecov.io/gh/szablowskilab/cellpose-counter)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/cellpose-counter)](https://napari-hub.org/plugins/cellpose-counter)\n\nA Napari plugin for cell/nuclei counting from a region or interest using\ncellpose models.\n\n----------------------------------\n\n## Installation\n\nOption 1: Install in Napari directly under the plugins tab and select\ncellpose-counter.\n\nOption 2: via [pip](https://pip.pypa.io/en/stable/) (or pip alternatives like\n[uv](https://docs.astral.sh/uv/)):\n\nBelow is a minimally working example of setting up a new virtual environment and\ninstalling the counter module with uv on Unix based systems.\n\n```bash\nuv venv # create virtual environment in .venv\nsource .venv/bin/activate\n\nuv pip install \"napari[all]\" cellpose-counter\n```\n\n## GPU Acceleration\n\nTo enable GPU acceleration, you will need a CUDA capable GPU along with the\n[CUDA toolkit](https://developer.nvidia.com/cuda-toolkit) and [cudNN library](https://developer.nvidia.com/cudnn).\n\nFor instructions on installing cuda toolkit and cudNN, see:\n\n1. [cuda toolkit installation for Linux](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#fedora)\n1. [cudNN installation for Linux](https://docs.nvidia.com/deeplearning/cudnn/latest/installation/linux.html)\n\nOnce these are installed, update the pytorch package by first uninstalling torch\n(if already instsalled).\n\n```bash\nuv pip uninstall torch\n```\n\nThen install a torch version that is compatible with your CUDA version. For example,\n\n```bash\nuv pip install torch --index-url https://download.pytorch.org/whl/cu118\n```\n\nAfter installation, you can verify in an interactive python console with:\n\n```python3\nimport torch\ntorch.cuda.is_available()\n```\n\n## Usage\n\nTo open Napari with the cellpose counter loaded, run `napari -w cellpose-counter`.\n\nA dock widget will be open on the right side of the Napari interface. There\nyou can view options for restoring images (using the cellpose denoise module),\nand counting cells/nuclei in a region of interest (ROI).\n\nA few important notes:\n\n1. Images in TIFF or CZI file formats may be used.\n1. Images must be grayscale or single channel. RGB images may be loaded, but\nshould be split. You can do this by right clicking on the image and select\n`split rgb` or `split stack`.\n1. ROIs can be drawn using the shape layer tools. Only a single ROI can be drawn\nper shape layer (otherwise only the first draw ROI will be used).\n1. ROIs should be square or rectangular. You can draw ROIs as polygons or other\nshapes, but a bounding box will be made from these shapes anyway.\n1. For long running processes such as image restoration or counting, it may seem\nlike Napari is not doing anything. Notifications are shown in the viewer to\ndisplay import information and a small activity indicator can be seen in the\nbottom right hand corner. If this indicator is spinning, then work is being done\neven if it doesn't look like it.\n\n## Updating\n\n1. via Napari plugin manager. Select cellpose-counter plugin and update button.\n\n1. via pip (or uv, ..., etc.)\n\n```bash\nuv pip install cellpose-counter --upgrade\n```\n\n## Contributing\n\nAll contributions are welcome. Please submit an issue for feedback or bugs.\n\n## Citations\n\nThis plugin is built on top of the Cellpose segmentation and denoising models.\nIf you use this plugin, please cite the following paper:\n\n```bitex\n@article{stringer2021cellpose,\ntitle={Cellpose: a generalist algorithm for cellular segmentation},\nauthor={Stringer, Carsen and Wang, Tim and Michaelos, Michalis and Pachitariu, Marius},\njournal={Nature Methods},\nvolume={18},\nnumber={1},\npages={100--106},\nyear={2021},\npublisher={Nature Publishing Group}\n}\n```\n\n## License\n\n[BSD-3](./LICENSE)\n",
+    "description": "# cellpose-counter\n\n[![License BSD-3](https://img.shields.io/pypi/l/cellpose-counter.svg?color=green)](https://github.com/szablowskilab/cellpose-counter/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/cellpose-counter.svg?color=green)](https://pypi.org/project/cellpose-counter)\n[![Python Version](https://img.shields.io/pypi/pyversions/cellpose-counter.svg?color=green)](https://python.org)\n[![tests](https://github.com/szablowskilab/cellpose-counter/workflows/tests/badge.svg)](https://github.com/szablowskilab/cellpose-counter/actions)\n[![codecov](https://codecov.io/gh/szablowskilab/cellpose-counter/branch/main/graph/badge.svg)](https://codecov.io/gh/szablowskilab/cellpose-counter)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/cellpose-counter)](https://napari-hub.org/plugins/cellpose-counter)\n\nA Napari plugin for cell/nuclei counting from a region or interest using\ncellpose models.\n\n----------------------------------\n\n## Installation\n\nOption 1: Install in Napari directly under the plugins tab and select\ncellpose-counter.\n\nOption 2: via [pip](https://pip.pypa.io/en/stable/) (or pip alternatives like\n[uv](https://docs.astral.sh/uv/)):\n\nBelow is a minimally working example of setting up a new virtual environment and\ninstalling the counter module with uv on Unix based systems.\n\n```bash\nuv venv # create virtual environment in .venv\nsource .venv/bin/activate\n\nuv pip install \"napari[all]\" cellpose-counter\n```\n\nOption 3: via Docker/Podman. The provide [Dockerfile](./Dockerfile) can be used\nto install Napari and the counter plugin along with a preconfigured Xpra server\nusing the napari-xpra image. Below is an example of building the image and\nrunning the application with GPU support.\n\n```bash\npodman build -t cellpose-counter .\npodman run -it -d \\\n    -p 9876:9876 \\\n    -e XPRA_START=\"python3 -m napari -w cellpose-counter\" \\\n    --device nvidia.com/gpu=all\n```\n\nThen, navigate to `http://localhost:9876` to view the application in a virtual\nmachine.\n\n## GPU Acceleration\n\nTo enable GPU acceleration, you will need a CUDA capable GPU along with the\n[CUDA toolkit](https://developer.nvidia.com/cuda-toolkit) and [cudNN library](https://developer.nvidia.com/cudnn).\n\nFor instructions on installing cuda toolkit and cudNN, see:\n\n1. [cuda toolkit installation for Linux](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#fedora)\n1. [cudNN installation for Linux](https://docs.nvidia.com/deeplearning/cudnn/latest/installation/linux.html)\n\nOnce these are installed, update the pytorch package by first uninstalling torch\n(if already instsalled).\n\n```bash\nuv pip uninstall torch\n```\n\nThen install a torch version that is compatible with your CUDA version. For example,\n\n```bash\nuv pip install torch --index-url https://download.pytorch.org/whl/cu118\n```\n\nAfter installation, you can verify in an interactive python console with:\n\n```python3\nimport torch\ntorch.cuda.is_available()\n```\n\n## Usage\n\nTo open Napari with the cellpose counter loaded, run `napari -w cellpose-counter`.\n\nA dock widget will be open on the right side of the Napari interface. There\nyou can view options for restoring images (using the cellpose denoise module),\nand counting cells/nuclei in a region of interest (ROI).\n\nA few important notes:\n\n1. Images in TIFF or CZI file formats may be used.\n1. Images must be grayscale or single channel. RGB images may be loaded, but\nshould be split. You can do this by right clicking on the image and select\n`split rgb` or `split stack`.\n1. ROIs can be drawn using the shape layer tools. Only a single ROI can be drawn\nper shape layer (otherwise only the first draw ROI will be used).\n1. ROIs should be square or rectangular. You can draw ROIs as polygons or other\nshapes, but a bounding box will be made from these shapes anyway.\n1. For long running processes such as image restoration or counting, it may seem\nlike Napari is not doing anything. Notifications are shown in the viewer to\ndisplay import information and a small activity indicator can be seen in the\nbottom right hand corner. If this indicator is spinning, then work is being done\neven if it doesn't look like it.\n\n## Updating\n\n1. via Napari plugin manager. Select cellpose-counter plugin and update button.\n\n1. via pip (or uv, ..., etc.)\n\n```bash\nuv pip install cellpose-counter --upgrade\n```\n\n## Contributing\n\nAll contributions are welcome. Please submit an issue for feedback or bugs.\n\n## Citations\n\nThis plugin is built on top of the Cellpose segmentation and denoising models.\nIf you use this plugin, please cite the following paper:\n\n```bitex\n@article{stringer2021cellpose,\ntitle={Cellpose: a generalist algorithm for cellular segmentation},\nauthor={Stringer, Carsen and Wang, Tim and Michaelos, Michalis and Pachitariu, Marius},\njournal={Nature Methods},\nvolume={18},\nnumber={1},\npages={100--106},\nyear={2021},\npublisher={Nature Publishing Group}\n}\n```\n\n## License\n\n[BSD-3](./LICENSE)\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -42,7 +42,7 @@
     "provides_extra": [
       "testing"
     ],
-    "release_url": "https://pypi.org/project/cellpose-counter/0.1.3/",
+    "release_url": "https://pypi.org/project/cellpose-counter/0.1.4/",
     "requires_dist": [
       "numpy",
       "magicgui",
@@ -61,11 +61,11 @@
     ],
     "requires_python": ">=3.10",
     "summary": "Cell/nuclei counter using cellpose models",
-    "version": "0.1.3",
+    "version": "0.1.4",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 26183707,
+  "last_serial": 26324094,
   "releases": {
     "0.1.0": [
       {
@@ -242,48 +242,92 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.1.4": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "da51ad658a6bb9edb23b4dbe76c8c63a58544fcf07bd7b6e393faa690e5f50d2",
+          "md5": "4d261ad5cd35b9d8f1bf1c6f71af0570",
+          "sha256": "846e7a0b5af5f7f66cf9c6b6e2b00e26c352c07be5db61ba6db4fb7928be09da"
+        },
+        "downloads": -1,
+        "filename": "cellpose_counter-0.1.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "4d261ad5cd35b9d8f1bf1c6f71af0570",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 2435580,
+        "upload_time": "2024-12-02T20:16:17",
+        "upload_time_iso_8601": "2024-12-02T20:16:17.342649Z",
+        "url": "https://files.pythonhosted.org/packages/da/51/ad658a6bb9edb23b4dbe76c8c63a58544fcf07bd7b6e393faa690e5f50d2/cellpose_counter-0.1.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "3c0da04188f574065123ef6094c235584fd776980305313d2491b23e63e15f22",
+          "md5": "e4988e94259aaa85009f6eb0ae996ad5",
+          "sha256": "3ccc3a7ebf0157ca6945999c7ffe9b0ad9669c3ff311b9436a54a6c9b63237e8"
+        },
+        "downloads": -1,
+        "filename": "cellpose_counter-0.1.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e4988e94259aaa85009f6eb0ae996ad5",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 2569077,
+        "upload_time": "2024-12-02T20:16:20",
+        "upload_time_iso_8601": "2024-12-02T20:16:20.538180Z",
+        "url": "https://files.pythonhosted.org/packages/3c/0d/a04188f574065123ef6094c235584fd776980305313d2491b23e63e15f22/cellpose_counter-0.1.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "ca30d5f073a3276a192d4be10562cf8e2574193032beafd87e44ac324c3ebca9",
-        "md5": "86e3cc8bb8801b12502ea64061a48a70",
-        "sha256": "5269f82512c635fbe84a0f4b94801d39faf8d2d3a359f3ccfc244d03ed5ee49a"
+        "blake2b_256": "da51ad658a6bb9edb23b4dbe76c8c63a58544fcf07bd7b6e393faa690e5f50d2",
+        "md5": "4d261ad5cd35b9d8f1bf1c6f71af0570",
+        "sha256": "846e7a0b5af5f7f66cf9c6b6e2b00e26c352c07be5db61ba6db4fb7928be09da"
       },
       "downloads": -1,
-      "filename": "cellpose_counter-0.1.3-py3-none-any.whl",
+      "filename": "cellpose_counter-0.1.4-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "86e3cc8bb8801b12502ea64061a48a70",
+      "md5_digest": "4d261ad5cd35b9d8f1bf1c6f71af0570",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.10",
-      "size": 2435220,
-      "upload_time": "2024-11-26T17:02:06",
-      "upload_time_iso_8601": "2024-11-26T17:02:06.682996Z",
-      "url": "https://files.pythonhosted.org/packages/ca/30/d5f073a3276a192d4be10562cf8e2574193032beafd87e44ac324c3ebca9/cellpose_counter-0.1.3-py3-none-any.whl",
+      "size": 2435580,
+      "upload_time": "2024-12-02T20:16:17",
+      "upload_time_iso_8601": "2024-12-02T20:16:17.342649Z",
+      "url": "https://files.pythonhosted.org/packages/da/51/ad658a6bb9edb23b4dbe76c8c63a58544fcf07bd7b6e393faa690e5f50d2/cellpose_counter-0.1.4-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "6c88d4cbf09da614244b75f72b0840a9aca96ffb83ce99fd1d91cb06de7c24b7",
-        "md5": "c7c96ed973876446ae209a65f648572c",
-        "sha256": "755ff03ed38c0a448f8d292c3362b38cc22130036e1b16911f60561ecbc591fb"
+        "blake2b_256": "3c0da04188f574065123ef6094c235584fd776980305313d2491b23e63e15f22",
+        "md5": "e4988e94259aaa85009f6eb0ae996ad5",
+        "sha256": "3ccc3a7ebf0157ca6945999c7ffe9b0ad9669c3ff311b9436a54a6c9b63237e8"
       },
       "downloads": -1,
-      "filename": "cellpose_counter-0.1.3.tar.gz",
+      "filename": "cellpose_counter-0.1.4.tar.gz",
       "has_sig": false,
-      "md5_digest": "c7c96ed973876446ae209a65f648572c",
+      "md5_digest": "e4988e94259aaa85009f6eb0ae996ad5",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.10",
-      "size": 2568399,
-      "upload_time": "2024-11-26T17:02:08",
-      "upload_time_iso_8601": "2024-11-26T17:02:08.220603Z",
-      "url": "https://files.pythonhosted.org/packages/6c/88/d4cbf09da614244b75f72b0840a9aca96ffb83ce99fd1d91cb06de7c24b7/cellpose_counter-0.1.3.tar.gz",
+      "size": 2569077,
+      "upload_time": "2024-12-02T20:16:20",
+      "upload_time_iso_8601": "2024-12-02T20:16:20.538180Z",
+      "url": "https://files.pythonhosted.org/packages/3c/0d/a04188f574065123ef6094c235584fd776980305313d2491b23e63e15f22/cellpose_counter-0.1.4.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
