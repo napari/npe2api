@@ -7,7 +7,7 @@
       "Framework :: napari",
       "Programming Language :: Python :: 3"
     ],
-    "description": "# cellular-Automated Annotation Pipeline\nUtilities for the semi-automated generation of instance segmentation annotations to be used for neural network training. Utilities are built ontop of [UMAP](https://github.com/lmcinnes/umap), [HDBSCAN](https://arxiv.org/abs/1911.02282) and a finetuned encoder version of FAIR's [Segment Anything Model](https://github.com/facebookresearch/segment-anything/tree/main?tab=readme-ov-file) developed by Computational Cell Analytics for the project [micro-sam](https://github.com/computational-cell-analytics/micro-sam/tree/master/micro_sam/sam_annotator). In addition to providing utilies for annotation building, we train a network, FAIR's [detectron2](https://github.com/facebookresearch/detectron2) to \n1. Demonstrate the efficacy of our utilities. \n2. Be used for microscopy annotation of supported cell lines \n\nSupported cell lines currently include:\n1. HeLa\n\nIn development cell lines currently include:\n1. U2OS\n2. HT1080\n3. Yeast\n\nWe've developed a napari application for the usage of this pre-trained network and propose a transfer learning schematic for the handling of new cell lines. \n\n\n\n# Installation \nWe highly recommend installing cell-AAP in a clean conda environment. To do so you must have [miniconda](https://docs.anaconda.com/free/miniconda/#quick-command-line-install) or [anaconda](https://docs.anaconda.com/free/anaconda/) installed.\n\nIf a conda distribution has been installed:\n\n1. Create and activate a clean environment \n\n        conda create -n cell-aap-env\n        conda activate cell-app-env\n\n2. Within this enviroment install pip\n\n        conda install pip\n\n3. Then install cell-AAP from PyPi\n\n        pip install cell-AAP --upgrade\n\n4. Finally detectron2 must be built from source, atop cell-AAP\n    \n        #For MacOS\n        CC=clang CXX=clang++ ARCHFLAGS=\"-arch arm64\" python -m pip install 'git+https://github.com/facebookresearch/detectron2.git'\n\n        #For other operating systems \n        python -m pip install 'git+https://github.com/facebookresearch/detectron2.git'\n\n\n\n# Napari Plugin Usage\n\n1. To open napari simply type \"napari\" into the command line, ensure that you are working the correct environment\n2. To instantiate the plugin navigate to the \"Plugins\" menu and select \"cell-AAP\"\n3. You should now see the Plugin, where you can select an image, display it, and run inference on it. \n\n\n# Configs Best Practices\n\nIf running inference on large volumes of data, i.e. timeseries data >= 300 MB in size, we recommed to procceed in the following manner. \n\n1. Assemble a small, < 100 MB, substack of your data using python or a program like [ImageJ](https://imagej.net/ij/download.html)\n2. Use this substack to find the optimal parameters for your data, (Number of Cells, Confidence)\n3. Run Inference over the volume using the discovered optimal parameters\n\nNote: Finding the optimal set of parameters requires some trial and error, to assist we've created a table. \n\n| Classifications $\\Downarrow$ Detections $\\Rightarrow$ | **Too few**                            | **Too many**                             |\n|----------------------------|----------------------------------------|------------------------------------------|\n| **Dropping M-phase**       | Confidence $\\Downarrow$ <br> Number of Cells $\\Uparrow$ | Confidence $\\Downarrow$ <br> Number of cells $\\Downarrow$ |\n| **Missclasifying M-phase** | Confidence $\\Uparrow$ <br> Number of Cells $\\Uparrow$   | Confidence $\\Uparrow$ <br> Number of Cells $\\Downarrow$   |\n\n\n# Intepreting Results \n\nOnce inference is complete the following colors indicate class prediction\n- Red: Non-mitotic\n- Blue: Mitotic\n- Purple: Interclass double prediction\n\nNote: Interclass double predictions are often early prophase cells that the network is not \"confident\" in, to mitigate such predictions increase the minimum confidence threshold. This will typically result in most double predictions regressing to the Non-mitotic class. \n\n\n\n\n\n\n\n\n\n\n",
+    "description": "# cellular-Automated Annotation Pipeline\nUtilities for the semi-automated generation of instance segmentation annotations to be used for neural network training. Utilities are built ontop of [UMAP](https://github.com/lmcinnes/umap), [HDBSCAN](https://arxiv.org/abs/1911.02282) and a finetuned encoder version of FAIR's [Segment Anything Model](https://github.com/facebookresearch/segment-anything/tree/main?tab=readme-ov-file) developed by Computational Cell Analytics for the project [micro-sam](https://github.com/computational-cell-analytics/micro-sam/tree/master/micro_sam/sam_annotator). In addition to providing utilies for annotation building, we train a network, FAIR's [detectron2](https://github.com/facebookresearch/detectron2) to \n1. Demonstrate the efficacy of our utilities. \n2. Be used for microscopy annotation of supported cell lines \n\nSupported cell lines currently include:\n1. HeLa\n2. U2OS\n\nIn development cell lines currently include:\n1. HT1080\n2. RPE1\n\nWe've developed a napari application for the usage of this pre-trained network and propose a transfer learning schematic for the handling of new cell lines. \n\n\n\n# Installation \nWe highly recommend installing cell-AAP in a clean conda environment. To do so you must have [miniconda](https://docs.anaconda.com/free/miniconda/#quick-command-line-install) or [anaconda](https://docs.anaconda.com/free/anaconda/) installed.\n\nIf a conda distribution has been installed:\n\n1. Create and activate a clean environment \n\n        conda create -n cell-aap-env python=3.11.0\n        conda activate cell-app-env\n\n2. Within this environment install pip\n\n        conda install pip\n\n3. Then install cell-AAP from PyPi\n\n        pip install cell-AAP --upgrade\n\n4. Finally detectron2 must be built from source, atop cell-AAP\n    \n        #For MacOS\n        CC=clang CXX=clang++ ARCHFLAGS=\"-arch arm64\" python -m pip install 'git+https://github.com/facebookresearch/detectron2.git'\n\n        #For other operating systems \n        python -m pip install 'git+https://github.com/facebookresearch/detectron2.git'\n\n\n\n# Napari Plugin Usage\n\n1. To open napari simply type \"napari\" into the command line, ensure that you are working the correct environment\n2. To instantiate the plugin navigate to the \"Plugins\" menu and select \"cell-AAP\"\n3. You should now see the Plugin, where you can select an image, display it, and run inference on it. \n\n\n# Configs Best Practices\n\nIf running inference on large volumes of data, i.e. timeseries data >= 300 MB in size, we recommend to proceed in the following manner. \n\n1. Assemble a small, < 100 MB, substack of your data using python or a program like [ImageJ](https://imagej.net/ij/download.html)\n2. Use this substack to find the optimal parameters for your data, (Number of Cells, Confidence)\n3. Run Inference over the volume using the discovered optimal parameters\n\nNote: Finding the optimal set of parameters requires some trial and error, to assist we've created a table. \n\n| Classifications $\\Downarrow$ Detections $\\Rightarrow$ | **Too few**                            | **Too many**                             |\n|----------------------------|----------------------------------------|------------------------------------------|\n| **Dropping M-phase**       | Confidence $\\Downarrow$ <br> Number of Cells $\\Uparrow$ | Confidence $\\Downarrow$ <br> Number of cells $\\Downarrow$ |\n| **Misclasifying M-phase** | Confidence $\\Uparrow$ <br> Number of Cells $\\Uparrow$   | Confidence $\\Uparrow$ <br> Number of Cells $\\Downarrow$   |\n\n\n# Interpreting Results \n\nOnce inference is complete the following colors indicate class prediction\n- Red: Non-mitotic\n- Blue: Mitotic\n\n\n\n\n\n\n\n\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -30,7 +30,7 @@
     "project_url": "https://pypi.org/project/cell-AAP/",
     "project_urls": null,
     "provides_extra": null,
-    "release_url": "https://pypi.org/project/cell-AAP/0.0.8/",
+    "release_url": "https://pypi.org/project/cell-AAP/0.0.8.1/",
     "requires_dist": [
       "napari[all]>=0.4.19",
       "numpy==1.26.4",
@@ -54,11 +54,11 @@
     ],
     "requires_python": "<3.13,>=3.11",
     "summary": null,
-    "version": "0.0.8",
+    "version": "0.0.8.1",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 26191465,
+  "last_serial": 26518452,
   "releases": {
     "0.0.1": [
       {
@@ -411,48 +411,92 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.0.8.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "56254b994c85aec6193a0b5d936b3d48491272a26319159d99241382cb384589",
+          "md5": "c03892f210c138b39b7e36362f3f4246",
+          "sha256": "6428344ba745b8663701cd699259da2ade1cdaa200fb74969e8930e06701974a"
+        },
+        "downloads": -1,
+        "filename": "cell_AAP-0.0.8.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "c03892f210c138b39b7e36362f3f4246",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.11",
+        "size": 41568,
+        "upload_time": "2024-12-14T22:41:40",
+        "upload_time_iso_8601": "2024-12-14T22:41:40.418043Z",
+        "url": "https://files.pythonhosted.org/packages/56/25/4b994c85aec6193a0b5d936b3d48491272a26319159d99241382cb384589/cell_AAP-0.0.8.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "229348b1ef4a374799665a4a871a8cf4ad15763a8c379500fc476b981d6a2cfa",
+          "md5": "06521b6d81f1b2e3b5bed86f873a12a5",
+          "sha256": "b6ebb7698a59b5843d64cb317cc3ef5026ef56f7d181972530e08573433e7c7c"
+        },
+        "downloads": -1,
+        "filename": "cell_aap-0.0.8.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "06521b6d81f1b2e3b5bed86f873a12a5",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.11",
+        "size": 23829218,
+        "upload_time": "2024-12-14T22:42:25",
+        "upload_time_iso_8601": "2024-12-14T22:42:25.009441Z",
+        "url": "https://files.pythonhosted.org/packages/22/93/48b1ef4a374799665a4a871a8cf4ad15763a8c379500fc476b981d6a2cfa/cell_aap-0.0.8.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "6ecb92d5beff214a7d74e1e81df5e3dac7ca587bb5bf09028a3de460f875a8e2",
-        "md5": "d8891644bd348afae19d6801f5691f1b",
-        "sha256": "94a832a9b3a2487b7e16d31604a6bab5339d4d17a265307a3c5fc4d3dc939f7c"
+        "blake2b_256": "56254b994c85aec6193a0b5d936b3d48491272a26319159d99241382cb384589",
+        "md5": "c03892f210c138b39b7e36362f3f4246",
+        "sha256": "6428344ba745b8663701cd699259da2ade1cdaa200fb74969e8930e06701974a"
       },
       "downloads": -1,
-      "filename": "cell_AAP-0.0.8-py3-none-any.whl",
+      "filename": "cell_AAP-0.0.8.1-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "d8891644bd348afae19d6801f5691f1b",
+      "md5_digest": "c03892f210c138b39b7e36362f3f4246",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": "<3.13,>=3.11",
-      "size": 37294,
-      "upload_time": "2024-11-27T03:20:07",
-      "upload_time_iso_8601": "2024-11-27T03:20:07.736282Z",
-      "url": "https://files.pythonhosted.org/packages/6e/cb/92d5beff214a7d74e1e81df5e3dac7ca587bb5bf09028a3de460f875a8e2/cell_AAP-0.0.8-py3-none-any.whl",
+      "size": 41568,
+      "upload_time": "2024-12-14T22:41:40",
+      "upload_time_iso_8601": "2024-12-14T22:41:40.418043Z",
+      "url": "https://files.pythonhosted.org/packages/56/25/4b994c85aec6193a0b5d936b3d48491272a26319159d99241382cb384589/cell_AAP-0.0.8.1-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "133a3a69ce1350fc1ac31328d1f4423a829e6709e9dd496f14f04dd6b76435b6",
-        "md5": "540cd1cf424dbf1ff0503d4d85e01496",
-        "sha256": "dac527287d7b3395cbe2091f61369c3b002ec9b02565f54f7a257c5e1b6198e2"
+        "blake2b_256": "229348b1ef4a374799665a4a871a8cf4ad15763a8c379500fc476b981d6a2cfa",
+        "md5": "06521b6d81f1b2e3b5bed86f873a12a5",
+        "sha256": "b6ebb7698a59b5843d64cb317cc3ef5026ef56f7d181972530e08573433e7c7c"
       },
       "downloads": -1,
-      "filename": "cell_aap-0.0.8.tar.gz",
+      "filename": "cell_aap-0.0.8.1.tar.gz",
       "has_sig": false,
-      "md5_digest": "540cd1cf424dbf1ff0503d4d85e01496",
+      "md5_digest": "06521b6d81f1b2e3b5bed86f873a12a5",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": "<3.13,>=3.11",
-      "size": 23827120,
-      "upload_time": "2024-11-27T03:20:18",
-      "upload_time_iso_8601": "2024-11-27T03:20:18.830098Z",
-      "url": "https://files.pythonhosted.org/packages/13/3a/3a69ce1350fc1ac31328d1f4423a829e6709e9dd496f14f04dd6b76435b6/cell_aap-0.0.8.tar.gz",
+      "size": 23829218,
+      "upload_time": "2024-12-14T22:42:25",
+      "upload_time_iso_8601": "2024-12-14T22:42:25.009441Z",
+      "url": "https://files.pythonhosted.org/packages/22/93/48b1ef4a374799665a4a871a8cf4ad15763a8c379500fc476b981d6a2cfa/cell_aap-0.0.8.1.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
