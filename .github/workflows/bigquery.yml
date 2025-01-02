@@ -33,6 +33,17 @@ jobs:
           python -m pip install -r requirements.txt google-cloud-bigquery
           python scripts/bigquery.py
 
+      # validate and re-index plugin versions in case new ones have been 
+      # retrieved from bigquery
+      # will update extended_summary.json, index.json and pypi.json
+      # to include all plugin versions
+      - name: (re)index
+        run: |
+          python scripts/reindex.py
+        env:
+          GH_API_TOKEN: ${{ secrets.GH_API_TOKEN }}
+          CODECOV_API_TOKEN: ${{ secrets.CODECOV_API_TOKEN }}
+
       # push changes back to the repo, this will trigger a new vercel build
       # https://github.com/stefanzweifel/git-auto-commit-action
       - uses: stefanzweifel/git-auto-commit-action@v4
