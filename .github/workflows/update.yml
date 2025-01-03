@@ -1,4 +1,4 @@
-name: Run BigQuery
+name: Update Plugin Index
 
 on:
   workflow_dispatch:
@@ -38,6 +38,11 @@ jobs:
           python -m pip install -r requirements.txt google-cloud-bigquery
           python scripts/bigquery.py
 
+      # fetch new manifests for new/updated plugins, based on active versions found with bigquery
+      - name: Fetch manifests
+        run: |
+          python scripts/fetch_manifests.py
+
       # validate and re-index plugin versions in case new ones have been 
       # retrieved from bigquery
       # will update extended_summary.json, index.json and pypi.json
@@ -53,5 +58,5 @@ jobs:
       # https://github.com/stefanzweifel/git-auto-commit-action
       - uses: stefanzweifel/git-auto-commit-action@v4
         with:
-          commit_message: '[bot] BigQuery update'
+          commit_message: '[bot] Update Plugin Index'
           commit_author: github-actions[bot] <github-actions[bot]@users.noreply.github.com>
