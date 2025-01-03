@@ -52,7 +52,8 @@ def _try_fetch_and_write_manifest(name: str, active_versions: list[str]) -> Mani
     try:
         mf = fetch_manifest(name, version_to_fetch)
         (MANIFEST_DIR / f"{name}.json").write_text(
-            mf.model_dump_json(exclude=None, indent=2)
+            # npe2 is using Pydantic v1, which doesn't support `model_dump_json`
+            mf.json(exclude=set(), indent=2)
         )
     except Exception as exc:
         print(f"❌ {name}")
