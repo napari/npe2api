@@ -237,6 +237,12 @@ if __name__ == "__main__":
         for pkg in EXTENDED_SUMMARY:
             versions = data.get(pkg["name"], {}).get("versions", [])
             pkg["conda_versions"] = sorted(set(versions), key=Version, reverse=True)
+    else:
+        print("#" * 80)
+        print("Skipping conda info....")
+        print(os.getenv("SKIP_CONDA"))
+        print(conda is not None)
+        print("#" * 80)
 
     # write out data to public locations
     (PUBLIC / "summary.json").write_text(json.dumps(PYPI_INDEX, indent=2))
