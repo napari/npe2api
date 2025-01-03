@@ -195,6 +195,11 @@ if __name__ == "__main__":
 
     # now check conda for each package and write data to public/conda/{package}.json
     if not os.getenv("SKIP_CONDA") and (conda is not None):
+        print("#" * 80)
+        print("Fetching conda info....")
+        print(os.getenv("SKIP_CONDA"))
+        print(conda is not None)
+        print("#" * 80)
         # output directory for conda info
         CONDA = PUBLIC / "conda"
         CONDA.mkdir(exist_ok=True)
