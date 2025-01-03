@@ -32,7 +32,7 @@ def _current_manifest_is_valid(name: str, version: str) -> bool:
     try:
         existing_manifest = json.loads((MANIFEST_DIR / f"{name}.json").read_text())
         return existing_manifest["package_metadata"]["version"] == version
-    except (FileNotFoundError, json.JSONDecodeError):
+    except Exception:
         return False
 
 
