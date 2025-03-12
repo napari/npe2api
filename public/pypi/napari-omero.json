@@ -16,6 +16,8 @@
       "Operating System :: OS Independent",
       "Programming Language :: Python :: 3",
       "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
       "Programming Language :: Python :: 3.9",
       "Topic :: Scientific/Engineering",
       "Topic :: Scientific/Engineering :: Bio-Informatics",
@@ -25,7 +27,7 @@
       "Topic :: Utilities",
       "Typing :: Typed"
     ],
-    "description": "# napari-omero\n\n[![License](https://img.shields.io/pypi/l/napari-omero.svg?color=green)](https://github.com/tlambert03/napari-omero/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-omero.svg?color=green)](https://pypi.org/project/napari-omero)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-omero.svg?color=green)](https://python.org)\n[![CI](https://github.com/tlambert03/napari-omero/actions/workflows/ci.yml/badge.svg)](https://github.com/tlambert03/napari-omero/actions/workflows/ci.yml)\n[![codecov](https://codecov.io/gh/tlambert03/napari-omero/branch/main/graph/badge.svg)](https://codecov.io/gh/tlambert03/napari-omero)\n[![conda-forge](https://img.shields.io/conda/vn/conda-forge/napari-omero)](https://anaconda.org/conda-forge/napari-omero)\n\nThis package provides interoperability between the\n[OMERO](https://www.openmicroscopy.org/omero/) image management platform, and\n[napari](https://github.com/napari/napari): a fast, multi-dimensional image\nviewer for python.\n\nIt provides a GUI interface for browsing an OMERO instance from within napari,\nas well as command line interface extensions for both OMERO and napari CLIs.\n\n![demo](https://github.com/tlambert03/napari-omero/blob/master/demo.gif?raw=true)\n\n## Features\n\n- GUI interface to browse remote OMERO data, with thumbnail previews.\n- Loads remote nD images from an OMERO server into napari\n- Planes are loading on demand as sliders are moved (\"lazy loading\").\n- session management (login memory)\n- OMERO rendering settings (contrast limits, colormaps, active channels, current\n  Z/T position) are applied in napari\n\n### as a napari dock widget\n\nTo launch napari with the OMERO browser added, [install](#installation) this\npackage and run:\n\n```bash\nnapari-omero\n```\n\nThe OMERO browser widget can also be manually added to the napari viewer:\n\n```python\nimport napari\n\nviewer = napari.Viewer()\nviewer.window.add_plugin_dock_widget('napari-omero')\n\nnapari.run()\n```\n\n### as a napari plugin\n\nThis package provides a napari reader plugin that accepts OMERO resources as\n\"proxy strings\" (e.g. `omero://Image:<ID>`) or as [OMERO webclient\nURLS](https://help.openmicroscopy.org/urls-to-data.html).\n\n```python\nviewer = napari.Viewer()\n\n# omero object identifier string\nviewer.open(\"omero://Image:1\")\n\n# or URLS: https://help.openmicroscopy.org/urls-to-data.html\nviewer.open(\"http://yourdomain.example.org/omero/webclient/?show=image-314\")\n```\n\nthese will also work on the napari command line interface, e.g.:\n\n```bash\nnapari omero://Image:1\n# or\nnapari http://yourdomain.example.org/omero/webclient/?show=image-314\n```\n\n### as an OMERO CLI plugin\n\nThis package also serves as a plugin to the OMERO CLI\n\n```bash\nomero napari view Image:1\n```\n\n- ROIs created in napari can be saved back to OMERO via a \"Save ROIs\" button.\n- napari viewer console has BlitzGateway 'conn' and 'omero_image' in context.\n\n## installation\n\nWhile this package supports anything above python 3.9,\nIn practice, python support is limited by `omero-py` and `zeroc-ice`,\ncompatibility, which is limited to python <=3.10 at the time of writing.\n\n### from conda\n\nIt's easiest to install `omero-py` from conda, so the recommended procedure\nis to install everything from conda, using the `conda-forge` channel\n\n```sh\nconda install -c conda-forge napari-omero\n```\n\n### from pip\n\n`napari-omero` itself can be installed from pip, but you will still need\n`omero-py`\n\n```sh\nconda create -n omero -c conda-forge python=3.10 omero-py\nconda activate omero\npip install napari-omero[all]  # the [all] here is the same as `napari[all]`\n```\n\n## issues\n\n| \u2757  | This is alpha software & some things will be broken or sub-optimal!  |\n| --- | -------------------------------------------------------------------- |\n\n- experimental & definitely still buggy!  [Bug\n  reports](https://github.com/tlambert03/napari-omero/issues/new) are welcome!\n- remote loading can be very slow still... though this is not strictly an issue\n  of this plugin.  Datasets are wrapped as delayed dask stacks, and remote data\n  fetching time can be significant.  Plans for [asynchronous\n  rendering](https://napari.org/guides/stable/rendering.html) in\n  napari and\n  [tiled loading from OMERO](https://github.com/tlambert03/napari-omero/pull/1)\n  may eventually improve the subjective performance... but remote data loading\n  will likely always be a limitation here.\n  To try asyncronous loading, start the program with `NAPARI_ASYNC=1 napari-omero`.\n\n## contributing\n\nContributions are welcome!  To get setup with a development environment:\n\n```bash\n# clone this repo:\ngit clone https://github.com/tlambert03/napari-omero.git\n# change into the new directory\ncd napari-omero\n# create conda environment\nconda env create -n napari-omero python=3.10 omero-py\n# activate the new env\nconda activate napari-omero\n\n# install in editable mode with dev dependencies\npip install -e \".[dev]\"      # quotes are needed on zsh\n```\n\nTo maintain good code quality, this repo uses\n[ruff](https://github.com/astral-sh/ruff),\n[mypy](https://github.com/python/mypy).\n\nTo enforce code quality when you commit code, you can install pre-commit\n\n```bash\n# install pre-commit which will run code checks prior to commits\npre-commit install\n```\n\nThe original OMERO data loader and CLI extension was created by [Will\nMoore](https://github.com/will-moore).\n\nThe napari reader plugin and GUI browser was created by [Talley\nLambert](https://github.com/tlambert03/)\n\n## release\n\nTo psuh a release to PyPI, one of the maintainers needs to do, for example:\n```sh\ngit tag -a v0.2.0 -m v0.2.0\ngit push upstream --follow-tags\n```\nThen, the workflow should handle everything!\n",
+    "description": "# napari-omero\n\n[![License](https://img.shields.io/pypi/l/napari-omero.svg?color=green)](https://github.com/tlambert03/napari-omero/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-omero.svg?color=green)](https://pypi.org/project/napari-omero)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-omero.svg?color=green)](https://python.org)\n[![CI](https://github.com/tlambert03/napari-omero/actions/workflows/ci.yml/badge.svg)](https://github.com/tlambert03/napari-omero/actions/workflows/ci.yml)\n[![codecov](https://codecov.io/gh/tlambert03/napari-omero/branch/main/graph/badge.svg)](https://codecov.io/gh/tlambert03/napari-omero)\n[![conda-forge](https://img.shields.io/conda/vn/conda-forge/napari-omero)](https://anaconda.org/conda-forge/napari-omero)\n\nThis package provides interoperability between the\n[OMERO](https://www.openmicroscopy.org/omero/) image management platform, and\n[napari](https://github.com/napari/napari): a fast, multi-dimensional image\nviewer for python.\n\nIt provides a GUI interface for browsing an OMERO instance from within napari,\nas well as command line interface extensions for both OMERO and napari CLIs.\n\n![demo](https://github.com/tlambert03/napari-omero/blob/master/demo.gif?raw=true)\n\n## Features\n\n- GUI interface to browse remote OMERO data, with thumbnail previews.\n- Loads remote nD images from an OMERO server into napari\n- Planes are loading on demand as sliders are moved (\"lazy loading\").\n- session management (login memory)\n- OMERO rendering settings (contrast limits, colormaps, active channels, current\n  Z/T position) are applied in napari\n\n### as a napari dock widget\n\nTo launch napari with the OMERO browser added, [install](#installation) this\npackage and run:\n\n```bash\nnapari-omero\n```\n\nThe OMERO browser widget can also be manually added to the napari viewer:\n\n```python\nimport napari\n\nviewer = napari.Viewer()\nviewer.window.add_plugin_dock_widget('napari-omero')\n\nnapari.run()\n```\n\n### as a napari plugin\n\nThis package provides a napari reader plugin that accepts OMERO resources as\n\"proxy strings\" (e.g. `omero://Image:<ID>`) or as [OMERO webclient\nURLS](https://help.openmicroscopy.org/urls-to-data.html).\n\n```python\nviewer = napari.Viewer()\n\n# omero object identifier string\nviewer.open(\"omero://Image:1\")\n\n# or URLS: https://help.openmicroscopy.org/urls-to-data.html\nviewer.open(\"http://yourdomain.example.org/omero/webclient/?show=image-314\")\n```\n\nthese will also work on the napari command line interface, e.g.:\n\n```bash\nnapari omero://Image:1\n# or\nnapari http://yourdomain.example.org/omero/webclient/?show=image-314\n```\n\n### as an OMERO CLI plugin\n\nThis package also serves as a plugin to the OMERO CLI\n\n```bash\nomero napari view Image:1\n```\n\n- ROIs created in napari can be saved back to OMERO via a \"Save ROIs\" button.\n- napari viewer console has BlitzGateway 'conn' and 'omero_image' in context.\n\n## installation\n\nWhile this package supports anything above python 3.9,\nIn practice, python support is limited by `omero-py` and `zeroc-ice`,\ncompatibility, which is limited to python <=3.12 at the time of writing.\n\n### from conda\n\nIt's easiest to install `omero-py` from conda, so the recommended procedure\nis to install everything from conda, using the `conda-forge` channel\n\n```sh\nconda install -c conda-forge napari-omero\n```\n\n### from pip\n\n`napari-omero` itself can be installed from pip, but you will still need\n`omero-py`\n\n```sh\nconda create -n omero -c conda-forge python=3.10 omero-py\nconda activate omero\npip install napari-omero[all]  # the [all] here is the same as `napari[all]`\n```\n\n## issues\n\n| \u2757  | This is alpha software & some things will be broken or sub-optimal!  |\n| --- | -------------------------------------------------------------------- |\n\n- experimental & definitely still buggy!  [Bug\n  reports](https://github.com/tlambert03/napari-omero/issues/new) are welcome!\n- remote loading can be very slow still... though this is not strictly an issue\n  of this plugin.  Datasets are wrapped as delayed dask stacks, and remote data\n  fetching time can be significant.  Enabling [asynchronous\n  rendering](https://napari.org/stable/guides/rendering.html#asynchronous-slicing) in\n  napari improves the subjective performance... but remote data loading\n  will likely always be a limitation here.\n  To try asyncronous loading, start the program with `NAPARI_ASYNC=1 napari-omero`\n  or look in the Preferences on the Experimental tab.\n  Also, keep an eye on the [napari progressive loading implementation progress](https://github.com/napari/napari/issues/5561).\n\n## contributing\n\nContributions are welcome!  To get setup with a development environment:\n\n```bash\n# clone this repo:\ngit clone https://github.com/tlambert03/napari-omero.git\n# change into the new directory\ncd napari-omero\n# create conda environment\nconda env create -n napari-omero python=3.10 omero-py\n# activate the new env\nconda activate napari-omero\n\n# install in editable mode with dev dependencies\npip install -e \".[dev]\"      # quotes are needed on zsh\n```\n\nTo maintain good code quality, this repo uses\n[ruff](https://github.com/astral-sh/ruff),\n[mypy](https://github.com/python/mypy).\n\nTo enforce code quality when you commit code, you can install pre-commit\n\n```bash\n# install pre-commit which will run code checks prior to commits\npre-commit install\n```\n\nThe original OMERO data loader and CLI extension was created by [Will\nMoore](https://github.com/will-moore).\n\nThe napari reader plugin and GUI browser was created by [Talley\nLambert](https://github.com/tlambert03/)\n\n## release\n\nTo psuh a release to PyPI, one of the maintainers needs to do, for example:\n```sh\ngit tag -a v0.2.0 -m v0.2.0\ngit push upstream --follow-tags\n```\nThen, the workflow should handle everything!\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -39,7 +41,9 @@
     "keywords": "OMERO.CLI, napari, napari-plugin, plugin",
     "license": "GPL-2.0-or-later",
     "license_expression": null,
-    "license_files": null,
+    "license_files": [
+      "LICENSE"
+    ],
     "maintainer": null,
     "maintainer_email": null,
     "name": "napari-omero",
@@ -55,7 +59,7 @@
       "dev",
       "test"
     ],
-    "release_url": "https://pypi.org/project/napari-omero/0.3.0/",
+    "release_url": "https://pypi.org/project/napari-omero/0.4.0/",
     "requires_dist": [
       "dask[array]>=2021.10.0",
       "napari>=0.4.13",
@@ -85,11 +89,11 @@
     ],
     "requires_python": ">=3.9",
     "summary": "napari/OMERO interoperability",
-    "version": "0.3.0",
+    "version": "0.4.0",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 26848648,
+  "last_serial": 27906559,
   "releases": {
     "0.1.0": [
       {
@@ -442,48 +446,92 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.4.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "e15ff5860b00e6ae36090ffb7df7d12d227a4686bd0c33183b732fab45d3d0e9",
+          "md5": "b50af81012e244c1297db09b94397718",
+          "sha256": "95b5438f84620f3bba39e762801e9e6549723343622a5dad22f90a7af9e569e1"
+        },
+        "downloads": -1,
+        "filename": "napari_omero-0.4.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "b50af81012e244c1297db09b94397718",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 28651,
+        "upload_time": "2025-03-12T10:57:54",
+        "upload_time_iso_8601": "2025-03-12T10:57:54.473384Z",
+        "url": "https://files.pythonhosted.org/packages/e1/5f/f5860b00e6ae36090ffb7df7d12d227a4686bd0c33183b732fab45d3d0e9/napari_omero-0.4.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "3f5d0ce10952c29bd4150b83427547091a228612e45188aef89562cd01fcc9d4",
+          "md5": "a20535fa8ab2d5477a4fae10894bd249",
+          "sha256": "f0ba40c52de1251f99516f296f4599cf291fbe1bb1f45846156b4c82f1f11aa5"
+        },
+        "downloads": -1,
+        "filename": "napari_omero-0.4.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "a20535fa8ab2d5477a4fae10894bd249",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 10225262,
+        "upload_time": "2025-03-12T10:57:56",
+        "upload_time_iso_8601": "2025-03-12T10:57:56.047189Z",
+        "url": "https://files.pythonhosted.org/packages/3f/5d/0ce10952c29bd4150b83427547091a228612e45188aef89562cd01fcc9d4/napari_omero-0.4.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
-      "comment_text": "",
+      "comment_text": null,
       "digests": {
-        "blake2b_256": "2f4bad2cf2e3bf7f3053acb30d5539c207f0c8a12e83330536c428ebabe3e2e2",
-        "md5": "158ad68480433c58b131be809627e8b9",
-        "sha256": "8497049affb04331bdf8bfff4b437aaae96ce32825d88309195b2478de5ae11c"
+        "blake2b_256": "e15ff5860b00e6ae36090ffb7df7d12d227a4686bd0c33183b732fab45d3d0e9",
+        "md5": "b50af81012e244c1297db09b94397718",
+        "sha256": "95b5438f84620f3bba39e762801e9e6549723343622a5dad22f90a7af9e569e1"
       },
       "downloads": -1,
-      "filename": "napari_omero-0.3.0-py3-none-any.whl",
+      "filename": "napari_omero-0.4.0-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "158ad68480433c58b131be809627e8b9",
+      "md5_digest": "b50af81012e244c1297db09b94397718",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.9",
-      "size": 27911,
-      "upload_time": "2025-01-08T15:08:35",
-      "upload_time_iso_8601": "2025-01-08T15:08:35.709277Z",
-      "url": "https://files.pythonhosted.org/packages/2f/4b/ad2cf2e3bf7f3053acb30d5539c207f0c8a12e83330536c428ebabe3e2e2/napari_omero-0.3.0-py3-none-any.whl",
+      "size": 28651,
+      "upload_time": "2025-03-12T10:57:54",
+      "upload_time_iso_8601": "2025-03-12T10:57:54.473384Z",
+      "url": "https://files.pythonhosted.org/packages/e1/5f/f5860b00e6ae36090ffb7df7d12d227a4686bd0c33183b732fab45d3d0e9/napari_omero-0.4.0-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
-      "comment_text": "",
+      "comment_text": null,
       "digests": {
-        "blake2b_256": "c0afd8aefe667128b9b945135b7b22b64d9014ca97ac39400fb4beb9f69f5775",
-        "md5": "f951730f92a01e49be2b5c2072c4f3d5",
-        "sha256": "c1650718c1923984f4df510dccb35d3d4ee80c8bfe28f61b3806460f0dbbffe8"
+        "blake2b_256": "3f5d0ce10952c29bd4150b83427547091a228612e45188aef89562cd01fcc9d4",
+        "md5": "a20535fa8ab2d5477a4fae10894bd249",
+        "sha256": "f0ba40c52de1251f99516f296f4599cf291fbe1bb1f45846156b4c82f1f11aa5"
       },
       "downloads": -1,
-      "filename": "napari_omero-0.3.0.tar.gz",
+      "filename": "napari_omero-0.4.0.tar.gz",
       "has_sig": false,
-      "md5_digest": "f951730f92a01e49be2b5c2072c4f3d5",
+      "md5_digest": "a20535fa8ab2d5477a4fae10894bd249",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.9",
-      "size": 10224452,
-      "upload_time": "2025-01-08T15:08:39",
-      "upload_time_iso_8601": "2025-01-08T15:08:39.586268Z",
-      "url": "https://files.pythonhosted.org/packages/c0/af/d8aefe667128b9b945135b7b22b64d9014ca97ac39400fb4beb9f69f5775/napari_omero-0.3.0.tar.gz",
+      "size": 10225262,
+      "upload_time": "2025-03-12T10:57:56",
+      "upload_time_iso_8601": "2025-03-12T10:57:56.047189Z",
+      "url": "https://files.pythonhosted.org/packages/3f/5d/0ce10952c29bd4150b83427547091a228612e45188aef89562cd01fcc9d4/napari_omero-0.4.0.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
