@@ -18,7 +18,7 @@
       "Programming Language :: Python :: 3.13",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "# napari-sam2long\n\n[![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC_BY--NC_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)\n[![PyPI](https://img.shields.io/pypi/v/napari-sam2long.svg?color=green)](https://pypi.org/project/napari-sam2long)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-sam2long.svg?color=green)](https://python.org)\n[![tests](https://github.com/maihanhoang/napari-sam2long/workflows/tests/badge.svg)](https://github.com/maihanhoang/napari-sam2long/actions)\n[![codecov](https://codecov.io/gh/maihanhoang/napari-sam2long/branch/main/graph/badge.svg)](https://codecov.io/gh/maihanhoang/napari-sam2long)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-sam2long)](https://napari-hub.org/plugins/napari-sam2long)\n[![npe2](https://img.shields.io/badge/plugin-npe2-blue?link=https://napari.org/stable/plugins/index.html)](https://napari.org/stable/plugins/index.html)\n[![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-purple.json)](https://github.com/copier-org/copier)\n\nA plugin for interactive 3D (volumetric or time-lapse) segmentation using Meta's Segment Anything Model 2 (SAM2).\n\nDesigned for bioimaging researchers working with 3D volumetric or time-lapse images, this plugin supports TIFF files in ZYX or TYX format. Users can provide input and make corrections through point clicks or manually drawn masks.\n\nThe tool leverages the [SAM2Long](https://github.com/Mark12Ding/SAM2Long) model, an optimized version of [Meta's SAM 2](https://github.com/facebookresearch/sam2) with enhancements to the memory module for improved performance on long videos. It was built to support long videos, but it remains effective for shorter videos as well.\n\nThis [napari] plugin was generated with [copier] using the [napari-plugin-template].\n\n<div align=\"center\">\n\nhttps://github.com/user-attachments/assets/6c753c65-ff8c-4dff-a9c9-5b445f5cad13\n\n</div>\n\n\n<div align=\"center\">\n\nhttps://github.com/user-attachments/assets/04396517-cc20-42f4-93f3-81cc2a0f4560\n\n</div>\n\n## Installation\nPlease see the official [SAM 2](https://github.com/facebookresearch/sam2) repo and the [INSTALL.md](https://github.com/facebookresearch/sam2/blob/main/INSTALL.md) for notes and FAQs on potential installation issues.\n\n1. Create a new conda environment with python>=3.10 and install napari:\n    ```bash\n    conda create -n napari-sam2long python==3.10\n    conda activate napari-sam2long\n    python -m pip install \"napari[all]\"\n    ```\n\n2. Install PyTorch and TorchVision. Select preferences [here](https://pytorch.org/get-started/locally/) to find correct installation command.\n\n    Example command can look like this:\n\n    ```bash\n    pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126\n    ```\n\n3. Install SAM2Long:\n    ```bash\n    git clone git@github.com:maihanhoang/napari-sam2long.git\n\n    cd napari-sam2long/SAM2Long && pip install -e .\n    ```\n4. Install napari-SAM2Long plugin:\n    ```bash\n    cd .. && pip install e .\n    ```\n\n## Usage\n\n### Segmenting & tracking first object\n1. **Open a 3D tiff** in napari, make sure it's in TYX or ZYX format.\n2. **Select** the image in the ***Input*** dropdown.\n3. **Add a new [labels layer](https://napari.org/0.5.0/howtos/layers/labels.html)** *after* the input image, then select it in the *Labels* dropdown.\n\n    The labels layer must be added after the image to ensure dimension alignment.\n4. **Select the *Model***.\n5. **Click *Initialize*** to load the image and initialize the inference state.\n6. **Define the initial object mask** on any frame:\n    - Use the mouse middle-click to prompt the model:\n        - *Middle-click* = add region\n        - *Ctrl + middle-click* = remove region\n    - Or use napari's built-in tools (paintbrush, eraser, etc.) to draw the mask manually.\n\n    If the model doesn\u2019t segment the object accurately with point prompts, manual correction using napari tools can be useful.\n\n7. Once satisfied with the initial mask, **click *Propagate from current frame*** to obtain segmentations for all subsequent frames. The result will be added to the labels layer.\n\n    Propagation only affects future frames. It does not recompute previous ones or consider prompts from other frames. Only the current mask is used to propagate forward.\n\n### Making corrections\n8. To refine segmentation, add/remove regions use:\n    - *(Ctrl+) middle-click* prompts\n    - napari\u2019s label tools\n9. *Propagate from current frame* to re-run the model's predictions with the new mask.\n\n    The plugin treats this as a new initial mask and discards earlier prompts on that frame.\n\n### Segmenting another object in the same image/video\n10. Save the current labels layer (to preserve previous segmentation).\n11. Click *Reset*, or add a new labels layer and select it in the *Labels* dropdown.\nThen repeat steps from Step 6 for the next object.\n\n###  Segment new image/video\n12. *Reset* inference state.\n13. Load new image and follow instructions starting from Step 1.\n    *Initialize* is necessary to load the new image.\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[copier]: https://copier.readthedocs.io/en/stable/\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[napari-plugin-template]: https://github.com/napari/napari-plugin-template\n\n[file an issue]: https://github.com/maihanhoang/napari-sam2long/issues\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n\n## Bibliography\n[1]: Nikhila Ravi, Valentin Gabeur, Yuan-Ting Hu, Ronghang Hu, Chaitanya Ryali, Tengyu Ma, Haitham Khedr, Roman R\u00e4dle, Chloe Rolland, Laura Gustafson, Eric Mintun, Junting Pan, Kalyan Vasudev Alwala, Nicolas Carion, Chao-Yuan Wu, Ross Girshick, Piotr Doll\u00e1r, & Christoph Feichtenhofer. (2024). SAM 2: Segment Anything in Images and Videos.\n\n[2]: Ding, S., Qian, R., Dong, X., Zhang, P., Zang, Y., Cao, Y., Guo, Y., Lin, D., & Wang, J. (2024). SAM2Long: Enhancing SAM 2 for Long Video Segmentation with a Training-Free Memory Tree. arXiv preprint arXiv:2410.16268.\n\n## License & Attribution\n\nThis project integrates code from:\n- [SAM2](https://github.com/facebookresearch/sam2) by Meta ([`Apache 2.0 License`](LICENSE-Apache-2.0))\n- [SAM2Long](https://github.com/Mark12Ding/SAM2Long) by Shuangrui Ding et al. ([`CC-BY-NC 4.0 License`](LICENSE-CC-BY-NC-4.0))\n- [napari-samv2](https://github.com/Krishvraman/napari-SAMV2) by Krishnan Venkataraman ([`BSD-3 License`](LICENSE-BSD-3))\n\n\nThe following changes were made to SAM2Long:\n- integrated SAM2Long into a napari plugin\n- modified the video predictor to support the progress bar in the plugin\n\n\nSince this project includes **SAM2Long**, it inherits the **CC-BY-NC 4.0 license**, meaning **commercial use is not allowed**.\n",
+    "description": "# napari-sam2long\n\n[![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC_BY--NC_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)\n[![PyPI](https://img.shields.io/pypi/v/napari-sam2long.svg?color=green)](https://pypi.org/project/napari-sam2long)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-sam2long.svg?color=green)](https://python.org)\n[![tests](https://github.com/maihanhoang/napari-sam2long/workflows/tests/badge.svg)](https://github.com/maihanhoang/napari-sam2long/actions)\n[![codecov](https://codecov.io/gh/maihanhoang/napari-sam2long/branch/main/graph/badge.svg)](https://codecov.io/gh/maihanhoang/napari-sam2long)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-sam2long)](https://napari-hub.org/plugins/napari-sam2long)\n[![npe2](https://img.shields.io/badge/plugin-npe2-blue?link=https://napari.org/stable/plugins/index.html)](https://napari.org/stable/plugins/index.html)\n[![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-purple.json)](https://github.com/copier-org/copier)\n\nA plugin for interactive 3D (volumetric or time-lapse) segmentation using Meta's Segment Anything Model 2 (SAM2).\n\nDesigned for bioimaging researchers working with 3D volumetric or time-lapse images, this plugin supports TIFF files in ZYX or TYX format. Users can provide input and make corrections through point clicks or manually drawn masks.\n\nThe tool leverages the [SAM2Long](https://github.com/Mark12Ding/SAM2Long) model, an optimized version of [Meta's SAM 2](https://github.com/facebookresearch/sam2) with enhancements to the memory module for improved performance on long videos. It was built to support long videos, but it remains effective for shorter videos as well.\n\nThis [napari] plugin was generated with [copier] using the [napari-plugin-template].\n\n<h3 align=\"center\">Select object with point prompts</h3>\n<p align=\"middle\">\n  <img src=\"https://github.com/maihanhoang/napari-sam2long/raw/main/assets/napari-sam2long-firstLabel.gif\" width=\"100%\" />\n</p>\n\n<h3 align=\"center\">Refine object selection with napari tools </h3>\n<p align=\"middle\">\n  <img src=\"https://github.com/maihanhoang/napari-sam2long/raw/main/assets/napari-sam2long-anotherLabel.gif\" width=\"100%\" />\n</p>\n\n\n## Installation\nPlease see the official [SAM 2](https://github.com/facebookresearch/sam2) repo and the [INSTALL.md](https://github.com/facebookresearch/sam2/blob/main/INSTALL.md) for notes and FAQs on potential installation issues.\n\n1. Create a new conda environment with python>=3.10 and install napari:\n    ```bash\n    conda create -n napari-sam2long python==3.10\n    conda activate napari-sam2long\n    python -m pip install \"napari[all]\"\n    ```\n\n2. Install PyTorch and TorchVision. Select preferences [here](https://pytorch.org/get-started/locally/) to find correct installation command.\n\n    Example command can look like this:\n\n    ```bash\n    pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126\n    ```\n\n3. Install SAM2Long:\n    ```bash\n    git clone git@github.com:maihanhoang/napari-sam2long.git\n\n    cd napari-sam2long/SAM2Long && pip install -e .\n    ```\n4. Install napari-SAM2Long plugin:\n    ```bash\n    cd .. && pip install e .\n    ```\n\n## Usage\n\n### Segmenting & tracking first object\n1. **Open a 3D tiff** in napari, make sure it's in TYX or ZYX format.\n2. **Select** the image in the ***Input*** dropdown.\n3. **Add a new [labels layer](https://napari.org/0.5.0/howtos/layers/labels.html)** *after* the input image, then select it in the *Labels* dropdown.\n\n    The labels layer must be added after the image to ensure dimension alignment.\n4. **Select the *Model***.\n5. **Click *Initialize*** to load the image and initialize the inference state.\n6. **Define the initial object mask** on any frame:\n    - Use the mouse middle-click to prompt the model:\n        - *Middle-click* = add region\n        - *Ctrl + middle-click* = remove region\n    - Or use napari's built-in tools (paintbrush, eraser, etc.) to draw the mask manually.\n\n    If the model doesn\u2019t segment the object accurately with point prompts, manual correction using napari tools can be useful.\n\n7. Once satisfied with the initial mask, **click *Propagate from current frame*** to obtain segmentations for all subsequent frames. The result will be added to the labels layer.\n\n    Propagation only affects future frames. It does not recompute previous ones or consider prompts from other frames. Only the current mask is used to propagate forward.\n\n### Making corrections\n8. To refine segmentation, add/remove regions use:\n    - *(Ctrl+) middle-click* prompts\n    - napari\u2019s label tools\n9. *Propagate from current frame* to re-run the model's predictions with the new mask.\n\n    The plugin treats this as a new initial mask and discards earlier prompts on that frame.\n\n### Segmenting another object in the same image/video\n10. Save the current labels layer (to preserve previous segmentation).\n11. Click *Reset*, or add a new labels layer and select it in the *Labels* dropdown.\nThen repeat steps from Step 6 for the next object.\n\n###  Segment new image/video\n12. *Reset* inference state.\n13. Load new image and follow instructions starting from Step 1.\n    *Initialize* is necessary to load the new image.\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[copier]: https://copier.readthedocs.io/en/stable/\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[napari-plugin-template]: https://github.com/napari/napari-plugin-template\n\n[file an issue]: https://github.com/maihanhoang/napari-sam2long/issues\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n\n## Bibliography\n[1]: Nikhila Ravi, Valentin Gabeur, Yuan-Ting Hu, Ronghang Hu, Chaitanya Ryali, Tengyu Ma, Haitham Khedr, Roman R\u00e4dle, Chloe Rolland, Laura Gustafson, Eric Mintun, Junting Pan, Kalyan Vasudev Alwala, Nicolas Carion, Chao-Yuan Wu, Ross Girshick, Piotr Doll\u00e1r, & Christoph Feichtenhofer. (2024). SAM 2: Segment Anything in Images and Videos.\n\n[2]: Ding, S., Qian, R., Dong, X., Zhang, P., Zang, Y., Cao, Y., Guo, Y., Lin, D., & Wang, J. (2024). SAM2Long: Enhancing SAM 2 for Long Video Segmentation with a Training-Free Memory Tree. arXiv preprint arXiv:2410.16268.\n\n## License & Attribution\n\nThis project integrates code from:\n- [SAM2](https://github.com/facebookresearch/sam2) by Meta ([`Apache 2.0 License`](LICENSE-Apache-2.0))\n- [SAM2Long](https://github.com/Mark12Ding/SAM2Long) by Shuangrui Ding et al. ([`CC-BY-NC 4.0 License`](LICENSE-CC-BY-NC-4.0))\n- [napari-samv2](https://github.com/Krishvraman/napari-SAMV2) by Krishnan Venkataraman ([`BSD-3 License`](LICENSE-BSD-3))\n\n\nThe following changes were made to SAM2Long:\n- integrated SAM2Long into a napari plugin\n- modified the video predictor to support the progress bar in the plugin\n\n\nSince this project includes **SAM2Long**, it inherits the **CC-BY-NC 4.0 license**, meaning **commercial use is not allowed**.\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -47,13 +47,14 @@
     "project_urls": {
       "Bug Tracker": "https://github.com/maihanhoang/napari-sam2long/issues",
       "Documentation": "https://github.com/maihanhoang/napari-sam2long#README.md",
+      "Homepage": "https://github.com/maihanhoang/napari-sam2long",
       "Source Code": "https://github.com/maihanhoang/napari-sam2long",
       "User Support": "https://github.com/maihanhoang/napari-sam2long/issues"
     },
     "provides_extra": [
       "testing"
     ],
-    "release_url": "https://pypi.org/project/napari-sam2long/1.0.0/",
+    "release_url": "https://pypi.org/project/napari-sam2long/1.0.2/",
     "requires_dist": [
       "numpy",
       "magicgui",
@@ -70,11 +71,11 @@
     ],
     "requires_python": ">=3.10",
     "summary": "A plugin for interactive 3D (volumetric or time-lapse) segmentation using Meta's Segment Anything Model 2 (SAM2).",
-    "version": "1.0.0",
+    "version": "1.0.2",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 28579907,
+  "last_serial": 28583548,
   "releases": {
     "0.1.2": [
       {
@@ -207,48 +208,136 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "1.0.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "64981fea2a1d38bc8cb8072573845b813163c938725127368d206751ef9fb434",
+          "md5": "420e31a6c8f56efa46f619fe06dd0e2b",
+          "sha256": "7581dfee35967510778734f4a89b3f0a29e2087f90be27e98b0c3991dc279f3c"
+        },
+        "downloads": -1,
+        "filename": "napari_sam2long-1.0.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "420e31a6c8f56efa46f619fe06dd0e2b",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 28235,
+        "upload_time": "2025-04-17T18:54:12",
+        "upload_time_iso_8601": "2025-04-17T18:54:12.754657Z",
+        "url": "https://files.pythonhosted.org/packages/64/98/1fea2a1d38bc8cb8072573845b813163c938725127368d206751ef9fb434/napari_sam2long-1.0.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "9f7cc37e4f0cc7d022b35630b7850adb4ba62b1b661971b71d49ce2c4f4f0a63",
+          "md5": "9f541734cbbf2278a425057d838c347b",
+          "sha256": "b457c627b3114e5507ca9fe1a9ad27a30b43be4f7584cc22a2a335d84bf4bd1b"
+        },
+        "downloads": -1,
+        "filename": "napari_sam2long-1.0.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "9f541734cbbf2278a425057d838c347b",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 19478866,
+        "upload_time": "2025-04-17T18:54:14",
+        "upload_time_iso_8601": "2025-04-17T18:54:14.010414Z",
+        "url": "https://files.pythonhosted.org/packages/9f/7c/c37e4f0cc7d022b35630b7850adb4ba62b1b661971b71d49ce2c4f4f0a63/napari_sam2long-1.0.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.2": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "07ae01518f678f7f355c0f165daa90c78cdda08bd6c5d33e2b7c28cecbeedbb2",
+          "md5": "dfeeb25c2cdba87ef3e150427d455273",
+          "sha256": "67c91a1459384d6857f9fc61296b7a528168a33de0185c47a83d7692cdd0387b"
+        },
+        "downloads": -1,
+        "filename": "napari_sam2long-1.0.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "dfeeb25c2cdba87ef3e150427d455273",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 28249,
+        "upload_time": "2025-04-17T19:11:55",
+        "upload_time_iso_8601": "2025-04-17T19:11:55.022492Z",
+        "url": "https://files.pythonhosted.org/packages/07/ae/01518f678f7f355c0f165daa90c78cdda08bd6c5d33e2b7c28cecbeedbb2/napari_sam2long-1.0.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "14a37fca4135345520398d92081ac5b285b58a77d223d0671343c9d271c69e50",
+          "md5": "aee456be06e0f7cd099e2c0544789b6b",
+          "sha256": "f9ea9ccce80a81b8be4c67722f1a7c07688199d092320091dca6a9fe4ee68bdf"
+        },
+        "downloads": -1,
+        "filename": "napari_sam2long-1.0.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "aee456be06e0f7cd099e2c0544789b6b",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 19478954,
+        "upload_time": "2025-04-17T19:11:56",
+        "upload_time_iso_8601": "2025-04-17T19:11:56.696456Z",
+        "url": "https://files.pythonhosted.org/packages/14/a3/7fca4135345520398d92081ac5b285b58a77d223d0671343c9d271c69e50/napari_sam2long-1.0.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": null,
       "digests": {
-        "blake2b_256": "a13f72c64e6e74af52dd175a5bbe94f4dbb898886402b8e16cffe9694252925c",
-        "md5": "49d3becf114d9aa7d2bb1fc5940ffae9",
-        "sha256": "9810aeeab42eb41da91c26da62249c4f080239d575f6139d530a784eae640fc3"
+        "blake2b_256": "07ae01518f678f7f355c0f165daa90c78cdda08bd6c5d33e2b7c28cecbeedbb2",
+        "md5": "dfeeb25c2cdba87ef3e150427d455273",
+        "sha256": "67c91a1459384d6857f9fc61296b7a528168a33de0185c47a83d7692cdd0387b"
       },
       "downloads": -1,
-      "filename": "napari_sam2long-1.0.0-py3-none-any.whl",
+      "filename": "napari_sam2long-1.0.2-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "49d3becf114d9aa7d2bb1fc5940ffae9",
+      "md5_digest": "dfeeb25c2cdba87ef3e150427d455273",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.10",
-      "size": 28230,
-      "upload_time": "2025-04-17T15:31:25",
-      "upload_time_iso_8601": "2025-04-17T15:31:25.154098Z",
-      "url": "https://files.pythonhosted.org/packages/a1/3f/72c64e6e74af52dd175a5bbe94f4dbb898886402b8e16cffe9694252925c/napari_sam2long-1.0.0-py3-none-any.whl",
+      "size": 28249,
+      "upload_time": "2025-04-17T19:11:55",
+      "upload_time_iso_8601": "2025-04-17T19:11:55.022492Z",
+      "url": "https://files.pythonhosted.org/packages/07/ae/01518f678f7f355c0f165daa90c78cdda08bd6c5d33e2b7c28cecbeedbb2/napari_sam2long-1.0.2-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": null,
       "digests": {
-        "blake2b_256": "95af4a64a53e42a23ead417fce0a59bf3b4e4c1adda35928a0dd304738a79d0c",
-        "md5": "9bdef5033cf2f4f2b41839190d7e7af7",
-        "sha256": "f075e87e4b3e1bf6d7e8baf373fbaa58685d1068aff3d08ac8878b609554b981"
+        "blake2b_256": "14a37fca4135345520398d92081ac5b285b58a77d223d0671343c9d271c69e50",
+        "md5": "aee456be06e0f7cd099e2c0544789b6b",
+        "sha256": "f9ea9ccce80a81b8be4c67722f1a7c07688199d092320091dca6a9fe4ee68bdf"
       },
       "downloads": -1,
-      "filename": "napari_sam2long-1.0.0.tar.gz",
+      "filename": "napari_sam2long-1.0.2.tar.gz",
       "has_sig": false,
-      "md5_digest": "9bdef5033cf2f4f2b41839190d7e7af7",
+      "md5_digest": "aee456be06e0f7cd099e2c0544789b6b",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.10",
-      "size": 1612180,
-      "upload_time": "2025-04-17T15:31:26",
-      "upload_time_iso_8601": "2025-04-17T15:31:26.570126Z",
-      "url": "https://files.pythonhosted.org/packages/95/af/4a64a53e42a23ead417fce0a59bf3b4e4c1adda35928a0dd304738a79d0c/napari_sam2long-1.0.0.tar.gz",
+      "size": 19478954,
+      "upload_time": "2025-04-17T19:11:56",
+      "upload_time_iso_8601": "2025-04-17T19:11:56.696456Z",
+      "url": "https://files.pythonhosted.org/packages/14/a3/7fca4135345520398d92081ac5b285b58a77d223d0671343c9d271c69e50/napari_sam2long-1.0.2.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
