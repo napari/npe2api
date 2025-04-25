@@ -9,6 +9,8 @@ from urllib.request import urlopen
 
 from packaging.version import Version
 
+from utils import normalize
+
 PUBLIC = Path(__file__).parent.parent / "public"
 PYPI_DIR = PUBLIC / "pypi"
 PYPI_DIR.mkdir(exist_ok=True, parents=True)
@@ -54,6 +56,8 @@ def _find_by_classifier(classifier: str) -> dict[str, list[str]]:
     package_versions = {}
     for name, version in packages:
         assert isinstance(name, str) and isinstance(version, str), XML_RPC_MSG
+        # normalize name as per PyPA
+        name = normalize(name)
         package_versions.setdefault(name, []).append(version)
 
     return {
