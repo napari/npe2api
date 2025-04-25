@@ -163,6 +163,7 @@ if __name__ == "__main__":
                 "author": meta["author"],
                 "license": meta["license"],
                 "home_page": meta["home_page"],
+                "project_url": meta["project_url"],
             }
         )
 
