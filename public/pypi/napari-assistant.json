@@ -1,7 +1,7 @@
 {
   "info": {
     "author": "Robert Haase, Ryan Savill",
-    "author_email": "robert.haase@tu-dresden.de",
+    "author_email": "robert.haase@uni-leipzig.de",
     "bugtrack_url": null,
     "classifiers": [
       "Framework :: napari",
@@ -15,7 +15,7 @@
       "Topic :: Scientific/Engineering :: Image Processing",
       "Topic :: Scientific/Engineering :: Information Analysis"
     ],
-    "description": "# napari-assistant\n[![License](https://img.shields.io/pypi/l/napari-assistant.svg?color=green)](https://github.com/haesleinhuepf/napari-assistant/raw/master/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-assistant.svg?color=green)](https://pypi.org/project/napari-assistant)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-assistant.svg?color=green)](https://python.org)\n[![tests](https://github.com/haesleinhuepf/napari-assistant/workflows/tests/badge.svg)](https://github.com/haesleinhuepf/napari-assistant/actions)\n[![codecov](https://codecov.io/gh/haesleinhuepf/napari-assistant/branch/master/graph/badge.svg)](https://codecov.io/gh/haesleinhuepf/napari-assistant)\n[![Development Status](https://img.shields.io/pypi/status/napari-assistant.svg)](https://en.wikipedia.org/wiki/Software_release_life_cycle#Alpha)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-assistant)](https://napari-hub.org/plugins/napari-assistant)\n[![DOI](https://zenodo.org/badge/463875112.svg)](https://zenodo.org/badge/latestdoi/463875112)\n\n\nThe napari-assistant is a [napari](https://github.com/napari/napari) meta-plugin for building image processing workflows. \n\n## Usage\n\nAfter installing one or more napari plugins that use the napari-assistant as user interface, you can start it from the \nmenu `Tools > Utilities > Assistant (na)` or run `naparia` from the command line. \n\nBy clicking on the buttons in the assistant, you can setup a workflow for processing the images.\n\n![img.png](https://github.com/haesleinhuepf/napari-assistant/raw/main/docs/napari-assistant-screenshot.png)\n\nWhile setting up your workflow, you can at any point select a layer from the layer list (1) and change the parameters of\nthe corresponding operation (2). The layer will update when you change parameters and also all subsequent operations. \nYou can also vary which operation is applied to the image (3). Also make sure the right input image layer is selected (4).\n\n![img.png](https://github.com/haesleinhuepf/napari-assistant/raw/main/docs/design_workflows.png)\n\n### Saving and loading workflows\n\nYou can also save and load workflows to disk. \n\n![img.png](https://github.com/haesleinhuepf/napari-assistant/raw/main/docs/save_and_load.png)\n\nAfter loading a workflow, make sure that the right input images are selected.\n\n### Code generation\n\nThe napari-assistant allows exporting the given workflow as Python script and Jupyter Notebook. \n\n![img.png](https://github.com/haesleinhuepf/napari-assistant/raw/main/docs/code_generator.png)\n\nFurthermore, if you have the [napari-script-editor](https://www.napari-hub.org/plugins/napari-script-editor) installed,\nyou can also send the current workflow as code to the script editor from the same menu.\n\n![img.png](https://github.com/haesleinhuepf/napari-assistant/raw/main/docs/napari_script_editor.png)\n\n### Plugin generation\n\nThere is also a Napari plugin generator available. Check out [its documentation](https://github.com/haesleinhuepf/napari-assistant-plugin-generator) to learn how napari-assistant compatible plugins can be generated directly from within the assistant.\n\n## Installation\n\nIt is recommended to install the napari-assistant via one of the plugins that use it as graphical user interface.\nYou find a complete list of plugins that use the assistant [on the napari-hub](https://www.napari-hub.org/?search=napari-assistant&sort=relevance).\nMultiple of these plugins come bundled when installing [devbio-napari](https://www.napari-hub.org/plugins/devbio-napari).\n\n## For developers\n\nIf you want to make your napari-plugin accessible from the napari-assistant, consider programming functions with a simple \ninterface that consume images, labels, integers, floats and strings. Annotate input and return types, e.g. like this:\n```python\ndef example_function_widget(image: \"napari.types.ImageData\") -> \"napari.types.LabelsData\":\n    from skimage.filters import threshold_otsu\n    binary_image = image > threshold_otsu(image)\n\n    from skimage.measure import label\n    return label(binary_image)\n```\n\nFurthermore, please add your function to the napari.yaml which uses [npe2](https://github.com/napari/npe2):\n```\nname: napari-npe2-test\ndisplay_name: napari-npe2-test\ncontributions:\n  commands: \n    - id: napari-npe2-test.make_magic_widget\n      python_name: napari_npe2_test._widget:example_magic_widget\n      title: Make example magic widget\n  widgets:\n    - command: napari-npe2-test.make_magic_widget\n      display_name: Segmentation / labeling > Otsu Labeling (nnpe2t)\n```\n\nTo put it in the right button within the napari-assistant, please use one of the following prefixes for the `display_name`:\n* `Filtering / noise removal > `\n* `Filtering / background removal > `\n* `Filtering > `\n* `Image math > `\n* `Transform > `\n* `Projection > `\n* `Segmentation / binarization > `\n* `Segmentation / labeling > `\n* `Segmentation post-processing > `\n* `Measurement > `\n* `Label neighbor filters > `\n* `Label filters > `\n* `Visualization > `\n\nYou find a fully functional example [here](https://github.com/haesleinhuepf/napari-npe2-test).\n\nLast but not least, to make your napari-plugin is listed in the napari-hub when searching for \"napari-assistant\", make sure\nyou mention it in your `readme`.\n\n## Feedback welcome!\n\nThe napari-assistant is developed in the open because we believe in the open source community. Feel free to drop feedback as [github issue](https://github.com/haesleinhuepf/napari-assistant/issues) or via [image.sc](https://image.sc)\n\n## Contributing\n\nContributions are very welcome. Please ensure\nthe test coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-assistant\" is free and open source software\n\n## Acknowledgements\nThis project was supported by the Deutsche Forschungsgemeinschaft under Germany\u2019s Excellence Strategy \u2013 EXC2068 - Cluster of Excellence \"Physics of Life\" of TU Dresden. \nThis project has been made possible in part by grant number [2021-240341 (Napari plugin accelerator grant)](https://chanzuckerberg.com/science/programs-resources/imaging/napari/improving-image-processing/) from the Chan Zuckerberg Initiative DAF, an advised fund of the Silicon Valley Community Foundation.\n\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n\n",
+    "description": "# napari-assistant\r\n[![License](https://img.shields.io/pypi/l/napari-assistant.svg?color=green)](https://github.com/haesleinhuepf/napari-assistant/raw/master/LICENSE)\r\n[![PyPI](https://img.shields.io/pypi/v/napari-assistant.svg?color=green)](https://pypi.org/project/napari-assistant)\r\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-assistant.svg?color=green)](https://python.org)\r\n[![tests](https://github.com/haesleinhuepf/napari-assistant/workflows/tests/badge.svg)](https://github.com/haesleinhuepf/napari-assistant/actions)\r\n[![codecov](https://codecov.io/gh/haesleinhuepf/napari-assistant/branch/master/graph/badge.svg)](https://codecov.io/gh/haesleinhuepf/napari-assistant)\r\n[![Development Status](https://img.shields.io/pypi/status/napari-assistant.svg)](https://en.wikipedia.org/wiki/Software_release_life_cycle#Alpha)\r\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-assistant)](https://napari-hub.org/plugins/napari-assistant)\r\n[![DOI](https://zenodo.org/badge/463875112.svg)](https://zenodo.org/badge/latestdoi/463875112)\r\n\r\n\r\nThe napari-assistant is a [napari](https://github.com/napari/napari) meta-plugin for building image processing workflows. \r\n\r\n## Usage\r\n\r\nAfter installing one or more napari plugins that use the napari-assistant as user interface, you can start it from the \r\nmenu `Tools > Utilities > Assistant (na)` or run `naparia` from the command line. \r\n\r\nBy clicking on the buttons in the assistant, you can setup a workflow for processing the images.\r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-assistant/raw/main/docs/napari-assistant-screenshot.png)\r\n\r\nWhile setting up your workflow, you can at any point select a layer from the layer list (1) and change the parameters of\r\nthe corresponding operation (2). The layer will update when you change parameters and also all subsequent operations. \r\nYou can also vary which operation is applied to the image (3). Also make sure the right input image layer is selected (4).\r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-assistant/raw/main/docs/design_workflows.png)\r\n\r\n### Saving and loading workflows\r\n\r\nYou can also save and load workflows to disk. \r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-assistant/raw/main/docs/save_and_load.png)\r\n\r\nAfter loading a workflow, make sure that the right input images are selected.\r\n\r\n### Code generation\r\n\r\nThe napari-assistant allows exporting the given workflow as Python script and Jupyter Notebook. \r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-assistant/raw/main/docs/code_generator.png)\r\n\r\nFurthermore, if you have the [napari-script-editor](https://www.napari-hub.org/plugins/napari-script-editor) installed,\r\nyou can also send the current workflow as code to the script editor from the same menu.\r\n\r\n![img.png](https://github.com/haesleinhuepf/napari-assistant/raw/main/docs/napari_script_editor.png)\r\n\r\n### Plugin generation\r\n\r\nThere is also a Napari plugin generator available. Check out [its documentation](https://github.com/haesleinhuepf/napari-assistant-plugin-generator) to learn how napari-assistant compatible plugins can be generated directly from within the assistant.\r\n\r\n## Installation\r\n\r\nIt is recommended to install the napari-assistant via one of the plugins that use it as graphical user interface.\r\nYou find a complete list of plugins that use the assistant [on the napari-hub](https://www.napari-hub.org/?search=napari-assistant&sort=relevance).\r\nMultiple of these plugins come bundled when installing [devbio-napari](https://www.napari-hub.org/plugins/devbio-napari).\r\nNote: This plugin is not compatible with napari 0.6.0 and later.\r\n\r\n## For developers\r\n\r\nIf you want to make your napari-plugin accessible from the napari-assistant, consider programming functions with a simple \r\ninterface that consume images, labels, integers, floats and strings. Annotate input and return types, e.g. like this:\r\n```python\r\ndef example_function_widget(image: \"napari.types.ImageData\") -> \"napari.types.LabelsData\":\r\n    from skimage.filters import threshold_otsu\r\n    binary_image = image > threshold_otsu(image)\r\n\r\n    from skimage.measure import label\r\n    return label(binary_image)\r\n```\r\n\r\nFurthermore, please add your function to the napari.yaml which uses [npe2](https://github.com/napari/npe2):\r\n```\r\nname: napari-npe2-test\r\ndisplay_name: napari-npe2-test\r\ncontributions:\r\n  commands: \r\n    - id: napari-npe2-test.make_magic_widget\r\n      python_name: napari_npe2_test._widget:example_magic_widget\r\n      title: Make example magic widget\r\n  widgets:\r\n    - command: napari-npe2-test.make_magic_widget\r\n      display_name: Segmentation / labeling > Otsu Labeling (nnpe2t)\r\n```\r\n\r\nTo put it in the right button within the napari-assistant, please use one of the following prefixes for the `display_name`:\r\n* `Filtering / noise removal > `\r\n* `Filtering / background removal > `\r\n* `Filtering > `\r\n* `Image math > `\r\n* `Transform > `\r\n* `Projection > `\r\n* `Segmentation / binarization > `\r\n* `Segmentation / labeling > `\r\n* `Segmentation post-processing > `\r\n* `Measurement > `\r\n* `Label neighbor filters > `\r\n* `Label filters > `\r\n* `Visualization > `\r\n\r\nYou find a fully functional example [here](https://github.com/haesleinhuepf/napari-npe2-test).\r\n\r\nLast but not least, to make your napari-plugin is listed in the napari-hub when searching for \"napari-assistant\", make sure\r\nyou mention it in your `readme`.\r\n\r\n## Feedback welcome!\r\n\r\nThe napari-assistant is developed in the open because we believe in the open source community. Feel free to drop feedback as [github issue](https://github.com/haesleinhuepf/napari-assistant/issues) or via [image.sc](https://image.sc)\r\n\r\n## Contributing\r\n\r\nContributions are very welcome. Please ensure\r\nthe test coverage at least stays the same before you submit a pull request.\r\n\r\n## License\r\n\r\nDistributed under the terms of the [BSD-3] license,\r\n\"napari-assistant\" is free and open source software\r\n\r\n## Acknowledgements\r\nThis project was supported by the Deutsche Forschungsgemeinschaft under Germany\u2019s Excellence Strategy \u2013 EXC2068 - Cluster of Excellence \"Physics of Life\" of TU Dresden. \r\nThis project has been made possible in part by grant number [2021-240341 (Napari plugin accelerator grant)](https://chanzuckerberg.com/science/programs-resources/imaging/napari/improving-image-processing/) from the Chan Zuckerberg Initiative DAF, an advised fund of the Silicon Valley Community Foundation.\r\n\r\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\r\n\r\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -48,7 +48,7 @@
       "User Support": "https://forum.image.sc/"
     },
     "provides_extra": null,
-    "release_url": "https://pypi.org/project/napari-assistant/0.4.14/",
+    "release_url": "https://pypi.org/project/napari-assistant/0.6.0/",
     "requires_dist": [
       "napari-plugin-engine>=0.1.4",
       "toolz",
@@ -65,11 +65,11 @@
     ],
     "requires_python": ">=3.9",
     "summary": "A pocket calculator like interface to image processing in napari",
-    "version": "0.4.14",
+    "version": "0.6.0",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 28362227,
+  "last_serial": 28839593,
   "releases": {
     "0.1.0": [
       {
@@ -1962,48 +1962,136 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.5.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "58abe3a236f0d6c9ac44615376c17afde7ac02ba7ad5c6025b5ca2992fe2fa31",
+          "md5": "f3f001acabf7577f85d4c00fe4bb9991",
+          "sha256": "944334ed003382efd93652008d0c37307ed626ccc47e4259515c28d810167991"
+        },
+        "downloads": -1,
+        "filename": "napari_assistant-0.5.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "f3f001acabf7577f85d4c00fe4bb9991",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 319713,
+        "upload_time": "2025-05-02T09:11:50",
+        "upload_time_iso_8601": "2025-05-02T09:11:50.352688Z",
+        "url": "https://files.pythonhosted.org/packages/58/ab/e3a236f0d6c9ac44615376c17afde7ac02ba7ad5c6025b5ca2992fe2fa31/napari_assistant-0.5.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "d9714395ad23862efd5b088ab12414087177a57e94775fff812b728be56da62a",
+          "md5": "7fe9a5c7e1e6ccaee9ce387a3c003b99",
+          "sha256": "2b828dd0fa9e74f9e66b6b1da3eb1623b9f53438f01a456db3b8010be1fdd1de"
+        },
+        "downloads": -1,
+        "filename": "napari_assistant-0.5.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "7fe9a5c7e1e6ccaee9ce387a3c003b99",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 288473,
+        "upload_time": "2025-05-02T09:11:52",
+        "upload_time_iso_8601": "2025-05-02T09:11:52.601915Z",
+        "url": "https://files.pythonhosted.org/packages/d9/71/4395ad23862efd5b088ab12414087177a57e94775fff812b728be56da62a/napari_assistant-0.5.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.6.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "347c2446a9f125dff611e9dcf65a3b6b6ac08ad4691ea4dff4158c3b9d651650",
+          "md5": "fb4b850aeb938b412ec171c0d5ed6296",
+          "sha256": "8a22f9ffd8c841de4fe2f94f77f84dfe351c4fa7a0a7a06cf11ee2328cda0d24"
+        },
+        "downloads": -1,
+        "filename": "napari_assistant-0.6.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "fb4b850aeb938b412ec171c0d5ed6296",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 319710,
+        "upload_time": "2025-05-02T09:29:27",
+        "upload_time_iso_8601": "2025-05-02T09:29:27.999658Z",
+        "url": "https://files.pythonhosted.org/packages/34/7c/2446a9f125dff611e9dcf65a3b6b6ac08ad4691ea4dff4158c3b9d651650/napari_assistant-0.6.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "8a8e4f305eaf888138d3f375f544990abc7d32f6074b6e0233ef0ef13e523073",
+          "md5": "2e5b0256a7818526b6b4a7dbbd1b4f21",
+          "sha256": "8b05bd132e018657ec191fc12c999e6be43ad736f00d590493eeafba4ea00fa0"
+        },
+        "downloads": -1,
+        "filename": "napari_assistant-0.6.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "2e5b0256a7818526b6b4a7dbbd1b4f21",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 288469,
+        "upload_time": "2025-05-02T09:29:29",
+        "upload_time_iso_8601": "2025-05-02T09:29:29.846839Z",
+        "url": "https://files.pythonhosted.org/packages/8a/8e/4f305eaf888138d3f375f544990abc7d32f6074b6e0233ef0ef13e523073/napari_assistant-0.6.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": null,
       "digests": {
-        "blake2b_256": "7b589f1ad44e92ab9b6eab97e4ce6d8e8b68dbff3b5fca4152c22db53f46a872",
-        "md5": "3e623b54ba6b83d1d64eedba58610b46",
-        "sha256": "7fbdc0dc9eb55be420a35de3ac2c863414159ccf7e604f82d927b44081a14e0f"
+        "blake2b_256": "347c2446a9f125dff611e9dcf65a3b6b6ac08ad4691ea4dff4158c3b9d651650",
+        "md5": "fb4b850aeb938b412ec171c0d5ed6296",
+        "sha256": "8a22f9ffd8c841de4fe2f94f77f84dfe351c4fa7a0a7a06cf11ee2328cda0d24"
       },
       "downloads": -1,
-      "filename": "napari_assistant-0.4.14-py3-none-any.whl",
+      "filename": "napari_assistant-0.6.0-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "3e623b54ba6b83d1d64eedba58610b46",
+      "md5_digest": "fb4b850aeb938b412ec171c0d5ed6296",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.9",
-      "size": 318954,
-      "upload_time": "2025-04-05T11:29:14",
-      "upload_time_iso_8601": "2025-04-05T11:29:14.806826Z",
-      "url": "https://files.pythonhosted.org/packages/7b/58/9f1ad44e92ab9b6eab97e4ce6d8e8b68dbff3b5fca4152c22db53f46a872/napari_assistant-0.4.14-py3-none-any.whl",
+      "size": 319710,
+      "upload_time": "2025-05-02T09:29:27",
+      "upload_time_iso_8601": "2025-05-02T09:29:27.999658Z",
+      "url": "https://files.pythonhosted.org/packages/34/7c/2446a9f125dff611e9dcf65a3b6b6ac08ad4691ea4dff4158c3b9d651650/napari_assistant-0.6.0-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": null,
       "digests": {
-        "blake2b_256": "ec0271247670c1d1ee8928a80e0f46f0d7d415cba28563780d3110d0bc272456",
-        "md5": "fe64bc9b9713476294c6bc9513551638",
-        "sha256": "d7a6531747298fdbf0a45a76d25de02b8e96a3c6233297a006f111741cc38ffb"
+        "blake2b_256": "8a8e4f305eaf888138d3f375f544990abc7d32f6074b6e0233ef0ef13e523073",
+        "md5": "2e5b0256a7818526b6b4a7dbbd1b4f21",
+        "sha256": "8b05bd132e018657ec191fc12c999e6be43ad736f00d590493eeafba4ea00fa0"
       },
       "downloads": -1,
-      "filename": "napari_assistant-0.4.14.tar.gz",
+      "filename": "napari_assistant-0.6.0.tar.gz",
       "has_sig": false,
-      "md5_digest": "fe64bc9b9713476294c6bc9513551638",
+      "md5_digest": "2e5b0256a7818526b6b4a7dbbd1b4f21",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.9",
-      "size": 287688,
-      "upload_time": "2025-04-05T11:29:16",
-      "upload_time_iso_8601": "2025-04-05T11:29:16.716544Z",
-      "url": "https://files.pythonhosted.org/packages/ec/02/71247670c1d1ee8928a80e0f46f0d7d415cba28563780d3110d0bc272456/napari_assistant-0.4.14.tar.gz",
+      "size": 288469,
+      "upload_time": "2025-05-02T09:29:29",
+      "upload_time_iso_8601": "2025-05-02T09:29:29.846839Z",
+      "url": "https://files.pythonhosted.org/packages/8a/8e/4f305eaf888138d3f375f544990abc7d32f6074b6e0233ef0ef13e523073/napari_assistant-0.6.0.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
