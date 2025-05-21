@@ -27,7 +27,7 @@ The rest API used by napari to query plugins
 4. Endpoints:
     - <https://npe2api.vercel.app/api/plugins>
         - map of {plugin_names -> version}
-    - <https://npe2api.vercel.app/api/summary>
+    - <https://npe2api.vercel.app/api/extended_summary>
         - all basic plugin info needed to populate the plugin browser in napari
     - [https://npe2api.vercel.app/api/manifest/{plugin-name}](https://npe2api.vercel.app/api/manifest/napari-animation)
         - the full manifest for a given plugin
