@@ -8,6 +8,8 @@ from urllib.request import urlopen
 from packaging.version import Version
 from google.cloud import bigquery
 
+from utils import normalize_name
+
 PUBLIC = Path(__file__).parent.parent / "public"
 PYPI_DIR = PUBLIC / "pypi"
 PYPI_DIR.mkdir(exist_ok=True, parents=True)
@@ -26,7 +28,10 @@ query_job = client.query(QUERY.format(CLASSIFIER))
 withdrawn = {}
 deleted = {}
 active = {
-    k: sorted(set(v.split(",")), key=Version, reverse=True)  # remove version dupes and sort in descending order
+    k : {
+        "normalized_name": normalize_name(k),
+        "pypi_versions": sorted(set(v.split(",")), key=Version, reverse=True)
+    }
     for k, v in sorted(query_job.result(), key=lambda x: x[0].lower())
 }
 

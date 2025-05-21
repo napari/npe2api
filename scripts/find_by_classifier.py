@@ -9,7 +9,7 @@ from urllib.request import urlopen
 
 from packaging.version import Version
 
-from utils import normalize
+from utils import normalize_name
 
 PUBLIC = Path(__file__).parent.parent / "public"
 PYPI_DIR = PUBLIC / "pypi"
@@ -56,8 +56,6 @@ def _find_by_classifier(classifier: str) -> dict[str, list[str]]:
     package_versions = {}
     for name, version in packages:
         assert isinstance(name, str) and isinstance(version, str), XML_RPC_MSG
-        # normalize name as per PyPA
-        name = normalize(name)
         package_versions.setdefault(name, []).append(version)
 
     return {
@@ -112,7 +110,10 @@ if __name__ == "__main__":
                 status = "withdrawn"
 
             if status == "active":
-                active[name] = versions
+                active[name] = {
+                    "normalized_name": normalize_name(name),
+                    "pypi_versions": versions,
+                }
 
             print(f"{icon[status]} {name}")
 
