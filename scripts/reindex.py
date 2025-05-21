@@ -234,7 +234,6 @@ if __name__ == "__main__":
             pkg["conda_versions"] = sorted(set(versions), key=Version, reverse=True)
 
     # write out data to public locations
-    (PUBLIC / "summary.json").write_text(json.dumps(PYPI_INDEX, indent=2))
     (PUBLIC / "extended_summary.json").write_text(
         json.dumps(EXTENDED_SUMMARY, indent=2)
     )
