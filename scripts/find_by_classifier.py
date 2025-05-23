@@ -9,6 +9,8 @@ from urllib.request import urlopen
 
 from packaging.version import Version
 
+from utils import normalize_name
+
 PUBLIC = Path(__file__).parent.parent / "public"
 PYPI_DIR = PUBLIC / "pypi"
 PYPI_DIR.mkdir(exist_ok=True, parents=True)
@@ -108,7 +110,10 @@ if __name__ == "__main__":
                 status = "withdrawn"
 
             if status == "active":
-                active[name] = versions
+                active[name] = {
+                    "normalized_name": normalize_name(name),
+                    "pypi_versions": versions,
+                }
 
             print(f"{icon[status]} {name}")
 
