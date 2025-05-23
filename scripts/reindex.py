@@ -18,6 +18,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 from packaging.version import Version
 
+from utils import normalize_name
+
 try:
     import conda
 except ImportError:
@@ -186,8 +188,9 @@ if __name__ == "__main__":
     EXTENDED_SUMMARY = [
         {
             **pkg,
+            "normalized_name": normalize_name(pkg["name"]),
             "pypi_versions": sorted(
-                active_pypi_versions.get(pkg["name"], []), key=Version, reverse=True
+                active_pypi_versions.get(pkg["name"], {}).get("pypi_versions", []), key=Version, reverse=True
             ),
         }
         for pkg in PYPI_INDEX
