@@ -30,6 +30,7 @@ deleted = {}
 active = {
     k : {
         "normalized_name": normalize_name(k),
+        # remove version dupes and sort in descending order
         "pypi_versions": sorted(set(v.split(",")), key=Version, reverse=True)
     }
     for k, v in sorted(query_job.result(), key=lambda x: x[0].lower())
