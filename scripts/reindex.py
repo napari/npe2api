@@ -143,21 +143,30 @@ if __name__ == "__main__":
         print(f"{type(exc)}: {exc}", file=sys.stderr)
         active_pypi_versions = {}
 
+    # move the errors file to the top /public folder
+    desired_errors_path = PUBLIC / "errors.json"
+    current_error_path = Path(f"{PUBLIC}/manifest/errors.json")
+    if current_error_path.exists():
+        current_error_path.rename(desired_errors_path)
+    
     # load each manifest & build the indices (while verifying the manifest)
-    for mf_file in (PUBLIC / "manifest").glob("*.json"):
-        # move the errors file to top /public folder
-        if mf_file.name == "errors.json":
-            mf_file.rename(PUBLIC / "errors.json")
+    for normalized_name, info in active_pypi_versions.items():
+        name = info["name"]
+        pypi_versions = info["pypi_versions"]
+
+        mf_file = Path(f"{PUBLIC}/manifest/{normalized_name}.json")
+        if not mf_file.exists():
+            print(f"❌ {normalized_name} - no manifest found.")
             continue
 
         with mf_file.open() as f:
             data = json.load(f)
 
         # create the summary index item
-        name = data["name"]
         meta = data["package_metadata"]
         PYPI_INDEX.append(
             {
+                "normalized_name": normalized_name,
                 "name": name,
                 "version": meta["version"],
                 "display_name": data["display_name"],
@@ -178,10 +187,10 @@ if __name__ == "__main__":
             if contrib_type == "readers":
                 for contrib in contribs:
                     for pattern in contrib["filename_patterns"]:
-                        READER_INDEX[pattern].append(name)
+                        READER_INDEX[pattern].append(normalized_name)
 
     # sort things
-    PYPI_INDEX = sorted(PYPI_INDEX, key=lambda x: x["name"].lower())
+    PYPI_INDEX = sorted(PYPI_INDEX, key=lambda x: x["name"])
     READER_INDEX = {  # type: ignore
         k: sorted(v, key=str.lower) for k, v in sorted(READER_INDEX.items())
     }
@@ -189,9 +198,8 @@ if __name__ == "__main__":
     EXTENDED_SUMMARY = [
         {
             **pkg,
-            "normalized_name": normalize_name(pkg["name"]),
             "pypi_versions": sorted(
-                active_pypi_versions.get(pkg["name"], {}).get("pypi_versions", []), key=Version, reverse=True
+                active_pypi_versions.get(pkg["normalized_name"], {}).get("pypi_versions", []), key=Version, reverse=True
             ),
         }
         for pkg in PYPI_INDEX

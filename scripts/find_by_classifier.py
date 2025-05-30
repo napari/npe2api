@@ -96,26 +96,27 @@ if __name__ == "__main__":
             "deleted": "❌",
         }
         for name, info in pool.map(_fetch_packge_info, all_packages_with_classifier):
+            normalized_name = normalize_name(name)
             status = "active"
             versions = _prune_yanked_versions(info, all_packages_with_classifier[name])
 
             if not versions:
-                deleted[name] = versions
+                deleted[normalized_name] = versions
                 status = "deleted"
 
             if status == "active" and CLASSIFIER not in info["info"].get(
                 "classifiers", []
             ):
-                withdrawn[name] = versions
+                withdrawn[normalized_name] = versions
                 status = "withdrawn"
 
             if status == "active":
-                active[name] = {
-                    "normalized_name": normalize_name(name),
+                active[normalized_name] = {
+                    "name": name,
                     "pypi_versions": versions,
                 }
 
-            print(f"{icon[status]} {name}")
+            print(f"{icon[status]} {normalized_name}")
 
     output = {"active": active, "withdrawn": withdrawn, "deleted": deleted}
     (PUBLIC / "classifiers.json").write_text(json.dumps(output, indent=2))
