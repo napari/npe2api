@@ -65,10 +65,11 @@ def _find_by_classifier(classifier: str) -> dict[str, list[str]]:
 
 
 def _fetch_packge_info(name: str) -> Tuple[str, str]:
+    normalized_name = normalize_name(name)
     try:
         with urlopen(f"https://pypi.org/pypi/{name}/json") as f:
             info = json.load(f)
-        (PYPI_DIR / f"{name}.json").write_text(json.dumps(info, indent=2))
+        (PYPI_DIR / f"{normalized_name}.json").write_text(json.dumps(info, indent=2))
     except HTTPError:
         return None
     return name, info

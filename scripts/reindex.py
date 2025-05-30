@@ -18,7 +18,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from packaging.version import Version
 
-from utils import normalize_name
+from scripts.utils import normalize_name
 
 try:
     import conda
@@ -35,6 +35,7 @@ PluginName = str
 class SummaryDict(TypedDict):
     """Structure of dicts in index.json."""
 
+    normalized_name: str
     name: str
     version: str
     display_name: str
@@ -42,6 +43,7 @@ class SummaryDict(TypedDict):
     author: str
     license: str
     home_page: str
+    project_url:  List[str]
     pypi_versions: List[str]
     conda_versions: List[str]
 
@@ -226,7 +228,8 @@ if __name__ == "__main__":
                 )
             )
         for package_name, info in data.items():
-            CONDA_INDEX[package_name] = info.get("full_name")
+            normalized_name = normalize_name(package_name)
+            CONDA_INDEX[normalized_name] = info.get("full_name")
             if not info:
                 continue
 
@@ -234,7 +237,7 @@ if __name__ == "__main__":
             for file in info.get("files", []):
                 file.pop("ndownloads", None)
 
-            (CONDA / f"{package_name}.json").write_text(json.dumps(info, indent=2))
+            (CONDA / f"{normalized_name}.json").write_text(json.dumps(info, indent=2))
 
         # write summary map of pypi package name to conda channel/name
         (PUBLIC / "conda.json").write_text(json.dumps(CONDA_INDEX, indent=2))
@@ -252,7 +255,7 @@ if __name__ == "__main__":
     )
     (PUBLIC / "readers.json").write_text(json.dumps(READER_INDEX))
     (PUBLIC / "index.json").write_text(
-        json.dumps({x["name"]: x["version"] for x in PYPI_INDEX}, indent=2)
+        json.dumps({x["normalized_name"]: x["version"] for x in PYPI_INDEX}, indent=2)
     )
 
     github.fetch_all_github_info()
