@@ -89,9 +89,7 @@ if __name__ == "__main__":
         raise SystemExit(1)
     
     if not MANIFEST_DIR.exists():
-        print("Manifest directory doesn't exist")
-        print(os.listdir(PUBLIC))
-        raise SystemExit(1)
+        MANIFEST_DIR.mkdir()
 
     # use processes instead of threads, because many of the subroutines in build
     # and setuptools use `os.chdir()`, which is not thread-safe (used in `fetch_manifest`)
