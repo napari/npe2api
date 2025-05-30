@@ -1,0 +1,474 @@
+{
+  "info": {
+    "author": null,
+    "author_email": "Philipp Plewa <philipp.plewa@astrazeneca.com>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "Operating System :: OS Independent",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-wsi\n\n[![PyPI](https://img.shields.io/pypi/v/napari-wsi.svg?color=green)](https://pypi.org/project/napari-wsi)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-wsi)](https://napari-hub.org/plugins/napari-wsi)\n[![Tests](https://github.com/AstraZeneca/napari-wsi/actions/workflows/main.yml/badge.svg)](https://github.com/AstraZeneca/napari-wsi/actions)\n![Maturity Level-1](https://img.shields.io/badge/Maturity%20Level-ML--1-yellow)\n\nA plugin to read whole-slide images within [napari].\n\n---\n\n## Installation via pip\n\nYou can install `napari-wsi` via [pip]:\n\n```bash\npip install \"napari-wsi[all]>=1.0\"\n```\n\nThis automatically installs all optional backends, as a shortcut for:\n\n```bash\npip install \"napari-wsi[openslide,rasterio,wsidicom]>=1.0\"\n```\n\nIn addition, to be able to read images using the `openslide` backend, it is\nrequired to install the OpenSlide library itself, for example by installing the\n[openslide-bin] python package (also via [pip]).\n\n## Installation via conda\n\nYou can also install `napari-wsi` via [conda]:\n\n```bash\nconda install -c conda-forge \"napari-wsi>=1.0\"\n```\n\nThis already installs all optional dependencies, including OpenSlide.\n\n# Description\n\nThis [napari] plugin provides a widget for reading various whole-slide image\nformats using a common [zarr] store inteface, based on the libraries\n[openslide], [rasterio], and [wsidicom].\n\n# Quickstart\n\nAfter installation, open the `Plugins` menu in the viewer and select\n`WSI Reader` to open the widget. Then select a `Backend` to use, select a `Path`\nto open, and click `Load`.\n\n![The napari viewer displaying a sample image.](./resources/sample_data.jpg)\n\nIf `sRGB` is selected in the `Color Space` menu and an ICC profile is attached\nto the given image, a transformation to this color space will be applied when\nthe image data is read. Otherwise, the raw RGB image data will be displayed.\n\nThis plugin can also be used to open image files via drag and drop into the\nviewer window. The file suffixes '.bif', '.ndpi', '.scn', '.svs' are registered\nwith the `openslide` backend, while the suffixes '.tif' and '.tiff' are\nregistered with the `rasterio` backend. These files can also be opened directly\nfrom the command line or from a python script:\n\n```bash\nnapari CMU-1.svs\n```\n\n```python\nfrom napari import Viewer\n\nviewer = Viewer()\nviewer.open(\"CMU-1.svs\", plugin=\"napari-wsi\")\n```\n\nIt is also possible to use the different backend classes directly, in which case\nsome more features are available, for example:\n\n```python\nfrom napari import Viewer\nfrom napari_wsi.backends.openslide import OpenSlideStore\n\nviewer = Viewer()\n\n# Display the image in the sRGB color space and a physical coordinate system:\nstore = OpenSlideStore(\"CMU-1.svs\", color_space=\"sRGB\")\n(layer,) = store.to_viewer(viewer, spatial_transform=True)\nassert layer.metadata[\"color_space\"] == \"sRGB\"\n\n# Display a scale bar to indicate milli- or micrometers, depending on the zoom level:\nviewer.scale_bar.visible = True\nviewer.scale_bar.colored = True\n```\n\n```python\nfrom napari import Viewer\nfrom napari_wsi.backends.wsidicom import WSIDicomStore\nfrom requests.auth import HTTPBasicAuth\nfrom wsidicom import WsiDicomWebClient\n\nviewer = Viewer()\nclient = WsiDicomWebClient.create_client(\"...\", auth=HTTPBasicAuth(\"...\", \"...\"))\nstore = WSIDicomStore(client=client, study_uid=\"...\", series_uids=\"...\")\nstore.to_viewer(viewer)\n```\n\nThe sample images used above are part of the OpenSlide test data (see [Aperio]\nand [DICOM]).\n\n# Known Issues & Other Notes\n\n- This plugin is prototype research software and there may be **breaking\n  changes** with each release of the plugin, which is also the case for current\n  releases of the [napari] viewer itself.\n- The `wsidicom` backend supports loading annotations together with the image\n  data. However, this may take several minutes, depending on the number and\n  complexity of the annotations. When loading more than a few thousand polygon\n  annotations, make sure that the experimental \"[triangles] speedup\" setting is\n  enabled.\n\n[Aperio]: https://openslide.cs.cmu.edu/download/openslide-testdata/Aperio/\n[conda]: https://conda-forge.org/\n[DICOM]: https://openslide.cs.cmu.edu/download/openslide-testdata/DICOM/\n[napari]: https://github.com/napari/napari\n[openslide]: https://github.com/openslide/openslide-python\n[openslide-bin]: https://pypi.org/project/openslide-bin/\n[pip]: https://github.com/pypa/pip\n[rasterio]: https://github.com/rasterio/rasterio\n[triangles]: https://napari.org/island-dispatch/blog/triangles_speedup_beta.html\n[wsidicom]: https://github.com/imi-bigpicture/wsidicom\n[zarr]: https://github.com/zarr-developers/zarr-python\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": null,
+    "home_page": null,
+    "keywords": null,
+    "license": null,
+    "license_expression": "Apache-2.0",
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": "Philipp Plewa <philipp.plewa@astrazeneca.com>, Robert Schweizer <robert.schweizer@astrazeneca.com>",
+    "name": "napari-wsi",
+    "package_url": "https://pypi.org/project/napari-wsi/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-wsi/",
+    "project_urls": {
+      "Repository": "https://github.com/AstraZeneca/napari-wsi"
+    },
+    "provides_extra": [
+      "all",
+      "openslide",
+      "rasterio",
+      "wsidicom"
+    ],
+    "release_url": "https://pypi.org/project/napari-wsi/1.2.1/",
+    "requires_dist": [
+      "dask>=2025.1",
+      "magicgui>=0.10",
+      "numpy>=1.26",
+      "pillow>=11.1",
+      "typing-extensions>=4.6.1",
+      "universal-pathlib>=0.2",
+      "zarr>=3.0",
+      "colorspacious>=1.1.2; extra == \"all\"",
+      "openslide-python>=1.4; extra == \"all\"",
+      "pandas>=2.0; extra == \"all\"",
+      "rasterio>=1.4; extra == \"all\"",
+      "shapely>=2.0; extra == \"all\"",
+      "wsidicom>=0.22; extra == \"all\"",
+      "openslide-python>=1.4; extra == \"openslide\"",
+      "rasterio>=1.4; extra == \"rasterio\"",
+      "colorspacious>=1.1.2; extra == \"wsidicom\"",
+      "pandas>=2.0; extra == \"wsidicom\"",
+      "shapely>=2.0; extra == \"wsidicom\"",
+      "wsidicom>=0.22; extra == \"wsidicom\""
+    ],
+    "requires_python": ">=3.11",
+    "summary": "A plugin to read whole-slide images within napari.",
+    "version": "1.2.1",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 27654742,
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "efebcdf4d7fe3faedde8a891ee95641df542adcf6ca45e24e74a72b38459ddb9",
+          "md5": "98d94828cf9f3b8a6d56b94cf0236e69",
+          "sha256": "0745409e3b34f241ce5cd400fad4dd6ee13fa23b028583eeca3583763aeef248"
+        },
+        "downloads": -1,
+        "filename": "napari_wsi-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "98d94828cf9f3b8a6d56b94cf0236e69",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8,<3.11",
+        "size": 14343,
+        "upload_time": "2023-02-01T13:23:05",
+        "upload_time_iso_8601": "2023-02-01T13:23:05.934764Z",
+        "url": "https://files.pythonhosted.org/packages/ef/eb/cdf4d7fe3faedde8a891ee95641df542adcf6ca45e24e74a72b38459ddb9/napari_wsi-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "2a44b8f1c53e057c334bafe238cd0d97a55d27efded6b6bdbe3580a33b69c87c",
+          "md5": "31854e36504d8c1aa322caedb0b5422a",
+          "sha256": "d9ced0caac3707ee826fb4e8d92b56b46c5f2e084451cf8caf9fe27db892f7f4"
+        },
+        "downloads": -1,
+        "filename": "napari_wsi-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "31854e36504d8c1aa322caedb0b5422a",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8,<3.11",
+        "size": 12728,
+        "upload_time": "2023-02-01T13:23:07",
+        "upload_time_iso_8601": "2023-02-01T13:23:07.283913Z",
+        "url": "https://files.pythonhosted.org/packages/2a/44/b8f1c53e057c334bafe238cd0d97a55d27efded6b6bdbe3580a33b69c87c/napari_wsi-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "850e6b3aaac14e80429ac809a2ee90c5fd715127b38d569137b758448b36ac39",
+          "md5": "84dfbb76b823500f9ce35a8996c434f6",
+          "sha256": "a150dc3dc7b2bf3a2220144ea2d89a2e36edae3d399ca1e376e9a0c5fc8c056b"
+        },
+        "downloads": -1,
+        "filename": "napari_wsi-0.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "84dfbb76b823500f9ce35a8996c434f6",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8,<3.11",
+        "size": 14349,
+        "upload_time": "2023-03-06T15:09:12",
+        "upload_time_iso_8601": "2023-03-06T15:09:12.914713Z",
+        "url": "https://files.pythonhosted.org/packages/85/0e/6b3aaac14e80429ac809a2ee90c5fd715127b38d569137b758448b36ac39/napari_wsi-0.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "c0bf45eaf3f025d4b694e27dcc408722ba3d092c03f7cb21a14240a93213b99f",
+          "md5": "33c6275debeb09f8fe231d34d7aa570f",
+          "sha256": "7ee68a7f675b1568b0aa1159eb13bc1c3c246abc3e762bcc36fc675bc8b8d073"
+        },
+        "downloads": -1,
+        "filename": "napari_wsi-0.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "33c6275debeb09f8fe231d34d7aa570f",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8,<3.11",
+        "size": 12743,
+        "upload_time": "2023-03-06T15:09:14",
+        "upload_time_iso_8601": "2023-03-06T15:09:14.630415Z",
+        "url": "https://files.pythonhosted.org/packages/c0/bf/45eaf3f025d4b694e27dcc408722ba3d092c03f7cb21a14240a93213b99f/napari_wsi-0.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "6fd2d2df2e3b6aafdea211c739ac9e846e7d924343132660edf32d0c43605e4f",
+          "md5": "4eb3860b7843a75909d7b49f0751697a",
+          "sha256": "4452629e4b2cdbccd66da9d682589820acdb95e2404b1411589df6305315f1dc"
+        },
+        "downloads": -1,
+        "filename": "napari_wsi-0.1.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "4eb3860b7843a75909d7b49f0751697a",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8,<3.11",
+        "size": 14432,
+        "upload_time": "2023-03-27T14:47:26",
+        "upload_time_iso_8601": "2023-03-27T14:47:26.224265Z",
+        "url": "https://files.pythonhosted.org/packages/6f/d2/d2df2e3b6aafdea211c739ac9e846e7d924343132660edf32d0c43605e4f/napari_wsi-0.1.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "a744fdcad4a3545c9eb319179523679e5770537795ec357f163db529b2d33dda",
+          "md5": "bc7534696a8d07a95d048af5944c510c",
+          "sha256": "8e7bbf5c1e8d64ecebfe079bb8e29d31710c07c87b038a7654ef157138ecaf7c"
+        },
+        "downloads": -1,
+        "filename": "napari_wsi-0.1.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "bc7534696a8d07a95d048af5944c510c",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8,<3.11",
+        "size": 12809,
+        "upload_time": "2023-03-27T14:47:27",
+        "upload_time_iso_8601": "2023-03-27T14:47:27.888077Z",
+        "url": "https://files.pythonhosted.org/packages/a7/44/fdcad4a3545c9eb319179523679e5770537795ec357f163db529b2d33dda/napari_wsi-0.1.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.3": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "7d3d98b576f6fd96b1631b5ace09479276e1061936f41b897f115907d72d04a2",
+          "md5": "a78f28639dbdd90177d78e14552db757",
+          "sha256": "41dd29487e57ab55943e82e3f3a3b660a5675bfc5bb0b56b1e48183e2b3d863b"
+        },
+        "downloads": -1,
+        "filename": "napari_wsi-0.1.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "a78f28639dbdd90177d78e14552db757",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8,<3.11",
+        "size": 14532,
+        "upload_time": "2023-08-22T12:03:11",
+        "upload_time_iso_8601": "2023-08-22T12:03:11.372008Z",
+        "url": "https://files.pythonhosted.org/packages/7d/3d/98b576f6fd96b1631b5ace09479276e1061936f41b897f115907d72d04a2/napari_wsi-0.1.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "1ab2420428d9fc4b493a75adede7080ea140ea099b38d65e0d6df082c18deece",
+          "md5": "9f958dd86b9dc2f1fa2feb69d2b68929",
+          "sha256": "425586ecbd41df0c6e55d5598734e2e8106bd5134a378c716b96841f32e1948e"
+        },
+        "downloads": -1,
+        "filename": "napari_wsi-0.1.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "9f958dd86b9dc2f1fa2feb69d2b68929",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8,<3.11",
+        "size": 12897,
+        "upload_time": "2023-08-22T12:03:13",
+        "upload_time_iso_8601": "2023-08-22T12:03:13.109739Z",
+        "url": "https://files.pythonhosted.org/packages/1a/b2/420428d9fc4b493a75adede7080ea140ea099b38d65e0d6df082c18deece/napari_wsi-0.1.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.4": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "cc50f91cc45048b90612c6cba581749d9b67dee265b83176436f1f326c8f9207",
+          "md5": "0f419730b467ded3717fd0141c1cc617",
+          "sha256": "e5ec2c9e1d00be736a515e442a7f39d5d81c24ba3d77305c6e7754f098efe7a4"
+        },
+        "downloads": -1,
+        "filename": "napari_wsi-0.1.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "0f419730b467ded3717fd0141c1cc617",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10,<3.12",
+        "size": 14530,
+        "upload_time": "2023-10-11T12:28:54",
+        "upload_time_iso_8601": "2023-10-11T12:28:54.152412Z",
+        "url": "https://files.pythonhosted.org/packages/cc/50/f91cc45048b90612c6cba581749d9b67dee265b83176436f1f326c8f9207/napari_wsi-0.1.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "022b3b2ee7c128c3ea20144e577d0ea99badfe97f22fc30b61a90bc132131051",
+          "md5": "7f0c24464ca52bec0019e55400bef664",
+          "sha256": "eaf1271b93aba97b6c50664b0bc5fa4f0489a46a302b8043b09d3af651d92557"
+        },
+        "downloads": -1,
+        "filename": "napari_wsi-0.1.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "7f0c24464ca52bec0019e55400bef664",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10,<3.12",
+        "size": 12324,
+        "upload_time": "2023-10-11T12:28:55",
+        "upload_time_iso_8601": "2023-10-11T12:28:55.943221Z",
+        "url": "https://files.pythonhosted.org/packages/02/2b/3b2ee7c128c3ea20144e577d0ea99badfe97f22fc30b61a90bc132131051/napari_wsi-0.1.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "d90224defcf4ab47bd203ea06418a717d50ec09fb44c0cecc11b62984fb58a54",
+          "md5": "93c525194da3afaada2f9cddd0862c8b",
+          "sha256": "e104cbee35d799f29c355cf7b1c9daa5f3a12f3b8174d544470a6de852fa74da"
+        },
+        "downloads": -1,
+        "filename": "napari_wsi-1.0.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "93c525194da3afaada2f9cddd0862c8b",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 17959,
+        "upload_time": "2025-02-05T08:35:11",
+        "upload_time_iso_8601": "2025-02-05T08:35:11.253776Z",
+        "url": "https://files.pythonhosted.org/packages/d9/02/24defcf4ab47bd203ea06418a717d50ec09fb44c0cecc11b62984fb58a54/napari_wsi-1.0.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.1.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "bc4959ce36a30042bdde465d05ed2d8931e0b7b5b084f44081b1708a665570fe",
+          "md5": "8f971fecd0817cf4f98c198f5d90e8cf",
+          "sha256": "af3e4a30436e8855b2fcee6e8efc5c5df6c81d87e843dd071b34562b74ad9a13"
+        },
+        "downloads": -1,
+        "filename": "napari_wsi-1.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "8f971fecd0817cf4f98c198f5d90e8cf",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 20257,
+        "upload_time": "2025-02-10T15:18:19",
+        "upload_time_iso_8601": "2025-02-10T15:18:19.493725Z",
+        "url": "https://files.pythonhosted.org/packages/bc/49/59ce36a30042bdde465d05ed2d8931e0b7b5b084f44081b1708a665570fe/napari_wsi-1.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.2.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "935381f4bfd3eaed687bef7fd3ec9ee40dd5711248b36a1e25a30b5409396942",
+          "md5": "a1eff6cc3c9c5f63a21e5099ca5eba7a",
+          "sha256": "a90a57f6f30b325bbd83efde961f8840bfdadc48b1b30663213c49036c7fe1d4"
+        },
+        "downloads": -1,
+        "filename": "napari_wsi-1.2.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "a1eff6cc3c9c5f63a21e5099ca5eba7a",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 21954,
+        "upload_time": "2025-02-14T11:13:37",
+        "upload_time_iso_8601": "2025-02-14T11:13:37.323020Z",
+        "url": "https://files.pythonhosted.org/packages/93/53/81f4bfd3eaed687bef7fd3ec9ee40dd5711248b36a1e25a30b5409396942/napari_wsi-1.2.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "93d35eb0665a5cd0508fdaaa83f32c0e1938014dcd6f90b3ecc60837e107d347",
+          "md5": "639275c426f0675d7daf93be3a67d52e",
+          "sha256": "19eec2d5d837c90b08f4862f40110d3e82c2d91704692a1984fac1e2619365e4"
+        },
+        "downloads": -1,
+        "filename": "napari_wsi-1.2.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "639275c426f0675d7daf93be3a67d52e",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 4212586,
+        "upload_time": "2025-02-14T11:36:27",
+        "upload_time_iso_8601": "2025-02-14T11:36:27.044461Z",
+        "url": "https://files.pythonhosted.org/packages/93/d3/5eb0665a5cd0508fdaaa83f32c0e1938014dcd6f90b3ecc60837e107d347/napari_wsi-1.2.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.2.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "3529e634eafb9dc8e4a715789429ca1ec5b954c25f4f8d8bbe5c7c90b5377e35",
+          "md5": "dd431c32df038888adeb9f1230dee8df",
+          "sha256": "0c89491c842be4e78aa456dfa104a30941372c57c2c63c87669998c477bb4d7c"
+        },
+        "downloads": -1,
+        "filename": "napari_wsi-1.2.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "dd431c32df038888adeb9f1230dee8df",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 22096,
+        "upload_time": "2025-02-26T09:14:17",
+        "upload_time_iso_8601": "2025-02-26T09:14:17.235873Z",
+        "url": "https://files.pythonhosted.org/packages/35/29/e634eafb9dc8e4a715789429ca1ec5b954c25f4f8d8bbe5c7c90b5377e35/napari_wsi-1.2.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "68ba24ab4f6aeb8b690b173f3e288633d5007030dd01ae23d70ed1326a63cf00",
+          "md5": "3c6b6f37e9ca588ddf24455cd32b501a",
+          "sha256": "108182561e6306cc35f694cbf5be10eca38de251a74ae1b3834231f80bb0a925"
+        },
+        "downloads": -1,
+        "filename": "napari_wsi-1.2.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "3c6b6f37e9ca588ddf24455cd32b501a",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 4213242,
+        "upload_time": "2025-02-26T09:14:27",
+        "upload_time_iso_8601": "2025-02-26T09:14:27.186090Z",
+        "url": "https://files.pythonhosted.org/packages/68/ba/24ab4f6aeb8b690b173f3e288633d5007030dd01ae23d70ed1326a63cf00/napari_wsi-1.2.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "3529e634eafb9dc8e4a715789429ca1ec5b954c25f4f8d8bbe5c7c90b5377e35",
+        "md5": "dd431c32df038888adeb9f1230dee8df",
+        "sha256": "0c89491c842be4e78aa456dfa104a30941372c57c2c63c87669998c477bb4d7c"
+      },
+      "downloads": -1,
+      "filename": "napari_wsi-1.2.1-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "dd431c32df038888adeb9f1230dee8df",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.11",
+      "size": 22096,
+      "upload_time": "2025-02-26T09:14:17",
+      "upload_time_iso_8601": "2025-02-26T09:14:17.235873Z",
+      "url": "https://files.pythonhosted.org/packages/35/29/e634eafb9dc8e4a715789429ca1ec5b954c25f4f8d8bbe5c7c90b5377e35/napari_wsi-1.2.1-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "68ba24ab4f6aeb8b690b173f3e288633d5007030dd01ae23d70ed1326a63cf00",
+        "md5": "3c6b6f37e9ca588ddf24455cd32b501a",
+        "sha256": "108182561e6306cc35f694cbf5be10eca38de251a74ae1b3834231f80bb0a925"
+      },
+      "downloads": -1,
+      "filename": "napari_wsi-1.2.1.tar.gz",
+      "has_sig": false,
+      "md5_digest": "3c6b6f37e9ca588ddf24455cd32b501a",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.11",
+      "size": 4213242,
+      "upload_time": "2025-02-26T09:14:27",
+      "upload_time_iso_8601": "2025-02-26T09:14:27.186090Z",
+      "url": "https://files.pythonhosted.org/packages/68/ba/24ab4f6aeb8b690b173f3e288633d5007030dd01ae23d70ed1326a63cf00/napari_wsi-1.2.1.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

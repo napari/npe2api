@@ -1,0 +1,703 @@
+{
+  "info": {
+    "author": "Marco Meer",
+    "author_email": "marco.meer@pm.me",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-tmidas\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-tmidas.svg?color=green)](https://github.com/macromeer/napari-tmidas/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-tmidas.svg?color=green)](https://pypi.org/project/napari-tmidas)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-tmidas.svg?color=green)](https://python.org)\n[![tests](https://github.com/macromeer/napari-tmidas/workflows/tests/badge.svg)](https://github.com/macromeer/napari-tmidas/actions)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-tmidas)](https://napari-hub.org/plugins/napari-tmidas)\n<!-- [![codecov](https://codecov.io/gh/macromeer/napari-tmidas/branch/main/graph/badge.svg)](https://codecov.io/gh/macromeer/napari-tmidas) -->\nThe `napari-tmidas` plugin consists of a growing collection of pipelines for fast batch processing of confocal and whole slide microscopy images of biological tissues. This is a WIP and based on the CLI version of [T-MIDAS](https://github.com/MercaderLabAnatomy/T-MIDAS).\n\n## Features\nCurrently, napari-tmidas provides pipelines as widgets for batch image conversion / cropping / processing, ROI colocalization and label inspection (cf. [Usage](#usage) below).\n\n## Installation\n\nFirst, install Napari in a virtual environment:\n\n    mamba create -y -n napari-tmidas -c conda-forge python=3.11 tqdm\n    mamba activate napari-tmidas\n    python -m pip install \"napari[all]\"\n\nNow you can install `napari-tmidas` via [pip]:\n\n    pip install napari-tmidas\n\nIt is recommended to install the latest development version. Please also regularly execute this command in the activated environment:\n\n    pip install git+https://github.com/macromeer/napari-tmidas.git\n\n### Dependencies\n\nTo use the Batch Microscopy Image Conversion pipeline, we need some libraries to read microscopy formats:\n\n    # mamba activate napari-tmidas\n    pip install nd2 readlif tiffslide pylibCZIrw acquifer-napari\n\nIf you want to batch compress images using [Zstandard](https://github.com/facebook/zstd), use the package manager of your operating system to install it:\n\n    sudo apt-get install zstd    # for Linux\n    brew install zstd            # for macOS\n    choco install zstandard      # for Windows\n\nTo use the Batch Crop Anything pipeline, we need to install SAM2 in the napari-tmidas environment:\n\n    # mamba activate napari-tmidas\n    cd /opt\n    git clone https://github.com/facebookresearch/sam2.git && cd sam2\n    pip install -e .\n    wget https://dl.fbaipublicfiles.com/segment_anything_2/092824/sam2.1_hiera_large.pt -P checkpoints/\n    pip install decord\n\n\n\n\n## Usage\n\nTo use the plugin, start napari in the activated virtual environment with this terminal command:\n\n    mamba run -n napari-tmidas napari\n\nYou can then find the installed plugin in the Plugins tab.\n\n### Microscopy Image Conversion\n\nYou can start this pipeline via `Plugins > T-MIDAS > Batch Microscopy Image Conversion`. Currently, this pipeline supports the conversion of `.nd2, .lif, .ndpi, .czi` and acquifer data. After scanning a folder of your choice for microscopy image data, select a file in the first column of the table and preview and export any image data it contains.\n\n\n<img src=\"https://github.com/user-attachments/assets/e377ca71-2f30-447d-825e-d2feebf7061b\" alt=\"Microscopy Image Conversion Widget\" style=\"width:75%; height:auto;\">\n\n\n### Image Processing\n\n1. After opening `Plugins > T-MIDAS > Batch Image Processing`, enter the path to the folder containing the images to be processed (currently supports TIF, later also ZARR). You can also filter for filename suffix.\n\n![image](https://github.com/user-attachments/assets/41ecb689-9abe-4371-83b5-9c5eb37069f9)\n\n2. As a result, a table appears with the found images. You can click on them to inspect them in the viewer.\n\n![image](https://github.com/user-attachments/assets/8360942a-be8f-49ec-bc25-385ee43bd601)\n\n3. Next, select a processing function, set parameters if applicable and `Start Batch Processing`.\n\n![image](https://github.com/user-attachments/assets/05929660-6672-4f76-89da-4f17749ccfad)\n\n4. You can click on the images in the table to show them in the viewer. For example first click on one of the `Original Files`, and then the corresponding `Processed File` to see an overlay.\n\n<img src=\"https://github.com/user-attachments/assets/cfe84828-c1cc-4196-9a53-5dfb82d5bfce\" alt=\"Image Processing Widget\" style=\"width:75%; height:auto;\">\n\n\nNote that whenever you click on an `Original File` or `Processed File` in the table, it will replace the one that is currently shown in the viewer. So naturally, you'd first select the original image, and then the processed image to correctly see the image pair that you want to inspect.\n\n### Batch Label Inspection\nIf you have already segmented a folder full of images and now you want to maybe inspect and edit each label image, you can use the `Plugins > T-MIDAS > Batch Label Inspection`, which automatically saves your changes to the existing label image once you click the `Save Changes and Continue` button (bottom right).\n\n<img src=\"https://github.com/user-attachments/assets/0bf8c6ae-4212-449d-8183-e91b23ba740e\" alt=\"Batch Label Inspection Widget\" style=\"width:75%; height:auto;\">\n\n\n### Crop Anything\nThis pipeline combines the Segment Anything Model (SAM) for automatic object detection with an interactive interface for selecting and cropping multiple objects from images. To launch the widget, open `Plugins > T-MIDAS > Batch Crop Anything`. Click the image below to see a video demo.\n\n<img src=\"https://github.com/user-attachments/assets/6d72c2a2-1064-4a27-b398-a9b86fcbc443\" alt=\"Crop Anything Widget\" style=\"width:75%; height:auto;\">\n\n\n### ROI Colocalization\nThis pipeline quantifies colocalization between labeled regions of interest (ROIs) across multiple image channels. It determines the extent of overlap between ROIs in a reference channel and those in one or two other channels. The output is a table of colocalization counts. Optionally, the size of reference channel ROIs, as well as the total or median size of colocalizing ROIs in the other channels, can be included. Colocalization is determined using Boolean masking. The number of colocalizing instances is determined by counting unique label IDs within the overlapping regions. Typically, the reference channel contains larger structures, while other channels contain smaller, potentially nested, structures. For example, the reference channel might contain cell bodies, with the second and third channels containing nuclei and sub-nuclear objects, respectively.\n\n<img src=\"https://github.com/user-attachments/assets/2f9022a0-7b88-4588-a448-250f07a634d7\" alt=\"ROI Colocalization Widget\" style=\"width:75%; height:auto;\">\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-tmidas\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[copier]: https://copier.readthedocs.io/en/stable/\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[napari-plugin-template]: https://github.com/napari/napari-plugin-template\n\n[file an issue]: https://github.com/macromeer/napari-tmidas/issues\n\n----------------------------------\n\nThis [napari] plugin was generated with [copier] using the [napari-plugin-template].\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/napari-plugin-template#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/stable/plugins/index.html\n-->\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": "Copyright (c) 2025, Marco Meer\n        All rights reserved.\n        \n        Redistribution and use in source and binary forms, with or without\n        modification, are permitted provided that the following conditions are met:\n        \n        * Redistributions of source code must retain the above copyright notice, this\n          list of conditions and the following disclaimer.\n        \n        * Redistributions in binary form must reproduce the above copyright notice,\n          this list of conditions and the following disclaimer in the documentation\n          and/or other materials provided with the distribution.\n        \n        * Neither the name of copyright holder nor the names of its\n          contributors may be used to endorse or promote products derived from\n          this software without specific prior written permission.\n        \n        THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\"\n        AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\n        IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\n        DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE\n        FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\n        DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR\n        SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER\n        CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,\n        OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\n        OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n        ",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-tmidas",
+    "package_url": "https://pypi.org/project/napari-tmidas/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-tmidas/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/macromeer/napari-tmidas/issues",
+      "Documentation": "https://github.com/macromeer/napari-tmidas#README.md",
+      "Source Code": "https://github.com/macromeer/napari-tmidas",
+      "User Support": "https://github.com/macromeer/napari-tmidas/issues"
+    },
+    "provides_extra": [
+      "testing"
+    ],
+    "release_url": "https://pypi.org/project/napari-tmidas/0.2.1/",
+    "requires_dist": [
+      "numpy",
+      "magicgui",
+      "qtpy",
+      "scikit-image",
+      "pyqt5",
+      "tqdm",
+      "scikit-image",
+      "ome-zarr",
+      "napari-ome-zarr",
+      "torch",
+      "torchvision",
+      "timm",
+      "opencv-python",
+      "tox; extra == \"testing\"",
+      "pytest; extra == \"testing\"",
+      "pytest-cov; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "napari; extra == \"testing\"",
+      "pyqt5; extra == \"testing\""
+    ],
+    "requires_python": ">=3.9",
+    "summary": "A plugin for batch processing of confocal and whole-slide microscopy images of biological tissues",
+    "version": "0.2.1",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 29318863,
+  "releases": {
+    "0.1.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "762a69979676034f15e9f49d8d8b031d9dc74d967d57be713df3989c36bc7993",
+          "md5": "35df65e51be01cf0f4a1bf252320c72d",
+          "sha256": "fb88ade8731ef7c4fb94b3d197de4244c82d3fb5d4be34f8c147078b78daf3ea"
+        },
+        "downloads": -1,
+        "filename": "napari_tmidas-0.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "35df65e51be01cf0f4a1bf252320c72d",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 12919,
+        "upload_time": "2025-03-05T15:54:19",
+        "upload_time_iso_8601": "2025-03-05T15:54:19.236109Z",
+        "url": "https://files.pythonhosted.org/packages/76/2a/69979676034f15e9f49d8d8b031d9dc74d967d57be713df3989c36bc7993/napari_tmidas-0.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "dd34c4ed810fe5d822d35a3cae3c32d804c8078d0bc44384617b6f3113da95a1",
+          "md5": "8532511e225e2972b7075eb66756c47f",
+          "sha256": "2d4a6dd7c526040b949f0d6acbbbf2fabb917ed785c961c64d65e844df2076d0"
+        },
+        "downloads": -1,
+        "filename": "napari_tmidas-0.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "8532511e225e2972b7075eb66756c47f",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 15221,
+        "upload_time": "2025-03-05T15:54:20",
+        "upload_time_iso_8601": "2025-03-05T15:54:20.645789Z",
+        "url": "https://files.pythonhosted.org/packages/dd/34/c4ed810fe5d822d35a3cae3c32d804c8078d0bc44384617b6f3113da95a1/napari_tmidas-0.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.2": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "9036a4c1147a079017c40554b976a4589054f7ebb5c86966534b3c4e7600cc82",
+          "md5": "684954cb07a363328ee81aeb616be65d",
+          "sha256": "21152c9e48344362b65c5d7115e997de0ca12e7ad63f33ae986c3aea0626b0c0"
+        },
+        "downloads": -1,
+        "filename": "napari_tmidas-0.1.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "684954cb07a363328ee81aeb616be65d",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 24268,
+        "upload_time": "2025-03-10T18:48:52",
+        "upload_time_iso_8601": "2025-03-10T18:48:52.725305Z",
+        "url": "https://files.pythonhosted.org/packages/90/36/a4c1147a079017c40554b976a4589054f7ebb5c86966534b3c4e7600cc82/napari_tmidas-0.1.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "e97ec984367246b30432e12715cfed6d63304fbb55a2a546f7243b80eecd7518",
+          "md5": "1f80ec7d386aa62d497e82898bd19b18",
+          "sha256": "732cdc21eaa6f9422d9eb0aae00b831b38229220bfa009504d117c0151532930"
+        },
+        "downloads": -1,
+        "filename": "napari_tmidas-0.1.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "1f80ec7d386aa62d497e82898bd19b18",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 25251,
+        "upload_time": "2025-03-10T18:48:54",
+        "upload_time_iso_8601": "2025-03-10T18:48:54.019737Z",
+        "url": "https://files.pythonhosted.org/packages/e9/7e/c984367246b30432e12715cfed6d63304fbb55a2a546f7243b80eecd7518/napari_tmidas-0.1.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.3": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "10241e3adf85e8a2952e9b3dbc904c7075f9cf2a3698adbbc9f3c555850a616a",
+          "md5": "7036bcb8dea837f4b83112bc068ef77a",
+          "sha256": "8676599a560c8d8e251c3df697c44cbfb68de00d165e32c8ae0ed5c12bec3c6f"
+        },
+        "downloads": -1,
+        "filename": "napari_tmidas-0.1.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "7036bcb8dea837f4b83112bc068ef77a",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 24325,
+        "upload_time": "2025-03-18T15:56:54",
+        "upload_time_iso_8601": "2025-03-18T15:56:54.246580Z",
+        "url": "https://files.pythonhosted.org/packages/10/24/1e3adf85e8a2952e9b3dbc904c7075f9cf2a3698adbbc9f3c555850a616a/napari_tmidas-0.1.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "de8ec4dfaf96de19996081b5203539f1c27bd11d85b12c6506d74af16e5427c6",
+          "md5": "60a02b185454721ef6eb12c05b7082a2",
+          "sha256": "891ae002646bf78dbcb236236332cf10e9558942bcaa1d59f09f1d7da5cbf3ea"
+        },
+        "downloads": -1,
+        "filename": "napari_tmidas-0.1.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "60a02b185454721ef6eb12c05b7082a2",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 25323,
+        "upload_time": "2025-03-18T15:56:55",
+        "upload_time_iso_8601": "2025-03-18T15:56:55.126332Z",
+        "url": "https://files.pythonhosted.org/packages/de/8e/c4dfaf96de19996081b5203539f1c27bd11d85b12c6506d74af16e5427c6/napari_tmidas-0.1.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.4": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "4bab8da7645ad6c0fba255c26e4e09b0bad454e9f32a6311ec600f0bfec02467",
+          "md5": "a537004661c70916106541570b5f31f2",
+          "sha256": "93f45d7062c3eef41d947cf779d5f10318ac018d965c03dc1ab99ff21cad1943"
+        },
+        "downloads": -1,
+        "filename": "napari_tmidas-0.1.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "a537004661c70916106541570b5f31f2",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 39324,
+        "upload_time": "2025-03-18T18:22:17",
+        "upload_time_iso_8601": "2025-03-18T18:22:17.483385Z",
+        "url": "https://files.pythonhosted.org/packages/4b/ab/8da7645ad6c0fba255c26e4e09b0bad454e9f32a6311ec600f0bfec02467/napari_tmidas-0.1.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "0dc9e0a2019faf906cc3a80971dc0592698fe36bdddc107206ba69168a4f71e3",
+          "md5": "73e00c11db8c806c7a2a0162f9ea5af1",
+          "sha256": "2857580bd42d3268ff7d5fe50aef3fe94389cedcd98f7f5a1345236b1e501d32"
+        },
+        "downloads": -1,
+        "filename": "napari_tmidas-0.1.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "73e00c11db8c806c7a2a0162f9ea5af1",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 39495,
+        "upload_time": "2025-03-18T18:22:19",
+        "upload_time_iso_8601": "2025-03-18T18:22:19.339678Z",
+        "url": "https://files.pythonhosted.org/packages/0d/c9/e0a2019faf906cc3a80971dc0592698fe36bdddc107206ba69168a4f71e3/napari_tmidas-0.1.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.5": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "ed5dd758b5edf8f7c8ea079311dbd5124f8153feb9a9be29ed0e6ef55ca0e021",
+          "md5": "2d0e5e8fc3dba2bc8e48f260e5a852c9",
+          "sha256": "a9d2713ab7187adcf3403874b35d07f0bbf6bfe5ba4c842b0a6dcc74262635e0"
+        },
+        "downloads": -1,
+        "filename": "napari_tmidas-0.1.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "2d0e5e8fc3dba2bc8e48f260e5a852c9",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 40872,
+        "upload_time": "2025-03-26T15:49:42",
+        "upload_time_iso_8601": "2025-03-26T15:49:42.448787Z",
+        "url": "https://files.pythonhosted.org/packages/ed/5d/d758b5edf8f7c8ea079311dbd5124f8153feb9a9be29ed0e6ef55ca0e021/napari_tmidas-0.1.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "6ab031a4f45372365403838a9c2492e504e4d688071b5b76e14bd0521c824fcc",
+          "md5": "18593bb2abb608028219963c2f697080",
+          "sha256": "b396729d0ec23d9e8c5352c25367517764aae7569f9cf7fb920ccd2d9842bc45"
+        },
+        "downloads": -1,
+        "filename": "napari_tmidas-0.1.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "18593bb2abb608028219963c2f697080",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 41092,
+        "upload_time": "2025-03-26T15:49:43",
+        "upload_time_iso_8601": "2025-03-26T15:49:43.670115Z",
+        "url": "https://files.pythonhosted.org/packages/6a/b0/31a4f45372365403838a9c2492e504e4d688071b5b76e14bd0521c824fcc/napari_tmidas-0.1.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.6": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "20064018f7696af943d9cc88a98b980e214fe3d68e0b5e9c8e72bd06c7bd8861",
+          "md5": "17704a537940bc5d0f50f6d661444959",
+          "sha256": "db61907b62bc796872468186db86b6f1604336866c9389dbeb4482a93e53a102"
+        },
+        "downloads": -1,
+        "filename": "napari_tmidas-0.1.6-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "17704a537940bc5d0f50f6d661444959",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 40871,
+        "upload_time": "2025-03-26T21:56:24",
+        "upload_time_iso_8601": "2025-03-26T21:56:24.250584Z",
+        "url": "https://files.pythonhosted.org/packages/20/06/4018f7696af943d9cc88a98b980e214fe3d68e0b5e9c8e72bd06c7bd8861/napari_tmidas-0.1.6-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "3cc0e2239a6a46a3e48151a6bc558258950412a02e022f02360c38571dee79b4",
+          "md5": "0b885db071fc77239220901dbb94f00c",
+          "sha256": "dc32bc9f3a14b422d3a50f456b36ed49b74895585e41731ad52d80fcc2fb8f66"
+        },
+        "downloads": -1,
+        "filename": "napari_tmidas-0.1.6.tar.gz",
+        "has_sig": false,
+        "md5_digest": "0b885db071fc77239220901dbb94f00c",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 41098,
+        "upload_time": "2025-03-26T21:56:25",
+        "upload_time_iso_8601": "2025-03-26T21:56:25.613028Z",
+        "url": "https://files.pythonhosted.org/packages/3c/c0/e2239a6a46a3e48151a6bc558258950412a02e022f02360c38571dee79b4/napari_tmidas-0.1.6.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.7": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "2a14278dd658c9b91bdddfb9d3ddaa12be691012128d0244b2fff7b2dde6abb2",
+          "md5": "00be79a10c03bbcf898b8f195132cda9",
+          "sha256": "5b44a98ca29969d6ef50ca53c69197cc71b0885ce2cf0b68793bdac5b7feb159"
+        },
+        "downloads": -1,
+        "filename": "napari_tmidas-0.1.7-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "00be79a10c03bbcf898b8f195132cda9",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 67343,
+        "upload_time": "2025-04-04T08:24:59",
+        "upload_time_iso_8601": "2025-04-04T08:24:59.546498Z",
+        "url": "https://files.pythonhosted.org/packages/2a/14/278dd658c9b91bdddfb9d3ddaa12be691012128d0244b2fff7b2dde6abb2/napari_tmidas-0.1.7-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "9e0df1b6c4f5089653f5ce2c864f8843540d03e76b865bc2331b476dee78986a",
+          "md5": "847f8b89cd3f638b47ad06d176e0e9e3",
+          "sha256": "0cf09ff6069599e7be3f8e3b589508060cb4c97421174c7cc9d77436bcf8a67b"
+        },
+        "downloads": -1,
+        "filename": "napari_tmidas-0.1.7.tar.gz",
+        "has_sig": false,
+        "md5_digest": "847f8b89cd3f638b47ad06d176e0e9e3",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 66458,
+        "upload_time": "2025-04-04T08:25:01",
+        "upload_time_iso_8601": "2025-04-04T08:25:01.225505Z",
+        "url": "https://files.pythonhosted.org/packages/9e/0d/f1b6c4f5089653f5ce2c864f8843540d03e76b865bc2331b476dee78986a/napari_tmidas-0.1.7.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.7.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "1b4f327b1fee39fd82bb04fa59891fb5596cd9e21d15dd553368abe8b225f5af",
+          "md5": "9fa0b96882940dec5ae56b4088657ad3",
+          "sha256": "8cb9f6f920cdf53c15c45b041b905a28d2a2f99f04c51206a37db3e1c0eaa2f5"
+        },
+        "downloads": -1,
+        "filename": "napari_tmidas-0.1.7.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "9fa0b96882940dec5ae56b4088657ad3",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 67752,
+        "upload_time": "2025-04-04T08:44:29",
+        "upload_time_iso_8601": "2025-04-04T08:44:29.490586Z",
+        "url": "https://files.pythonhosted.org/packages/1b/4f/327b1fee39fd82bb04fa59891fb5596cd9e21d15dd553368abe8b225f5af/napari_tmidas-0.1.7.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "64a0edea24be65aa545f291c07a63682f100c2b3a72ed4137020833e7203eca0",
+          "md5": "7ff6e988ecb735ee926a675eb94c8942",
+          "sha256": "3db48d0c091b6b88b82d714f82c952f0d0af814cc10cbc302bbac8437d840eb0"
+        },
+        "downloads": -1,
+        "filename": "napari_tmidas-0.1.7.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "7ff6e988ecb735ee926a675eb94c8942",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 67159,
+        "upload_time": "2025-04-04T08:44:30",
+        "upload_time_iso_8601": "2025-04-04T08:44:30.864089Z",
+        "url": "https://files.pythonhosted.org/packages/64/a0/edea24be65aa545f291c07a63682f100c2b3a72ed4137020833e7203eca0/napari_tmidas-0.1.7.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.8": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "f8420f33baff17a2ba6b63d399f0471e07bf23a0ce35249f14a784f90308a4e2",
+          "md5": "9edc556afa6fcb4e99324500367af291",
+          "sha256": "1932533a174377ef7fe4fda09d283815d7ea2b26e5437a4595b2f082f3044355"
+        },
+        "downloads": -1,
+        "filename": "napari_tmidas-0.1.8-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "9edc556afa6fcb4e99324500367af291",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 67722,
+        "upload_time": "2025-04-04T14:14:53",
+        "upload_time_iso_8601": "2025-04-04T14:14:53.130008Z",
+        "url": "https://files.pythonhosted.org/packages/f8/42/0f33baff17a2ba6b63d399f0471e07bf23a0ce35249f14a784f90308a4e2/napari_tmidas-0.1.8-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "b1440cdb289c539c792de16f60ce45789cf81f2c62c9612214b04c6e0eec7bf0",
+          "md5": "208a4a8bfbd24777d0e7d94bd4bda3cd",
+          "sha256": "9db5079900a293e41ca082fddcdbc79d439ebc916dbb06f6ced7332a18c7bc8d"
+        },
+        "downloads": -1,
+        "filename": "napari_tmidas-0.1.8.tar.gz",
+        "has_sig": false,
+        "md5_digest": "208a4a8bfbd24777d0e7d94bd4bda3cd",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 67159,
+        "upload_time": "2025-04-04T14:14:54",
+        "upload_time_iso_8601": "2025-04-04T14:14:54.463669Z",
+        "url": "https://files.pythonhosted.org/packages/b1/44/0cdb289c539c792de16f60ce45789cf81f2c62c9612214b04c6e0eec7bf0/napari_tmidas-0.1.8.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.8.5": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "0dc41b42418eac41f5f4454b9150e9c0253752958d0ee104759925cab1bed604",
+          "md5": "c0e904c85362fae2b7e97efc0e68d76a",
+          "sha256": "9b12be60094fcc2c33d3fcd5b300b8f8f47605fbf5d054844e7eb01b35121627"
+        },
+        "downloads": -1,
+        "filename": "napari_tmidas-0.1.8.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "c0e904c85362fae2b7e97efc0e68d76a",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 79225,
+        "upload_time": "2025-04-24T08:07:25",
+        "upload_time_iso_8601": "2025-04-24T08:07:25.850040Z",
+        "url": "https://files.pythonhosted.org/packages/0d/c4/1b42418eac41f5f4454b9150e9c0253752958d0ee104759925cab1bed604/napari_tmidas-0.1.8.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "87f6b39630c298c5b52e072b6e20ab000b2e7033eb8d27dee9977d4653fc9f65",
+          "md5": "32234428663da55cf023c2da40cf3317",
+          "sha256": "cd727863604e349edbc86f4acb5b037034dcdcfb05e7101e1a902ce05e49c420"
+        },
+        "downloads": -1,
+        "filename": "napari_tmidas-0.1.8.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "32234428663da55cf023c2da40cf3317",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 76787,
+        "upload_time": "2025-04-24T08:07:27",
+        "upload_time_iso_8601": "2025-04-24T08:07:27.277117Z",
+        "url": "https://files.pythonhosted.org/packages/87/f6/b39630c298c5b52e072b6e20ab000b2e7033eb8d27dee9977d4653fc9f65/napari_tmidas-0.1.8.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.9": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "328b13ee0016ec2d320b5e5c7333624225d60be8df6ebcc84c09c23955b9f8da",
+          "md5": "2bdd0b7b3dc4fd7de7a66b4db3cf1a0e",
+          "sha256": "b6dcc30ccb235c2642620845d9588571cd724217b7d75acbe3b7663ff6437eb1"
+        },
+        "downloads": -1,
+        "filename": "napari_tmidas-0.1.9-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "2bdd0b7b3dc4fd7de7a66b4db3cf1a0e",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 78989,
+        "upload_time": "2025-04-24T08:40:59",
+        "upload_time_iso_8601": "2025-04-24T08:40:59.819624Z",
+        "url": "https://files.pythonhosted.org/packages/32/8b/13ee0016ec2d320b5e5c7333624225d60be8df6ebcc84c09c23955b9f8da/napari_tmidas-0.1.9-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "14329b74e28bdd16a5213c697d7d3ad0e8c3b6093ed594b4f0b56a5732beb72b",
+          "md5": "cfb243ccfec417cdf366a52ea85b4de3",
+          "sha256": "b79c0b94a683333e6c7f36fcbdfdfa98fd6fcdd8f281fef716e6f2e4a9aba00a"
+        },
+        "downloads": -1,
+        "filename": "napari_tmidas-0.1.9.tar.gz",
+        "has_sig": false,
+        "md5_digest": "cfb243ccfec417cdf366a52ea85b4de3",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 76389,
+        "upload_time": "2025-04-24T08:41:00",
+        "upload_time_iso_8601": "2025-04-24T08:41:00.872487Z",
+        "url": "https://files.pythonhosted.org/packages/14/32/9b74e28bdd16a5213c697d7d3ad0e8c3b6093ed594b4f0b56a5732beb72b/napari_tmidas-0.1.9.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "aa499b294e087a660c19a61b6d5f7ff2b283527141013ee83d45e13844364e77",
+          "md5": "7c303c8bfb2c02c8109d7cb4fad1461c",
+          "sha256": "10a089128be769ed410b32ce8d872f840c87c859702206d69cf20f3c95bdbf83"
+        },
+        "downloads": -1,
+        "filename": "napari_tmidas-0.2.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "7c303c8bfb2c02c8109d7cb4fad1461c",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 84145,
+        "upload_time": "2025-05-07T15:02:05",
+        "upload_time_iso_8601": "2025-05-07T15:02:05.052442Z",
+        "url": "https://files.pythonhosted.org/packages/aa/49/9b294e087a660c19a61b6d5f7ff2b283527141013ee83d45e13844364e77/napari_tmidas-0.2.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "a6c8e720b1d8a68455ea27b3633d1f4291595cfd7946c3694ef631eabd11869c",
+          "md5": "1a84760aa611b3797243a1d71e91b543",
+          "sha256": "aeddb719207deffb6b24f75a7609a6f38e081690121412875efd240964957770"
+        },
+        "downloads": -1,
+        "filename": "napari_tmidas-0.2.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "1a84760aa611b3797243a1d71e91b543",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 80600,
+        "upload_time": "2025-05-07T15:02:06",
+        "upload_time_iso_8601": "2025-05-07T15:02:06.279294Z",
+        "url": "https://files.pythonhosted.org/packages/a6/c8/e720b1d8a68455ea27b3633d1f4291595cfd7946c3694ef631eabd11869c/napari_tmidas-0.2.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "c00de69e1cb129acd01a4572a991a806737983393da739bebd5bd5c2225191b2",
+          "md5": "d03b0db572b35a3b6b020d5adc663625",
+          "sha256": "8a26d84fde121178c86d20c6e9943b86aabf7a9448ccf235a11b57e976720b3a"
+        },
+        "downloads": -1,
+        "filename": "napari_tmidas-0.2.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "d03b0db572b35a3b6b020d5adc663625",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 114736,
+        "upload_time": "2025-05-28T21:27:20",
+        "upload_time_iso_8601": "2025-05-28T21:27:20.750547Z",
+        "url": "https://files.pythonhosted.org/packages/c0/0d/e69e1cb129acd01a4572a991a806737983393da739bebd5bd5c2225191b2/napari_tmidas-0.2.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "71311b8c195ea7f6295390acfdc48465815434269241098f2c24b46e3653df6c",
+          "md5": "eecf5ea4209ff6a4fb0ef1d2cb2e9904",
+          "sha256": "34c9cd310c45711fa5f05f959a0cc7f829bddb5ad3a6c7e1a8933085b08e4111"
+        },
+        "downloads": -1,
+        "filename": "napari_tmidas-0.2.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "eecf5ea4209ff6a4fb0ef1d2cb2e9904",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 106671,
+        "upload_time": "2025-05-28T21:27:22",
+        "upload_time_iso_8601": "2025-05-28T21:27:22.342870Z",
+        "url": "https://files.pythonhosted.org/packages/71/31/1b8c195ea7f6295390acfdc48465815434269241098f2c24b46e3653df6c/napari_tmidas-0.2.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "c00de69e1cb129acd01a4572a991a806737983393da739bebd5bd5c2225191b2",
+        "md5": "d03b0db572b35a3b6b020d5adc663625",
+        "sha256": "8a26d84fde121178c86d20c6e9943b86aabf7a9448ccf235a11b57e976720b3a"
+      },
+      "downloads": -1,
+      "filename": "napari_tmidas-0.2.1-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "d03b0db572b35a3b6b020d5adc663625",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.9",
+      "size": 114736,
+      "upload_time": "2025-05-28T21:27:20",
+      "upload_time_iso_8601": "2025-05-28T21:27:20.750547Z",
+      "url": "https://files.pythonhosted.org/packages/c0/0d/e69e1cb129acd01a4572a991a806737983393da739bebd5bd5c2225191b2/napari_tmidas-0.2.1-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "71311b8c195ea7f6295390acfdc48465815434269241098f2c24b46e3653df6c",
+        "md5": "eecf5ea4209ff6a4fb0ef1d2cb2e9904",
+        "sha256": "34c9cd310c45711fa5f05f959a0cc7f829bddb5ad3a6c7e1a8933085b08e4111"
+      },
+      "downloads": -1,
+      "filename": "napari_tmidas-0.2.1.tar.gz",
+      "has_sig": false,
+      "md5_digest": "eecf5ea4209ff6a4fb0ef1d2cb2e9904",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.9",
+      "size": 106671,
+      "upload_time": "2025-05-28T21:27:22",
+      "upload_time_iso_8601": "2025-05-28T21:27:22.342870Z",
+      "url": "https://files.pythonhosted.org/packages/71/31/1b8c195ea7f6295390acfdc48465815434269241098f2c24b46e3653df6c/napari_tmidas-0.2.1.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
