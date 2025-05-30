@@ -18,7 +18,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from packaging.version import Version
 
-from scripts.utils import normalize_name
+from .utils import normalize_name
 
 try:
     import conda
