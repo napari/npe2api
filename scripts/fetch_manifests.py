@@ -42,29 +42,30 @@ class ManifestError(TypedDict):
     error: str
 
 
-def _try_fetch_and_write_manifest(name: str, active_versions: list[str]) -> ManifestError | None:
-    version_to_fetch = _latest_non_pre_release(active_versions) or active_versions[0]
+def _try_fetch_and_write_manifest(normalized_name: str, classifiers_info: dict[str, str | list[str]]) -> ManifestError | None:
+    pypi_versions = classifiers_info["pypi_versions"]
+    version_to_fetch = _latest_non_pre_release(pypi_versions) or pypi_versions[0]
 
-    if _current_manifest_is_valid(name, version_to_fetch):
-        print(f"🟢 {name}")
+    if _current_manifest_is_valid(normalized_name, version_to_fetch):
+        print(f"🟢 {normalized_name}")
         return None
 
     try:
-        mf = fetch_manifest(name, version_to_fetch)
-        (MANIFEST_DIR / f"{name}.json").write_text(
+        mf = fetch_manifest(normalized_name, version_to_fetch)
+        (MANIFEST_DIR / f"{normalized_name}.json").write_text(
             # npe2 is using Pydantic v1, which doesn't support `model_dump_json`
             mf.json(exclude=set(), indent=2)
         )
     except Exception as exc:
-        print(f"❌ {name}")
+        print(f"❌ {normalized_name}")
         print(f"{type(exc)}: {exc}", file=sys.stderr)
         return ManifestError(
-            name=name,
+            name=normalized_name,
             version=version_to_fetch,
             error=str(exc),
         )
     else:
-        print(f"✅ {name}")
+        print(f"✅ {normalized_name}")
         return None
 
 
