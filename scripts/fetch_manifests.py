@@ -7,6 +7,7 @@ framework::napari classifier. This script instead gets information about active 
 Much of this code is taken from `npe2._inspection._fetch`, where `npe2 fetch --all` was implemented.
 """
 import json
+import os
 import sys
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
@@ -85,6 +86,11 @@ if __name__ == "__main__":
             file=sys.stderr,
         )
         print(f"{type(exc)}: {exc}", file=sys.stderr)
+        raise SystemExit(1)
+    
+    if not MANIFEST_DIR.exists():
+        print("Manifest directory doesn't exist")
+        print(os.listdir(PUBLIC))
         raise SystemExit(1)
 
     # use processes instead of threads, because many of the subroutines in build
