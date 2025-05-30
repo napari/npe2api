@@ -29,10 +29,13 @@ def _latest_non_pre_release(versions: list[str]) -> str:
 
 
 def _current_manifest_is_valid(name: str, version: str) -> bool:
+    print(f"Checking {name} is valid?")
     try:
         existing_manifest = json.loads((MANIFEST_DIR / f"{name}.json").read_text())
+        print(f"{name} manifest valid.")
         return existing_manifest["package_metadata"]["version"] == version
     except Exception:
+        print(f"{name} manifest invalid.")
         return False
 
 
@@ -52,10 +55,12 @@ def _try_fetch_and_write_manifest(normalized_name: str, classifiers_info: dict[s
 
     try:
         mf = fetch_manifest(normalized_name, version_to_fetch)
+        print(f"Fetched manifest for {normalized_name}")
         (MANIFEST_DIR / f"{normalized_name}.json").write_text(
             # npe2 is using Pydantic v1, which doesn't support `model_dump_json`
             mf.json(exclude=set(), indent=2)
         )
+        print(f"Manifest {normalized_name} written successfully.")
     except Exception as exc:
         print(f"❌ {normalized_name}")
         print(f"{type(exc)}: {exc}", file=sys.stderr)
