@@ -186,7 +186,7 @@ if __name__ == "__main__":
                         READER_INDEX[pattern].append(normalized_name)
 
     # sort things
-    PYPI_INDEX = sorted(PYPI_INDEX, key=lambda x: x["name"])
+    PYPI_INDEX = sorted(PYPI_INDEX, key=lambda x: x["normalized_name"])
     READER_INDEX = {  # type: ignore
         k: sorted(v, key=str.lower) for k, v in sorted(READER_INDEX.items())
     }
