@@ -1,0 +1,390 @@
+{
+  "info": {
+    "author": "Mai Hoang",
+    "author_email": "maihan.hoang1208@gmail.com",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: Other/Proprietary License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-sam2long\n\n[![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC_BY--NC_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)\n[![PyPI](https://img.shields.io/pypi/v/napari-sam2long.svg?color=green)](https://pypi.org/project/napari-sam2long)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-sam2long.svg?color=green)](https://python.org)\n[![tests](https://github.com/maihanhoang/napari-sam2long/workflows/tests/badge.svg)](https://github.com/maihanhoang/napari-sam2long/actions)\n[![codecov](https://codecov.io/gh/maihanhoang/napari-sam2long/branch/main/graph/badge.svg)](https://codecov.io/gh/maihanhoang/napari-sam2long)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-sam2long)](https://napari-hub.org/plugins/napari-sam2long)\n[![npe2](https://img.shields.io/badge/plugin-npe2-blue?link=https://napari.org/stable/plugins/index.html)](https://napari.org/stable/plugins/index.html)\n[![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-purple.json)](https://github.com/copier-org/copier)\n\nA plugin for interactive 3D (volumetric or time-lapse) segmentation using Meta's Segment Anything Model 2 (SAM2).\n\nDesigned for bioimaging researchers working with 3D volumetric or time-lapse images, this plugin supports TIFF files in ZYX or TYX format. Users can provide input and make corrections through point clicks or manually drawn masks.\n\nThe tool leverages the [SAM2Long](https://github.com/Mark12Ding/SAM2Long) model, an optimized version of [Meta's SAM 2](https://github.com/facebookresearch/sam2) with enhancements to the memory module for improved performance on long videos. It was built to support long videos, but it remains effective for shorter videos as well.\n\nThis [napari] plugin was generated with [copier] using the [napari-plugin-template].\n\n<h3 align=\"center\">Select object with point prompts</h3>\n\n<p align=\"middle\">\n  <img src=\"https://github.com/maihanhoang/napari-sam2long/raw/main/assets/napari-sam2long-firstLabel.gif\" width=\"100%\" />\n</p>\n\n<h3 align=\"center\">Refine object selection with napari tools </h3>\n\n<p align=\"middle\">\n  <img src=\"https://github.com/maihanhoang/napari-sam2long/raw/main/assets/napari-sam2long-anotherLabel.gif\" width=\"100%\" />\n</p>\n\n\n## Installation\nPlease see the official [SAM 2](https://github.com/facebookresearch/sam2) repo and the [INSTALL.md](https://github.com/facebookresearch/sam2/blob/main/INSTALL.md) for notes and FAQs on potential installation issues.\n\n1. Create a new conda environment with python>=3.10 and install napari:\n    ```bash\n    conda create -n napari-sam2long python==3.10 pip\n    conda activate napari-sam2long\n    python -m pip install \"napari[all]\"\n    ```\n\n2. Install PyTorch and TorchVision. Select preferences [here](https://pytorch.org/get-started/locally/) to find correct installation command.\n\n    Example command can look like this:\n\n    ```bash\n    pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126\n    ```\n\n3. Install SAM2Long:\n    ```bash\n    git clone git@github.com:maihanhoang/napari-sam2long.git\n\n    cd napari-sam2long/SAM2Long && python -m pip install -e .\n    ```\n4. Install napari-SAM2Long plugin:\n    ```bash\n    cd .. && python -m pip install e .\n    ```\n\n## Usage\n\n### Segmenting & tracking first object\n1. **Open a 3D tiff** in napari, make sure it's in TYX or ZYX format.\n2. **Select** the image in the ***Input*** dropdown.\n3. **Add a new [labels layer](https://napari.org/0.5.0/howtos/layers/labels.html)** *after* the input image, then select it in the *Labels* dropdown.\n\n    The labels layer must be added after the image to ensure dimension alignment.\n4. **Select the *Model***.\n5. **Click *Initialize*** to load the image and initialize the inference state.\n6. **Define the initial object mask** on any frame:\n    - Use the mouse middle-click to prompt the model:\n        - *Middle-click* = add region\n        - *Ctrl + middle-click* = remove region\n    - Or use napari's built-in tools (paintbrush, eraser, etc.) to draw the mask manually.\n\n    If the model doesn\u2019t segment the object accurately with point prompts, manual correction using napari tools can be useful.\n\n7. Once satisfied with the initial mask, **click *Propagate from current frame*** to obtain segmentations for all subsequent frames. The result will be added to the labels layer.\n\n    Propagation only affects future frames. It does not recompute previous ones or consider prompts from other frames. Only the current mask is used to propagate forward.\n\n### Making corrections\n8. To refine segmentation, add/remove regions use:\n    - *(Ctrl+) middle-click* prompts\n    - napari\u2019s label tools\n9. *Propagate from current frame* to re-run the model's predictions with the new mask.\n\n    The plugin treats this as a new initial mask and discards earlier prompts on that frame.\n\n### Segmenting another object in the same image/video\n10. Save the current labels layer (to preserve previous segmentation).\n11. Click *Reset*, or add a new labels layer and select it in the *Labels* dropdown.\nThen repeat steps from Step 6 for the next object.\n\n###  Segment new image/video\n12. *Reset* inference state.\n13. Load new image and follow instructions starting from Step 1.\n    *Initialize* is necessary to load the new image.\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[copier]: https://copier.readthedocs.io/en/stable/\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[napari-plugin-template]: https://github.com/napari/napari-plugin-template\n\n[file an issue]: https://github.com/maihanhoang/napari-sam2long/issues\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n\n## Bibliography\n[1]: Nikhila Ravi, Valentin Gabeur, Yuan-Ting Hu, Ronghang Hu, Chaitanya Ryali, Tengyu Ma, Haitham Khedr, Roman R\u00e4dle, Chloe Rolland, Laura Gustafson, Eric Mintun, Junting Pan, Kalyan Vasudev Alwala, Nicolas Carion, Chao-Yuan Wu, Ross Girshick, Piotr Doll\u00e1r, & Christoph Feichtenhofer. (2024). SAM 2: Segment Anything in Images and Videos.\n\n[2]: Ding, S., Qian, R., Dong, X., Zhang, P., Zang, Y., Cao, Y., Guo, Y., Lin, D., & Wang, J. (2024). SAM2Long: Enhancing SAM 2 for Long Video Segmentation with a Training-Free Memory Tree. arXiv preprint arXiv:2410.16268.\n\n## License & Attribution\n\nThis project integrates code from:\n- [SAM2](https://github.com/facebookresearch/sam2) by Meta ([`Apache 2.0 License`](LICENSE-Apache-2.0))\n- [SAM2Long](https://github.com/Mark12Ding/SAM2Long) by Shuangrui Ding et al. ([`CC-BY-NC 4.0 License`](LICENSE-CC-BY-NC-4.0))\n- [napari-samv2](https://github.com/Krishvraman/napari-SAMV2) by Krishnan Venkataraman ([`BSD-3 License`](LICENSE-BSD-3))\n\n\nThe following changes were made to SAM2Long:\n- integrated SAM2Long into a napari plugin\n- modified the video predictor to support the progress bar in the plugin\n\n\nSince this project includes **SAM2Long**, it inherits the **CC-BY-NC 4.0 license**, meaning **commercial use is not allowed**.\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": "Attribution-NonCommercial 4.0 International\n        \n        \n        \n        Creative Commons Corporation (\"Creative Commons\") is not a law firm and\n        does not provide legal services or legal advice. Distribution of\n        Creative Commons public licenses does not create a lawyer-client or\n        other relationship. Creative Commons makes its licenses and related\n        information available on an \"as-is\" basis. Creative Commons gives no\n        warranties regarding its licenses, any material licensed under their\n        terms and conditions, or any related information. Creative Commons\n        disclaims all liability for damages resulting from their use to the\n        fullest extent possible.\n        \n        Using Creative Commons Public Licenses\n        \n        Creative Commons public licenses provide a standard set of terms and\n        conditions that creators and other rights holders may use to share\n        original works of authorship and other material subject to copyright\n        and certain other rights specified in the public license below. The\n        following considerations are for informational purposes only, are not\n        exhaustive, and do not form part of our licenses.\n        \n             Considerations for licensors: Our public licenses are\n             intended for use by those authorized to give the public\n             permission to use material in ways otherwise restricted by\n             copyright and certain other rights. Our licenses are\n             irrevocable. Licensors should read and understand the terms\n             and conditions of the license they choose before applying it.\n             Licensors should also secure all rights necessary before\n             applying our licenses so that the public can reuse the\n             material as expected. Licensors should clearly mark any\n             material not subject to the license. This includes other CC-\n             licensed material, or material used under an exception or\n             limitation to copyright. More considerations for licensors:\n        \twiki.creativecommons.org/Considerations_for_licensors\n        \n             Considerations for the public: By using one of our public\n             licenses, a licensor grants the public permission to use the\n             licensed material under specified terms and conditions. If\n             the licensor's permission is not necessary for any reason--for\n             example, because of any applicable exception or limitation to\n             copyright--then that use is not regulated by the license. Our\n             licenses grant only permissions under copyright and certain\n             other rights that a licensor has authority to grant. Use of\n             the licensed material may still be restricted for other\n             reasons, including because others have copyright or other\n             rights in the material. A licensor may make special requests,\n             such as asking that all changes be marked or described.\n             Although not required by our licenses, you are encouraged to\n             respect those requests where reasonable. More_considerations\n             for the public:\n        \twiki.creativecommons.org/Considerations_for_licensees\n        \n        \n        \n        Creative Commons Attribution-NonCommercial 4.0 International Public\n        License\n        \n        By exercising the Licensed Rights (defined below), You accept and agree\n        to be bound by the terms and conditions of this Creative Commons\n        Attribution-NonCommercial 4.0 International Public License (\"Public\n        License\"). To the extent this Public License may be interpreted as a\n        contract, You are granted the Licensed Rights in consideration of Your\n        acceptance of these terms and conditions, and the Licensor grants You\n        such rights in consideration of benefits the Licensor receives from\n        making the Licensed Material available under these terms and\n        conditions.\n        \n        Section 1 -- Definitions.\n        \n          a. Adapted Material means material subject to Copyright and Similar\n             Rights that is derived from or based upon the Licensed Material\n             and in which the Licensed Material is translated, altered,\n             arranged, transformed, or otherwise modified in a manner requiring\n             permission under the Copyright and Similar Rights held by the\n             Licensor. For purposes of this Public License, where the Licensed\n             Material is a musical work, performance, or sound recording,\n             Adapted Material is always produced where the Licensed Material is\n             synched in timed relation with a moving image.\n        \n          b. Adapter's License means the license You apply to Your Copyright\n             and Similar Rights in Your contributions to Adapted Material in\n             accordance with the terms and conditions of this Public License.\n        \n          c. Copyright and Similar Rights means copyright and/or similar rights\n             closely related to copyright including, without limitation,\n             performance, broadcast, sound recording, and Sui Generis Database\n             Rights, without regard to how the rights are labeled or\n             categorized. For purposes of this Public License, the rights\n             specified in Section 2(b)(1)-(2) are not Copyright and Similar\n             Rights.\n          d. Effective Technological Measures means those measures that, in the\n             absence of proper authority, may not be circumvented under laws\n             fulfilling obligations under Article 11 of the WIPO Copyright\n             Treaty adopted on December 20, 1996, and/or similar international\n             agreements.\n        \n          e. Exceptions and Limitations means fair use, fair dealing, and/or\n             any other exception or limitation to Copyright and Similar Rights\n             that applies to Your use of the Licensed Material.\n        \n          f. Licensed Material means the artistic or literary work, database,\n             or other material to which the Licensor applied this Public\n             License.\n        \n          g. Licensed Rights means the rights granted to You subject to the\n             terms and conditions of this Public License, which are limited to\n             all Copyright and Similar Rights that apply to Your use of the\n             Licensed Material and that the Licensor has authority to license.\n        \n          h. Licensor means the individual(s) or entity(ies) granting rights\n             under this Public License.\n        \n          i. NonCommercial means not primarily intended for or directed towards\n             commercial advantage or monetary compensation. For purposes of\n             this Public License, the exchange of the Licensed Material for\n             other material subject to Copyright and Similar Rights by digital\n             file-sharing or similar means is NonCommercial provided there is\n             no payment of monetary compensation in connection with the\n             exchange.\n        \n          j. Share means to provide material to the public by any means or\n             process that requires permission under the Licensed Rights, such\n             as reproduction, public display, public performance, distribution,\n             dissemination, communication, or importation, and to make material\n             available to the public including in ways that members of the\n             public may access the material from a place and at a time\n             individually chosen by them.\n        \n          k. Sui Generis Database Rights means rights other than copyright\n             resulting from Directive 96/9/EC of the European Parliament and of\n             the Council of 11 March 1996 on the legal protection of databases,\n             as amended and/or succeeded, as well as other essentially\n             equivalent rights anywhere in the world.\n        \n          l. You means the individual or entity exercising the Licensed Rights\n             under this Public License. Your has a corresponding meaning.\n        \n        Section 2 -- Scope.\n        \n          a. License grant.\n        \n               1. Subject to the terms and conditions of this Public License,\n                  the Licensor hereby grants You a worldwide, royalty-free,\n                  non-sublicensable, non-exclusive, irrevocable license to\n                  exercise the Licensed Rights in the Licensed Material to:\n        \n                    a. reproduce and Share the Licensed Material, in whole or\n                       in part, for NonCommercial purposes only; and\n        \n                    b. produce, reproduce, and Share Adapted Material for\n                       NonCommercial purposes only.\n        \n               2. Exceptions and Limitations. For the avoidance of doubt, where\n                  Exceptions and Limitations apply to Your use, this Public\n                  License does not apply, and You do not need to comply with\n                  its terms and conditions.\n        \n               3. Term. The term of this Public License is specified in Section\n                  6(a).\n        \n               4. Media and formats; technical modifications allowed. The\n                  Licensor authorizes You to exercise the Licensed Rights in\n                  all media and formats whether now known or hereafter created,\n                  and to make technical modifications necessary to do so. The\n                  Licensor waives and/or agrees not to assert any right or\n                  authority to forbid You from making technical modifications\n                  necessary to exercise the Licensed Rights, including\n                  technical modifications necessary to circumvent Effective\n                  Technological Measures. For purposes of this Public License,\n                  simply making modifications authorized by this Section 2(a)\n                  (4) never produces Adapted Material.\n        \n               5. Downstream recipients.\n        \n                    a. Offer from the Licensor -- Licensed Material. Every\n                       recipient of the Licensed Material automatically\n                       receives an offer from the Licensor to exercise the\n                       Licensed Rights under the terms and conditions of this\n                       Public License.\n        \n                    b. No downstream restrictions. You may not offer or impose\n                       any additional or different terms or conditions on, or\n                       apply any Effective Technological Measures to, the\n                       Licensed Material if doing so restricts exercise of the\n                       Licensed Rights by any recipient of the Licensed\n                       Material.\n        \n               6. No endorsement. Nothing in this Public License constitutes or\n                  may be construed as permission to assert or imply that You\n                  are, or that Your use of the Licensed Material is, connected\n                  with, or sponsored, endorsed, or granted official status by,\n                  the Licensor or others designated to receive attribution as\n                  provided in Section 3(a)(1)(A)(i).\n        \n          b. Other rights.\n        \n               1. Moral rights, such as the right of integrity, are not\n                  licensed under this Public License, nor are publicity,\n                  privacy, and/or other similar personality rights; however, to\n                  the extent possible, the Licensor waives and/or agrees not to\n                  assert any such rights held by the Licensor to the limited\n                  extent necessary to allow You to exercise the Licensed\n                  Rights, but not otherwise.\n        \n               2. Patent and trademark rights are not licensed under this\n                  Public License.\n        \n               3. To the extent possible, the Licensor waives any right to\n                  collect royalties from You for the exercise of the Licensed\n                  Rights, whether directly or through a collecting society\n                  under any voluntary or waivable statutory or compulsory\n                  licensing scheme. In all other cases the Licensor expressly\n                  reserves any right to collect such royalties, including when\n                  the Licensed Material is used other than for NonCommercial\n                  purposes.\n        \n        Section 3 -- License Conditions.\n        \n        Your exercise of the Licensed Rights is expressly made subject to the\n        following conditions.\n        \n          a. Attribution.\n        \n               1. If You Share the Licensed Material (including in modified\n                  form), You must:\n        \n                    a. retain the following if it is supplied by the Licensor\n                       with the Licensed Material:\n        \n                         i. identification of the creator(s) of the Licensed\n                            Material and any others designated to receive\n                            attribution, in any reasonable manner requested by\n                            the Licensor (including by pseudonym if\n                            designated);\n        \n                        ii. a copyright notice;\n        \n                       iii. a notice that refers to this Public License;\n        \n                        iv. a notice that refers to the disclaimer of\n                            warranties;\n        \n                         v. a URI or hyperlink to the Licensed Material to the\n                            extent reasonably practicable;\n        \n                    b. indicate if You modified the Licensed Material and\n                       retain an indication of any previous modifications; and\n        \n                    c. indicate the Licensed Material is licensed under this\n                       Public License, and include the text of, or the URI or\n                       hyperlink to, this Public License.\n        \n               2. You may satisfy the conditions in Section 3(a)(1) in any\n                  reasonable manner based on the medium, means, and context in\n                  which You Share the Licensed Material. For example, it may be\n                  reasonable to satisfy the conditions by providing a URI or\n                  hyperlink to a resource that includes the required\n                  information.\n        \n               3. If requested by the Licensor, You must remove any of the\n                  information required by Section 3(a)(1)(A) to the extent\n                  reasonably practicable.\n        \n               4. If You Share Adapted Material You produce, the Adapter's\n                  License You apply must not prevent recipients of the Adapted\n                  Material from complying with this Public License.\n        \n        Section 4 -- Sui Generis Database Rights.\n        \n        Where the Licensed Rights include Sui Generis Database Rights that\n        apply to Your use of the Licensed Material:\n        \n          a. for the avoidance of doubt, Section 2(a)(1) grants You the right\n             to extract, reuse, reproduce, and Share all or a substantial\n             portion of the contents of the database for NonCommercial purposes\n             only;\n        \n          b. if You include all or a substantial portion of the database\n             contents in a database in which You have Sui Generis Database\n             Rights, then the database in which You have Sui Generis Database\n             Rights (but not its individual contents) is Adapted Material; and\n        \n          c. You must comply with the conditions in Section 3(a) if You Share\n             all or a substantial portion of the contents of the database.\n        \n        For the avoidance of doubt, this Section 4 supplements and does not\n        replace Your obligations under this Public License where the Licensed\n        Rights include other Copyright and Similar Rights.\n        \n        Section 5 -- Disclaimer of Warranties and Limitation of Liability.\n        \n          a. UNLESS OTHERWISE SEPARATELY UNDERTAKEN BY THE LICENSOR, TO THE\n             EXTENT POSSIBLE, THE LICENSOR OFFERS THE LICENSED MATERIAL AS-IS\n             AND AS-AVAILABLE, AND MAKES NO REPRESENTATIONS OR WARRANTIES OF\n             ANY KIND CONCERNING THE LICENSED MATERIAL, WHETHER EXPRESS,\n             IMPLIED, STATUTORY, OR OTHER. THIS INCLUDES, WITHOUT LIMITATION,\n             WARRANTIES OF TITLE, MERCHANTABILITY, FITNESS FOR A PARTICULAR\n             PURPOSE, NON-INFRINGEMENT, ABSENCE OF LATENT OR OTHER DEFECTS,\n             ACCURACY, OR THE PRESENCE OR ABSENCE OF ERRORS, WHETHER OR NOT\n             KNOWN OR DISCOVERABLE. WHERE DISCLAIMERS OF WARRANTIES ARE NOT\n             ALLOWED IN FULL OR IN PART, THIS DISCLAIMER MAY NOT APPLY TO YOU.\n        \n          b. TO THE EXTENT POSSIBLE, IN NO EVENT WILL THE LICENSOR BE LIABLE\n             TO YOU ON ANY LEGAL THEORY (INCLUDING, WITHOUT LIMITATION,\n             NEGLIGENCE) OR OTHERWISE FOR ANY DIRECT, SPECIAL, INDIRECT,\n             INCIDENTAL, CONSEQUENTIAL, PUNITIVE, EXEMPLARY, OR OTHER LOSSES,\n             COSTS, EXPENSES, OR DAMAGES ARISING OUT OF THIS PUBLIC LICENSE OR\n             USE OF THE LICENSED MATERIAL, EVEN IF THE LICENSOR HAS BEEN\n             ADVISED OF THE POSSIBILITY OF SUCH LOSSES, COSTS, EXPENSES, OR\n             DAMAGES. WHERE A LIMITATION OF LIABILITY IS NOT ALLOWED IN FULL OR\n             IN PART, THIS LIMITATION MAY NOT APPLY TO YOU.\n        \n          c. The disclaimer of warranties and limitation of liability provided\n             above shall be interpreted in a manner that, to the extent\n             possible, most closely approximates an absolute disclaimer and\n             waiver of all liability.\n        \n        Section 6 -- Term and Termination.\n        \n          a. This Public License applies for the term of the Copyright and\n             Similar Rights licensed here. However, if You fail to comply with\n             this Public License, then Your rights under this Public License\n             terminate automatically.\n        \n          b. Where Your right to use the Licensed Material has terminated under\n             Section 6(a), it reinstates:\n        \n               1. automatically as of the date the violation is cured, provided\n                  it is cured within 30 days of Your discovery of the\n                  violation; or\n        \n               2. upon express reinstatement by the Licensor.\n        \n             For the avoidance of doubt, this Section 6(b) does not affect any\n             right the Licensor may have to seek remedies for Your violations\n             of this Public License.\n        \n          c. For the avoidance of doubt, the Licensor may also offer the\n             Licensed Material under separate terms or conditions or stop\n             distributing the Licensed Material at any time; however, doing so\n             will not terminate this Public License.\n        \n          d. Sections 1, 5, 6, 7, and 8 survive termination of this Public\n             License.\n        \n        Section 7 -- Other Terms and Conditions.\n        \n          a. The Licensor shall not be bound by any additional or different\n             terms or conditions communicated by You unless expressly agreed.\n        \n          b. Any arrangements, understandings, or agreements regarding the\n             Licensed Material not stated herein are separate from and\n             independent of the terms and conditions of this Public License.\n        \n        Section 8 -- Interpretation.\n        \n          a. For the avoidance of doubt, this Public License does not, and\n             shall not be interpreted to, reduce, limit, restrict, or impose\n             conditions on any use of the Licensed Material that could lawfully\n             be made without permission under this Public License.\n        \n          b. To the extent possible, if any provision of this Public License is\n             deemed unenforceable, it shall be automatically reformed to the\n             minimum extent necessary to make it enforceable. If the provision\n             cannot be reformed, it shall be severed from this Public License\n             without affecting the enforceability of the remaining terms and\n             conditions.\n        \n          c. No term or condition of this Public License will be waived and no\n             failure to comply consented to unless expressly agreed to by the\n             Licensor.\n        \n          d. Nothing in this Public License constitutes or may be interpreted\n             as a limitation upon, or waiver of, any privileges and immunities\n             that apply to the Licensor or You, including from the legal\n             processes of any jurisdiction or authority.\n        \n        \n        \n        Creative Commons is not a party to its public\n        licenses. Notwithstanding, Creative Commons may elect to apply one of\n        its public licenses to material it publishes and in those instances\n        will be considered the \u201cLicensor.\u201d The text of the Creative Commons\n        public licenses is dedicated to the public domain under the CC0 Public\n        Domain Dedication. Except for the limited purpose of indicating that\n        material is shared under a Creative Commons public license or as\n        otherwise permitted by the Creative Commons policies published at\n        creativecommons.org/policies, Creative Commons does not authorize the\n        use of the trademark \"Creative Commons\" or any other trademark or logo\n        of Creative Commons without its prior written consent including,\n        without limitation, in connection with any unauthorized modifications\n        to any of its public licenses or any other arrangements,\n        understandings, or agreements concerning use of licensed material. For\n        the avoidance of doubt, this paragraph does not form part of the\n        public licenses.\n        \n        Creative Commons may be contacted at creativecommons.org.\n        ",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE",
+      "NOTICE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-sam2long",
+    "package_url": "https://pypi.org/project/napari-sam2long/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-sam2long/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/maihanhoang/napari-sam2long/issues",
+      "Documentation": "https://github.com/maihanhoang/napari-sam2long#README.md",
+      "Homepage": "https://github.com/maihanhoang/napari-sam2long",
+      "Source Code": "https://github.com/maihanhoang/napari-sam2long",
+      "User Support": "https://github.com/maihanhoang/napari-sam2long/issues"
+    },
+    "provides_extra": [
+      "testing"
+    ],
+    "release_url": "https://pypi.org/project/napari-sam2long/1.0.3/",
+    "requires_dist": [
+      "numpy",
+      "magicgui",
+      "qtpy",
+      "scikit-image",
+      "opencv-python",
+      "pytest",
+      "tox; extra == \"testing\"",
+      "pytest; extra == \"testing\"",
+      "pytest-cov; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "napari; extra == \"testing\"",
+      "pyqt5; extra == \"testing\""
+    ],
+    "requires_python": ">=3.10",
+    "summary": "A plugin for interactive 3D (volumetric or time-lapse) segmentation using Meta's Segment Anything Model 2 (SAM2).",
+    "version": "1.0.3",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 28654145,
+  "releases": {
+    "0.1.2": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "aa5f8f80946db04238430537d4c4cdf061eb532b4fd7c3ccf94115293bdca28c",
+          "md5": "ea0ae13065fd1ff7215bd11bd9bdbb83",
+          "sha256": "0d068170fec906f9cb76392fc5c0f686064a3ba6f243ecde53adad424ebf0683"
+        },
+        "downloads": -1,
+        "filename": "napari_sam2long-0.1.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "ea0ae13065fd1ff7215bd11bd9bdbb83",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 35633,
+        "upload_time": "2025-04-14T18:47:27",
+        "upload_time_iso_8601": "2025-04-14T18:47:27.831393Z",
+        "url": "https://files.pythonhosted.org/packages/aa/5f/8f80946db04238430537d4c4cdf061eb532b4fd7c3ccf94115293bdca28c/napari_sam2long-0.1.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "7160b2e865c57be15235d701ccf7ce8ca38dc5ebc8e2c8cdefdd81a763a52e53",
+          "md5": "427ad0c0722ee6e487c57181ad0a847c",
+          "sha256": "080589d3b042b4023aa7cf950d444ee15f7dc3614ec3ca8a1afb6a9a1ed5ab61"
+        },
+        "downloads": -1,
+        "filename": "napari_sam2long-0.1.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "427ad0c0722ee6e487c57181ad0a847c",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 1602901,
+        "upload_time": "2025-04-14T18:47:30",
+        "upload_time_iso_8601": "2025-04-14T18:47:30.340701Z",
+        "url": "https://files.pythonhosted.org/packages/71/60/b2e865c57be15235d701ccf7ce8ca38dc5ebc8e2c8cdefdd81a763a52e53/napari_sam2long-0.1.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.3": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "49a7db25730403f72d531cd0a1278222310d12c5888431a31280604d00daa8ad",
+          "md5": "2a368994e9010bf58f910abf46d2b9e0",
+          "sha256": "34e821391b520b223436a4e7b54a3868b25038f258f76df19d5d391104db115b"
+        },
+        "downloads": -1,
+        "filename": "napari_sam2long-0.1.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "2a368994e9010bf58f910abf46d2b9e0",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 35798,
+        "upload_time": "2025-04-16T15:30:08",
+        "upload_time_iso_8601": "2025-04-16T15:30:08.156241Z",
+        "url": "https://files.pythonhosted.org/packages/49/a7/db25730403f72d531cd0a1278222310d12c5888431a31280604d00daa8ad/napari_sam2long-0.1.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "1b74d1bf8a26092ab1777c28dba9c7807e815d1c13d66d05219d763807467f6a",
+          "md5": "33db3a3d26b44719032ea1a1de14fed7",
+          "sha256": "b54851b9671e2da36137e1f49a27d64655957115f19927c6a8d0649a9183043a"
+        },
+        "downloads": -1,
+        "filename": "napari_sam2long-0.1.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "33db3a3d26b44719032ea1a1de14fed7",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 1603124,
+        "upload_time": "2025-04-16T15:30:09",
+        "upload_time_iso_8601": "2025-04-16T15:30:09.149850Z",
+        "url": "https://files.pythonhosted.org/packages/1b/74/d1bf8a26092ab1777c28dba9c7807e815d1c13d66d05219d763807467f6a/napari_sam2long-0.1.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "a13f72c64e6e74af52dd175a5bbe94f4dbb898886402b8e16cffe9694252925c",
+          "md5": "49d3becf114d9aa7d2bb1fc5940ffae9",
+          "sha256": "9810aeeab42eb41da91c26da62249c4f080239d575f6139d530a784eae640fc3"
+        },
+        "downloads": -1,
+        "filename": "napari_sam2long-1.0.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "49d3becf114d9aa7d2bb1fc5940ffae9",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 28230,
+        "upload_time": "2025-04-17T15:31:25",
+        "upload_time_iso_8601": "2025-04-17T15:31:25.154098Z",
+        "url": "https://files.pythonhosted.org/packages/a1/3f/72c64e6e74af52dd175a5bbe94f4dbb898886402b8e16cffe9694252925c/napari_sam2long-1.0.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "95af4a64a53e42a23ead417fce0a59bf3b4e4c1adda35928a0dd304738a79d0c",
+          "md5": "9bdef5033cf2f4f2b41839190d7e7af7",
+          "sha256": "f075e87e4b3e1bf6d7e8baf373fbaa58685d1068aff3d08ac8878b609554b981"
+        },
+        "downloads": -1,
+        "filename": "napari_sam2long-1.0.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "9bdef5033cf2f4f2b41839190d7e7af7",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 1612180,
+        "upload_time": "2025-04-17T15:31:26",
+        "upload_time_iso_8601": "2025-04-17T15:31:26.570126Z",
+        "url": "https://files.pythonhosted.org/packages/95/af/4a64a53e42a23ead417fce0a59bf3b4e4c1adda35928a0dd304738a79d0c/napari_sam2long-1.0.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "64981fea2a1d38bc8cb8072573845b813163c938725127368d206751ef9fb434",
+          "md5": "420e31a6c8f56efa46f619fe06dd0e2b",
+          "sha256": "7581dfee35967510778734f4a89b3f0a29e2087f90be27e98b0c3991dc279f3c"
+        },
+        "downloads": -1,
+        "filename": "napari_sam2long-1.0.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "420e31a6c8f56efa46f619fe06dd0e2b",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 28235,
+        "upload_time": "2025-04-17T18:54:12",
+        "upload_time_iso_8601": "2025-04-17T18:54:12.754657Z",
+        "url": "https://files.pythonhosted.org/packages/64/98/1fea2a1d38bc8cb8072573845b813163c938725127368d206751ef9fb434/napari_sam2long-1.0.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "9f7cc37e4f0cc7d022b35630b7850adb4ba62b1b661971b71d49ce2c4f4f0a63",
+          "md5": "9f541734cbbf2278a425057d838c347b",
+          "sha256": "b457c627b3114e5507ca9fe1a9ad27a30b43be4f7584cc22a2a335d84bf4bd1b"
+        },
+        "downloads": -1,
+        "filename": "napari_sam2long-1.0.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "9f541734cbbf2278a425057d838c347b",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 19478866,
+        "upload_time": "2025-04-17T18:54:14",
+        "upload_time_iso_8601": "2025-04-17T18:54:14.010414Z",
+        "url": "https://files.pythonhosted.org/packages/9f/7c/c37e4f0cc7d022b35630b7850adb4ba62b1b661971b71d49ce2c4f4f0a63/napari_sam2long-1.0.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.2": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "07ae01518f678f7f355c0f165daa90c78cdda08bd6c5d33e2b7c28cecbeedbb2",
+          "md5": "dfeeb25c2cdba87ef3e150427d455273",
+          "sha256": "67c91a1459384d6857f9fc61296b7a528168a33de0185c47a83d7692cdd0387b"
+        },
+        "downloads": -1,
+        "filename": "napari_sam2long-1.0.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "dfeeb25c2cdba87ef3e150427d455273",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 28249,
+        "upload_time": "2025-04-17T19:11:55",
+        "upload_time_iso_8601": "2025-04-17T19:11:55.022492Z",
+        "url": "https://files.pythonhosted.org/packages/07/ae/01518f678f7f355c0f165daa90c78cdda08bd6c5d33e2b7c28cecbeedbb2/napari_sam2long-1.0.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "14a37fca4135345520398d92081ac5b285b58a77d223d0671343c9d271c69e50",
+          "md5": "aee456be06e0f7cd099e2c0544789b6b",
+          "sha256": "f9ea9ccce80a81b8be4c67722f1a7c07688199d092320091dca6a9fe4ee68bdf"
+        },
+        "downloads": -1,
+        "filename": "napari_sam2long-1.0.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "aee456be06e0f7cd099e2c0544789b6b",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 19478954,
+        "upload_time": "2025-04-17T19:11:56",
+        "upload_time_iso_8601": "2025-04-17T19:11:56.696456Z",
+        "url": "https://files.pythonhosted.org/packages/14/a3/7fca4135345520398d92081ac5b285b58a77d223d0671343c9d271c69e50/napari_sam2long-1.0.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.3": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "03ff9275a91bc4d380630bd0f97c1362dc666da33c78b4b55df60ae64ba90a9d",
+          "md5": "77d69754172b1f84479013083e88c282",
+          "sha256": "efb68d574ec57a36e9761459b2cff74d5975c6b3879b3f07014c31c89467ed53"
+        },
+        "downloads": -1,
+        "filename": "napari_sam2long-1.0.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "77d69754172b1f84479013083e88c282",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 28254,
+        "upload_time": "2025-04-22T15:18:45",
+        "upload_time_iso_8601": "2025-04-22T15:18:45.832202Z",
+        "url": "https://files.pythonhosted.org/packages/03/ff/9275a91bc4d380630bd0f97c1362dc666da33c78b4b55df60ae64ba90a9d/napari_sam2long-1.0.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "0f7bb24e1326a387f268a77ac41dc0e8201705aecf1f708bdfdb072d499f8ed2",
+          "md5": "709e1d9a2f9de19632fe8bb01e75b72f",
+          "sha256": "e078a822b21fad6f4d1fe18ab4a26a8466997817a86753424147dbd04457d1a2"
+        },
+        "downloads": -1,
+        "filename": "napari_sam2long-1.0.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "709e1d9a2f9de19632fe8bb01e75b72f",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 19479066,
+        "upload_time": "2025-04-22T15:18:47",
+        "upload_time_iso_8601": "2025-04-22T15:18:47.087850Z",
+        "url": "https://files.pythonhosted.org/packages/0f/7b/b24e1326a387f268a77ac41dc0e8201705aecf1f708bdfdb072d499f8ed2/napari_sam2long-1.0.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "03ff9275a91bc4d380630bd0f97c1362dc666da33c78b4b55df60ae64ba90a9d",
+        "md5": "77d69754172b1f84479013083e88c282",
+        "sha256": "efb68d574ec57a36e9761459b2cff74d5975c6b3879b3f07014c31c89467ed53"
+      },
+      "downloads": -1,
+      "filename": "napari_sam2long-1.0.3-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "77d69754172b1f84479013083e88c282",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.10",
+      "size": 28254,
+      "upload_time": "2025-04-22T15:18:45",
+      "upload_time_iso_8601": "2025-04-22T15:18:45.832202Z",
+      "url": "https://files.pythonhosted.org/packages/03/ff/9275a91bc4d380630bd0f97c1362dc666da33c78b4b55df60ae64ba90a9d/napari_sam2long-1.0.3-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "0f7bb24e1326a387f268a77ac41dc0e8201705aecf1f708bdfdb072d499f8ed2",
+        "md5": "709e1d9a2f9de19632fe8bb01e75b72f",
+        "sha256": "e078a822b21fad6f4d1fe18ab4a26a8466997817a86753424147dbd04457d1a2"
+      },
+      "downloads": -1,
+      "filename": "napari_sam2long-1.0.3.tar.gz",
+      "has_sig": false,
+      "md5_digest": "709e1d9a2f9de19632fe8bb01e75b72f",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.10",
+      "size": 19479066,
+      "upload_time": "2025-04-22T15:18:47",
+      "upload_time_iso_8601": "2025-04-22T15:18:47.087850Z",
+      "url": "https://files.pythonhosted.org/packages/0f/7b/b24e1326a387f268a77ac41dc0e8201705aecf1f708bdfdb072d499f8ed2/napari_sam2long-1.0.3.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

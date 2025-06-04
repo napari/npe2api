@@ -1,0 +1,132 @@
+{
+  "name": "tracktour",
+  "display_name": "Tracktour",
+  "visibility": "public",
+  "icon": "",
+  "categories": [],
+  "schema_version": "0.2.0",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "tracktour.merge_explorer",
+        "title": "Merge Explorer...",
+        "python_name": "tracktour._napari._merge_explorer:MergeExplorer",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "tracktour.track_solver",
+        "title": "Track Solver...",
+        "python_name": "tracktour._napari._solver:TrackingSolver",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "tracktour.track_editor",
+        "title": "Track Editor...",
+        "python_name": "tracktour._napari._track_editor:TrackEditor",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "tracktour.merge_explorer",
+        "display_name": "Merge Explorer",
+        "autogenerate": false
+      },
+      {
+        "command": "tracktour.track_solver",
+        "display_name": "Track Solver",
+        "autogenerate": false
+      },
+      {
+        "command": "tracktour.track_editor",
+        "display_name": "Track Editor",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.3",
+    "name": "tracktour",
+    "version": "0.0.3rc1",
+    "dynamic": null,
+    "platform": null,
+    "supported_platform": null,
+    "summary": "Network flow based tracker with guided error correction",
+    "description": "# tracktour\n\n[![License](https://img.shields.io/pypi/l/tracktour.svg?color=green)](https://github.com/DragaDoncila/tracktour/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/tracktour.svg?color=green)](https://pypi.org/project/tracktour)\n[![Python Version](https://img.shields.io/pypi/pyversions/tracktour.svg?color=green)](https://python.org)\n[![CI](https://github.com/DragaDoncila/tracktour/actions/workflows/ci.yml/badge.svg)](https://github.com/DragaDoncila/tracktour/actions/workflows/ci.yml)\n\ntracktour is a simple object tracker based on a network flow linear model. tracktour takes a dataframe of detected objects and solves a linear program\n(currently using Gurobi, but we will soon add an open source solver interface) to produce tracking results.\n\ntracktour is rapidly changing and its API will change without deprecation warnings.\n\n## Usage\n\nThe `Tracker` object is the interface for producing tracking solutions. Below is a toy example with explicitly defined detections.\n\n```python\ncoords = [\n    (0, 50.0, 50.0),\n    (0, 40, 50),\n    (0, 30, 57),\n    (1, 50, 52),\n    (1, 38, 51),\n    (1, 29, 60),\n    (2, 52, 53),\n    (2, 37, 53),\n    (2, 28, 64),\n]\ncoords = pd.DataFrame(coords, columns=[\"t\", \"y\", \"x\"])\n\n# initialize Tracker object\ntracker = Tracker(\n    im_shape=(100, 100),    # size of the image detections come from. Affects cost of detections appearing/disappearing\n    k_neighbours=2          # number of neighbours to consider for assignment in the next frame (default=10)\n)\n# solve\ntracked = tracker.solve(coords)\n```\n\nThe `Tracked` object contains a copy of the detections, potentially reindexed, and a dataframe of edges that make up the solution.\nColumns `u` and `v` in `tracked_edges` are direct indices into `tracked_detections`.\n\n```python\nprint(tracked.tracked_detections)\nprint(tracked.tracked_edges)\n```\n\nYou may want to convert the solution into a networkx graph for easier manipulation.\n\n```python\nsolution_graph = tracked.as_nx_digraph()\n```\n\n### Extracting Detections\n\nIf you're starting from an image segmentation, you can use the `get_im_centers` or `extract_im_centers` functions.\n\nIf your segmentation is already loaded into a numpy array, use `extract_im_centers`. The returned `detections` DataFrame is ready for use with the `Tracker`.\n\n```python\ndetections, min_t, max_t, corners = extract_im_centers(segmentation)\n```\n\nIf your segmentation is in Cell Tracking Challenge format and lives in single tiffs per frame in a directory, use `get_im_centers`. This will also return\nthe segmentation as a numpy array.\n\n```python\nseg, detections, min_t, max_t, corners = get_im_centers('path/to/01_RES/')\n```\n\n### CLI Tool - Cell Tracking Challenge\n\nIf you're working with Cell Tracking Challenge formatted datasets, you can use the CLI to extract detections, run tracktour, and save output in CTC format.\n\n```sh\n$ tracktour ctc /path/to/seg/ /path/to/save/ -k 8\n```\n\n## Support\n\nPlease feel free to open issues with feature requests, bug reports, questions on usage, etc.\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": null,
+    "download_url": null,
+    "author": null,
+    "author_email": "Draga Doncila Pop <ddoncila@gmail.com>",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "BSD 3-Clause License",
+    "classifier": [
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Programming Language :: Python :: 3.10",
+      "Topic :: Scientific/Engineering",
+      "Topic :: Scientific/Engineering :: Bio-Informatics",
+      "Topic :: Scientific/Engineering :: Image Processing",
+      "Topic :: Scientific/Engineering :: Information Analysis",
+      "Topic :: Scientific/Engineering :: Visualization"
+    ],
+    "requires_dist": [
+      "gurobipy",
+      "imagecodecs",
+      "networkx",
+      "numpy",
+      "pandas",
+      "pydantic",
+      "scikit-image",
+      "scipy",
+      "tifffile",
+      "tqdm",
+      "typer",
+      "pre-commit; extra == 'dev'",
+      "arboretum; extra == 'napari'",
+      "napari; extra == 'napari'",
+      "napari-graph; extra == 'napari'",
+      "pytest>=6.0; extra == 'test'"
+    ],
+    "requires_python": ">=3.8",
+    "requires_external": null,
+    "project_url": [
+      "homepage, https://github.com/DragaDoncila/tracktour",
+      "repository, https://github.com/DragaDoncila/tracktour"
+    ],
+    "provides_extra": [
+      "dev",
+      "napari",
+      "test"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}
