@@ -144,12 +144,6 @@ if __name__ == "__main__":
         )
         print(f"{type(exc)}: {exc}", file=sys.stderr)
         active_pypi_versions = {}
-
-    # move the errors file to the top /public folder
-    desired_errors_path = PUBLIC / "errors.json"
-    current_error_path = Path(f"{PUBLIC}/manifest/errors.json")
-    if current_error_path.exists():
-        current_error_path.rename(desired_errors_path)
     
     # load each manifest & build the indices (while verifying the manifest)
     for normalized_name, info in active_pypi_versions.items():
