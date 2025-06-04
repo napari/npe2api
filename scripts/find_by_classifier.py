@@ -7,9 +7,9 @@ from typing import Tuple
 from urllib.error import HTTPError
 from urllib.request import urlopen
 
+from packaging.utils import canonicalize_name
 from packaging.version import Version
 
-from utils import normalize_name
 
 PUBLIC = Path(__file__).parent.parent / "public"
 PYPI_DIR = PUBLIC / "pypi"
@@ -65,7 +65,7 @@ def _find_by_classifier(classifier: str) -> dict[str, list[str]]:
 
 
 def _fetch_packge_info(name: str) -> Tuple[str, str]:
-    normalized_name = normalize_name(name)
+    normalized_name = canonicalize_name(name)
     try:
         with urlopen(f"https://pypi.org/pypi/{name}/json") as f:
             info = json.load(f)
@@ -97,7 +97,7 @@ if __name__ == "__main__":
             "deleted": "❌",
         }
         for name, info in pool.map(_fetch_packge_info, all_packages_with_classifier):
-            normalized_name = normalize_name(name)
+            normalized_name = canonicalize_name(name)
             status = "active"
             versions = _prune_yanked_versions(info, all_packages_with_classifier[name])
 

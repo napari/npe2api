@@ -16,9 +16,9 @@ import os
 import sys
 from concurrent.futures import ThreadPoolExecutor
 
+from packaging.utils import canonicalize_name
 from packaging.version import Version
 
-from utils import normalize_name
 
 try:
     import conda
@@ -222,7 +222,7 @@ if __name__ == "__main__":
                 )
             )
         for package_name, info in data.items():
-            normalized_name = normalize_name(package_name)
+            normalized_name = canonicalize_name(package_name)
             CONDA_INDEX[normalized_name] = info.get("full_name")
             if not info:
                 continue

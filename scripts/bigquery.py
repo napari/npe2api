@@ -5,10 +5,9 @@ from typing import Tuple
 from urllib.error import HTTPError
 from urllib.request import urlopen
 
+from packaging.utils import canonicalize_name
 from packaging.version import Version
 from google.cloud import bigquery
-
-from utils import normalize_name
 
 PUBLIC = Path(__file__).parent.parent / "public"
 PYPI_DIR = PUBLIC / "pypi"
@@ -28,7 +27,7 @@ query_job = client.query(QUERY.format(CLASSIFIER))
 withdrawn = {}
 deleted = {}
 active = {
-    normalize_name(k) : {
+    canonicalize_name(k) : {
         "name": k,
         # remove version dupes and sort in descending order
         "pypi_versions": sorted(set(v.split(",")), key=Version, reverse=True)
