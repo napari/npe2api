@@ -150,12 +150,12 @@ if __name__ == "__main__":
         name = info["name"]
         pypi_versions = info["pypi_versions"]
 
-        mf_file = Path(f"{PUBLIC}/manifest/{normalized_name}.json")
-        if not mf_file.exists():
+        manifest_file = Path(f"{PUBLIC}/manifest/{normalized_name}.json")
+        if not manifest_file.exists():
             print(f"❌ {normalized_name} - no manifest found.")
             continue
 
-        with mf_file.open() as f:
+        with manifest_file.open() as f:
             data = json.load(f)
 
         # create the summary index item
