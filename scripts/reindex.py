@@ -186,17 +186,18 @@ if __name__ == "__main__":
                         READER_INDEX[pattern].append(normalized_name)
 
     # sort things
-    PYPI_INDEX = sorted(PYPI_INDEX, key=lambda x: x["normalized_name"])
     READER_INDEX = {  # type: ignore
+        # sort reader index by filename pattern and sort the list of plugins
+        # that provide each filename pattern
         k: sorted(v, key=str.lower) for k, v in sorted(READER_INDEX.items())
     }
 
     EXTENDED_SUMMARY = [
         {
             **pkg,
-            "pypi_versions": sorted(
-                active_pypi_versions.get(pkg["normalized_name"], {}).get("pypi_versions", []), key=Version, reverse=True
-            ),
+            "pypi_versions":
+                # pypi versions are sorted before writing to classifiers.json
+                active_pypi_versions.get(pkg["normalized_name"], {}).get("pypi_versions", []),
         }
         for pkg in PYPI_INDEX
     ]

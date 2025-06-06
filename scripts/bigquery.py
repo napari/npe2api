@@ -32,7 +32,7 @@ active = {
         # remove version dupes and sort in descending order
         "pypi_versions": sorted(set(v.split(",")), key=Version, reverse=True)
     }
-    for k, v in sorted(query_job.result(), key=lambda x: x[0].lower())
+    for k, v in query_job.result()
 }
 
 
@@ -62,6 +62,10 @@ with ThreadPoolExecutor() as pool:
             deleted[normalized_name] = active.pop(normalized_name)
         elif status == "withdrawn":
             withdrawn[normalized_name] = active.pop(normalized_name)
+
+for info_dict in [active, withdrawn, deleted]:
+    # sort by normalized name
+    info_dict = dict(sorted(info_dict.items()))
 
 output = {"active": active, "withdrawn": withdrawn, "deleted": deleted}
 (PUBLIC / "classifiers.json").write_text(json.dumps(output, indent=2))
