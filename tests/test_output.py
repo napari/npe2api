@@ -29,6 +29,7 @@ def test_manifests_are_valid(mf_file):
     
     assert data["name"], "package has no name"
     assert data["package_metadata"]["version"], "package has no version"
+    assert data["visibility"], "package has no visibility"
     contributions = data["contributions"]
     
     if not any(contributions.values()):
