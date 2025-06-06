@@ -36,7 +36,7 @@ def test_manifests_are_valid(mf_file):
 
 
 def _get_summary_packages():
-    with (PUBLIC / "summary.json").open() as f:
+    with (PUBLIC / "extended_summary.json").open() as f:
         data = json.load(f)
     return data
 
