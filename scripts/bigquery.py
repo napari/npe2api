@@ -5,6 +5,7 @@ from typing import Tuple
 from urllib.error import HTTPError
 from urllib.request import urlopen
 
+from packaging.utils import canonicalize_name
 from packaging.version import Version
 from google.cloud import bigquery
 
@@ -26,23 +27,27 @@ query_job = client.query(QUERY.format(CLASSIFIER))
 withdrawn = {}
 deleted = {}
 active = {
-    k: sorted(set(v.split(",")), key=Version, reverse=True)  # remove version dupes and sort in descending order
-    for k, v in sorted(query_job.result(), key=lambda x: x[0].lower())
+    canonicalize_name(k) : {
+        "name": k,
+        # remove version dupes and sort in descending order
+        "pypi_versions": sorted(set(v.split(",")), key=Version, reverse=True)
+    }
+    for k, v in query_job.result()
 }
 
 
-def _fetch_packge_info(name: str) -> Tuple[str, str]:
+def _fetch_packge_info(normalized_name: str) -> Tuple[str, str]:
     try:
-        with urlopen(f"https://pypi.org/pypi/{name}/json") as f:
+        with urlopen(f"https://pypi.org/pypi/{normalized_name}/json") as f:
             data = json.load(f)
     except HTTPError:
-        return (name, "deleted")
+        return (normalized_name, "deleted")
 
-    (PYPI_DIR / f"{name}.json").write_text(json.dumps(data, indent=2))
+    (PYPI_DIR / f"{normalized_name}.json").write_text(json.dumps(data, indent=2))
 
     if CLASSIFIER not in data["info"].get("classifiers", []):
-        return (name, "withdrawn")
-    return (name, "active")
+        return (normalized_name, "withdrawn")
+    return (normalized_name, "active")
 
 
 with ThreadPoolExecutor() as pool:
@@ -51,12 +56,16 @@ with ThreadPoolExecutor() as pool:
         "withdrawn": "🔵",
         "deleted": "❌",
     }
-    for name, status in pool.map(_fetch_packge_info, active):
-        print(f"{icon[status]} {name}")
+    for normalized_name, status in pool.map(_fetch_packge_info, active):
+        print(f"{icon[status]} {normalized_name}")
         if status == "deleted":
-            deleted[name] = active.pop(name)
+            deleted[normalized_name] = active.pop(normalized_name)
         elif status == "withdrawn":
-            withdrawn[name] = active.pop(name)
+            withdrawn[normalized_name] = active.pop(normalized_name)
+
+for info_dict in [active, withdrawn, deleted]:
+    # sort by normalized name
+    info_dict = dict(sorted(info_dict.items()))
 
 output = {"active": active, "withdrawn": withdrawn, "deleted": deleted}
 (PUBLIC / "classifiers.json").write_text(json.dumps(output, indent=2))

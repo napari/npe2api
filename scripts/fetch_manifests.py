@@ -7,6 +7,7 @@ framework::napari classifier. This script instead gets information about active 
 Much of this code is taken from `npe2._inspection._fetch`, where `npe2 fetch --all` was implemented.
 """
 import json
+import os
 import sys
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
@@ -29,10 +30,13 @@ def _latest_non_pre_release(versions: list[str]) -> str:
 
 
 def _current_manifest_is_valid(name: str, version: str) -> bool:
+    print(f"Checking {name} is valid?")
     try:
         existing_manifest = json.loads((MANIFEST_DIR / f"{name}.json").read_text())
+        print(f"{name} manifest valid.")
         return existing_manifest["package_metadata"]["version"] == version
     except Exception:
+        print(f"{name} manifest invalid.")
         return False
 
 
@@ -42,29 +46,32 @@ class ManifestError(TypedDict):
     error: str
 
 
-def _try_fetch_and_write_manifest(name: str, active_versions: list[str]) -> ManifestError | None:
-    version_to_fetch = _latest_non_pre_release(active_versions) or active_versions[0]
+def _try_fetch_and_write_manifest(normalized_name: str, classifiers_info: dict[str, str | list[str]]) -> ManifestError | None:
+    pypi_versions = classifiers_info["pypi_versions"]
+    version_to_fetch = _latest_non_pre_release(pypi_versions) or pypi_versions[0]
 
-    if _current_manifest_is_valid(name, version_to_fetch):
-        print(f"🟢 {name}")
+    if _current_manifest_is_valid(normalized_name, version_to_fetch):
+        print(f"🟢 {normalized_name}")
         return None
 
     try:
-        mf = fetch_manifest(name, version_to_fetch)
-        (MANIFEST_DIR / f"{name}.json").write_text(
+        mf = fetch_manifest(normalized_name, version_to_fetch)
+        print(f"Fetched manifest for {normalized_name}")
+        (MANIFEST_DIR / f"{normalized_name}.json").write_text(
             # npe2 is using Pydantic v1, which doesn't support `model_dump_json`
             mf.json(exclude=set(), indent=2)
         )
+        print(f"Manifest {normalized_name} written successfully.")
     except Exception as exc:
-        print(f"❌ {name}")
+        print(f"❌ {normalized_name}")
         print(f"{type(exc)}: {exc}", file=sys.stderr)
         return ManifestError(
-            name=name,
+            name=normalized_name,
             version=version_to_fetch,
             error=str(exc),
         )
     else:
-        print(f"✅ {name}")
+        print(f"✅ {normalized_name}")
         return None
 
 
@@ -80,6 +87,9 @@ if __name__ == "__main__":
         )
         print(f"{type(exc)}: {exc}", file=sys.stderr)
         raise SystemExit(1)
+    
+    if not MANIFEST_DIR.exists():
+        MANIFEST_DIR.mkdir()
 
     # use processes instead of threads, because many of the subroutines in build
     # and setuptools use `os.chdir()`, which is not thread-safe (used in `fetch_manifest`)

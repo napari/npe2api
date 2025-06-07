@@ -7,7 +7,9 @@ from typing import Tuple
 from urllib.error import HTTPError
 from urllib.request import urlopen
 
+from packaging.utils import canonicalize_name
 from packaging.version import Version
+
 
 PUBLIC = Path(__file__).parent.parent / "public"
 PYPI_DIR = PUBLIC / "pypi"
@@ -63,10 +65,11 @@ def _find_by_classifier(classifier: str) -> dict[str, list[str]]:
 
 
 def _fetch_packge_info(name: str) -> Tuple[str, str]:
+    normalized_name = canonicalize_name(name)
     try:
         with urlopen(f"https://pypi.org/pypi/{name}/json") as f:
             info = json.load(f)
-        (PYPI_DIR / f"{name}.json").write_text(json.dumps(info, indent=2))
+        (PYPI_DIR / f"{normalized_name}.json").write_text(json.dumps(info, indent=2))
     except HTTPError:
         return None
     return name, info
@@ -94,23 +97,31 @@ if __name__ == "__main__":
             "deleted": "❌",
         }
         for name, info in pool.map(_fetch_packge_info, all_packages_with_classifier):
+            normalized_name = canonicalize_name(name)
             status = "active"
             versions = _prune_yanked_versions(info, all_packages_with_classifier[name])
 
             if not versions:
-                deleted[name] = versions
+                deleted[normalized_name] = versions
                 status = "deleted"
 
             if status == "active" and CLASSIFIER not in info["info"].get(
                 "classifiers", []
             ):
-                withdrawn[name] = versions
+                withdrawn[normalized_name] = versions
                 status = "withdrawn"
 
             if status == "active":
-                active[name] = versions
+                active[normalized_name] = {
+                    "name": name,
+                    "pypi_versions": versions,
+                }
 
-            print(f"{icon[status]} {name}")
+            print(f"{icon[status]} {normalized_name}")
+    
+    for info_dict in [active, withdrawn, deleted]:
+        # sort by normalized name
+        info_dict = dict(sorted(info_dict.items()))
 
     output = {"active": active, "withdrawn": withdrawn, "deleted": deleted}
     (PUBLIC / "classifiers.json").write_text(json.dumps(output, indent=2))
