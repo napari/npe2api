@@ -16,7 +16,9 @@ import os
 import sys
 from concurrent.futures import ThreadPoolExecutor
 
+from packaging.utils import canonicalize_name
 from packaging.version import Version
+
 
 try:
     import conda
@@ -33,6 +35,7 @@ PluginName = str
 class SummaryDict(TypedDict):
     """Structure of dicts in index.json."""
 
+    normalized_name: str
     name: str
     version: str
     display_name: str
@@ -40,6 +43,7 @@ class SummaryDict(TypedDict):
     author: str
     license: str
     home_page: str
+    project_url:  List[str]
     pypi_versions: List[str]
     conda_versions: List[str]
 
@@ -140,22 +144,25 @@ if __name__ == "__main__":
         )
         print(f"{type(exc)}: {exc}", file=sys.stderr)
         active_pypi_versions = {}
-
+    
     # load each manifest & build the indices (while verifying the manifest)
-    for mf_file in (PUBLIC / "manifest").glob("*.json"):
-        # move the errors file to top /public folder
-        if mf_file.name == "errors.json":
-            mf_file.rename(PUBLIC / "errors.json")
+    for normalized_name, info in active_pypi_versions.items():
+        name = info["name"]
+        pypi_versions = info["pypi_versions"]
+
+        manifest_file = Path(f"{PUBLIC}/manifest/{normalized_name}.json")
+        if not manifest_file.exists():
+            print(f"❌ {normalized_name} - no manifest found.")
             continue
 
-        with mf_file.open() as f:
+        with manifest_file.open() as f:
             data = json.load(f)
 
         # create the summary index item
-        name = data["name"]
         meta = data["package_metadata"]
         PYPI_INDEX.append(
             {
+                "normalized_name": normalized_name,
                 "name": name,
                 "version": meta["version"],
                 "display_name": data["display_name"],
@@ -176,20 +183,21 @@ if __name__ == "__main__":
             if contrib_type == "readers":
                 for contrib in contribs:
                     for pattern in contrib["filename_patterns"]:
-                        READER_INDEX[pattern].append(name)
+                        READER_INDEX[pattern].append(normalized_name)
 
     # sort things
-    PYPI_INDEX = sorted(PYPI_INDEX, key=lambda x: x["name"].lower())
     READER_INDEX = {  # type: ignore
+        # sort reader index by filename pattern and sort the list of plugins
+        # that provide each filename pattern
         k: sorted(v, key=str.lower) for k, v in sorted(READER_INDEX.items())
     }
 
     EXTENDED_SUMMARY = [
         {
             **pkg,
-            "pypi_versions": sorted(
-                active_pypi_versions.get(pkg["name"], []), key=Version, reverse=True
-            ),
+            "pypi_versions":
+                # pypi versions are sorted before writing to classifiers.json
+                active_pypi_versions.get(pkg["normalized_name"], {}).get("pypi_versions", []),
         }
         for pkg in PYPI_INDEX
     ]
@@ -215,7 +223,8 @@ if __name__ == "__main__":
                 )
             )
         for package_name, info in data.items():
-            CONDA_INDEX[package_name] = info.get("full_name")
+            normalized_name = canonicalize_name(package_name)
+            CONDA_INDEX[normalized_name] = info.get("full_name")
             if not info:
                 continue
 
@@ -223,7 +232,7 @@ if __name__ == "__main__":
             for file in info.get("files", []):
                 file.pop("ndownloads", None)
 
-            (CONDA / f"{package_name}.json").write_text(json.dumps(info, indent=2))
+            (CONDA / f"{normalized_name}.json").write_text(json.dumps(info, indent=2))
 
         # write summary map of pypi package name to conda channel/name
         (PUBLIC / "conda.json").write_text(json.dumps(CONDA_INDEX, indent=2))
@@ -240,7 +249,7 @@ if __name__ == "__main__":
     )
     (PUBLIC / "readers.json").write_text(json.dumps(READER_INDEX))
     (PUBLIC / "index.json").write_text(
-        json.dumps({x["name"]: x["version"] for x in PYPI_INDEX}, indent=2)
+        json.dumps({x["normalized_name"]: x["version"] for x in PYPI_INDEX}, indent=2)
     )
 
     github.fetch_all_github_info()
