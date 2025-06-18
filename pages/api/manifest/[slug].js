@@ -1,5 +1,6 @@
 import path from "path";
 import { promises as fs } from "fs";
+import { normalizeName } from "../../utils"; 
 
 export default async function handler(req, res) {
   const { slug } = req.query;
@@ -10,8 +11,4 @@ export default async function handler(req, res) {
     "utf8"
   );
   res.status(200).send(JSON.stringify(JSON.parse(fileContents)));
-}
-
-function normalizeName(name) {
-  return name.replace(/[-_.]+/g, "-").toLowerCase();
 }
