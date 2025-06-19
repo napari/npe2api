@@ -34,6 +34,8 @@ The rest API used by napari to query plugins
         - the full manifest for a given plugin
     - <https://npe2api.vercel.app/api/conda>
         - map of {pypi_name -> conda_channel/package_name}
+    - [https://npe2api.vercel.app/api/pypi/{plugin-name}](https://npe2api.vercel.app/api/pypi/napari-animation)
+        - PyPI info for a plugin.
     - [https://npe2api.vercel.app/api/conda/{plugin-name}](https://npe2api.vercel.app/api/conda/napari-animation)
         - conda info for a plugin. *name is pypi_name, not conda-name*
     - <https://npe2api.vercel.app/errors.json>
