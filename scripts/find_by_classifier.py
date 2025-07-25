@@ -3,13 +3,11 @@ import sys
 import xmlrpc.client
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Tuple
 from urllib.error import HTTPError
 from urllib.request import urlopen
 
 from packaging.utils import canonicalize_name
 from packaging.version import Version
-
 
 PUBLIC = Path(__file__).parent.parent / "public"
 PYPI_DIR = PUBLIC / "pypi"
@@ -64,7 +62,7 @@ def _find_by_classifier(classifier: str) -> dict[str, list[str]]:
     }
 
 
-def _fetch_packge_info(name: str) -> Tuple[str, str]:
+def _fetch_packge_info(name: str) -> tuple[str, str]:
     normalized_name = canonicalize_name(name)
     try:
         with urlopen(f"https://pypi.org/pypi/{name}/json") as f:

@@ -8,7 +8,6 @@ Much of this code is taken from `npe2._inspection._fetch`, where `npe2 fetch --a
 """
 
 import json
-import os
 import sys
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path

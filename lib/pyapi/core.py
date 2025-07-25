@@ -4,10 +4,10 @@ Currently, it's not used anywhere, just for local interactive convenience.
 """
 
 from __future__ import annotations
+
 import json
 from pathlib import Path
 from typing import TYPE_CHECKING
-
 
 if TYPE_CHECKING:
     from typing import TypedDict

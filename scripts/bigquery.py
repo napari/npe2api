@@ -1,13 +1,12 @@
 import json
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Tuple
 from urllib.error import HTTPError
 from urllib.request import urlopen
 
+from google.cloud import bigquery
 from packaging.utils import canonicalize_name
 from packaging.version import Version
-from google.cloud import bigquery
 
 PUBLIC = Path(__file__).parent.parent / "public"
 PYPI_DIR = PUBLIC / "pypi"
@@ -36,7 +35,7 @@ active = {
 }
 
 
-def _fetch_packge_info(normalized_name: str) -> Tuple[str, str]:
+def _fetch_packge_info(normalized_name: str) -> tuple[str, str]:
     try:
         with urlopen(f"https://pypi.org/pypi/{normalized_name}/json") as f:
             data = json.load(f)

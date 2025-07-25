@@ -4,7 +4,7 @@ import re
 from functools import lru_cache
 from itertools import chain
 from pathlib import Path
-from typing import Literal, Optional, Tuple, TypedDict
+from typing import Literal, TypedDict
 
 import requests
 from gql import Client, gql
@@ -47,7 +47,7 @@ class CoverageInfo(TypedDict):
 class RepoSummary(TypedDict):
     url: str
     activity: GithubActivity
-    coverage: Optional[CoverageInfo]
+    coverage: CoverageInfo | None
 
 
 query_activity = gql(
@@ -129,7 +129,7 @@ def _activity(owner: str, name: str) -> GithubActivity:
     )
 
 
-def codecov(name: PluginName) -> Optional[CoverageInfo]:
+def codecov(name: PluginName) -> CoverageInfo | None:
     """Return coverage using codecov api."""
     if not (result := org_repo(name)):
         return None
@@ -157,7 +157,7 @@ def codecov(name: PluginName) -> Optional[CoverageInfo]:
 
 
 @lru_cache
-def org_repo(name: PluginName) -> Optional[Tuple[str, str]]:
+def org_repo(name: PluginName) -> tuple[str, str] | None:
     """Return the link to the public repo."""
     try:
         info: dict = pypi_info(name)["info"]

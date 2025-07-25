@@ -9,17 +9,16 @@ classifier from the official public database (rather than parsing pypi.org html)
 
 import contextlib
 import json
-from pathlib import Path
-from typing import Any, DefaultDict, Dict, List, Tuple, TypedDict
-import re
-from urllib import request, error
 import os
+import re
 import sys
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+from typing import Any, TypedDict
+from urllib import error, request
 
 from packaging.utils import canonicalize_name
 from packaging.version import Version
-
 
 try:
     import conda
@@ -28,6 +27,7 @@ except ImportError:
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from lib.pyapi import github  # noqa
+from collections import defaultdict
 
 
 PluginName = str
@@ -44,18 +44,18 @@ class SummaryDict(TypedDict):
     author: str
     license: str
     home_page: str
-    project_url: List[str]
-    pypi_versions: List[str]
-    conda_versions: List[str]
+    project_url: list[str]
+    pypi_versions: list[str]
+    conda_versions: list[str]
 
 
 HERE = Path(__file__)
 # Path to the public directory in this repo
 PUBLIC = HERE.parent.parent / "public"
 # index of filename pattern to list of plugin names
-READER_INDEX: DefaultDict[str, List[PluginName]] = DefaultDict(list)
+READER_INDEX: defaultdict[str, list[PluginName]] = defaultdict(list)
 # summary index, used plugin install widget list items
-PYPI_INDEX: List["SummaryDict"] = []
+PYPI_INDEX: list["SummaryDict"] = []
 # anaconda api
 ANACONDA_ORG = "https://api.anaconda.org/package/{channel}/{package}"
 
@@ -65,10 +65,10 @@ def _normname(name: str, delim="-") -> str:
     return re.sub(r"[-_.]+", delim, name).lower()
 
 
-def repodatas(channel: str = "conda-forge") -> Dict:
-    from conda.models.channel import Channel
+def repodatas(channel: str = "conda-forge") -> dict:
     from conda.core.subdir_data import SubdirData
     from conda.gateways.logging import initialize_logging
+    from conda.models.channel import Channel
 
     initialize_logging()
 
@@ -92,7 +92,7 @@ def repodatas(channel: str = "conda-forge") -> Dict:
     return index
 
 
-def patch_api_data_with_repodata(data: Dict[str, Any], repodata: Dict):
+def patch_api_data_with_repodata(data: dict[str, Any], repodata: dict):
     patched_files = []
     for package in data["files"].copy():
         # dependencies are available in a more useful way under `attrs`
@@ -104,7 +104,7 @@ def patch_api_data_with_repodata(data: Dict[str, Any], repodata: Dict):
     data["files"] = patched_files
 
 
-def conda_data(package_name, channel="conda-forge", repodata=None) -> Tuple[str, dict]:
+def conda_data(package_name, channel="conda-forge", repodata=None) -> tuple[str, dict]:
     """Try to fetch conda package data from anaconda.org.
 
     Will try package_name as provided, then lower-case with delimiters replaced by
@@ -212,7 +212,7 @@ if __name__ == "__main__":
         CONDA.mkdir(exist_ok=True)
 
         # conda summary, mapping from pypi package name to conda channel/name
-        CONDA_INDEX: Dict[str, str] = {}
+        CONDA_INDEX: dict[str, str] = {}
 
         # fetch the index
         channel = "conda-forge"
