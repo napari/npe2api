@@ -6,6 +6,7 @@ Then also searches conda and github for additional info.
 See also scripts/bigquery.py, which runs ~every 2 hours, to double check the napari
 classifier from the official public database (rather than parsing pypi.org html).
 """
+
 import contextlib
 import json
 from pathlib import Path
@@ -43,7 +44,7 @@ class SummaryDict(TypedDict):
     author: str
     license: str
     home_page: str
-    project_url:  List[str]
+    project_url: List[str]
     pypi_versions: List[str]
     conda_versions: List[str]
 
@@ -144,7 +145,7 @@ if __name__ == "__main__":
         )
         print(f"{type(exc)}: {exc}", file=sys.stderr)
         active_pypi_versions = {}
-    
+
     # load each manifest & build the indices (while verifying the manifest)
     for normalized_name, info in active_pypi_versions.items():
         name = info["name"]
@@ -176,7 +177,6 @@ if __name__ == "__main__":
 
         # index contributions
         for contrib_type, contribs in data.get("contributions", {}).items():
-
             if not contribs:
                 continue
 
@@ -189,15 +189,18 @@ if __name__ == "__main__":
     READER_INDEX = {  # type: ignore
         # sort reader index by filename pattern and sort the list of plugins
         # that provide each filename pattern
-        k: sorted(v, key=str.lower) for k, v in sorted(READER_INDEX.items())
+        k: sorted(v, key=str.lower)
+        for k, v in sorted(READER_INDEX.items())
     }
 
     EXTENDED_SUMMARY = [
         {
             **pkg,
             "pypi_versions":
-                # pypi versions are sorted before writing to classifiers.json
-                active_pypi_versions.get(pkg["normalized_name"], {}).get("pypi_versions", []),
+            # pypi versions are sorted before writing to classifiers.json
+            active_pypi_versions.get(pkg["normalized_name"], {}).get(
+                "pypi_versions", []
+            ),
         }
         for pkg in PYPI_INDEX
     ]

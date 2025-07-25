@@ -6,6 +6,7 @@ framework::napari classifier. This script instead gets information about active 
 
 Much of this code is taken from `npe2._inspection._fetch`, where `npe2 fetch --all` was implemented.
 """
+
 import json
 import os
 import sys
@@ -46,7 +47,9 @@ class ManifestError(TypedDict):
     error: str
 
 
-def _try_fetch_and_write_manifest(normalized_name: str, classifiers_info: dict[str, str | list[str]]) -> ManifestError | None:
+def _try_fetch_and_write_manifest(
+    normalized_name: str, classifiers_info: dict[str, str | list[str]]
+) -> ManifestError | None:
     pypi_versions = classifiers_info["pypi_versions"]
     version_to_fetch = _latest_non_pre_release(pypi_versions) or pypi_versions[0]
 
@@ -87,7 +90,7 @@ if __name__ == "__main__":
         )
         print(f"{type(exc)}: {exc}", file=sys.stderr)
         raise SystemExit(1)
-    
+
     if not MANIFEST_DIR.exists():
         MANIFEST_DIR.mkdir()
 

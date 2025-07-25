@@ -118,7 +118,7 @@ if __name__ == "__main__":
                 }
 
             print(f"{icon[status]} {normalized_name}")
-    
+
     for info_dict in [active, withdrawn, deleted]:
         # sort by normalized name
         info_dict = dict(sorted(info_dict.items()))

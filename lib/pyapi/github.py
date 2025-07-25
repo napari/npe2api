@@ -98,7 +98,6 @@ def activity(name: PluginName) -> GithubActivity:
 
 
 def _activity(owner: str, name: str) -> GithubActivity:
-
     headers = {}
     if GH_API_TOKEN := os.environ.get("GH_API_TOKEN"):
         headers["Authorization"] = f"bearer {GH_API_TOKEN}"

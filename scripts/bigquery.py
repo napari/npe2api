@@ -27,10 +27,10 @@ query_job = client.query(QUERY.format(CLASSIFIER))
 withdrawn = {}
 deleted = {}
 active = {
-    canonicalize_name(k) : {
+    canonicalize_name(k): {
         "name": k,
         # remove version dupes and sort in descending order
-        "pypi_versions": sorted(set(v.split(",")), key=Version, reverse=True)
+        "pypi_versions": sorted(set(v.split(",")), key=Version, reverse=True),
     }
     for k, v in query_job.result()
 }
