@@ -41,7 +41,8 @@ def _validate_xmlrpc_browse_response(packages):
 def _find_by_classifier(classifier: str) -> dict[str, list[str]]:
     """Find all packages with a given classifier on PyPI.
 
-    Returns a dictionary with package names as keys and a sorted list of versions as values.
+    Returns a dictionary with package names as keys and a sorted list of
+    versions as values.
     """
     try:
         with xmlrpc.client.ServerProxy("https://pypi.org/pypi") as client:

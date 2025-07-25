@@ -1,10 +1,11 @@
 """
-This replaces `npe2 fetch --all`, which relied on PyPI scraping to retrieve all packages with the
-framework::napari classifier. This script instead gets information about active plugins from
-`classifiers.json`, which is generated from the PyPI BigQuery data (source of truth) via
-`bigquery.py`.
+This replaces `npe2 fetch --all`, which relied on PyPI scraping to retrieve all
+packages with the framework::napari classifier. This script instead gets information
+about active plugins from `classifiers.json`, which is generated from the PyPI
+BigQuery data (source of truth) via `bigquery.py`.
 
-Much of this code is taken from `npe2._inspection._fetch`, where `npe2 fetch --all` was implemented.
+Much of this code is taken from `npe2._inspection._fetch`, where
+`npe2 fetch --all` was implemented.
 """
 
 import json
@@ -94,7 +95,8 @@ if __name__ == "__main__":
         MANIFEST_DIR.mkdir()
 
     # use processes instead of threads, because many of the subroutines in build
-    # and setuptools use `os.chdir()`, which is not thread-safe (used in `fetch_manifest`)
+    # and setuptools use `os.chdir()`, which is not thread-safe. It is used in
+    # `fetch_manifest`
     with ProcessPoolExecutor() as executor:
         errors = executor.map(
             _try_fetch_and_write_manifest,
