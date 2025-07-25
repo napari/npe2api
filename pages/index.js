@@ -6,13 +6,13 @@ export default function home({ data }) {
   return (
     <div>
       <h1>napari plugins</h1>
-      <p><Link href={"https://github.com/napari/npe2api"}><a>source code for this site</a></Link></p>
+      <p><Link href={"https://github.com/napari/npe2api"}>source code for this site</Link></p>
       <h3>(This top page is for humans)</h3>
-      <p>Plugin index: <Link href={`/api/plugins`}><a>/api/plugins</a></Link></p>
-      <p>Summary info: <Link href={`/api/extended_summary`}><a>/api/extended_summary</a></Link></p>
+      <p>Plugin index: <Link href={`/api/plugins`}>/api/plugins</Link></p>
+      <p>Summary info: <Link href={`/api/extended_summary`}>/api/extended_summary</Link></p>
       <p>PyPI information: see PyPI info for each plugin at /api/pypi/pypi_name</p>
-      <p>Conda index: <Link href={`/api/conda`}><a>/api/conda</a></Link>  (see conda info for each plugin at /api/conda/pypi_name)</p>
-      <p>Fetch errors: <Link href={`/errors.json`}><a>errors.json</a></Link></p>
+      <p>Conda index: <Link href={`/api/conda`}>/api/conda</Link>  (see conda info for each plugin at /api/conda/pypi_name)</p>
+      <p>Fetch errors: <Link href={`/errors.json`}>errors.json</Link></p>
       <h3>manifests</h3>
       <ul>
         {data.map((item) => (
@@ -21,9 +21,9 @@ export default function home({ data }) {
               as={`/api/manifest/${item.name}`}
               href={`/api/manifest/[slug]`}
             >
-              <a>
-                {item.name}-{item.version}
-              </a>
+
+              {item.name}-{item.version}
+
             </Link>
           </li>
         ))}
