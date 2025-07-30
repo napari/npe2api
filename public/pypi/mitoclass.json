@@ -18,7 +18,7 @@
       "Programming Language :: Python :: 3.13",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "# <img src=\"assets/mitoclass.png\" alt=\"MitoClass logo\" height=\"60\" style=\"vertical-align: middle;\"> Mitoclass         \r\n\r\n\r\n\r\n[![License: GPL\u202fv3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](LICENSE)\r\n[![PyPI](https://img.shields.io/pypi/v/mitoclass.svg)](https://pypi.org/project/mitoclass/)\r\n[![Python\u202f\u2265\u202f3.10](https://img.shields.io/badge/python-%3E%3D3.10-blue.svg)]()\r\n[![napari\u2011hub](https://img.shields.io/badge/napari--hub-mitoclass-orange.svg)](https://github.com/napari/napari-hub)\r\n\r\n<p align=\"left\">\r\n  <img src=\"assets/imhorphen.png\" alt=\"IMHORPHEN\" height=\"70\" style=\"margin: 0 20px;\">\r\n  <img src=\"assets/LARIS.png\" alt=\"LARIS\" height=\"70\" style=\"margin: 0 20px;\">\r\n  <img src=\"assets/ua.png\" alt=\"Universit\u00e9 d'Angers\" height=\"70\" style=\"margin: 0 20px;\">\r\n</p>\r\n\r\nA **napari** plugin for the **qualitative** assessment of mitochondrial network morphology.\r\n\r\n---\r\n\r\n## 1. Overview\r\n\r\nMitoclass provides an end\u2011to\u2011end workflow to classify mitochondrial morphology\u2014**connected**, **fragmented**, or **intermediate**\u2014directly inside the napari viewer.\r\nBeyond inference, the plugin offers tools for\u202f:\r\n\r\n- data annotation;\r\n- model training and improvement;\r\n- interactive result visualisation.\r\n\r\nAll functionality is accessible through a graphical user interface.\r\n\r\n---\r\n\r\n## 2. Key features\r\n\r\n| Module            | Functionality                                                                                                                                                                       |\r\n|-------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|\r\n| **Prediction**    | Pixel\u2011wise classification of 3\u2011D stacks (automatic maximum\u2011intensity projection). Batch processing, class overlays, per\u2011image statistics, CSV summary.                              |\r\n| **Annotation**    | Fast image labelling to standardise classes for model training.                                                                                                                     |\r\n| **Pre\u2011processing**| Generation of normalised patches with stratified *train/val/test* split.                                                                                                            |\r\n| **Training**      | Train a CNN or **fine\u2011tune** existing models.                                                                                                                                       |\r\n| **Visualisation** | Interactive heatmaps and 3\u2011D scatter plots (Plotly) of class proportions.                                                                                                           |\r\n\r\n---\r\n\r\n## 3. Requirements\r\n\r\n- **Python**\u00a0\u2265\u00a03.10\r\n- **Operating systems**: Linux, macOS, or Windows\r\n- **Hardware**: CPU supported; GPU (CUDA\u00a011+) recommended for large\u2011scale inference and training\r\n\r\n---\r\n\r\n## 4. Installation\r\n\r\n### 4.1. Stable release (PyPI)\r\n\r\n```bash\r\npip install mitoclass\r\n```\r\n\r\n> Installs the plugin and its dependencies (napari, Qt, etc.).\r\n\r\n### 4.2. Reproducible conda environment\r\n\r\n```bash\r\nconda create -n mitoclass python=3.10\r\nconda activate mitoclass\r\n\r\n# (Optional) TensorFlow GPU (e.g. Linux CUDA\u00a011.8)\r\nconda install -c conda-forge cudnn=8.9 cuda11.8 tensorflow\r\n\r\npip install mitoclass\r\n```\r\n\r\n\ud83d\udca1 **Apple\u00a0Silicon**: use `tensorflow-macos` instead.\r\n\r\n### 4.3. Download the pre\u2011trained model\r\n\r\n<https://github.com/Jmlr2/MitoClassif/releases>\r\n\r\n---\r\n\r\n## 5. Usage\r\n\r\n### 5.1. Graphical interface\r\n\r\n```bash\r\nnapari\r\n```\r\n\r\n1. Open the **Mitoclass** widget from the **Plugins** menu.\r\n2. Select the desired tab.\r\n\r\n---\r\n\r\n### 5.2. Annotation\r\n\r\n| Item        | Description                                                                                                                                                                      |\r\n|-------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|\r\n| **Goal**    | Create an *image \u2192 class* mapping to bootstrap or expand a training dataset.                                                                                                     |\r\n| **Input**   | Folder of unlabelled images (`*.tif`, `*.tiff`, `*.stk`).                                                                                                                         |\r\n| **Output**  | Images copied or moved to `annot_output/<ClassName>/`, sorted into one folder per class.                                                                                          |\r\n\r\n---\r\n\r\n### 5.3. Pre\u2011processing\r\n\r\n**Goal**: convert 3\u2011D stacks into normalised 2\u2011D patches for CNN training.\r\n\r\n**Input structure**:\r\n\r\n```\r\nraw_input/\r\n\u251c\u2500\u2500 Connected/\r\n\u251c\u2500\u2500 Fragmented/\r\n\u2514\u2500\u2500 Intermediate/\r\n```\r\n\r\n**Steps**:\r\n\r\n1. Maximum\u2011intensity projection (MIP)\r\n2. Intensity normalisation (8\u2011bit or 16\u2011bit)\r\n3. Otsu segmentation\r\n4. Patch extraction (configurable size/overlap)\r\n5. Patch labelling (class vs. background)\r\n6. Stratified *train/val/test* split\r\n\r\n**Output structure**:\r\n\r\n```\r\npp_output/\r\n\u251c\u2500\u2500 train/\r\n\u2502   \u251c\u2500\u2500 Connected/\r\n\u2502   \u251c\u2500\u2500 Fragmented/\r\n\u2502   \u251c\u2500\u2500 Intermediate/\r\n\u2502   \u2514\u2500\u2500 background/\r\n\u251c\u2500\u2500 val/\r\n\u251c\u2500\u2500 test/\r\n\u2514\u2500\u2500 manifest.csv\r\n```\r\n\r\n**CSV columns**: `split`, `original`, `x`, `y`, `label`, `patch_path`\r\n\r\n---\r\n\r\n### 5.4. Training\r\n\r\n| Item          | Description                                                                                                                                                                  |\r\n|---------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|\r\n| **Goal**      | Train a CNN (or **fine\u2011tune** an existing model) on the patches.                                                                                                              |\r\n| **Input**     | Patch folders (`train/`, `val/`, `test/`).                                                                                                                                    |\r\n| **Parameters**| Patch size, batch size, epochs, learning rate, patience, bit depth, pre\u2011trained model (`.h5`).                                                                               |\r\n| **Outputs**   | In the output directory: `best_model.h5`, `best_model_history.csv`, `best_model_test_metrics.csv`, `best_model_classification_report.txt`.                                    |\r\n\r\n---\r\n\r\n### 5.5. Prediction / Inference\r\n\r\n| Item          | Description                                                                                                                                                                              |\r\n|---------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|\r\n| **Goal**      | Classify new images/stacks and compute class proportions.                                                                                                                                |\r\n| **Inputs**    | - Folder of images (`.tif`, `.tiff`, `.stk`, `.png`)\u202f; <br>- Active layer in napari                                                                                                      |\r\n| **Parameters**| Patch size, overlap, batch size, bit\u2011depth conversion, model path (`.h5`).                                                                                                               |\r\n| **Outputs**   | - `predictions.csv` (image, %\u202fconnected, %\u202ffragmented, %\u202fintermediate, *global_class*)\u202f; <br>- Folder of heatmaps (`*_map.tif`)\u202f; <br>- Optional global summary CSV                     |\r\n| **Interactive**| Overlay in napari and interactive 3\u2011D scatter plot (`graph3d.html`).                                                                                                                    |\r\n\r\n---\r\n\r\n## 6. Licence\r\n\r\nThis software is released under the **GNU\u00a0GPL\u202fv3** licence.\r\nRefer to the [LICENSE](LICENSE) file for details.\r\n",
+    "description": "\r\n# <img src=\"https://raw.githubusercontent.com/Jmlr2/MitoClassif/main/assets/mitoclass.png\" alt=\"MitoClass logo\" height=\"60\" style=\"vertical-align: middle;\"> Mitoclass\r\n\r\n[![License: GPL\u202fv3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](LICENSE)  \r\n[![PyPI](https://img.shields.io/pypi/v/mitoclass.svg)](https://pypi.org/project/mitoclass/)  \r\n[![Python\u202f\u2265\u202f3.10](https://img.shields.io/badge/python-%3E%3D3.10-blue.svg)]()  \r\n[![napari\u2011hub](https://img.shields.io/badge/napari--hub-mitoclass-orange.svg)](https://github.com/napari/napari-hub)\r\n\r\n<p align=\"left\">\r\n  <img src=\"https://raw.githubusercontent.com/Jmlr2/MitoClassif/main/assets/imhorphen.png\" alt=\"IMHORPHEN\" height=\"70\" style=\"margin: 0 20px;\">\r\n  <img src=\"https://raw.githubusercontent.com/Jmlr2/MitoClassif/main/assets/LARIS.png\" alt=\"LARIS\" height=\"70\" style=\"margin: 0 20px;\">\r\n  <img src=\"https://raw.githubusercontent.com/Jmlr2/MitoClassif/main/assets/ua.png\" alt=\"Universit\u00e9 d'Angers\" height=\"70\" style=\"margin: 0 20px;\">\r\n</p>\r\n\r\n---\r\n\r\n## 1&nbsp;&nbsp;Overview\r\n\r\n**Mitoclass** is a *napari* plugin for the qualitative assessment of mitochondrial network morphology.  \r\nInference is **patch\u2011wise**: each 2\u2011D patch\u2014obtained from a maximum\u2011intensity projection of 3\u2011D stacks\u2014is classified as **connected**, **fragmented**, or **intermediate**.\r\n\r\n---\r\n\r\n## 2&nbsp;&nbsp;Key features\r\n\r\n| Module | Description |\r\n|--------|-------------|\r\n| Patch\u2011based inference | Analyse an image folder *or* the active napari layer. |\r\n| RGBA heatmaps | Overlay prediction maps as semi\u2011transparent layers in napari. |\r\n| Global statistics | Compute the proportion of pixels assigned to each morphology and identify the dominant class. |\r\n| 3\u2011D graph | Interactive Plotly scatter plot of connected / fragmented / intermediate proportions per image. |\r\n\r\n---\r\n\r\n## 3&nbsp;&nbsp;Requirements\r\n\r\n* **Python**\u00a0\u2265\u00a03.10  \r\n* **OS**\u00a0: Windows, Linux or macOS  \r\n* **Hardware**\u00a0: CPU is sufficient; GPU (CUDA\u00a011+) is recommended for large datasets\r\n\r\n---\r\n\r\n## 4&nbsp;&nbsp;Installation\r\n\r\n### 4.1\u00a0\u00a0PyPI\r\n\r\n```bash\r\npip install mitoclass\r\n```\r\n\r\n### 4.2\u00a0\u00a0Reproducible *conda* environment\r\n\r\n```bash\r\nconda create -n mitoclass python=3.10\r\nconda activate mitoclass\r\n\r\n# (Optional) GPU acceleration\r\nconda install -c conda-forge cudnn=8.9 cuda11.8 tensorflow\r\n\r\npip install mitoclass\r\n```\r\n\r\n*Apple\u00a0Silicon*: install `tensorflow-macos`.\r\n\r\n### 4.3\u00a0\u00a0Pre\u2011trained model\r\n\r\nDownload the model (`.h5`) from  \r\n<https://github.com/Jmlr2/MitoClassif/releases>\r\n\r\n---\r\n\r\n## 5&nbsp;&nbsp;Usage\r\n\r\n### 5.1\u00a0\u00a0Graphical interface\r\n\r\n```bash\r\nnapari\r\n```\r\n\r\n1. Open **Plugins \u2192 Mitoclass**.  \r\n2. Select the four required paths:  \r\n\r\n   | Field | Purpose |\r\n   |-------|---------|\r\n   | **Input dir** | Folder of images to analyse (`.tif`, `.tiff`, `.stk`, `.png`). |\r\n   | **Output dir** | Destination folder for CSV and graph files. |\r\n   | **Heatmaps dir** | Folder where heatmaps (`*_map.tif`) will be written. |\r\n   | **Model file** | Pre\u2011trained Keras model (`.h5`). |\r\n\r\n3. Click **Run inference**. A progress bar tracks the number of processed images.  \r\n4. After completion:  \r\n   * **Show heatmaps** adds the newly generated `*_map.tif` layers to napari.  \r\n   * **Show 3D graph** opens `graph3d.html`, displaying the connected/fragmented/intermediate proportions.\r\n\r\n*Tip*: Without an *Input dir* you may run **Infer active layer**; results are still saved to *Output dir* and *Heatmaps dir*.\r\n\r\n### 5.2\u00a0\u00a0Output structure\r\n\r\n| Folder | File(s) | Content |\r\n|--------|---------|---------|\r\n| **Output dir** | `predictions.csv` | Pixel proportion for each class (*connected*, *fragmented*, *intermediate*) and the dominant morphology, one line per image. |\r\n|                | `graph3d.html` | Interactive 3\u2011D Plotly graph of class proportions. |\r\n| **Heatmaps dir** | `*_map.tif` | One RGBA heatmap per image, ready to overlay in napari. |\r\n\r\n---\r\n\r\n## 6&nbsp;&nbsp;Licence\r\n\r\nThis project is released under the **GNU\u00a0GPL\u202fv3** licence.  \r\nSee the [LICENSE](LICENSE) file for details.\r\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -53,7 +53,7 @@
       "all",
       "testing"
     ],
-    "release_url": "https://pypi.org/project/mitoclass/0.1.1.dev5/",
+    "release_url": "https://pypi.org/project/mitoclass/0.1.1.post3/",
     "requires_dist": [
       "numpy",
       "magicgui",
@@ -74,11 +74,11 @@
     ],
     "requires_python": ">=3.10",
     "summary": "Mitoclass is a napari plugin for classifying mitochondrial morphology from microscopy images: it allows preprocessing data, training or using a model, predicting classes (connected, fragmented, intermediate), visualizing overlays and 3D summaries, and managing a prediction history.",
-    "version": "0.1.1.dev5",
+    "version": "0.1.1.post3",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 30425059,
+  "last_serial": 30425865,
   "releases": {
     "0.1.1.dev5": [
       {
@@ -123,48 +123,180 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.1.1.post1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "c123dc98cf8c8d42fa85f617b7ab0bf3c9e4dc5844d4beea6bf5563edd5f4ea6",
+          "md5": "5085ee3ac28da58b7bba680a8daf725e",
+          "sha256": "c7dff0885d2c1451e1e0c15f63392d38d3eae3dadcf554c86cc8e87360d582b4"
+        },
+        "downloads": -1,
+        "filename": "mitoclass-0.1.1.post1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "5085ee3ac28da58b7bba680a8daf725e",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 43483,
+        "upload_time": "2025-07-30T12:38:58",
+        "upload_time_iso_8601": "2025-07-30T12:38:58.553112Z",
+        "url": "https://files.pythonhosted.org/packages/c1/23/dc98cf8c8d42fa85f617b7ab0bf3c9e4dc5844d4beea6bf5563edd5f4ea6/mitoclass-0.1.1.post1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "79474cc04b00bc985857b38feb617f8f352514d1c7a33ff2749cfe6c8f80a2b5",
+          "md5": "7791e7269559f81a1bce13a1fdfe54b1",
+          "sha256": "32698e45a8627a6b06b90ca1ce63d2f8ba7630b16df29d77b7878df920bc7b3d"
+        },
+        "downloads": -1,
+        "filename": "mitoclass-0.1.1.post1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "7791e7269559f81a1bce13a1fdfe54b1",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 55540,
+        "upload_time": "2025-07-30T12:38:59",
+        "upload_time_iso_8601": "2025-07-30T12:38:59.856486Z",
+        "url": "https://files.pythonhosted.org/packages/79/47/4cc04b00bc985857b38feb617f8f352514d1c7a33ff2749cfe6c8f80a2b5/mitoclass-0.1.1.post1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.1.post2": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "efc2ee53c6fb106a4248f61fe8fbdd4e3ba184b068915073293a60e1b93d871b",
+          "md5": "ae757d6869ff69dc07e6ad05cb8b880e",
+          "sha256": "015520516ddc7e9725f53b3a15ddbf29a9fcf644155f06fc8e49a28ec0d381b4"
+        },
+        "downloads": -1,
+        "filename": "mitoclass-0.1.1.post2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "ae757d6869ff69dc07e6ad05cb8b880e",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 43509,
+        "upload_time": "2025-07-30T12:49:48",
+        "upload_time_iso_8601": "2025-07-30T12:49:48.847597Z",
+        "url": "https://files.pythonhosted.org/packages/ef/c2/ee53c6fb106a4248f61fe8fbdd4e3ba184b068915073293a60e1b93d871b/mitoclass-0.1.1.post2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "e41ac9901ad0b7d9bda5ebc092c65562bab1d32ad9029604a7032d174be25042",
+          "md5": "33a70994518d2cb265c4718aa849a072",
+          "sha256": "0568f7b62247c09ee33f2e0fc59395db06219e6b22cf7c0e13f50919690c2484"
+        },
+        "downloads": -1,
+        "filename": "mitoclass-0.1.1.post2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "33a70994518d2cb265c4718aa849a072",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 55619,
+        "upload_time": "2025-07-30T12:49:50",
+        "upload_time_iso_8601": "2025-07-30T12:49:50.336094Z",
+        "url": "https://files.pythonhosted.org/packages/e4/1a/c9901ad0b7d9bda5ebc092c65562bab1d32ad9029604a7032d174be25042/mitoclass-0.1.1.post2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.1.post3": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "966eb455e6f5553f2b71b3d6c4cfe9f7e895d3912c1f311bf5a56a385d2246de",
+          "md5": "218061e3646541f263c6a81130279cf0",
+          "sha256": "596d42b01374063fe03b9576c3be22d61207e35a629f5f63afc1ec6094c764bc"
+        },
+        "downloads": -1,
+        "filename": "mitoclass-0.1.1.post3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "218061e3646541f263c6a81130279cf0",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 43506,
+        "upload_time": "2025-07-30T12:54:05",
+        "upload_time_iso_8601": "2025-07-30T12:54:05.396909Z",
+        "url": "https://files.pythonhosted.org/packages/96/6e/b455e6f5553f2b71b3d6c4cfe9f7e895d3912c1f311bf5a56a385d2246de/mitoclass-0.1.1.post3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "52ac0dc5f6cc24ba8643f6ccc28c5004407ad084c9d0af63787e86ac9fccd122",
+          "md5": "aef0eaf57d806a9855964a7731a7ad72",
+          "sha256": "7886fc5091c83041b9bb4e4a85396be6e721c1a18ed5d3930c8875dd5a5c00c6"
+        },
+        "downloads": -1,
+        "filename": "mitoclass-0.1.1.post3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "aef0eaf57d806a9855964a7731a7ad72",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 55597,
+        "upload_time": "2025-07-30T12:54:06",
+        "upload_time_iso_8601": "2025-07-30T12:54:06.701593Z",
+        "url": "https://files.pythonhosted.org/packages/52/ac/0dc5f6cc24ba8643f6ccc28c5004407ad084c9d0af63787e86ac9fccd122/mitoclass-0.1.1.post3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": null,
       "digests": {
-        "blake2b_256": "f3154309be0ae93ef41523a5d787f648831ae58413e23a210c9270036a97eb37",
-        "md5": "c92a372a6bb93d3ea33ec73f39f239fc",
-        "sha256": "47fedf8b532e4a326c4c0fd90d1c299d7960e94b718c34636c3900b7abbd19f9"
+        "blake2b_256": "966eb455e6f5553f2b71b3d6c4cfe9f7e895d3912c1f311bf5a56a385d2246de",
+        "md5": "218061e3646541f263c6a81130279cf0",
+        "sha256": "596d42b01374063fe03b9576c3be22d61207e35a629f5f63afc1ec6094c764bc"
       },
       "downloads": -1,
-      "filename": "mitoclass-0.1.1.dev5-py3-none-any.whl",
+      "filename": "mitoclass-0.1.1.post3-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "c92a372a6bb93d3ea33ec73f39f239fc",
+      "md5_digest": "218061e3646541f263c6a81130279cf0",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.10",
-      "size": 44133,
-      "upload_time": "2025-07-30T11:59:20",
-      "upload_time_iso_8601": "2025-07-30T11:59:20.300962Z",
-      "url": "https://files.pythonhosted.org/packages/f3/15/4309be0ae93ef41523a5d787f648831ae58413e23a210c9270036a97eb37/mitoclass-0.1.1.dev5-py3-none-any.whl",
+      "size": 43506,
+      "upload_time": "2025-07-30T12:54:05",
+      "upload_time_iso_8601": "2025-07-30T12:54:05.396909Z",
+      "url": "https://files.pythonhosted.org/packages/96/6e/b455e6f5553f2b71b3d6c4cfe9f7e895d3912c1f311bf5a56a385d2246de/mitoclass-0.1.1.post3-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": null,
       "digests": {
-        "blake2b_256": "880f28d501e03aa0cade8c75e74fb44e288aa510b860fd59bda98de4d85958f2",
-        "md5": "012d731382e59866fb80199aac5bc50b",
-        "sha256": "3b89069b4732f68fb460bfe3edd312ed4c3edd8b78ca597854c80b0d8387a34d"
+        "blake2b_256": "52ac0dc5f6cc24ba8643f6ccc28c5004407ad084c9d0af63787e86ac9fccd122",
+        "md5": "aef0eaf57d806a9855964a7731a7ad72",
+        "sha256": "7886fc5091c83041b9bb4e4a85396be6e721c1a18ed5d3930c8875dd5a5c00c6"
       },
       "downloads": -1,
-      "filename": "mitoclass-0.1.1.dev5.tar.gz",
+      "filename": "mitoclass-0.1.1.post3.tar.gz",
       "has_sig": false,
-      "md5_digest": "012d731382e59866fb80199aac5bc50b",
+      "md5_digest": "aef0eaf57d806a9855964a7731a7ad72",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.10",
-      "size": 56788,
-      "upload_time": "2025-07-30T11:59:21",
-      "upload_time_iso_8601": "2025-07-30T11:59:21.663023Z",
-      "url": "https://files.pythonhosted.org/packages/88/0f/28d501e03aa0cade8c75e74fb44e288aa510b860fd59bda98de4d85958f2/mitoclass-0.1.1.dev5.tar.gz",
+      "size": 55597,
+      "upload_time": "2025-07-30T12:54:06",
+      "upload_time_iso_8601": "2025-07-30T12:54:06.701593Z",
+      "url": "https://files.pythonhosted.org/packages/52/ac/0dc5f6cc24ba8643f6ccc28c5004407ad084c9d0af63787e86ac9fccd122/mitoclass-0.1.1.post3.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
