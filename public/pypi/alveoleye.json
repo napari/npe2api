@@ -1,0 +1,295 @@
+{
+  "info": {
+    "author": "Joseph Hirsh",
+    "author_email": "josephhirsh9@gmail.com",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# AlveolEye: Automated Lung Morphometry Made Easy\n\n[![Napari Plugin](https://img.shields.io/badge/Napari-Plugin-1157c4?logo=napari)](https://www.napari-hub.org/plugins/AlveolEye)\n![Python Version](https://img.shields.io/badge/Python-3.9%20|%203.10%20|%203.11-blue)\n![OS Support](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-blue)\n![GitHub Release](https://img.shields.io/github/v/release/SucreLab/AlveolEye?display_name=tag)\n![License](https://img.shields.io/github/license/SucreLab/AlveolEye)\n[![PyPI Downloads](https://img.shields.io/pypi/dm/AlveolEye)](https://pypi.org/project/AlveolEye/)\n![Maintenance](https://img.shields.io/maintenance/yes/2025)\n![Last Commit](https://img.shields.io/github/last-commit/SucreLab/AlveolEye)\n![Issues](https://img.shields.io/github/issues/SucreLab/AlveolEye)\n\nThis repository contains the beta version of AlveolEye, created by the [Sucre lab](https://www.sucrelab.org/).  \nThe code is authored by Samuel Hirsh, Joseph Hirsh, Nick Negretti, and Shawyon Shirazi.\n\nAlveolEye is a Napari plugin that uses computer vision and classical image processing  \nto calculate mean linear intercept (MLI) and airspace volume density (ASVD) of histologic images.\n\nThe goal of this tool is to aid researchers, not provide a complete automated annotation solution.\n\nWe welcome GitHub issues and feedback!\n\n## Installation\n\nThe goal of this process is to create a conda environment containing Napari and all AlveolEye requirements.\n\n*If you already have conda set up, you can skip step 1.*\n\n1. **Install Miniconda** by downloading the appropriate version from [here](https://www.anaconda.com/docs/getting-started/miniconda/install):  \n   - Choose the version that matches your processor.  \n   - Download the `.pkg` version for easy installation.\n\n2. **Clone the repository** (by opening a terminal or Miniconda prompt and running the following)\n   ```\n   git clone https://github.com/SucreLab/AlveolEye\n   ```\n\n3. **Navigate to the directory**:\n   ```\n   cd AlveolEye\n   ```\n\n4. **Create the conda environment**:\n   ```\n   conda env create -f ./environment.yml\n   ```\n\n5. **Activate the environment**:\n   ```\n   conda activate AlveolEye\n   ```\n\n6. **Install the plugin**:\n   ```\n   pip install .\n   ```\n\n7. **Launch Napari** and locate the plugin in the plugin menu:\n   ```\n   napari\n   ```\n\n## Running Post-Installation\n\n1. **Activate the environment** in the terminal or Miniconda prompt:\n   ```\n   conda activate AlveolEye\n   ```\n\n2. **Run Napari** in the terminal:\n   ```\n   napari\n   ```\n\n<div align=\"right\">\n  <a href=\"#alveoleye-automated-lung-morphometry-made-easy\">Back to Top</a>\n</div>\n\n## Usage\n\n### Processing: Identify and Segment Vessel Endothelium and Airway Epithelium with Computer Vision\n\n![processing diagram](https://raw.githubusercontent.com/SucreLab/AlveolEye/main/docs/PROCESSING_FINAL.svg)\n\n1. **Import image**  \n   - Click the \"Import Image\" button.  \n   - Use the file dialog to select an image (`.jpg`, `.png`, or `.tiff`).  \n   - Verify that the image correctly loaded. The file name should appear to the right of the button.\n\n2. **Toggle processing with computer vision**  \n   - Keep the checkbox selected to process the image with computer vision (continue to step 3).  \n   - Deselect to skip computer vision processing (skip to step 5).\n\n3. **Import weights**  \n   - To use the default model, proceed to step 4.  \n   - To use a custom model:  \n     - Click the \"Import Weights\" button.  \n     - Select a model file (`.pth`).  \n     - Verify that the weights correctly loaded. The file name should appear to the right of the button.\n\n4. **Set minimum confidence**  \n   - Adjust the minimum confidence using the input box or the \"-/+\" buttons.  \n   - Predictions from the computer vision model with lower confidence than this threshold will not appear.\n\n5. **Run processing**  \n   - Click the \"Run Processing\" button.  \n   - Once completed, manually edit the prediction as needed using Napari's built-in tools.\n\n<div align=\"right\">\n  <a href=\"#alveoleye-automated-lung-morphometry-made-easy\">Back to Top</a>\n</div>\n\n### Postprocessing: Segment Alveolar Tissue and Find Vessel and Aireway Lumens\n\n![postprocessing diagram](https://raw.githubusercontent.com/SucreLab/AlveolEye/main/docs/POSTPROCESSING_FINAL.svg)\n\n1. **Configure thresholding**  \n   - For manual thresholding: Select the \"Manual threshold\" checkbox and use the spinbox to set the threshold level.  \n   - For automatic thresholding ([Otsu's method](https://learnopencv.com/otsu-thresholding-with-opencv/)): Leave the box unchecked.\n\n2. **Remove small particles**  \n   - Set the minimum size cutoff.\n   - Particles with fewer pixels than this value will be removed.\n\n3. **Remove small holes**  \n   - Set the minimum size cutoff.  \n   - Holes with fewer pixels than this value will be removed.\n\n4. **Run postprocessing**  \n   - Click the \"Run Postprocessing\" button.  \n   - Once completed, manually edit the results as needed using Napari's built-in tools.\n\n<div align=\"right\">\n  <a href=\"#alveoleye-automated-lung-morphometry-made-easy\">Back to Top</a>\n</div>\n\n### Assessments: Calculate Morphometry Measurements\n\n![assessments diagram](https://raw.githubusercontent.com/SucreLab/AlveolEye/main/docs/ASSESSMENTS_FINAL.svg)\n\n1. **Airspace Volume Density (ASVD)**\n   - Select the checkbox to run ASVD calculation.\n   - Deselect the checkbox to exclude data from export and increase processing speed.\n\n2. **Mean Linear Intercept (MLI)**\n   - Select the checkbox to run MLI calculation.\n   - Deselect the checkbox to exclude data from export and increase processing speed.\n\n3. **Number of lines**\n   - Set the number of lines used for MLI calculation.\n\n5. **Minimum length**\n   - Set the minimum chord length for inclusion in MLI calculations.\n   - Note: Chords are the line segments that span across an airspace between two alveolar tissue boundaries during MLI calculation.\n\n7. **Scale**\n   - Set the pixel-to-physical space multiplier.\n\n9. **Run assessments**\n   - Click the \"Run Assessments\" button.\n   - View results displayed beside assessment checkboxes and in the export box.\n\n<div align=\"right\">\n  <a href=\"#alveoleye-automated-lung-morphometry-made-easy\">Back to Top</a>\n</div>\n\n### Export Results: Save Assessment Results as a CSV or JSON File\n\n![export diagram](https://raw.githubusercontent.com/SucreLab/AlveolEye/main/docs/EXPORT_FINAL.svg)\n\n1. **Add results**\n   - Click \"Add\" to include current assessment data in the export file.\n\n3. **Remove last result**\n   - Click \"Remove\" to delete the last added results from the export file.\n\n5. **Clear export data**\n   - Click \"Clear\" to empty the export file.\n\n7. **Export results**\n   - Click \"Export Results\" to save the data (`.csv` or `.json` format).\n\n**Results Key**\n\n- **MLI**: Mean Linear Intercept for the tissue image\n \n- **Standard deviation**: Standard deviation of chord lengths used in MLI calculation\n  \n- **Number of chords**: Number of chords used in MLI calculation\n\n- **ASVD**: Airspace Volume Density for the image\n \n- **Airspace pixels**: Total number of airspace pixels\n   \n- **Non-airspace pixels**: Total number of non-airspace pixels\n\n<div align=\"right\">\n  <a href=\"#alveoleye-automated-lung-morphometry-made-easy\">Back to Top</a>\n</div>\n\n## Manual Annotation Guide\n\n### Label Reference\n\n| Structure          | Label Number |\n|--------------------|--------------|\n| Blocker            | 1            |\n| Airway Epithelium  | 2            |\n| Vessel Endothelium | 3            |\n| Airway Lumen       | 4            |\n| Vessel Lumen       | 5            |\n| Parenchyma         | 6            |\n| Alveoli            | 7            |\n\n### Annotation Tips\n\n- **Eyedropper tool**: Click the eyedropper tool, then click a pixel in the image to set your active label (for drawing and editing) to that pixel's label.  \n- **Layer selection**: Ensure you're working on the correct layer before annotating.  \n- **Visibility control**: Hide unnecessary layers using the eye icon on the layer boxes (to the left of the image viewer) for clearer viewing.\n- **Blocking**: Encircle airways and vessels in the blocking label, and everything within that closed shape will be discounted from assessments calculation. \n\n<div align=\"right\">\n  <a href=\"#alveoleye-automated-lung-morphometry-made-easy\">Back to Top</a>\n</div>\n\n## Additional Information\n\n### Theme Settings\n\nToggle between dark and light mode using:\n\n- **Windows/Linux**: `Ctrl + Shift + T`  \n- **macOS**: `Cmd + Shift + T`\n\nOr through Napari preferences:\n\n1. Select \"napari\" in the menu bar.\n   \n2. Choose \"Preferences.\"\n   \n3. Click \"Appearance\" in the left menu.\n     \n4. Select \"dark,\" \"light,\" or \"system\" in the theme dropdown.\n\n<div align=\"right\">\n  <a href=\"#alveoleye-automated-lung-morphometry-made-easy\">Back to Top</a>\n</div>\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": "BSD",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "AlveolEye",
+    "package_url": "https://pypi.org/project/AlveolEye/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/AlveolEye/",
+    "project_urls": null,
+    "provides_extra": [
+      "testing"
+    ],
+    "release_url": "https://pypi.org/project/AlveolEye/0.1.7/",
+    "requires_dist": [
+      "numpy",
+      "magicgui",
+      "qtpy",
+      "typeguard",
+      "pytest; extra == \"testing\"",
+      "pytest-cov; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "napari; extra == \"testing\"",
+      "qtpy; extra == \"testing\""
+    ],
+    "requires_python": ">=3.8",
+    "summary": "Reads lung slides with AI-driven and classical methods",
+    "version": "0.1.7",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 30222067,
+  "releases": {
+    "0.1.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "06d19d8740333cc4a3009159c6e75edc5c6128c5877ee0efbbba61805417314d",
+          "md5": "7f13ccd42e4e2ae05c5db64fd5bb37d3",
+          "sha256": "a66c2f961360d024f2bb5d10932f1e829c73c3dacd01c974b686e24e3e6adfe1"
+        },
+        "downloads": -1,
+        "filename": "AlveolEye-0.1.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "7f13ccd42e4e2ae05c5db64fd5bb37d3",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 48807,
+        "upload_time": "2024-05-22T16:20:36",
+        "upload_time_iso_8601": "2024-05-22T16:20:36.083654Z",
+        "url": "https://files.pythonhosted.org/packages/06/d1/9d8740333cc4a3009159c6e75edc5c6128c5877ee0efbbba61805417314d/AlveolEye-0.1.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "716ff996c420fd6479a4a21aa14204cdf2e29ec5dd67a382121eef5c015ea705",
+          "md5": "2ce59c4ff997fe29c892729f59cd1710",
+          "sha256": "429281cd4191e981dbc7161192f95a7104a916e27401546c50fae6217aa95b87"
+        },
+        "downloads": -1,
+        "filename": "alveoleye-0.1.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "2ce59c4ff997fe29c892729f59cd1710",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 41070,
+        "upload_time": "2024-05-22T16:20:37",
+        "upload_time_iso_8601": "2024-05-22T16:20:37.198970Z",
+        "url": "https://files.pythonhosted.org/packages/71/6f/f996c420fd6479a4a21aa14204cdf2e29ec5dd67a382121eef5c015ea705/alveoleye-0.1.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.3a0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "d9d3326ccf38ab2fde3971e1397eaee82c417c28c797f7f7148d18bced58d332",
+          "md5": "417928c01e51d8837efc5417438af035",
+          "sha256": "35eee9afa2f87f65b3a3ecc7f56c3e189965cdb94b911e2b0b6a92062175f138"
+        },
+        "downloads": -1,
+        "filename": "AlveolEye-0.1.3a0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "417928c01e51d8837efc5417438af035",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 52186,
+        "upload_time": "2025-01-07T19:43:29",
+        "upload_time_iso_8601": "2025-01-07T19:43:29.603408Z",
+        "url": "https://files.pythonhosted.org/packages/d9/d3/326ccf38ab2fde3971e1397eaee82c417c28c797f7f7148d18bced58d332/AlveolEye-0.1.3a0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "e41a7409a74dac85c681ed864eb2d6f04e42d9117ea9003b5b8ae8395e3a0d42",
+          "md5": "029f838bf1e054ace0bd17db0625bb12",
+          "sha256": "eec4b6a0eda21a10f5a3b7a5006ace7391dfc1c944d97a5a4384ae6f420853a6"
+        },
+        "downloads": -1,
+        "filename": "alveoleye-0.1.3a0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "029f838bf1e054ace0bd17db0625bb12",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 44164,
+        "upload_time": "2025-01-07T19:43:32",
+        "upload_time_iso_8601": "2025-01-07T19:43:32.111179Z",
+        "url": "https://files.pythonhosted.org/packages/e4/1a/7409a74dac85c681ed864eb2d6f04e42d9117ea9003b5b8ae8395e3a0d42/alveoleye-0.1.3a0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.4": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "be4771cf717bfd2ef6965c36c2d2d9e7e07f688281e26c83e464360fc812d000",
+          "md5": "7527cd43929b25859f02fac29e817fd2",
+          "sha256": "50c749bdc8f9df87f44e2ce4896cb89cdea3470619288d5d55002ba6ccddc73a"
+        },
+        "downloads": -1,
+        "filename": "AlveolEye-0.1.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "7527cd43929b25859f02fac29e817fd2",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 56620,
+        "upload_time": "2025-01-07T20:09:29",
+        "upload_time_iso_8601": "2025-01-07T20:09:29.332291Z",
+        "url": "https://files.pythonhosted.org/packages/be/47/71cf717bfd2ef6965c36c2d2d9e7e07f688281e26c83e464360fc812d000/AlveolEye-0.1.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "1b6ce6994a64c8d6beab5d021caf9615d5643dcd7150dbde47151f05e480a438",
+          "md5": "5c7aa5cbde2ea6d0242bfc8916dae0a4",
+          "sha256": "07d40f65e42148c196a5554f0f8e34ab27da06dc9f18c17029935778b494a4a7"
+        },
+        "downloads": -1,
+        "filename": "alveoleye-0.1.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "5c7aa5cbde2ea6d0242bfc8916dae0a4",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 47906,
+        "upload_time": "2025-01-07T20:09:31",
+        "upload_time_iso_8601": "2025-01-07T20:09:31.166111Z",
+        "url": "https://files.pythonhosted.org/packages/1b/6c/e6994a64c8d6beab5d021caf9615d5643dcd7150dbde47151f05e480a438/alveoleye-0.1.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.5": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "00ae39d02cd1e842797992542113e6c7be870169e9b673522c70c4ccde04390b",
+          "md5": "f2bd43a5d4f55eee460b755ef4186e33",
+          "sha256": "1d6c5eb953198ac73745a678d8b4600bb632608c15de8a301e6f92488a712dda"
+        },
+        "downloads": -1,
+        "filename": "alveoleye-0.1.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "f2bd43a5d4f55eee460b755ef4186e33",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 52822,
+        "upload_time": "2025-04-07T19:12:24",
+        "upload_time_iso_8601": "2025-04-07T19:12:24.838339Z",
+        "url": "https://files.pythonhosted.org/packages/00/ae/39d02cd1e842797992542113e6c7be870169e9b673522c70c4ccde04390b/alveoleye-0.1.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.6": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "3828bdc243f244255acfce8c1b522091973508253db62f8519d380401cae956a",
+          "md5": "83cba909ec0395ff5c2df8c7e7fd9096",
+          "sha256": "d05ff3cf376715a51cbc521f773e98409b1a69953c674200472cfcb69109346f"
+        },
+        "downloads": -1,
+        "filename": "alveoleye-0.1.6.tar.gz",
+        "has_sig": false,
+        "md5_digest": "83cba909ec0395ff5c2df8c7e7fd9096",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 56652,
+        "upload_time": "2025-06-27T21:47:24",
+        "upload_time_iso_8601": "2025-06-27T21:47:24.945937Z",
+        "url": "https://files.pythonhosted.org/packages/38/28/bdc243f244255acfce8c1b522091973508253db62f8519d380401cae956a/alveoleye-0.1.6.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.7": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "a969ae2396abf35b240ba99d65f15e5874049935b4ff8cc85b2452bcdfb15422",
+          "md5": "81c2f886f2cef59b73c99b6038c9084f",
+          "sha256": "f8ec8b28e3c47458f1d5004131183cd7fd44e31b6ca7c2aa7a610c9e6d024fd5"
+        },
+        "downloads": -1,
+        "filename": "alveoleye-0.1.7.tar.gz",
+        "has_sig": false,
+        "md5_digest": "81c2f886f2cef59b73c99b6038c9084f",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 58929,
+        "upload_time": "2025-07-18T20:05:01",
+        "upload_time_iso_8601": "2025-07-18T20:05:01.962629Z",
+        "url": "https://files.pythonhosted.org/packages/a9/69/ae2396abf35b240ba99d65f15e5874049935b4ff8cc85b2452bcdfb15422/alveoleye-0.1.7.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "a969ae2396abf35b240ba99d65f15e5874049935b4ff8cc85b2452bcdfb15422",
+        "md5": "81c2f886f2cef59b73c99b6038c9084f",
+        "sha256": "f8ec8b28e3c47458f1d5004131183cd7fd44e31b6ca7c2aa7a610c9e6d024fd5"
+      },
+      "downloads": -1,
+      "filename": "alveoleye-0.1.7.tar.gz",
+      "has_sig": false,
+      "md5_digest": "81c2f886f2cef59b73c99b6038c9084f",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.8",
+      "size": 58929,
+      "upload_time": "2025-07-18T20:05:01",
+      "upload_time_iso_8601": "2025-07-18T20:05:01.962629Z",
+      "url": "https://files.pythonhosted.org/packages/a9/69/ae2396abf35b240ba99d65f15e5874049935b4ff8cc85b2452bcdfb15422/alveoleye-0.1.7.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

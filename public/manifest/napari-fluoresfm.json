@@ -1,0 +1,115 @@
+{
+  "name": "napari-fluoresfm",
+  "display_name": "FluoResFM",
+  "visibility": "public",
+  "icon": "",
+  "categories": [],
+  "schema_version": "0.2.1",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-fluoresfm.make_main_widget",
+        "title": "Make main widget",
+        "python_name": "napari_fluoresfm:Widget_train_predict",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "napari-fluoresfm.make_main_widget",
+        "display_name": "FluoResFM",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "napari-fluoresfm",
+    "version": "0.2.3",
+    "dynamic": [
+      "license-file"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "A plugin to use FluoResFM model in napari.",
+    "description": "# napari-fluoresfm\n\n[![License MIT](https://img.shields.io/pypi/l/napari-fluoresfm.svg?color=green)](https://github.com/qiqi-lu/napari-fluoresfm/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-fluoresfm.svg?color=green)](https://pypi.org/project/napari-fluoresfm)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-fluoresfm.svg?color=green)](https://python.org)\n[![tests](https://github.com/qiqi-lu/napari-fluoresfm/workflows/tests/badge.svg)](https://github.com/qiqi-lu/napari-fluoresfm/actions)\n[![codecov](https://codecov.io/gh/qiqi-lu/napari-fluoresfm/branch/main/graph/badge.svg)](https://codecov.io/gh/qiqi-lu/napari-fluoresfm)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-fluoresfm)](https://napari-hub.org/plugins/napari-fluoresfm)\n[![npe2](https://img.shields.io/badge/plugin-npe2-blue?link=https://napari.org/stable/plugins/index.html)](https://napari.org/stable/plugins/index.html)\n[![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-purple.json)](https://github.com/copier-org/copier)\n\nThis is a `napari` plugin developed for using FluoResFM model in napari.\nFluoresFM is a deep learning-based foundation model for multi-task cross-distribution restoration of fluorescence microscopic images.\n\nFluoResFM's `napari` plugin is in early satge, therefore I highly encourage any feedback and suggestions.\n\n----------------------------------\n\nThis [napari] plugin was generated with [copier] using the [napari-plugin-template].\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/napari-plugin-template#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/stable/plugins/index.html\n-->\n\n## Before Installation\nAs FluoResFM is a deep learning-based model, it is recommended to use a GPU for inference and training on Linux system. So no choice to use CPU is provided in the plugin. Besides, as the code is depended on PyTorch and `triton` packages, you should install the plugin through command lines.\n\nI recommand you to install the plugin in a new envoroment created by `conda` .\n\n First, create a new environment with `conda` and activate it.\n```\nconda create -y --name napari-fluoresfm python=3.12\nconda activate napari-fluoresfm\n```\n\nThen, install `napari`.\n```\npip install -U \"napari[all]\"\n```\n\nTo use GPU for inference and training, you should install the GPU version of PyTorch. You can use `nvcc -V` to check the cuda version. Then install the corresponding version of PyTorch by check the [table](https://pytorch.org/get-started/previous-versions/) provided by PyTorch. For example, if you have `cuda 12.4`, you should install the following version of PyTorch.\n```\npip install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cu124\n```\n\nWe recommend you using Linux for training and inference, as the `triton` support for Windows is not stable. And the with Linux system, the acceleration of `triton` is much better than Windows, which allow larger `batch size` and `patch size` to be used in training and inference.\n\nIf you are using Windows, you should install the `triton` package first according the PyTorch version you installed. Please check this [link](https://github.com/woct0rdho/triton-windows?tab=readme-ov-file#3-pytorch) for more details.\n```\npip install -U \"triton-windows<3.3\"\n```\n\n## Installation\n\nYou can install `napari-fluoresfm` via [pip]:\n\n```\npip install napari-fluoresfm\n```\n\nTo install latest development version :\n\n```\npip install git+https://github.com/qiqi-lu/napari-fluoresfm.git\n```\n\n## Functions\nThis plugin can be used for data preprocessing, model training, and model inference.\n\n![interface](src/napari_fluoresfm/images/interface.png)\n**Figure 1: The interface of the plugin.** **a** The label page uased for prediction of restored images. **b** The page for data preprocessing, including data patching and text embedding modules. **c** The page for model training.\n\n**Each page can be run independetly. You only need to input the data and model information as described below from top to bottom, and click `run` button to start. To train or fine-tune the mdoel, you need to preprocess the data firstly using the `Preprocess` page. The training and fine-tuning can both be done in `Train` page.**\n\n### Predict\nThis label page is used for prediction of restored images. You can select the pretrained model and the input image to predict the restored image.\n#### PATH box\nThis box is used to select the folder for data and models.\n- **Input Folder**: The folder containing the input images. The input images should be in `.tif` format with a shape of `(1, H, W)` or `(H, W)`. The model will restored the images one by one and save them into the **Output Folder**.\n- **Index File**: This should be a `.txt` file containing all the file names of the images to be restored in each line. The file name should be the same as the file name of the input images.\n- **Output Folder** (optional): The folder to save the restored images. If not specified, the restored images will be saved into the `#Input Folder#_fluoresfm`.\n- **Embedder**: The folder saved the text embedder model. You can download the text model from my [Google Drive](https://drive.google.com/drive/folders/1pfiCHtXrf5ne6fjKJQAvwQhgBO_yVpWy?usp=sharing).\n- **Checkpoint**: The pre-trained FluoResFM model checkpoint with a suffix `.pt`.\n\n#### PARAMETERS box\nThis box is used to set the parameters for prediction.\n- **Device**: The device to run the model. Only support `cuda`.\n- **Compile model**: Whether to compile the model. If checked, the model will be compiled with `triton` for faster inference and lower BPU memory usage. But the compile process will take a few minutes. if only a few image to be restored, you can uncheck this box.\n- **Input interpolation (nearest)**: Do nearest interpolation on the input image to implement super-resolution task, as the input and output image of FluoResFM have the save shape.\n- **Batch size**: The batch size used during inference. Larger batch size will use more memory and faster inference. If your GPU memory is not enough, you can reduce this value.\n- **Patch size**: The patch size used during inference. Larger patch size will use more memory. If your GPU memory is not enough, you can reduce this value. Different pacth size may lead to slightly different results due to the patch stiching process.\n#### TEXT box\nThis box is used to set the text prompt for the model.\n- **Task**: The task to be performed. For example, \"denoising\", \"deconvolution\", or \"super-resolution with a scale factor of 2\". When inputing \"super-resolution with a scale factor of 2\", the **Input interpolation (nearest)** should be also set as 2. Other tasks may result in unexpected results as the model is not trained for these tasks.\n- **Sample**: The image sample. For example, \"fixed COS-7 cell line\".\n- **Structure**: The imaging structure. For example, \"microtubules\".\n- **Fluorescence indicator**: The fluorescence indicator. For example, \"mEmerald (GFP)\".\n- **INPUT**: The imaging condition of image image.\n    - **Microscope**: The microscope used for imaging. Such as, \"wide-field microscope\".\n    - **Mircoscopy params**: The microscope parameters. For example, \"with excitation numrical aperture (NA) of 1.35, detection namerical aperture (NA) of 1.3\".\n    - **Pixel size**: The pixel size of the image. For example, \"62.6 x 62.6 nm\".\n\n- **OUTPUT**: The imaging condition of the target image.\n    - **Microscope**: The microscope used for imaging. Such as, \"linear structured illumination microscopy\".\n    - **Mircoscopy params**: The microscope parameters. For example, \"with excitation numrical aperture (NA) of 1.35, detection namerical aperture (NA) of 1.3\".\n    - **Pixel size**: The pixel size of the image. For example, \"62.6 x 62.6 nm\".\n\n#### RUN box\nThis box is used to start, stop, and watch the prediction process. Press the **run** button to start the prediction. Press the **stop** button to stop the prediction. The prediciton process will be shown in the progress bar.\n\n### Preprocess\nThis page is used for data preprocessing, including data patching and text embedding modules.\n#### IMAGE PATCHING box\n- **PATH**\n    - **Dataset Folder**: The folder containing the images to be patched. The images should be in `.tif` format with a shape of `(1, H, W)` or `(H, W)`. The model will patch the images one by one and save them into a folder named `#Dataset Folder#_p#patch size#_s#patch stride#_2d`.\n    - **Index File**: This should be a `.txt` file containing all the file names of the images to be patched in each line. The file name should be the same as that of images in the **Dataset Folder**.\n\n- **PARAMETERS**\n    - **Patch size**: The size of the patch. Deault is `64`, which is same as that used for FluoResFM pretraining.\n    - **Patch stride**: The stride of the patch. Deault is `64`, i.e., no overlap between patches, which is same as that used for FluoResFM pretraining.\n    - **Normalization (low)**: The lower bound of the percentile-based normalization. Deault is `0.03`.\n    - **Normalization (high)**: The upper bound of the percentile-based normalization. Deault is `0.995`.\n\n- **RUN**\n\n    This box is used to start, stop, and watch the preprocessing process. Same function as the **RUN box** in the **Predict** page.\n\n#### EMBEDDING box\n- **PATH**\n    - **Excel File**: The excel file containing all the information for the datasets used for training or fine-tuning. The excel file should be in `.xlsx` format. The excel file should contain the all the columns as shown in the example data.\n    - **Output Folder**: The folder to save the text embeddings. The generated text will be saved into a `.txt` file named as `dataset_text_#Text type#.txt`. The corresponding text embedding will be saved into a folder named `dataset_text_#Text type#_#Context length#`. Each `.npy` file is for each dataset. The id is corresponding to the order of the dataset in the excel file.\n    - **Embedder**: The folder saved the text embedder model.\n\n- **PARAMETERS**\n    - **Device**: The device to run the model. Only support `cuda`.\n    - **Context length**: The context length of the text embedding. Deault is `160`, which is same as that used for FluoResFM pretraining.\n    - **Text type**: The type of the text. [\"ALL\", \"T\", \"TS\"], where \"ALL\" means all the text informatio will be used, \"T\" means only the task informaiton will be used, and \"TS\" means only the task and structure informaiton will be used.\n\n- **RUN**: This box is used to start, stop, and watch the preprocessing process. Same function as the **RUN box** in the **Predict** page.\n\n### Train\nThis page is used for model training.\n#### PATH box\n- **Information Folder**: The folder containing the information for the datasets used for training or fine-tuning, includeingt the path of input and reference images and the path of their corresponding index files. Other information should be same as the provided example.\n- **Text Embedding**: The folder containing the text embeddings for the datasets used for training or fine-tuning, which should be generated first using the **EMBEDDING box** in the **Preprocess** page.\n- **Checkpoint (load from)**: The pre-trained FluoResFM model checkpoint with a suffix `.pt`. If not specified, the model will be trained from scratch.\n- **Finetune**: Whether to fine-tune the model. If checked, **Checkpoint (load from)** must be specified and will be fine-tuned (only the first and last convolution layers will be trainable). If not checked, all the parameters in the model wil be setted as trainable.\n- **Checkpoint (save to)**: The folder  to save the trained model checkpoint. The checkpoint will be saved into a folder named `unet_sd_c_mae_bs#bactch size#_lr_#learning rate#-160-res1-att0123`. It `finetune` is checked, the folder will be added a suffix of `-ft-in-out`.\n#### PARAMETERS box\n- **Device**: : The device to run the model. Only support `cuda`.\n- **Compile**: Whether to compile the model. The compiling of model will take a few minutes, but will accelerate the training/fine-tuning process and save the GPU memory. On Linux system, the compiling of model will be more efficient than on Windows system.\n- **Batch size**: The batch size used during training.\n- **Epochs**: The number of epochs used during training.\n- **Learning rate**: The start learning rate.\n- **Decay (every iter)**: The learning rate will decay every `#Decay (every iter)#` iterations. The decay rate is 0.5.\n- **Validation (every iter)**: The validation will be performed every `#Validation (every iter)#` iterations.\n- **Validation (fraction)**: The fraction of the dataset used for validation. If it is set as 0, the validation will not be performed. (0,1)*100% dataset will be used for validation.\n- **Save Model (every iter)**: The model will be saved every `#Save Model (every iter)#` iterations.\n\n#### RUN box\nThis box is used to start, stop, and watch the training process. Same function as the **RUN box** in the **Predict** page.\n\n### Log\nThis page is used to show the working log.\nPress the **CLEAR** button to clear the log.\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [MIT] license,\n\"napari-fluoresfm\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[copier]: https://copier.readthedocs.io/en/stable/\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[napari-plugin-template]: https://github.com/napari/napari-plugin-template\n\n[file an issue]: https://github.com/qiqi-lu/napari-fluoresfm/issues\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": null,
+    "download_url": null,
+    "author": "Qiqi Lu",
+    "author_email": "136303971@qq.com",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "The MIT License (MIT)\n\nCopyright (c) 2025 Qiqi Lu\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in\nall copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\nTHE SOFTWARE.\n",
+    "classifier": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: MIT License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "requires_dist": [
+      "numpy",
+      "magicgui",
+      "qtpy",
+      "napari",
+      "scikit-image",
+      "torch",
+      "torchvision",
+      "torchaudio",
+      "tqdm",
+      "scipy",
+      "open_clip_torch",
+      "pandas",
+      "pytorch_msssim",
+      "pydicom",
+      "torchinfo",
+      "tensorboard",
+      "transformers",
+      "openpyxl",
+      "napari[all]; extra == \"all\"",
+      "tox; extra == \"testing\"",
+      "pytest; extra == \"testing\"",
+      "pytest-cov; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "napari[qt]; extra == \"testing\""
+    ],
+    "requires_python": ">=3.10",
+    "requires_external": null,
+    "project_url": [
+      "Bug Tracker, https://github.com/qiqi-lu/napari-fluoresfm/issues",
+      "Documentation, https://github.com/qiqi-lu/napari-fluoresfm#README.md",
+      "Source Code, https://github.com/qiqi-lu/napari-fluoresfm",
+      "User Support, https://github.com/qiqi-lu/napari-fluoresfm/issues"
+    ],
+    "provides_extra": [
+      "all",
+      "testing"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}

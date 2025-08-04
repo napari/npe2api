@@ -1,4 +1,13 @@
-# how this repo works
+# npe2api
+
+The rest API used by napari to query plugins
+
+**Status:** [![vercel](https://img.shields.io/github/deployments/napari/npe2api/production?label=vercel&logo=vercel&style=flat-square)](https://api.napari.org)
+
+<https://api.napari.org>
+
+## how this repo works
+
 
 1. [The fetch action](.github/workflows/fetch.yml) is triggered by:
     - any push to the `main` branch
@@ -18,12 +27,15 @@
 4. Endpoints:
     - <https://npe2api.vercel.app/api/plugins>
         - map of {plugin_names -> version}
-    - <https://npe2api.vercel.app/api/summary>
+    - <https://npe2api.vercel.app/api/extended_summary>
         - all basic plugin info needed to populate the plugin browser in napari
+        - summary endpoint has been removed. Use extended_summary instead.
     - [https://npe2api.vercel.app/api/manifest/{plugin-name}](https://npe2api.vercel.app/api/manifest/napari-animation)
         - the full manifest for a given plugin
     - <https://npe2api.vercel.app/api/conda>
         - map of {pypi_name -> conda_channel/package_name}
+    - [https://npe2api.vercel.app/api/pypi/{plugin-name}](https://npe2api.vercel.app/api/pypi/napari-animation)
+        - PyPI info for a plugin.
     - [https://npe2api.vercel.app/api/conda/{plugin-name}](https://npe2api.vercel.app/api/conda/napari-animation)
         - conda info for a plugin. *name is pypi_name, not conda-name*
     - <https://npe2api.vercel.app/errors.json>
