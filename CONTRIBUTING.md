@@ -94,7 +94,7 @@ Core scripts in `scripts/`:
 
 1. [The fetch action](.github/workflows/fetch.yml) is triggered by:
     - any push to the `main` branch
-    - a cron job every 10 minutes
+    - a cron job every 2 hours
     - a `workflow_dispatch` triggered manually from the [actions page](https://github.com/napari/npe2api/actions/workflows/fetch.yml)
 2. When triggered, the fetch action
     1. installs `npe2`
