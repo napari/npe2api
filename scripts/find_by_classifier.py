@@ -3,13 +3,11 @@ import sys
 import xmlrpc.client
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Tuple
 from urllib.error import HTTPError
 from urllib.request import urlopen
 
 from packaging.utils import canonicalize_name
 from packaging.version import Version
-
 
 PUBLIC = Path(__file__).parent.parent / "public"
 PYPI_DIR = PUBLIC / "pypi"
@@ -43,7 +41,8 @@ def _validate_xmlrpc_browse_response(packages):
 def _find_by_classifier(classifier: str) -> dict[str, list[str]]:
     """Find all packages with a given classifier on PyPI.
 
-    Returns a dictionary with package names as keys and a sorted list of versions as values.
+    Returns a dictionary with package names as keys and a sorted list of
+    versions as values.
     """
     try:
         with xmlrpc.client.ServerProxy("https://pypi.org/pypi") as client:
@@ -64,7 +63,7 @@ def _find_by_classifier(classifier: str) -> dict[str, list[str]]:
     }
 
 
-def _fetch_packge_info(name: str) -> Tuple[str, str]:
+def _fetch_packge_info(name: str) -> tuple[str, str]:
     normalized_name = canonicalize_name(name)
     try:
         with urlopen(f"https://pypi.org/pypi/{name}/json") as f:
@@ -118,7 +117,7 @@ if __name__ == "__main__":
                 }
 
             print(f"{icon[status]} {normalized_name}")
-    
+
     for info_dict in [active, withdrawn, deleted]:
         # sort by normalized name
         info_dict = dict(sorted(info_dict.items()))
