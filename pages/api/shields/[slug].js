@@ -17,6 +17,7 @@ export default async function handler(req, res) {
   const fileContents = await fs.readFile(jsonDirectory + '/index.json', 'utf8');
   const plugins = JSON.parse(fileContents)
   if (plugins[normalizedSlug]) {
+    shield_schema["message"] = plugins[normalizedSlug].name;
     return res.status(200).json(shield_schema);
   }
   else {
