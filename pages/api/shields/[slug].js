@@ -2,7 +2,8 @@ import path from "path";
 import { promises as fs } from "fs";
 
 
-const logo_svg = `<svg width=\"512\" height=\"512\" viewBox=\"0 0 512 512\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">
+const logo_svg = `
+<svg width=\"512\" height=\"512\" viewBox=\"0 0 512 512\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">
 <path
     d="M27.8387 0H2.16127C0.967636 0 0 0.967636 0 2.16127V27.8387C0 29.0324 0.967636 30 2.16127 30H27.8387C29.0324 30 30 29.0324 30 27.8387V2.16127C30 0.967636 29.0324 0 27.8387 0Z"
     fill="#26283D"></path>
@@ -45,7 +46,7 @@ const logo_svg = `<svg width=\"512\" height=\"512\" viewBox=\"0 0 512 512\" fill
         <stop offset="1" stop-color="#94D1D6"></stop>
     </lineargradient>
 </defs>
-</svg>`;
+</svg>`.replace(/\n/g, '').trim();
 
 export default async function handler(req, res) {
   const { slug } = req.query;
