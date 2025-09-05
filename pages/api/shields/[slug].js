@@ -10,20 +10,19 @@ export default async function handler(req, res) {
   const jsonDirectory = path.join(process.cwd(), 'public');
   const fileContents = await fs.readFile(jsonDirectory + '/index.json', 'utf8');
   const plugins = JSON.parse(fileContents)
+  var shield_schema = {
+    "color": "#82001A",
+    "label": "napari hub",
+    "logoSvg": logo_svg,
+    "message": "unavailable",
+    "schemaVersion": 1,
+    "style": "flat-square"
+  }
   if (plugins[normalizedSlug]) {
-    const shield_schema = {
-        "color": "#0074B8",
-        "label": "napari hub",
-        "logoSvg": logo_svg,
-        "message": slug,
-        "schemaVersion": 1,
-        "style": "flat-square"
-    }
-    return res.status(200).json(shield_schema);
+    shield_schema.color = "#0074B8";
+    shield_schema.message = slug;
   }
-  else {
-    return res.status(404).json('Plugin not found.')
-  }
+  return res.status(200).json(shield_schema)
 }
 
 function normalizeName(name) {
