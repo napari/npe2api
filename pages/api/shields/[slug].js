@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     const shield_schema = {
         "color": "#0074B8",
         "label": "napari hub",
-        "logoSvg": logo_b64,
+        "logo": logo_b64,
         "message": slug,
         "schemaVersion": 1,
         "style": "flat-square"
