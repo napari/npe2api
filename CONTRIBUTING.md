@@ -21,7 +21,8 @@ git clone https://github.com/YOUR_USERNAME/npe2api.git
 cd npe2api
 ```
 
-2. Install dependencies
+2. Install dependencies. You will need `npm` for the Node.js dependencies. First install [`nvm`](https://github.com/nvm-sh/nvm), then use it to install `npm` with `nvm install node`. After that, install the dependencies with:
+
 ```bash
 # Install Node.js dependencies
 npm install
