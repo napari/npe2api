@@ -40,14 +40,14 @@
   "package_metadata": {
     "metadata_version": "2.4",
     "name": "napari-data-inspection",
-    "version": "0.0.4",
+    "version": "1.0.0",
     "dynamic": [
       "license-file"
     ],
     "platform": null,
     "supported_platform": null,
     "summary": "Data Inspection Plugin, designed to streamline file navigation and enhance the efficiency of data inspection.",
-    "description": "# napari-data-inspection\n\nA data inspection plugin for loading image tiles from multiple folders.\nWith data loading and prefetching handled automatically, file navigation is streamlined to enable fast and efficient data inspection.\nAny number of folders for images and labels can be specified, and files are automatically paired based on their order \u2014 manual file selection is eliminated.\nPerfect for high-throughput inspection workflows and rapid dataset review, especially in semantic segmentation tasks.\n\n## Installation\n\n```bash\n# 1. Install napari if necessary\npip install napari[all]\n# 2. Install the plugin\npip install napari-data-inspection\n```\n\n## Prerequisites\n\n### Supported File Types\nThe following file types are supported: `.nii.gz`, `.png`, `.b2nd`, `.nrrd`, `.mha`, `.tif`, `.tiff`.\nIf you want to add custom ones add a loader to `src/napari_data_inspection/utils/data_loading.py`.\n\n### Data Organization Requirements\nYour data should be organized so that different images and different labels can be clearly distinguished\u2014either by placing them in separate folders or by using consistent filename patterns (e.g., *_img for images and *_seg for labels).\n**The number of files must match across all folders, as they are paired by order.**\n\n## How to\n\n```\nnapari -w napari-data-inspection\n```\n\n<img src=\"https://github.com/MIC-DKFZ/napari-data-inspection/raw/main/imgs/GUI.png\">\n\n# Acknowledgments\n\n<p align=\"left\">\n  <img src=\"https://github.com/MIC-DKFZ/napari-data-inspection/raw/main/imgs/Logos/HI_Logo.png\" width=\"150\"> &nbsp;&nbsp;&nbsp;&nbsp;\n  <img src=\"https://github.com/MIC-DKFZ/napari-data-inspection/raw/main/imgs/Logos/DKFZ_Logo.png\" width=\"500\">\n</p>\n\nThis repository is developed and maintained by the Applied Computer Vision Lab (ACVL)\nof [Helmholtz Imaging](https://www.helmholtz-imaging.de/) and the\n[Division of Medical Image Computing](https://www.dkfz.de/en/medical-image-computing) at DKFZ.\n\nThis [napari] plugin was generated with [copier] using the [napari-plugin-template].\n\n[copier]: https://copier.readthedocs.io/en/stable/\n[napari]: https://github.com/napari/napari\n[napari-plugin-template]: https://github.com/napari/napari-plugin-template\n",
+    "description": "# Napari Data Inspection\n\nA napari plugin for fast, high-throughput inspection of 2D/3D segmentation datasets.  \nSelect one or more images and/or labels layers; files are paired and loaded automatically so you can browse entire datasets without manual effort.\n\n## Features\n\n- Multi-folder pairing: any number of image/label folders\n- Prefetching & caching for steamless navigation\n- Supports common formats (e.g., NIfTI, TIFF, PNG, NRRD, MHA, B2ND) out of the box.\n- Extensible loaders (add your own formats if needed).\n\n\n## Installation\n\n```bash\n# a) Install the plugin\npip install napari-data-inspection\n# b) Install the plugin and napari if necessary\npip install napari-data-inspection[all]\n```\n\n## Quickstart\n```\nnapari -w napari-data-inspection\n```\n\n<img src=\"https://github.com/MIC-DKFZ/napari-data-inspection/raw/main/imgs/GUI.png\">\n\n\n# Data organization\n\n- Filter files by patterns (e.g., *_img.nii.gz, *_seg.nii.gz) and/or separate folders per layer.\n- Number of files must match across layers; pairs are made by sorted order.\n\n### 1. Separate folders per layer\n\nPut each layer\u2019s files in its own directory.\n\n```\n/data/images/\n  case001.nii.gz\n  case002.nii.gz\n/data/labels/\n  case001.nii.gz\n  case002.nii.gz\n```\n\n### 2. By Patterns\n\nUse patterns (globs) per layer.\n\n```\n/data/\n  case001_img.nii.gz\n  case001_seg.nii.gz\n  case002_img.nii.gz\n  case002_seg.nii.gz\n```\n\nPatterns\n```\nImages: *_img.nii.gz\nLabels: *_seg.nii.gz\n```\n\n## Supported file types\n\nThe data loading is based on the [ViData](\"https://github.com/MIC-DKFZ/ViData?tab=readme-ov-file#imaging-and-array-data\") package. \nThe following Extensions and Backends are available.\n\n| Extension(s)                       | Backend(s)  | Notes                                                                 |\n| ---------------------------------- | ----------- | --------------------------------------------------------------------- |\n| `.png`, `.jpg`, `.jpeg`, `.bmp`    | `imageio`   | Standard 2D image formats                                             |\n| `.tif`, `.tiff`                    | `tifffile`  | Multipage TIFF; high bit-depths supported                             |\n| `.nii.gz`, `.nii`, `.mha`, `.nrrd` | `sitk`      | Medical image formats (3D volumes)                                    |\n| `.nii.gz`, `.nii`                  | `nibabel`   | Alternative medical imaging backend                                   |\n| `.b2nd`                            | `blosc2`    | Compressed N-dimensional arrays                                       |\n| `.b2nd`                            | `blosc2pkl` | Compressed N-dimensional arrays with metadata in a separate `.pkl`    |\n| `.npy`                             | `numpy`     | Single NumPy array                                                    | \n\n### Custom Load Functions\n\n- Register a reader with a decorator.\n- Reader must return (numpy_array, metadata_dict).\n- Registration happens at import time\u2014make sure this module is imported (e.g., from your package\u2019s __init__.py).\n- See [here](https://github.com/MIC-DKFZ/ViData/blob/main/src/vidata/io/image_io.py) for an example.\n- metadata should contain an \"affine\" if entry, if any spatial transformation should be applied \n\n```py \n# custom_io_template.py  \u2014 fill in the TODOs and import this module somewhere at startup.\nimport numpy as np\nfrom typing import Tuple, Dict, List\n\n# TODO: import your backend library (e.g., imageio, tifffile, nibabel, SimpleITK, ...)\n# import imageio.v3 as iio\n\nfrom vidata.registry import register_loader, register_writer\n\n# --------------------------- READER ------------------------------------------\n# Replace file extension and backend name to your custom function\n@register_loader(\"image\", \".png\", \".jpg\", \".jpeg\", \".bmp\", backend=\"imageio\")  # To Register Image Loading\n@register_loader(\"mask\", \".png\", \".bmp\", backend=\"imageio\") # To Register Label Loading\ndef load_custom(file: str) -> tuple[np.ndarray, dict]:\n    \"\"\"\n    Load a file and return (data, metadata).\n    metadata can be empty or include keys like: spacing, origin, direction, shear, dtype, etc.\n    \"\"\"\n    # data = iio.imread(file)  # example for imageio\n    data = ...  # TODO: replace\n    meta = {}   # TODO: replace\n    return data, meta\n```\n\n\n# Acknowledgments\n\n<p align=\"left\">\n  <img src=\"https://github.com/MIC-DKFZ/napari-data-inspection/raw/main/imgs/Logos/HI_Logo.png\" width=\"150\"> &nbsp;&nbsp;&nbsp;&nbsp;\n  <img src=\"https://github.com/MIC-DKFZ/napari-data-inspection/raw/main/imgs/Logos/DKFZ_Logo.png\" width=\"500\">\n</p>\n\nThis repository is developed and maintained by the Applied Computer Vision Lab (ACVL)\nof [Helmholtz Imaging](https://www.helmholtz-imaging.de/) and the\n[Division of Medical Image Computing](https://www.dkfz.de/en/medical-image-computing) at DKFZ.\n\nThis [napari] plugin was generated with [copier] using the [napari-plugin-template].\n\n[copier]: https://copier.readthedocs.io/en/stable/\n[napari]: https://github.com/napari/napari\n[napari-plugin-template]: https://github.com/napari/napari-plugin-template\n",
     "description_content_type": "text/markdown",
     "keywords": null,
     "home_page": null,
@@ -74,19 +74,19 @@
     ],
     "requires_dist": [
       "numpy",
+      "napari",
       "qtpy",
       "napari_toolkit",
-      "blosc2",
-      "SimpleITK",
-      "tifffile",
-      "scikit-image",
-      "natsort",
+      "omegaconf",
+      "vidata",
+      "napari[all]; extra == \"all\"",
       "tox; extra == \"testing\"",
       "pytest; extra == \"testing\"",
       "pytest-cov; extra == \"testing\"",
       "pytest-qt; extra == \"testing\"",
       "napari; extra == \"testing\"",
-      "pyqt5; extra == \"testing\""
+      "pyqt5; extra == \"testing\"",
+      "omegaconf; extra == \"testing\""
     ],
     "requires_python": ">=3.10",
     "requires_external": null,
@@ -95,6 +95,7 @@
       "Code, https://github.com/MIC-DKFZ/napari-data-inspection"
     ],
     "provides_extra": [
+      "all",
       "testing"
     ],
     "provides_dist": null,
