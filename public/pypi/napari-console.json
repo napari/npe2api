@@ -15,8 +15,7 @@
       "Programming Language :: Python :: 3.10",
       "Programming Language :: Python :: 3.11",
       "Programming Language :: Python :: 3.12",
-      "Programming Language :: Python :: 3.8",
-      "Programming Language :: Python :: 3.9",
+      "Programming Language :: Python :: 3.13",
       "Topic :: Software Development :: Testing"
     ],
     "description": "# napari-console (WIP, under active development)\n\n[![License](https://img.shields.io/pypi/l/napari-console.svg?color=green)](https://github.com/napari/napari-console/raw/master/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-console.svg?color=green)](https://pypi.org/project/napari-console)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-console.svg?color=green)](https://python.org)\n[![tests](https://github.com/napari/napari-console/workflows/tests/badge.svg)](https://github.com/napari/napari-console/actions)\n[![codecov](https://codecov.io/gh/napari/napari-console/branch/main/graph/badge.svg)](https://codecov.io/gh/napari/napari-console)\n\nA plugin that adds a console to napari\n\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using with [@napari]'s [cookiecutter-napari-plugin] template.\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/docs/plugins/index.html\n-->\n\n## Local variables\n\nIn napari-console 0.0.8 and earlier, the console `locals()` namespace only\ncontained a reference to the napari viewer that enclosed the console.\n\nSince version 0.0.9, it instead contains everything in the enclosing frame that\ncalled napari. That is, if your Python code is:\n\n```python\nimport napari\nimport numpy as np\nfrom scipy import ndimage as ndi\n\nimage = np.random.random((500, 500))\nlabels = ndi.label(image > 0.7)[0]\n\nviewer, image_layer = napari.imshow(image)\nlabels_layer = viewer.add_labels(labels)\n\nnapari.run()\n```\n\nThen the napari console will have the variables `np`, `napari`, `ndi`, `image`,\n`labels`, `viewer`, `image_layer`, and `labels_layer` in its namespace.\n\nThis is implemented by inspecting the Python stack when the console is first\ninstantiated, finding the first frame that is outside of the `napari_console`,\n`napari`, and `in_n_out` modules, and passing the variables in the frame's\n`f_locals` and `f_globals` to the console namespace.\n\nIf you want to disable this behavior (for example, because you are embedding\nnapari and the console within some larger application), you can add\n`NAPARI_EMBED=1` to your environment variables before instantiating the\nconsole.\n\n## Installation\n\nYou can install `napari-console` via [pip]:\n\n    pip install napari-console\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-console\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n[file an issue]: https://github.com/sofroniewn/napari-console/issues\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
@@ -28,12 +27,16 @@
       "last_month": -1,
       "last_week": -1
     },
-    "dynamic": null,
+    "dynamic": [
+      "License-File"
+    ],
     "home_page": null,
     "keywords": null,
     "license": "BSD-3-Clause",
     "license_expression": null,
-    "license_files": null,
+    "license_files": [
+      "LICENSE"
+    ],
     "maintainer": null,
     "maintainer_email": null,
     "name": "napari-console",
@@ -55,10 +58,10 @@
       "qt",
       "testing"
     ],
-    "release_url": "https://pypi.org/project/napari-console/0.1.3/",
+    "release_url": "https://pypi.org/project/napari-console/0.1.4/",
     "requires_dist": [
       "IPython>=7.7.0",
-      "ipykernel>=5.2.0",
+      "ipykernel<7,>=5.2.0",
       "qtconsole!=4.7.6,!=5.4.2,>=4.5.1",
       "qtpy>=1.7.0",
       "PySide2!=5.15.0,>=5.13.2; (python_version < \"3.11\" and platform_machine != \"arm64\") and extra == \"pyside2\"",
@@ -71,13 +74,13 @@
       "napari-console[pyqt]; extra == \"qt\"",
       "napari[pyqt]; extra == \"testing\""
     ],
-    "requires_python": ">=3.9",
+    "requires_python": ">=3.10",
     "summary": "A plugin that adds a console to napari",
-    "version": "0.1.3",
+    "version": "0.1.4",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 26610537,
+  "last_serial": 31815289,
   "releases": {
     "0.0.1": [
       {
@@ -650,48 +653,92 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.1.4": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "01722067f28fd0ae87978f3b61e8ec30c1d085bbed03f64eb58e43949d526b3a",
+          "md5": "3434e90d75d9f00c8f8b23ad97e4ae92",
+          "sha256": "565df1fa15db579552af9e9d9d3883067c00191be282ad47d80f9b0d50b4e5ad"
+        },
+        "downloads": -1,
+        "filename": "napari_console-0.1.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "3434e90d75d9f00c8f8b23ad97e4ae92",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 9786,
+        "upload_time": "2025-10-15T14:24:17",
+        "upload_time_iso_8601": "2025-10-15T14:24:17.677212Z",
+        "url": "https://files.pythonhosted.org/packages/01/72/2067f28fd0ae87978f3b61e8ec30c1d085bbed03f64eb58e43949d526b3a/napari_console-0.1.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "5a036e1fcd9aa9ac4746ce2b44050ea8f7192d883f4d3da4e7ff08589ac3ad3b",
+          "md5": "5c3a0956976bea5225d0a5860d27a47d",
+          "sha256": "e185e4d36d8171ae23ca383dc69c38df76592a984d6c99ad08372d188a1fbb9b"
+        },
+        "downloads": -1,
+        "filename": "napari_console-0.1.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "5c3a0956976bea5225d0a5860d27a47d",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 20152,
+        "upload_time": "2025-10-15T14:24:18",
+        "upload_time_iso_8601": "2025-10-15T14:24:18.456328Z",
+        "url": "https://files.pythonhosted.org/packages/5a/03/6e1fcd9aa9ac4746ce2b44050ea8f7192d883f4d3da4e7ff08589ac3ad3b/napari_console-0.1.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
-      "comment_text": "",
+      "comment_text": null,
       "digests": {
-        "blake2b_256": "5fff1d1aad9292aeccf01f94ca150ce621737cbe7b9fabbb0bfef32b8da70e58",
-        "md5": "2d4244861c3f4b5def09044c66f4eb06",
-        "sha256": "29d1700b85561b8c91331821360c9cd0e989350f4a06b86239ec65bc06c7aecb"
+        "blake2b_256": "01722067f28fd0ae87978f3b61e8ec30c1d085bbed03f64eb58e43949d526b3a",
+        "md5": "3434e90d75d9f00c8f8b23ad97e4ae92",
+        "sha256": "565df1fa15db579552af9e9d9d3883067c00191be282ad47d80f9b0d50b4e5ad"
       },
       "downloads": -1,
-      "filename": "napari_console-0.1.3-py3-none-any.whl",
+      "filename": "napari_console-0.1.4-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "2d4244861c3f4b5def09044c66f4eb06",
+      "md5_digest": "3434e90d75d9f00c8f8b23ad97e4ae92",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
-      "requires_python": ">=3.9",
-      "size": 9990,
-      "upload_time": "2024-12-20T13:48:54",
-      "upload_time_iso_8601": "2024-12-20T13:48:54.093698Z",
-      "url": "https://files.pythonhosted.org/packages/5f/ff/1d1aad9292aeccf01f94ca150ce621737cbe7b9fabbb0bfef32b8da70e58/napari_console-0.1.3-py3-none-any.whl",
+      "requires_python": ">=3.10",
+      "size": 9786,
+      "upload_time": "2025-10-15T14:24:17",
+      "upload_time_iso_8601": "2025-10-15T14:24:17.677212Z",
+      "url": "https://files.pythonhosted.org/packages/01/72/2067f28fd0ae87978f3b61e8ec30c1d085bbed03f64eb58e43949d526b3a/napari_console-0.1.4-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
-      "comment_text": "",
+      "comment_text": null,
       "digests": {
-        "blake2b_256": "414e9b65e4c4e9520888fe69c6307818f4f75b0113b0fab1db67424b29bed9fe",
-        "md5": "0486e699e003deb80fedcde5881c05b7",
-        "sha256": "ba4f7e1cdca65a7924631372a5e58884e2e35a2b9092c79b98acb9c2dfe1254f"
+        "blake2b_256": "5a036e1fcd9aa9ac4746ce2b44050ea8f7192d883f4d3da4e7ff08589ac3ad3b",
+        "md5": "5c3a0956976bea5225d0a5860d27a47d",
+        "sha256": "e185e4d36d8171ae23ca383dc69c38df76592a984d6c99ad08372d188a1fbb9b"
       },
       "downloads": -1,
-      "filename": "napari_console-0.1.3.tar.gz",
+      "filename": "napari_console-0.1.4.tar.gz",
       "has_sig": false,
-      "md5_digest": "0486e699e003deb80fedcde5881c05b7",
+      "md5_digest": "5c3a0956976bea5225d0a5860d27a47d",
       "packagetype": "sdist",
       "python_version": "source",
-      "requires_python": ">=3.9",
-      "size": 20010,
-      "upload_time": "2024-12-20T13:48:58",
-      "upload_time_iso_8601": "2024-12-20T13:48:58.451617Z",
-      "url": "https://files.pythonhosted.org/packages/41/4e/9b65e4c4e9520888fe69c6307818f4f75b0113b0fab1db67424b29bed9fe/napari_console-0.1.3.tar.gz",
+      "requires_python": ">=3.10",
+      "size": 20152,
+      "upload_time": "2025-10-15T14:24:18",
+      "upload_time_iso_8601": "2025-10-15T14:24:18.456328Z",
+      "url": "https://files.pythonhosted.org/packages/5a/03/6e1fcd9aa9ac4746ce2b44050ea8f7192d883f4d3da4e7ff08589ac3ad3b/napari_console-0.1.4.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
