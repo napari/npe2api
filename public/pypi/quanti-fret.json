@@ -1,0 +1,154 @@
+{
+  "info": {
+    "author": "Aur\u00e9lie Dupont",
+    "author_email": "aurelie.dupont@univ-grenoble-alpes.fr",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 3 - Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "License :: OSI Approved :: BSD License",
+      "Natural Language :: English",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3",
+      "Topic :: Scientific/Engineering",
+      "Topic :: Scientific/Engineering :: Image Processing",
+      "Topic :: Scientific/Engineering :: Physics",
+      "Typing :: Typed"
+    ],
+    "description": "# QuanTI-FRET\n\n[Home Page](https://liphy-annuaire.univ-grenoble-alpes.fr/pages_personnelles/aurelie_dupont/quantifret/index_quantifret.html)\n\n**QuanTI-FRET** is a Python tool that performs QuanTI-FRET calibration and\nanalysis from 3-channel movies\n\n1. [Description](#description)\n2. [Napari Plugin](#napari-plugin)\n3. [Standalone GUI App](#standalone-gui-app)\n4. [Standalone CLI App](#standalone-cli-app)\n4. [Python Module](#python-module)\n5. [Documentation](#documentation)\n6. [For developpers](#for-developpers)\n\n## Description\n\nThe QuanTI-FRET method proposes calibrating the instrument and the FRET pair to\nsimply calculate absolute FRET probabilities from triplet of images acquired\nunder the same conditions and with the same FRET pair. All the photophysical\nand instrumental factors are included in this calibration, leaving the\nvariability of the results to biological origins.\n\nThis module provide all the tools to perform the calibration, and then the\nquantitative FRET measurement of your experiments, using only your triplet\nimages.\n\nThis module can be used:\n* as a Napari Plugin\n* as a Standalone GUI app\n* as a CLI app\n* imported inside your code\n\n\n\n## Napari Plugin\n\n**QuanTI-FRET** was designed to be integrated into the Napari tool as a plugin.\n\n\n### Installation\n\n**QuanTI-FRET** is available in the [Napari Hub](https://napari-hub.org/plugins/quanti-fret.html)\nunder the name `quanti-fret`.\n\nTo install it:\n* Have a look [here](https://napari.org/stable/tutorials/fundamentals/installation.html#napari-installation)\n  to install Napari\n* Have a look [here](https://napari.org/stable/plugins/start_using_plugins/finding_and_installing_plugins.html#find-and-install-plugins)\n  to install a plugin\n\n\n### Getting Started\n\nTo open the plugin, go to the `Plugins` menu and click on `QuanTI-FRET (quanti-fret)`\n\n\n\n## Standalone GUI App\n\nYou can also use the **QuanTI-FRET** software as a standalone GUI or CLI app\noutside Napari.\n\n\n### Installation\n\n#### Set up your environment\n\nIt is good practice to set up a virtual environment and install the tool inside\nyour environment.\n\n##### With Conda\n\n```bash\nconda create --name quantifret\nconda activate quantifret\nconda install pip\n```\n\n##### With Pyenv\n\n```bash\npyenv virtualenv [PYTHON_VERSION>=3.12] quantifret\npyenv activate quantifret\npip install --upgrade pip\n```\n\n#### Install `Qt`\n\nIf you want to use the GUI application, you need to install `Qt`.\n\nIt is not in the defaults dependencies as the `quanti_fret` modules also comes\nup with CLI app, or can be imported directly inside your Python code. So we\ndon't want to penalize all the users by forcing a `Qt` dependency.\n\n**QuanTI-FRET** supports `Qt5` and `Qt6` using either `PyQt` or `PySide`\n\n```bash\npip install [pyqt6 | pyqt5 | pyside6 | pyside5] # Choose one package\n```\n\n#### Install the module\n\nFinally, you can install the `quanti_fret` module by running:\n```bash\npip install quanti-fret\n```\n\n#### Upgrade the module\n\n```bash\npip install quanti-fret --upgrade\n```\n\n\n### Getting Started\n\nRun the following command inside your environement:`\n\n```bash\nquanti-fret-run\n```\n\n\n\n## Standalone CLI App\n\nFor automation purposes, or if you don't have access to a graphic server, you\ncan use the CLI app.\n\n### Installation\n\nDo all the steps of [the standalone GUI app installation](#standalone-gui-app)\nexcept for the **Qt** part\n\n### Getting Started\n\n#### Generate your config files\n\nYou first need to generate one config file for the calibration phase, and one\nfor the fret phase:\n\n```bash\nquanti-fret-run generate_config calibration path/to/new/calibration.ini\nquanti-fret-run generate_config fret path/to/new/fret.ini\n```\n\nYou then need to modify them to fit your requirements (see the\n[documentation](#documentation))\n\n#### Run the calibration\n\n```bash\nquanti-fret-run cli calibration path/to/new/calibration.ini\n```\n\n#### Run the fret on the series\n```bash\nquanti-fret-run cli fret path/to/new/fret.ini\n```\n\n\n\n## Python Module\n\nFinally, you can integrate the **QuanTI-FRET** module inside your own code.\n\n### Installation\n\nDo all the steps of [the standalone GUI app installation](#standalone-gui-app)\nexcept for the **Qt** part\n\n### Getting Started\n\n#### Generate your config files\n\nYou first need to generate one config file for the calibration phase, and one\nfor the fret phase:\n\n```bash\nquanti-fret-run generate_config calibration path/to/new/calibration.ini\nquanti-fret-run generate_config fret path/to/new/fret.ini\n```\n\nYou then need to modify them to fit your requirements (see the\n[documentation](#documentation))\n\n#### Run the calibration\n\n```python\nfrom quanti_fret.run import QtfRunner\nfrom quanti_fret.io import CalibrationIOPhaseManager IOManager\n\niopm_cali = CalibrationIOPhaseManager(load_series=True)\niopm_fret = FretIOPhaseManager(load_series=True)\niom = IOManager(iopm_cali, iopm_fret)\n\niopm_cali.load_config('path/to/new/calibration.ini')\n\nrunner = QtfRunner(iom)\nrunner.run_calibration()\n```\n\n#### Run the fret\n\n```python\nfrom quanti_fret.run import QtfRunner\nfrom quanti_fret.io import CalibrationIOPhaseManager IOManager\n\niopm_cali = CalibrationIOPhaseManager(load_series=True)\niopm_fret = FretIOPhaseManager(load_series=True)\niom = IOManager(iopm_cali, iopm_fret)\n\niopm_fret.load_config('path/to/new/fret.ini')\n\nrunner = QtfRunner(iom)\nrunner.run_fret()\n```\n\n\n\n## Documentation\n\nComing soon...\n\n\n\n## For developpers\n\nHere are some indications dedicated to the developpers\n\n\n### Poetry\n\nWe are using poetry as a build system.\n\nTo install it, go to their [doc page](https://python-poetry.org/docs/)\n\n\n### Clone the project\n\n```bash\ngit clone https://gricad-gitlab.univ-grenoble-alpes.fr/liphy/quanti-fret.git\ncd quanti-fret/\n```\n\n\n### Install QuanTI-FRET\n\n```bash\npoetry install\n```\n\n\n### Run the tests\n\n```bash\npytest\nflake8\nmypy .\n```\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": null,
+    "home_page": "https://liphy-annuaire.univ-grenoble-alpes.fr/pages_personnelles/aurelie_dupont/quantifret/index_quantifret.html",
+    "keywords": null,
+    "license": null,
+    "license_expression": null,
+    "license_files": null,
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "quanti-fret",
+    "package_url": "https://pypi.org/project/quanti-fret/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/quanti-fret/",
+    "project_urls": {
+      "Changelog": "https://gricad-gitlab.univ-grenoble-alpes.fr/liphy/quanti-fret/-/blob/main/CHANGELOG.md?ref_type=heads",
+      "Homepage": "https://liphy-annuaire.univ-grenoble-alpes.fr/pages_personnelles/aurelie_dupont/quantifret/index_quantifret.html",
+      "Releasenotes": "https://gricad-gitlab.univ-grenoble-alpes.fr/liphy/quanti-fret/-/releases",
+      "Repository": "https://gricad-gitlab.univ-grenoble-alpes.fr/liphy/quanti-fret"
+    },
+    "provides_extra": null,
+    "release_url": "https://pypi.org/project/quanti-fret/0.10.0/",
+    "requires_dist": [
+      "tifffile<2026.0.0,>=2025.6.11",
+      "qtpy<3.0.0,>=2.4.3",
+      "matplotlib<4.0.0,>=3.10.3",
+      "scipy<2.0.0,>=1.16.1",
+      "platformdirs<5.0.0,>=4.3.8",
+      "pandas<3.0.0,>=2.3.2"
+    ],
+    "requires_python": ">=3.12",
+    "summary": "Performs QuanTI-FRET calibration and analysis from 3-channel movies",
+    "version": "0.10.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 32037038,
+  "releases": {
+    "0.10.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "1c0a0471e5ea46e9bedd4f2b2d1ba5d611109531c19ffa161ac20fe1957af2f8",
+          "md5": "35b1b3e4a1ccf520b5ecad2f61b6ecca",
+          "sha256": "45e9d1a4db3e7ee08e11f3383c25540f146fae0adf93aaac7af4b008244f4b36"
+        },
+        "downloads": -1,
+        "filename": "quanti_fret-0.10.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "35b1b3e4a1ccf520b5ecad2f61b6ecca",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.12",
+        "size": 148823,
+        "upload_time": "2025-10-27T13:41:43",
+        "upload_time_iso_8601": "2025-10-27T13:41:43.233656Z",
+        "url": "https://files.pythonhosted.org/packages/1c/0a/0471e5ea46e9bedd4f2b2d1ba5d611109531c19ffa161ac20fe1957af2f8/quanti_fret-0.10.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "09592d06777df263d2db56321a5cafb9e41d3a024d2578de2ac694587e11c225",
+          "md5": "595f93882a84a4bf8f93278d50231fbc",
+          "sha256": "e37c19525306ce081510fc4f1a83094e15eb43e7c3c92a3eaf0c5f27340d1d60"
+        },
+        "downloads": -1,
+        "filename": "quanti_fret-0.10.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "595f93882a84a4bf8f93278d50231fbc",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.12",
+        "size": 95681,
+        "upload_time": "2025-10-27T13:41:45",
+        "upload_time_iso_8601": "2025-10-27T13:41:45.473716Z",
+        "url": "https://files.pythonhosted.org/packages/09/59/2d06777df263d2db56321a5cafb9e41d3a024d2578de2ac694587e11c225/quanti_fret-0.10.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "blake2b_256": "1c0a0471e5ea46e9bedd4f2b2d1ba5d611109531c19ffa161ac20fe1957af2f8",
+        "md5": "35b1b3e4a1ccf520b5ecad2f61b6ecca",
+        "sha256": "45e9d1a4db3e7ee08e11f3383c25540f146fae0adf93aaac7af4b008244f4b36"
+      },
+      "downloads": -1,
+      "filename": "quanti_fret-0.10.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "35b1b3e4a1ccf520b5ecad2f61b6ecca",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.12",
+      "size": 148823,
+      "upload_time": "2025-10-27T13:41:43",
+      "upload_time_iso_8601": "2025-10-27T13:41:43.233656Z",
+      "url": "https://files.pythonhosted.org/packages/1c/0a/0471e5ea46e9bedd4f2b2d1ba5d611109531c19ffa161ac20fe1957af2f8/quanti_fret-0.10.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "blake2b_256": "09592d06777df263d2db56321a5cafb9e41d3a024d2578de2ac694587e11c225",
+        "md5": "595f93882a84a4bf8f93278d50231fbc",
+        "sha256": "e37c19525306ce081510fc4f1a83094e15eb43e7c3c92a3eaf0c5f27340d1d60"
+      },
+      "downloads": -1,
+      "filename": "quanti_fret-0.10.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "595f93882a84a4bf8f93278d50231fbc",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.12",
+      "size": 95681,
+      "upload_time": "2025-10-27T13:41:45",
+      "upload_time_iso_8601": "2025-10-27T13:41:45.473716Z",
+      "url": "https://files.pythonhosted.org/packages/09/59/2d06777df263d2db56321a5cafb9e41d3a024d2578de2ac694587e11c225/quanti_fret-0.10.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
