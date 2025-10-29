@@ -7,7 +7,7 @@
       "Framework :: napari",
       "Programming Language :: Python :: 3"
     ],
-    "description": "# Cellular Annotation & Perception Pipeline\n\n![](https://github.com/anishjv/cell-AAP/blob/main/images/figure2.png?raw=true)\n![](https://github.com/anishjv/cell-AAP/blob/main/images/rpe1_u2os.png?raw=true)\n\n\n\n\nUtilities for the semi-automated generation of instance segmentation annotations to be used for neural network training. Utilities are built ontop of [UMAP](https://github.com/lmcinnes/umap), [HDBSCAN](https://arxiv.org/abs/1911.02282) and a finetuned encoder version of FAIR's [Segment Anything Model](https://github.com/facebookresearch/segment-anything/tree/main?tab=readme-ov-file) developed by Computational Cell Analytics for the project [micro-sam](https://github.com/computational-cell-analytics/micro-sam/tree/master/micro_sam/sam_annotator). In addition to providing utilies for annotation building, we train networks using FAIR's [detectron2](https://github.com/facebookresearch/detectron2) to \n1. Demonstrate the efficacy of our utilities. \n2. Be used for microscopy annotation of supported cell lines \n\nCell-line specific models currently include:\n1. HeLa\n2. U2OS\n\nModels have demonstrated performance efficacy on:\n1. HT1080 (HeLa model)\n2. RPE1 (U2OS model)\n\nWe've also developed a napari application for the usage of these pre-trained networks.\n\n\n# Installation \nWe highly recommend installing cell-AAP in a clean conda environment. To do so you must have [miniconda](https://docs.anaconda.com/free/miniconda/#quick-command-line-install) or [anaconda](https://docs.anaconda.com/free/anaconda/) installed.\n\nIf a conda distribution has been installed:\n\n1. Create and activate a clean environment \n\n        conda create -n cell-aap-env python=3.11.0\n        conda activate cell-app-env\n\n2. Within this environment install pip\n\n        conda install pip\n\n3. Then install cell-AAP from PyPi\n\n        pip install cell-AAP --upgrade\n\n4. Finally detectron2 must be built from source, atop cell-AAP\n    \n        #For MacOS\n        CC=clang CXX=clang++ ARCHFLAGS=\"-arch arm64\" python -m pip install 'git+https://github.com/facebookresearch/detectron2.git'\n\n        #For other operating systems \n        python -m pip install 'git+https://github.com/facebookresearch/detectron2.git'\n\n\n\n# Napari Plugin Usage\n\n1. To open napari simply type \"napari\" into the command line, ensure that you are working the correct environment\n2. To instantiate the plugin navigate to the \"Plugins\" menu and select \"cell-AAP\"\n3. You should now see the Plugin, where you can select an image, display it, and run inference on it. \n\n\n# Configs Best Practices\n\nIf running inference on large volumes of data, i.e. timeseries data >= 300 MB in size, we recommend to proceed in the following manner. \n\n1. Assemble a small, < 100 MB, substack of your data using python or a program like [ImageJ](https://imagej.net/ij/download.html)\n2. Use this substack to find the optimal parameters for your data, (Number of Cells, Network confidence threshold)\n3. Run Inference over the volume using the discovered optimal parameters\n\n\n# Interpreting Results \n\nOnce inference is complete the following colors indicate class prediction\n- Red: Non-mitotic\n- Blue: Mitotic\n\nFor analysis purposes, masks in the semantic and instance segmentations have the following value mapping:\nSemantic\n- 1: Non-mitotic\n- 100: Mitotic\n\nInstance\n- $2x$: Non-mitotic\n- $2x-1$: Mitotic\n\n\n\n\n\n\n\n\n",
+    "description": "# Cellular Annotation & Perception Pipeline\n\n![](https://github.com/anishjv/cell-AAP/blob/main/images/fig_1.png?raw=true)\n\n## Description\nCell-APP automates the generation of cell masks (and classifications too!), enabling users to create \ncustom instance segmentation training datasets in transmitted-light microscopy. \n\nTo learn more, read our preprint: https://www.biorxiv.org/content/10.1101/2025.01.23.634498v2.\n\nFor questions regarding installation or usage, contact: anishjv@umich.edu\n\n## Usage \n1. Users who wish to segment HeLa, U2OS, HT1080, or RPE-1 cell lines may try our pre-trained model. These models can be used through our GUI (see **Installation**) and their weights can be downloaded at: https://zenodo.org/communities/cellapp/records?q=&l=list&p=1&s=10. To learn about using pre-trained models through the GUI, see this video: \n\n\n\n2. Users who wish to segment their own cell lines may: (a) try our \"general\" model (GUI/weight download) or (b) \ntrain a custom model by creating an instance segmentation dataset via our *Dataset Generation GUI* (see **Installation**). To learn about creating custom datasets through the GUI, see this video: \n\n## Installation\n\n`cell-AAP` requires Python **3.11\u20133.12**. We recommend installing into a clean virtual environment (via `conda` or `venv`) to avoid dependency conflicts.\n\n### 1. Create and activate an environment\n\nWith **conda**:\n```bash\nconda create -n cellapp -c conda-forge python=3.11\nconda activate cellapp\n```\n\nOr with **venv**:\n```bash \npython -m venv cellapp\nsource cellapp/bin/activate  # Linux/Mac\ncellapp\\Scripts\\activate     # Windows PowerShell\n```\n\n### 2. Install Pytorch:\n```bash\nconda install -c pytorch -c conda-forge pytorch torchvision #Mac\npip install torch torchvision #Linux/Windows\n```\n\n### 3. Install Cell-APP:\n```bash\npip install cell-AAP\n```\n### 4. Finally, detectron2 must be built from source atop Cell-APP:\n```bash\n    \n#Mac\nCC=clang CXX=clang++ ARCHFLAGS=\"-arch arm64\" python -m pip install 'git+https://github.com/facebookresearch/detectron2.git'\n\n#Linux/Windows\n python -m pip install 'git+https://github.com/facebookresearch/detectron2.git'\n```\n\n## Napari Plugin Usage\n\n1. To open napari simply type \"napari\" into the command line, ensure that you are working the correct environment\n2. To instantiate the plugin, navigate to the \"Plugins\" menu and hover over \"cell-AAP\"\n3. You should see three plugin options; two relate to *Usage 1*; one relates to *Usage 2*. \n\n\n\n\n\n\n\n\n\n\n\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -16,12 +16,16 @@
       "last_month": -1,
       "last_week": -1
     },
-    "dynamic": null,
+    "dynamic": [
+      "License-File"
+    ],
     "home_page": null,
     "keywords": null,
-    "license": null,
+    "license": "MIT",
     "license_expression": null,
-    "license_files": null,
+    "license_files": [
+      "LICENSE"
+    ],
     "maintainer": null,
     "maintainer_email": null,
     "name": "cell-AAP",
@@ -29,19 +33,21 @@
     "platform": null,
     "project_url": "https://pypi.org/project/cell-AAP/",
     "project_urls": null,
-    "provides_extra": null,
-    "release_url": "https://pypi.org/project/cell-AAP/0.0.9/",
+    "provides_extra": [
+      "torch",
+      "torch-macos",
+      "full"
+    ],
+    "release_url": "https://pypi.org/project/cell-AAP/1.0.3/",
     "requires_dist": [
       "napari[all]>=0.4.19",
-      "numpy==1.26.4",
+      "numpy<2.0,>=1.23",
       "opencv-python>=4.9.0",
       "tifffile>=2024.2.12",
-      "torch>=2.3.1",
-      "torchvision>=0.18.1",
-      "scikit-image>=0.22.0",
+      "scikit-image<0.26.0,>=0.23.2",
       "qtpy>=2.4.1",
       "pillow>=10.3.0",
-      "scipy>=1.3.0",
+      "scipy>=1.12.0",
       "timm>=1.0.7",
       "pandas>=2.2.2",
       "superqt>=0.6.3",
@@ -50,15 +56,22 @@
       "openpyxl>=3.1.4",
       "joblib>=1.0",
       "scikit-learn>=0.22",
-      "cython<3,>=0.27"
+      "segment-anything>=1.0",
+      "pycocotools>=2.0.7",
+      "lxml>=4.9.0",
+      "lxml_html_clean>=0.1.0",
+      "torch>=2.3.1; platform_system != \"Darwin\" and extra == \"torch\"",
+      "torchvision>=0.18.1; platform_system != \"Darwin\" and extra == \"torch\"",
+      "torch>=2.3.1; platform_system != \"Darwin\" and extra == \"full\"",
+      "torchvision>=0.18.1; platform_system != \"Darwin\" and extra == \"full\""
     ],
     "requires_python": "<3.13,>=3.11",
     "summary": null,
-    "version": "0.0.9",
+    "version": "1.0.3",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 27555611,
+  "last_serial": 32090040,
   "releases": {
     "0.0.1": [
       {
@@ -499,48 +512,115 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "1.0.2": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "96eb91c0d9d02ad7388bbed59b416409959b217429feebf4a5343e8a742e2b9a",
+          "md5": "3c857a3359e362d340efc94b90a9096d",
+          "sha256": "bff672f2fbfbce6e221db15be6fac95deff5fffdc4313491736a8d9b7e57b7a9"
+        },
+        "downloads": -1,
+        "filename": "cell_aap-1.0.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "3c857a3359e362d340efc94b90a9096d",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.11",
+        "size": 62697,
+        "upload_time": "2025-10-29T19:20:34",
+        "upload_time_iso_8601": "2025-10-29T19:20:34.230338Z",
+        "url": "https://files.pythonhosted.org/packages/96/eb/91c0d9d02ad7388bbed59b416409959b217429feebf4a5343e8a742e2b9a/cell_aap-1.0.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.3": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "7f5c6bd6838dec17088dda0d311e25e66c33dcc765c8528ff8bb721ed1a2e4a5",
+          "md5": "c6e1de95b0a3a86cd4d8aa426228450c",
+          "sha256": "26644dd0bfc01941039d43d131bd03f434e21c3e7d1e17958d8b46e06b797326"
+        },
+        "downloads": -1,
+        "filename": "cell_aap-1.0.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "c6e1de95b0a3a86cd4d8aa426228450c",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.11",
+        "size": 60413,
+        "upload_time": "2025-10-29T19:20:35",
+        "upload_time_iso_8601": "2025-10-29T19:20:35.135903Z",
+        "url": "https://files.pythonhosted.org/packages/7f/5c/6bd6838dec17088dda0d311e25e66c33dcc765c8528ff8bb721ed1a2e4a5/cell_aap-1.0.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "66fa8524649d1eeba790b13483d58a3d6582ccf9cfd6dc9d21b472d16b2ab674",
+          "md5": "fdd863a8d7e40acf2c2f50ac6ba3627b",
+          "sha256": "db79c56d9fd4f2c1e87654c0f8faa15aa041cd0d001b683d2bf98215a7067347"
+        },
+        "downloads": -1,
+        "filename": "cell_aap-1.0.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "fdd863a8d7e40acf2c2f50ac6ba3627b",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.11",
+        "size": 34483756,
+        "upload_time": "2025-10-29T19:20:40",
+        "upload_time_iso_8601": "2025-10-29T19:20:40.312498Z",
+        "url": "https://files.pythonhosted.org/packages/66/fa/8524649d1eeba790b13483d58a3d6582ccf9cfd6dc9d21b472d16b2ab674/cell_aap-1.0.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
-      "comment_text": "",
+      "comment_text": null,
       "digests": {
-        "blake2b_256": "a49ee63bd2386429dddb0e0a1467f8bf617f535ac0fa18c1d2febb0699ed85d0",
-        "md5": "28bd21d1ed1b57fd3ed6254fd66d491f",
-        "sha256": "795777b610593d1ff64afbbb9416ad41fd50acb23a52cdf0fef2cb86762e694c"
+        "blake2b_256": "7f5c6bd6838dec17088dda0d311e25e66c33dcc765c8528ff8bb721ed1a2e4a5",
+        "md5": "c6e1de95b0a3a86cd4d8aa426228450c",
+        "sha256": "26644dd0bfc01941039d43d131bd03f434e21c3e7d1e17958d8b46e06b797326"
       },
       "downloads": -1,
-      "filename": "cell_AAP-0.0.9-py3-none-any.whl",
+      "filename": "cell_aap-1.0.3-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "28bd21d1ed1b57fd3ed6254fd66d491f",
+      "md5_digest": "c6e1de95b0a3a86cd4d8aa426228450c",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": "<3.13,>=3.11",
-      "size": 41258,
-      "upload_time": "2025-02-20T13:47:28",
-      "upload_time_iso_8601": "2025-02-20T13:47:28.583437Z",
-      "url": "https://files.pythonhosted.org/packages/a4/9e/e63bd2386429dddb0e0a1467f8bf617f535ac0fa18c1d2febb0699ed85d0/cell_AAP-0.0.9-py3-none-any.whl",
+      "size": 60413,
+      "upload_time": "2025-10-29T19:20:35",
+      "upload_time_iso_8601": "2025-10-29T19:20:35.135903Z",
+      "url": "https://files.pythonhosted.org/packages/7f/5c/6bd6838dec17088dda0d311e25e66c33dcc765c8528ff8bb721ed1a2e4a5/cell_aap-1.0.3-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
-      "comment_text": "",
+      "comment_text": null,
       "digests": {
-        "blake2b_256": "05e643ac18c1110380131a975d82a8e64d29598d43f1d8a9ec878e29e7d18142",
-        "md5": "6d3a1adde670c3ec9a88fb30193e3dad",
-        "sha256": "19ac9517f30994521744d1cc02cd386ad6ff089461503a439ea0f27467894874"
+        "blake2b_256": "66fa8524649d1eeba790b13483d58a3d6582ccf9cfd6dc9d21b472d16b2ab674",
+        "md5": "fdd863a8d7e40acf2c2f50ac6ba3627b",
+        "sha256": "db79c56d9fd4f2c1e87654c0f8faa15aa041cd0d001b683d2bf98215a7067347"
       },
       "downloads": -1,
-      "filename": "cell_aap-0.0.9.tar.gz",
+      "filename": "cell_aap-1.0.3.tar.gz",
       "has_sig": false,
-      "md5_digest": "6d3a1adde670c3ec9a88fb30193e3dad",
+      "md5_digest": "fdd863a8d7e40acf2c2f50ac6ba3627b",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": "<3.13,>=3.11",
-      "size": 30886474,
-      "upload_time": "2025-02-20T13:47:49",
-      "upload_time_iso_8601": "2025-02-20T13:47:49.049634Z",
-      "url": "https://files.pythonhosted.org/packages/05/e6/43ac18c1110380131a975d82a8e64d29598d43f1d8a9ec878e29e7d18142/cell_aap-0.0.9.tar.gz",
+      "size": 34483756,
+      "upload_time": "2025-10-29T19:20:40",
+      "upload_time_iso_8601": "2025-10-29T19:20:40.312498Z",
+      "url": "https://files.pythonhosted.org/packages/66/fa/8524649d1eeba790b13483d58a3d6582ccf9cfd6dc9d21b472d16b2ab674/cell_aap-1.0.3.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
