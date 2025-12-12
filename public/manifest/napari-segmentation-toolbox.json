@@ -1,0 +1,106 @@
+{
+  "name": "napari-segmentation-toolbox",
+  "display_name": "Segmentation Toolbox",
+  "visibility": "public",
+  "icon": "",
+  "categories": [
+    "Annotation",
+    "Segmentation"
+  ],
+  "schema_version": "0.2.1",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-segmentation-toolbox.main_widget",
+        "title": "Segmentation Toolbox",
+        "python_name": "napari_segmentation_toolbox.main_widget:LabelToolbox",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "napari-segmentation-toolbox.main_widget",
+        "display_name": "Segmentation Toolbox",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "napari-segmentation-toolbox",
+    "version": "0.0.1",
+    "dynamic": [
+      "license-file"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "A plugin for manually correcting cell segmentation in 3D (z, y, x) or 4D (t, z, y, x) (virtual) arrays.",
+    "description": "# napari-segmentation-toolbox\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-segmentation-toolbox.svg?color=green)](https://github.com/AnniekStok/napari-segmentation-toolbox/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-segmentation-toolbox.svg?color=green)](https://pypi.org/project/napari-segmentation-toolbox)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-segmentation-toolbox.svg?color=green)](https://python.org)\n[![tests](https://github.com/AnniekStok/napari-segmentation-toolbox/workflows/tests/badge.svg)](https://github.com/AnniekStok/napari-segmentation-toolbox/actions)\n[![codecov](https://codecov.io/gh/AnniekStok/napari-segmentation-toolbox/branch/main/graph/badge.svg)](https://codecov.io/gh/AnniekStok/napari-segmentation-toolbox)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-segmentation-toolbox)](https://napari-hub.org/plugins/napari-segmentation-toolbox)\n\nToolbox for viewing, analyzing and correcting (cell) segmentation in 2D, 3D or 4D (t, z, y, x) (virtual) arrays.\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/stable/plugins/index.html\n-->\n\n## Installation\n\nYou can install `napari-segmentation-toolbox` via [pip]:\n\nTo install latest development version :\n\n    pip install git+https://github.com/AnniekStok/napari-segmentation-toolbox.git\n\n## Usage\nThe aim is to serve as a toolbox that provides easy access to functionalities from ![SciPy](https://pypi.org/project/scipy/) and ![scikit-image](https://pypi.org/project/scikit-image/) that can help to explore and correct segmentation data.\n\n- Orthogonal views for 3D data (also available ![separately](https://napari-hub.org/plugins/napari-orthogonal-views.html)).\n- Copy labels from a 2-5 dimensional array with multiple segmentation options to your current 2-5 dimensional label layer.\n- Label connected components, keep the largest connected cluster of labels, keep the largest fragment per label.\n- Smooth labels using a median filter.\n- Compute label boundaries.\n- Erode/dilate labels (scipy.ndimage and scikit-image).\n- Binarize an image or labels layer by applying an intensity threshold.\n- Image calculator for mathematical operations between two images.\n- Select/delete labels using a mask.\n- Binary mask interpolation in the z or time dimension.\n- Explore label properties in a table widget and a Matplotlib plot.\n- Filter and color regions by properties.\n\n### Copy labels between different labels layers\n![copy_labels](https://github.com/user-attachments/assets/4f6a638d-c6bc-4a61-bdcd-6cc29b6f817e)\n\n<table>\n  <tr>\n    <td width=\"50%\">\n      2D/3D/4D labels can be copied from a source layer to a target layer via <b>SHIFT+CLICK</b>.<br><br>\n      The data in the source layer should have the same shape as the target layer, but can optionally have one extra dimension (e.g. stack multiple segmentation solutions as channels).<br><br>\n      To copy labels, select a 'source' and a 'target' labels layer in the dropdown. By default, the source layer will be displayed as contours.<br><br>\n      Select whether to copy a slice, a volume, or a series across time.<br><br>\n      Checking <b>Use source label value</b> keeps the original label values.<br><br>\n      Selecting <b>Preserve target labels</b> only allows copying into background (0) regions. Otherwise, SHIFT+CLICK replaces the existing label region.\n    </td>\n    <td width=\"50%\">\n      <img alt=\"copy_labels\" src=\"https://github.com/user-attachments/assets/448252f2-e6a0-4bc9-ae30-42aa24aadc04\" />\n    </td>\n  </tr>\n</table>\n\n### Connected component analysis\nThere are shortcut buttons for connected components labeling, keeping the largest cluster of connected labels, and to keep the largest fragment per label.\n\n<img width=\"910\" height=\"770\" alt=\"conncomp\" src=\"https://github.com/user-attachments/assets/8c7f41b2-fa58-48cc-8921-29e703195401\" />\n\n### Select / delete labels that overlap with a binary mask\nAll labels that share any pixel overlap with the mask are selected or removed.\n<img width=\"1500\" height=\"844\" alt=\"select_delete\" src=\"https://github.com/user-attachments/assets/c3d96516-d34d-468c-9c51-3fed4e904463\" />\n\n### Binary mask interpolation\nIt is possible to interpolate a 3D or 4D mask to fill in the region in between. In 3D, this means creating a 3D volume from slices, in 4D this means creating a time series of a volume that linearly 'morphs' into a different shape.\n\n<table>\n  <tr>\n    <td width=\"40%\">\n      <img width=\"400\" alt=\"interpolate\" src=\"https://github.com/user-attachments/assets/74115915-936a-48cb-a6b3-415d09a9ed48\" />\n    </td>\n    <td width=\"60%\">\n      <img width=\"600\" alt=\"labelinterpolation gif\" src=\"https://github.com/user-attachments/assets/c7384096-478d-448e-882c-691d568e83f8\" />\n    </td>\n  </tr>\n</table>\n\n### Measuring label properties\nYou can measure label properties, including intensity (if a matching image layer is provided), area/volume, perimeter/surface area, circularity/sphericity, ellipse/ellipsoid axes in the 'Region Properties' tab. The plugin uses scikit-image regionprops with extended properties for 3D shapes based on methods from PoreSpy.\nMake sure you set the dimensions correctly in the 'Extra layer controls' tab, to distinguish between measuring in 2D + time, 3D, and 3D + time, depending on your layer dimensions (2D to 4D). Once finished, a table displays the measurements, and a filter widget allows you to select objects matching a condition. The measurements are also displayed in the 'Plot'-tab for each layer for which you ran the region properties calculation.\n\n![table_widget](https://github.com/user-attachments/assets/a7cd7686-7f90-46de-9864-0cac3aa77cf2)\n\n## See also\nThis plugin has taken inspiration from other napari plugins with similar and more advanced functionalities for measuring features, such as:\n\n- ![napari-skimage-regionprops](https://github.com/haesleinhuepf/napari-skimage-regionprops)\n- ![napari-pyclesperanto-assistant](https://napari-hub.org/plugins/napari-pyclesperanto-assistant)\n- ![morphometrics](https://napari-hub.org/plugins/morphometrics)\n- ![napari-clusters-plotter](https://napari-hub.org/plugins/napari-clusters-plotter)\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-segmentation-toolbox\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[file an issue]: https://github.com/AnniekStok/napari-segmentation-toolbox/issues\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": "https://github.com/AnniekStok/napari-segmentation-toolbox",
+    "download_url": null,
+    "author": "Anniek Stokkermans",
+    "author_email": "anniek.stokkermans@gmail.com",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "BSD-3-Clause",
+    "classifier": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Programming Language :: Python :: 3.10",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "requires_dist": [
+      "napari>=0.6.2",
+      "numpy",
+      "scikit-image>=0.24.0",
+      "scipy>=1.15.0",
+      "dask_image",
+      "dask",
+      "matplotlib",
+      "imagecodecs",
+      "napari-orthogonal-views>=0.0.7",
+      "tox; extra == \"testing\"",
+      "pytest; extra == \"testing\"",
+      "pytest-cov; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "napari[qt]; extra == \"testing\""
+    ],
+    "requires_python": ">=3.8",
+    "requires_external": null,
+    "project_url": [
+      "Bug Tracker, https://github.com/AnniekStok/napari-segmentation-toolbox/issues",
+      "Documentation, https://github.com/AnniekStok/napari-segmentation-toolbox#README.md",
+      "Source Code, https://github.com/AnniekStok/napari-segmentation-toolbox",
+      "User Support, https://github.com/AnniekStok/napari-segmentation-toolbox/issues"
+    ],
+    "provides_extra": [
+      "testing"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}
