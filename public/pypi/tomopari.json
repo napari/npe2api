@@ -16,7 +16,7 @@
       "Programming Language :: Python :: 3.9",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "# tomopari\n\n[![License MIT](https://img.shields.io/pypi/l/tomopari.svg?color=green)](https://github.com/obandomarcos/ToMoDL/blob/nhattm/tomopari/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/tomopari.svg?color=green)](https://pypi.org/project/tomopari)\n[![Python Version](https://img.shields.io/pypi/pyversions/tomopari.svg?color=green)](https://python.org)\n<!-- [![tests](https://github.com/marcoso96/tomopari/workflows/tests/badge.svg)](https://github.com/marcoso96/tomopari/actions) -->\n[![codecov](https://codecov.io/gh/marcoso96/tomopari/branch/main/graph/badge.svg)](https://codecov.io/gh/marcoso96/tomopari)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/tomopari)](https://napari-hub.org/plugins/tomopari)\n\nA plugin for optical projection tomography reconstruction with model-based neural networks.\n\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/stable/plugins/index.html\n-->\n## \ud83d\udd2c Introduction\n\n**tomopari** is a [napari](https://napari.org/) plugin that enables users to easily reconstruct tomography images directly from raw projection data. Simply load an ordered stack of projection files into the napari viewer, and the plugin takes care of reconstructing the corresponding tomographic volume.  \n\n## \ud83d\ude80 Usage\n\n1. **Load ordered stack**  \n![plot](https://raw.githubusercontent.com/obandomarcos/ToMoDL/refs/heads/nhattm/tomopari/figures/stack_image.png)\n\n   Go to **File \u2192 Open Files as Stack...** and load the angular projections for parallel beam optical tomography reconstruction.\n   \n   After loading, the stack of \u03b8-angular projection images should have shape of $N_{angles} \u00d7 det_h \u00d7 det_w$, where:\n\n   - $N_{angles}$ is the number of projection views (one image per rotation angle \u03b8),\n   - $det_h$ is the detector height (vertical pixel dimension),\n   - $det_w$ is the detector width (horizontal pixel dimension).\n2. **Select image layer**  \n![plot](https://raw.githubusercontent.com/obandomarcos/ToMoDL/refs/heads/nhattm/tomopari/figures/select_layer.png) \n\n   In the dropdown menu, click **Select image layer** and choose the loaded volume.  \n\n<!--  make this line be bigger and bold -->\n<h3>From here you can choose between two reconstruction modes: Basic and Advanced.</h3>\n\n### \ud83d\udd39 Basic Mode\n![plot](https://raw.githubusercontent.com/obandomarcos/ToMoDL/refs/heads/nhattm/tomopari/figures/basic_mode.png)  \n\n3. **Half-rotation**  \n   - Click **Half rotation** if your projection data was acquired from 0\u00b0 to 180\u00b0.  \n   - Leave it unchecked if data was acquired from 0\u00b0 to 360\u00b0.\n\n4. **Automatic axis alignment**  \n   If the rotation axis is not correctly aligned during acquisition, enable **Automatic axis alignment**.  This aligns the sinogram to the detector center using the [Wall-method].\n\n5. **Compression**  \n   Compression affects the detector dimension differently depending on the acquisition mode:\n\n   - Vertical-axis mode \u2192 the $det_w$ will be resized\n   - Horizontal-axis mode \u2192 the $det_h$ will be resized\n\n   Available compression levels:\n   - **HIGH** \u2192 resize to 100  \n   - **MEDIUM** \u2192 resize to 256  \n   - **LOW** \u2192 resize to 512  \n   - **NO** \u2192 no compression  \n  \n\n\n6. **Reconstruction method**  \n   - **FBP CPU / FBP GPU** \u2192 from the [QBI_radon] library  \n   - **TOMODL CPU / TOMODL GPU / UNET CPU / UNET GPU** \u2192 proposed in our [ToMoDL-paper]  \n\n7. **Smoothing level**  \n   Select smoothing strength (only applies to **TOMODL** methods). Can be more fine tuned in the **Advanced mode**.\n    - **LOW** \u2192 2  \n    - **MEDIUM** \u2192 4  \n    - **HIGH** \u2192 6 \n\n8. **Rotation axis**  \n   Select how your data is organized with respect to the rotation axis:\n   - **Vertical** \u2192 $det_w$ corresponds to the axis **perpendicular** to rotation.\n   - **Horizontal** \u2192 $det_h$ corresponds to the axis **perpendicular** to rotation.\n---\n\n### \ud83d\udd39 Advanced Mode\n![plot](https://raw.githubusercontent.com/obandomarcos/ToMoDL/refs/heads/nhattm/tomopari/figures/advanced_mode.png)\n\n9. **Manual axis alignment**  \n   Shift the object along $det_w$ in vertical mode, and along $det_h$ in horizontal mode. \n   - Negative values \u2192 shift left (toward lower pixel indices)\n   - Positive values \u2192 shift right (toward higher pixel indices)\n\n10. **Reshape volume**  \n    Select a reconstruction size (alternative to compression levels from Basic mode).\n\n11. **Flat-field correction**  \n    Apply flat-field correction to projection data before reconstruction.\n\n12. **Clip to circle**  \n    Constrain the reconstructed object inside a circular region.\n\n13. **Filter (FBP only)**  \n    Choose the filter to apply when using FBP methods. \n\n14. **Full volume mode**  \n    - Enabled \u2192 reconstruct the whole volume.  \n\n16. **One Slice mode**  \n    - Enabled \u2192 reconstruct only a single slice at the **Slice #** index. \n\n17. **Slices mode**\n    - Enabled \u2192 reconstruct from index 0 up to the chosen slice index in the **Slice #** field.  \n\n18. **Batch size**  \n    Number of slices processed simultaneously:  \n    - Higher values \u2192 faster reconstruction but greater GPU memory usage.  \n    - On CPU \u2192 limited to processing **1 slice at a time**.  \n\n19. **Invert colors**  \n    Invert grayscale values in the reconstructed volume.\n\n20. **16-bit conversion**  \n   The reconstructed volume is always generated in **32-bit float** precision. Enable this option to convert the final volume to **16-bit**, which significantly improves 3D rendering performance in napari.\n   Leave it unchecked if you prefer to keep the full 32-bit float output.\n---\n\n21. **Reconstruct!** \n\n![plot](https://raw.githubusercontent.com/obandomarcos/ToMoDL/refs/heads/nhattm/tomopari/figures/reconstruct_button.png)\n\n   A new layer will appear on top of the projections stack with the reconstructed volume.\n\n\n## \ud83d\udcbb Installation Guide *(No Code \u2014 Highly Recommended)*\n\n### \ud83e\udde9 **Step 1: Install Napari (Bundled App)**\n\n> \ud83d\udca1 *Skip this step if you already installed Napari via `pip`.*\n\nYou can directly download the official Napari **bundled installer** for your operating system:\n\n* \ud83e\ude9f **Windows (.exe):**\n  \ud83d\udc49 [napari-0.6.5-Windows-x86_64.exe](https://github.com/napari/napari/releases/download/v0.6.5/napari-0.6.5-Windows-x86_64.exe)\n\n* \ud83d\udc27 **Ubuntu (.sh):**\n  \ud83d\udc49 [napari-0.6.5-Linux-x86_64.sh](https://github.com/napari/napari/releases/download/v0.6.5/napari-0.6.5-Linux-x86_64.sh)\n\n\ud83d\udcd8 **Official Guide:**\nFollow the Napari documentation for detailed installation steps:\n\ud83d\udd17 [Napari Installation Guide (Bundled App)](https://napari.org/0.6.5/tutorials/fundamentals/installation_bundle_conda.html)\n\n---\n\n### \u2699\ufe0f **Step 2: Install PyTorch Inside Napari\u2019s Bundled Environment**\n\n> \ud83d\udca1 *Skip this step if PyTorch is already installed in your Napari environment.*\n\nThis step ensures **PyTorch** is properly installed within Napari\u2019s internal Conda environment for full compatibility.\n\n#### \ud83e\ude9f **Windows Users**\n\n1. Download the installer:\n   \ud83d\udd17 [install_torch2napari_windows.bat](https://github.com/obandomarcos/ToMoDL/releases/download/v.0.2.25/install_torch2napari_windows.bat)\n2. Double-click the `.bat` file to run it.\n   *(It will automatically detect Napari\u2019s environment and install PyTorch.)*\n\n#### \ud83d\udc27 **Linux Users**\n\n1. Download the installer:\n   \ud83d\udd17 [install_torch2napari_linux.sh](https://github.com/obandomarcos/ToMoDL/releases/download/v.0.2.25/install_torch2napari_linux.sh)\n2. Run it in your terminal:\n\n   ```bash\n   bash install_torch2napari_linux.sh\n   ```\n\n---\n\n### 3\ufe0f\u20e3 Install our plugin \u2014 **tomopari**\n\nOur plugin is available on the [napari-hub](https://napari-hub.org/plugins/tomopari.html).\n---\n\ud83d\udd39 Option 1: Install directly from napari\n1. Open **napari**.  \n2. Go to **Plugins \u2192 Install/Uninstall Plugins**.  \n3. Search for **tomopari** and click **Install**.\n---\n\ud83d\udd39 Option 2: Install via pip (from Napari Console)\nOpen napari\u2019s **Python Console** and type:\n\n```bash\npip install tomopari\n```\n\n> After installation, **restart napari** to apply the changes. \ud83d\ude0a\n\n## \ud83e\udd1d Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## \ud83d\udcdc License\n\nDistributed under the terms of the [MIT] license,\n\"tomopari\" is free and open source software\n\n## \ud83d\udc1bIssues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[QBI_radon]: https://github.com/QBioImaging/QBI_radon\n[Wall-method]: https://doi.org/10.1088/0031-9155/50/19/015\n[ToMoDL-paper]: https://doi.org/10.1038/s41598-023-47650-3\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description": "# tomopari\n\n[![License MIT](https://img.shields.io/pypi/l/tomopari.svg?color=green)](https://github.com/obandomarcos/ToMoDL/blob/nhattm/tomopari/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/tomopari.svg?color=green)](https://pypi.org/project/tomopari)\n[![Python Version](https://img.shields.io/pypi/pyversions/tomopari.svg?color=green)](https://python.org)\n<!-- [![tests](https://github.com/marcoso96/tomopari/workflows/tests/badge.svg)](https://github.com/marcoso96/tomopari/actions) -->\n<!-- [![codecov](https://codecov.io/gh/marcoso96/tomopari/branch/main/graph/badge.svg)](https://codecov.io/gh/marcoso96/tomopari) -->\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/tomopari)](https://napari-hub.org/plugins/tomopari)\n\nA plugin for accelerated tomographic reconstruction.\n\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/stable/plugins/index.html\n-->\n## \ud83d\udd2c Introduction\n\n**tomopari** is a [napari](https://napari.org/) plugin that enables users to easily reconstruct tomography images directly from raw projection data. Simply load an ordered stack of projection files into the napari viewer, and the plugin takes care of reconstructing the corresponding tomographic volume.  \n\n## \ud83d\ude80 Usage\n\n1. **Load ordered stack**  \n![plot](https://raw.githubusercontent.com/obandomarcos/ToMoDL/refs/heads/nhattm/tomopari/figures/stack_image.png)\n\n   Go to **File \u2192 Open Files as Stack...** and load the angular projections for parallel beam optical tomography reconstruction.\n   \n   After loading, the stack of \u03b8-angular projection images should have shape of $N_{angles} \u00d7 det_h \u00d7 det_w$, where:\n\n   - $N_{angles}$ is the number of projection views (one image per rotation angle \u03b8),\n   - $det_h$ is the detector height (vertical pixel dimension),\n   - $det_w$ is the detector width (horizontal pixel dimension).\n2. **Select image layer**  \n![plot](https://raw.githubusercontent.com/obandomarcos/ToMoDL/refs/heads/nhattm/tomopari/figures/select_layer.png) \n\n   In the dropdown menu, click **Select image layer** and choose the loaded volume.  \n\n<!--  make this line be bigger and bold -->\n<h3>From here you can choose between two reconstruction modes: Basic and Advanced.</h3>\n\n### \ud83d\udd39 Basic Mode\n![plot](https://raw.githubusercontent.com/obandomarcos/ToMoDL/refs/heads/nhattm/tomopari/figures/basic_mode.png)  \n\n3. **Half-rotation**  \n   - Click **Half rotation** if your projection data were acquired from 0\u00b0 to 180\u00b0.  \n   - Leave it unchecked if data were acquired from 0\u00b0 to 360\u00b0.\n\n4. **Automatic axis alignment**  \n   If the rotation axis is not correctly aligned during acquisition, enable **Automatic axis alignment**.  This aligns the sinogram to the detector center using the [Wall-method].\n\n5. **Compression**  \n   Compression affects the detector dimension differently depending on the acquisition mode:\n\n   - Vertical-axis mode \u2192 the $det_w$ will be resized\n   - Horizontal-axis mode \u2192 the $det_h$ will be resized\n\n   Available compression levels:\n   - **HIGH** \u2192 resize to 100  \n   - **MEDIUM** \u2192 resize to 256  \n   - **LOW** \u2192 resize to 512  \n   - **NO** \u2192 no compression  \n  \n\n\n6. **Reconstruction method**  \n   - **FBP CPU / FBP GPU** \u2192 from the [QBI_radon] library  \n   - **TOMODL CPU / TOMODL GPU / UNET CPU / UNET GPU** \u2192 proposed in our [ToMoDL-paper]  \n\n7. **Smoothing level**  \n   Select smoothing strength (only applies to **TOMODL** methods). Can be more fine tuned in the **Advanced mode**.\n    - **LOW** \u2192 2  \n    - **MEDIUM** \u2192 4  \n    - **HIGH** \u2192 6 \n\n8. **Rotation axis**  \n   Select how your data is organized with respect to the rotation axis:\n   - **Vertical** \u2192 rotation axis parallel to $det_h$\n   - **Horizontal** \u2192 rotation axis parallel to $det_w$\n---\n\n### \ud83d\udd39 Advanced Mode\n![plot](https://raw.githubusercontent.com/obandomarcos/ToMoDL/refs/heads/nhattm/tomopari/figures/advanced_mode.png)\n\n9. **Manual axis alignment**  \n   Shift the object along $det_w$ in vertical mode, and along $det_h$ in horizontal mode. \n   - Negative values \u2192 shift left (toward lower pixel indices)\n   - Positive values \u2192 shift right (toward higher pixel indices)\n\n10. **Reshape volume**  \n    Select a reconstruction size (alternative to compression levels from Basic mode).\n\n11. **Flat-field correction**  \n    Apply flat-field correction to projection data before reconstruction.\n\n12. **Clip to circle**  \n    Constrain the reconstructed object inside a circular region.\n\n13. **Filter (FBP only)**  \n    Choose the filter to apply when using FBP methods. \n\n14. **Full volume mode**  \n    - Enabled \u2192 reconstruct the whole volume.  \n\n16. **One Slice mode**  \n    - Enabled \u2192 reconstruct only a single slice at **Slice #** index. \n\n17. **Slices mode**\n    - Enabled \u2192 reconstruct from index 0  up to the chosen slice index defined in **Slice #**.\n\n18. **Batch size**  \n    Number of slices processed simultaneously:  \n    - Higher values \u2192 faster reconstruction but greater GPU memory usage.  \n    - On CPU \u2192 limited to processing **1 slice at a time**.  \n\n19. **Invert colors**  \n    Invert grayscale values in the reconstructed volume.\n\n20. **16-bit conversion**  \n   The reconstructed volume is always generated in **32-bit float** precision. Enable this option to convert the final volume to **16-bit**, which significantly improves 3D rendering performance in napari.\n   Leave it unchecked if you prefer to keep the full 32-bit float output.\n---\n\n21. **Reconstruct!** \n\n![plot](https://raw.githubusercontent.com/obandomarcos/ToMoDL/refs/heads/nhattm/tomopari/figures/reconstruct_button.png)\n\n   A new layer will appear on top of the projections stack with the reconstructed volume.\n\n\n## \ud83d\udcbb Installation Guide *(No Code \u2014 Highly Recommended)*\n\n### \ud83e\udde9 **Step 1: Install Napari (Bundled App)**\n\n> \ud83d\udca1 *Skip this step if you already installed Napari via `pip`.*\n\nYou can directly download the official Napari **bundled installer** for your operating system:\n\n* \ud83e\ude9f **Windows (.exe):**\n  \ud83d\udc49 [napari-0.6.5-Windows-x86_64.exe](https://github.com/napari/napari/releases/download/v0.6.5/napari-0.6.5-Windows-x86_64.exe)\n\n* \ud83d\udc27 **Ubuntu (.sh):**\n  \ud83d\udc49 [napari-0.6.5-Linux-x86_64.sh](https://github.com/napari/napari/releases/download/v0.6.5/napari-0.6.5-Linux-x86_64.sh)\n\n\ud83d\udcd8 **Official Guide:**\nFollow the Napari documentation for detailed installation steps:\n\ud83d\udd17 [Napari Installation Guide (Bundled App)](https://napari.org/0.6.5/tutorials/fundamentals/installation_bundle_conda.html)\n\n---\n\n### \u2699\ufe0f **Step 2: Install PyTorch Inside Napari\u2019s Bundled Environment**\n\n> \ud83d\udca1 *Skip this step if PyTorch is already installed in your Napari environment.*\n\nThis step ensures **PyTorch** is properly installed within Napari\u2019s internal Conda environment for full compatibility.\n\n#### \ud83e\ude9f **Windows Users**\n\n1. Download the installer:\n   \ud83d\udd17 [install_torch2napari_windows.bat](https://github.com/obandomarcos/ToMoDL/releases/download/v0.1.0/install_torch2napari_windows.bat)\n2. Double-click the `.bat` file to run it.\n   *(It will automatically detect Napari\u2019s environment and install PyTorch.)*\n\n#### \ud83d\udc27 **Linux Users**\n\n1. Download the installer:\n   \ud83d\udd17 [install_torch2napari_linux.sh](https://github.com/obandomarcos/ToMoDL/releases/download/v0.1.0/install_torch2napari_linux.sh)\n2. Run it in your terminal:\n\n   ```bash\n   bash install_torch2napari_linux.sh\n   ```\n\n---\n\n### 3\ufe0f\u20e3 Install our plugin \u2014 **tomopari**\n\nOur plugin is available on the [napari-hub](https://napari-hub.org/plugins/tomopari.html).\n---\n\ud83d\udd39 Option 1: Install directly from napari\n1. Open **napari**.  \n2. Go to **Plugins \u2192 Install/Uninstall Plugins**.  \n3. Search for **tomopari** and click **Install**.\n---\n\ud83d\udd39 Option 2: Install via pip (from Napari Console)\nOpen napari\u2019s **Python Console** and type:\n\n```bash\npip install tomopari\n```\n\n> After installation, **restart napari** to apply the changes. \ud83d\ude0a\n\n## \ud83e\udd1d Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## \ud83d\udcdc License\n\nDistributed under the terms of the [MIT] license,\n\"tomopari\" is free and open source software\n\n## \ud83d\udc1bIssues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[QBI_radon]: https://github.com/QBioImaging/QBI_radon\n[Wall-method]: https://doi.org/10.1088/0031-9155/50/19/015\n[ToMoDL-paper]: https://doi.org/10.1038/s41598-023-47650-3\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -39,7 +39,7 @@
     "project_url": "https://pypi.org/project/tomopari/",
     "project_urls": null,
     "provides_extra": null,
-    "release_url": "https://pypi.org/project/tomopari/0.1.0/",
+    "release_url": "https://pypi.org/project/tomopari/0.1.1/",
     "requires_dist": [
       "magicgui",
       "qtpy",
@@ -49,11 +49,11 @@
     ],
     "requires_python": ">=3.9",
     "summary": "A plugin for optical projection tomography reconstruction with model-based neural networks.",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 32887049,
+  "last_serial": 32953049,
   "releases": {
     "0.1.0": [
       {
@@ -98,48 +98,92 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.1.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "54b005ceaea08881315a921c1bab266fd676a7ff5753870197b7ba3f081aecbb",
+          "md5": "d6b8ae163aa8c1b84c67ef44d066731d",
+          "sha256": "1f647eda0b614a711116520d6af69683fca0ab7b0141ee1e6acc9de1ea8f6453"
+        },
+        "downloads": -1,
+        "filename": "tomopari-0.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "d6b8ae163aa8c1b84c67ef44d066731d",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 880272,
+        "upload_time": "2025-12-12T07:59:05",
+        "upload_time_iso_8601": "2025-12-12T07:59:05.686185Z",
+        "url": "https://files.pythonhosted.org/packages/54/b0/05ceaea08881315a921c1bab266fd676a7ff5753870197b7ba3f081aecbb/tomopari-0.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "8bbfa9b62dad69f21b67726b5dc64918df434b7f83e35c308364a4846c68a3f2",
+          "md5": "6176936002e311eddc78b20ff5daa80f",
+          "sha256": "804d2474c526f0412eba7d5fce486f67c81090e7dd719b8fb12dff11f5e8cc55"
+        },
+        "downloads": -1,
+        "filename": "tomopari-0.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "6176936002e311eddc78b20ff5daa80f",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 883037,
+        "upload_time": "2025-12-12T07:59:07",
+        "upload_time_iso_8601": "2025-12-12T07:59:07.568873Z",
+        "url": "https://files.pythonhosted.org/packages/8b/bf/a9b62dad69f21b67726b5dc64918df434b7f83e35c308364a4846c68a3f2/tomopari-0.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": null,
       "digests": {
-        "blake2b_256": "0f9dfcacc77267195110eaeb134262201c2f90a5a03538798445ea954fd937fe",
-        "md5": "ed61aa0f9cd567cd5a9d4fea7257b9ce",
-        "sha256": "9b16e31bc47886bdcfdd13493ca5d327ece96d827a94a5450c4a3c20e55f1c51"
+        "blake2b_256": "54b005ceaea08881315a921c1bab266fd676a7ff5753870197b7ba3f081aecbb",
+        "md5": "d6b8ae163aa8c1b84c67ef44d066731d",
+        "sha256": "1f647eda0b614a711116520d6af69683fca0ab7b0141ee1e6acc9de1ea8f6453"
       },
       "downloads": -1,
-      "filename": "tomopari-0.1.0-py3-none-any.whl",
+      "filename": "tomopari-0.1.1-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "ed61aa0f9cd567cd5a9d4fea7257b9ce",
+      "md5_digest": "d6b8ae163aa8c1b84c67ef44d066731d",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.9",
-      "size": 873312,
-      "upload_time": "2025-12-09T13:30:16",
-      "upload_time_iso_8601": "2025-12-09T13:30:16.604766Z",
-      "url": "https://files.pythonhosted.org/packages/0f/9d/fcacc77267195110eaeb134262201c2f90a5a03538798445ea954fd937fe/tomopari-0.1.0-py3-none-any.whl",
+      "size": 880272,
+      "upload_time": "2025-12-12T07:59:05",
+      "upload_time_iso_8601": "2025-12-12T07:59:05.686185Z",
+      "url": "https://files.pythonhosted.org/packages/54/b0/05ceaea08881315a921c1bab266fd676a7ff5753870197b7ba3f081aecbb/tomopari-0.1.1-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": null,
       "digests": {
-        "blake2b_256": "0381d81e241969e7c35a65e74f3825aae11820e9cbcbbd90dbbc6bee18aa5de4",
-        "md5": "9ef990dc6dde505f9ecf78a5e68136a9",
-        "sha256": "5114de30830cc40bf1005edbf481939707f20f96e00c3192f082fb348277c138"
+        "blake2b_256": "8bbfa9b62dad69f21b67726b5dc64918df434b7f83e35c308364a4846c68a3f2",
+        "md5": "6176936002e311eddc78b20ff5daa80f",
+        "sha256": "804d2474c526f0412eba7d5fce486f67c81090e7dd719b8fb12dff11f5e8cc55"
       },
       "downloads": -1,
-      "filename": "tomopari-0.1.0.tar.gz",
+      "filename": "tomopari-0.1.1.tar.gz",
       "has_sig": false,
-      "md5_digest": "9ef990dc6dde505f9ecf78a5e68136a9",
+      "md5_digest": "6176936002e311eddc78b20ff5daa80f",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.9",
-      "size": 876957,
-      "upload_time": "2025-12-09T13:30:18",
-      "upload_time_iso_8601": "2025-12-09T13:30:18.253435Z",
-      "url": "https://files.pythonhosted.org/packages/03/81/d81e241969e7c35a65e74f3825aae11820e9cbcbbd90dbbc6bee18aa5de4/tomopari-0.1.0.tar.gz",
+      "size": 883037,
+      "upload_time": "2025-12-12T07:59:07",
+      "upload_time_iso_8601": "2025-12-12T07:59:07.568873Z",
+      "url": "https://files.pythonhosted.org/packages/8b/bf/a9b62dad69f21b67726b5dc64918df434b7f83e35c308364a4846c68a3f2/tomopari-0.1.1.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
