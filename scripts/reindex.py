@@ -163,7 +163,7 @@ if __name__ == "__main__":
         meta = data["package_metadata"]
         # the license may be null, in which case we check for the presence
         # of a 'license_expression` key in the PyPI info loaded from
-        # the bigquery dataset
+        # the pypa warehouse XML-RPC API
         plugin_license = meta["license"]
         if not plugin_license:
             plugin_bigquery_pypi_path = Path(f"{PUBLIC}/pypi/{normalized_name}.json")
