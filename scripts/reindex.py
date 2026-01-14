@@ -171,9 +171,9 @@ if __name__ == "__main__":
                 with plugin_bigquery_pypi_path.open() as f:
                     plugin_bigquery_pypi_info = json.load(f)
                     if license_expression := (
-                        plugin_bigquery_pypi_info.get(
-                            "info", {}
-                        ).get("license_expression")
+                        plugin_bigquery_pypi_info.get("info", {}).get(
+                            "license_expression"
+                        )
                     ):
                         plugin_license = license_expression
 
