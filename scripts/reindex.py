@@ -166,12 +166,12 @@ if __name__ == "__main__":
         # the pypa warehouse XML-RPC API
         plugin_license = meta["license"]
         if not plugin_license:
-            plugin_bigquery_pypi_path = Path(f"{PUBLIC}/pypi/{normalized_name}.json")
-            if plugin_bigquery_pypi_path.exists():
-                with plugin_bigquery_pypi_path.open() as f:
-                    plugin_bigquery_pypi_info = json.load(f)
+            plugin_pypi_json_path = Path(f"{PUBLIC}/pypi/{normalized_name}.json")
+            if plugin_pypi_json_path.exists():
+                with plugin_pypi_json_path.open() as f:
+                    plugin_pypi_json_info = json.load(f)
                     if license_expression := (
-                        plugin_bigquery_pypi_info.get("info", {}).get(
+                        plugin_pypi_json_info.get("info", {}).get(
                             "license_expression"
                         )
                     ):
