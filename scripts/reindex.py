@@ -165,7 +165,7 @@ if __name__ == "__main__":
         # of a 'license_expression` key in the PyPI info loaded from
         # the pypa warehouse XML-RPC API
         plugin_license = meta["license"]
-        if not plugin_license:
+        if True:
             plugin_bigquery_pypi_path = Path(f"{PUBLIC}/pypi/{normalized_name}.json")
             if plugin_bigquery_pypi_path.exists():
                 with plugin_bigquery_pypi_path.open() as f:
