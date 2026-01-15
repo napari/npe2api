@@ -171,9 +171,7 @@ if __name__ == "__main__":
                 with plugin_pypi_json_path.open() as f:
                     plugin_pypi_json_info = json.load(f)
                     if license_expression := (
-                        plugin_pypi_json_info.get("info", {}).get(
-                            "license_expression"
-                        )
+                        plugin_pypi_json_info.get("info", {}).get("license_expression")
                     ):
                         plugin_license = license_expression
 
