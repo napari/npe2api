@@ -185,7 +185,7 @@ if __name__ == "__main__":
                 "display_name": data["display_name"],
                 "summary": meta["summary"],
                 "author": meta["author"],
-                "license": plugin_license,
+                "license": "test",
                 "home_page": meta["home_page"],
                 "project_url": meta["project_url"],
             }
