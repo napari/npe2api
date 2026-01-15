@@ -161,6 +161,20 @@ if __name__ == "__main__":
 
         # create the summary index item
         meta = data["package_metadata"]
+        # the license may be null, in which case we check for the presence
+        # of a 'license_expression` key in the PyPI info loaded from
+        # the pypa warehouse XML-RPC API
+        plugin_license = meta["license"]
+        if not plugin_license:
+            plugin_pypi_json_path = Path(f"{PUBLIC}/pypi/{normalized_name}.json")
+            if plugin_pypi_json_path.exists():
+                with plugin_pypi_json_path.open() as f:
+                    plugin_pypi_json_info = json.load(f)
+                    if license_expression := (
+                        plugin_pypi_json_info.get("info", {}).get("license_expression")
+                    ):
+                        plugin_license = license_expression
+
         PYPI_INDEX.append(
             {
                 "normalized_name": normalized_name,
@@ -169,7 +183,7 @@ if __name__ == "__main__":
                 "display_name": data["display_name"],
                 "summary": meta["summary"],
                 "author": meta["author"],
-                "license": meta["license"],
+                "license": plugin_license,
                 "home_page": meta["home_page"],
                 "project_url": meta["project_url"],
             }
