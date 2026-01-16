@@ -159,10 +159,6 @@ if __name__ == "__main__":
         with manifest_file.open() as f:
             data = json.load(f)
 
-        if data.get("visibility", "public") != "public":
-            print(f"❌ {normalized_name} - not public.")
-            continue
-
         # create the summary index item
         meta = data["package_metadata"]
         # the license may be null, in which case we check for the presence
