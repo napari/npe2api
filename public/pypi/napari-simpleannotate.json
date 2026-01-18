@@ -16,7 +16,7 @@
       "Programming Language :: Python :: 3.9",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "# napari-simpleannotate\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-simpleannotate.svg?color=green)](https://github.com/hiroalchem/napari-simpleannotate/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-simpleannotate.svg?color=green)](https://pypi.org/project/napari-simpleannotate)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-simpleannotate.svg?color=green)](https://python.org)\n[![tests](https://github.com/hiroalchem/napari-simpleannotate/workflows/tests/badge.svg)](https://github.com/hiroalchem/napari-simpleannotate/actions)\n[![codecov](https://codecov.io/gh/hiroalchem/napari-simpleannotate/branch/main/graph/badge.svg)](https://codecov.io/gh/hiroalchem/napari-simpleannotate)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-simpleannotate)](https://napari-hub.org/plugins/napari-simpleannotate)\n\nA napari plugin for simple image and video annotation that provides three main annotation workflows:\n\n1. **Bounding Box Annotation (YOLO format)**: For object detection training data on images\n2. **Video Bounding Box Annotation**: For object detection training data on video files\n3. **Image Classification Labeling**: For image classification training data\n\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/stable/plugins/index.html\n-->\n\n![overview](https://github.com/hiroalchem/napari-simpleannotate/raw/main/images/dog_and_cat.jpg)\n\n\n## Installation\n\nYou can install `napari-simpleannotate` via [pip]:\n\n    pip install napari-simpleannotate\n\n\n\nTo install latest development version :\n\n    pip install git+https://github.com/hiroalchem/napari-simpleannotate.git\n\n\n## How to use\n\n### Getting Started\n\nAfter installing napari-simpleannotate, launch napari and navigate to `Plugins > Add dock widget` to find three annotation widgets:\n\n- **Bbox annotation**: For bounding box annotation on images\n- **Bbox video annotation**: For bounding box annotation on video files  \n- **Label image classification**: For image classification labeling\n\n### Bounding Box Annotation (Images)\n\n**Prerequisites**: None required\n\n1. **Opening Files**:\n   - Single file: Click `Open File` to select an image file\n   - Directory: Click `Open Directory` to select a folder containing images\n   - If a `class.yaml` file exists in the directory, you'll be prompted to load existing classes\n\n2. **Class Management**:\n   - Enter class names in the text box and click `Add class`\n   - Classes are automatically assigned sequential IDs (0, 1, 2, ...)\n   - Select a class and click `Delete selected class` to remove it\n   - Classes are saved to `class.yaml` alongside annotations\n\n3. **Creating Annotations**:\n   - Select a class from the list (becomes your active class)\n   - Use napari's rectangle tool (shortcut: R) to draw bounding boxes\n   - New rectangles automatically inherit the selected class\n   - Change existing rectangles: select the shape, then click a different class\n\n4. **Saving Work**:\n   - Click `Save Annotations` to export in YOLO format\n   - Files saved: `image_name.txt` (YOLO coordinates) + `class.yaml` (class definitions)\n   - YOLO format: `class_id x_center y_center width height` (normalized 0-1)\n\n### Video Bounding Box Annotation\n\n**Prerequisites**: Install PyAV for video support: `pip install av`\n\n1. **Opening Videos**:\n   - Click `Open Video` to select video files\n   - Supported formats: MP4, AVI, MOV, MKV, WMV, FLV, WebM\n   - Video loads with frame-by-frame navigation\n\n2. **Navigation**:\n   - Use napari's time slider to navigate frames\n   - Frame counter shows current position: \"Frame: X/Y\"\n   - **Keyboard shortcuts**: Q (previous annotation), W (next annotation)\n   - Click navigation buttons to jump to nearest annotations\n   - Video performance optimized with LRU cache and parallel prefetching\n\n3. **Frame-Aware Annotation**:\n   - Navigate to target frame before annotating\n   - Create bounding boxes with napari's rectangle tool\n   - Each annotation automatically records the current frame number\n   - Annotations only visible on their respective frames\n\n4. **Class and Export**:\n   - Class management identical to image annotation\n   - Extended YOLO format: `class_id frame x_center y_center width height`\n   - Saves to `video_name.txt` + `class.yaml` in video directory\n\n### Image Classification Labeling\n\n**Prerequisites**: None required\n\n1. **Opening Directory**:\n   - Click `Open Directory` to select image folder\n   - Recursively finds all images (PNG, TIF, JPG, JPEG, TIFF)\n   - Automatically loads existing `labels.csv` and `class.txt` if present\n\n2. **Display Options**:\n   - **Split Channels**: Check to display multi-channel images as separate layers\n   - Contrast settings preserved when switching between images\n   - Navigate images using the file list on the left\n\n3. **Labeling Workflow**:\n   - Add classes: Type in text box and press Enter (or click `Add class`)\n   - Remove classes: Type existing class name and press Enter\n   - Assign labels: Select image \u2192 Click class name to label it\n   - Real-time auto-save to `labels.csv` and `class.txt`\n\n4. **Resume Sessions**:\n   - Previous work automatically loaded when reopening directories\n   - Continue labeling from where you left off\n\n## Performance Notes\n\n- **Video annotation**: Optimized with frame caching and parallel prefetching for smooth playback\n- **Large datasets**: Classification widget handles thousands of images efficiently  \n- **Memory management**: LRU cache prevents memory overflow during long annotation sessions\n\n## Output Formats\n\n| Widget | Annotation File | Class File | Format |\n|--------|----------------|------------|---------|\n| Bbox (Images) | `image.txt` | `class.yaml` | YOLO standard |\n| Bbox (Video) | `video.txt` | `class.yaml` | Extended YOLO with frame |\n| Classification | `labels.csv` | `class.txt` | CSV with image-label pairs |\n\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-simpleannotate\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[file an issue]: https://github.com/hiroalchem/napari-simpleannotate/issues\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description": "# napari-simpleannotate\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-simpleannotate.svg?color=green)](https://github.com/hiroalchem/napari-simpleannotate/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-simpleannotate.svg?color=green)](https://pypi.org/project/napari-simpleannotate)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-simpleannotate.svg?color=green)](https://python.org)\n[![tests](https://github.com/hiroalchem/napari-simpleannotate/workflows/tests/badge.svg)](https://github.com/hiroalchem/napari-simpleannotate/actions)\n[![codecov](https://codecov.io/gh/hiroalchem/napari-simpleannotate/branch/main/graph/badge.svg)](https://codecov.io/gh/hiroalchem/napari-simpleannotate)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-simpleannotate)](https://napari-hub.org/plugins/napari-simpleannotate)\n\nA napari plugin for simple image and video annotation that provides three main annotation workflows:\n\n1. **Bounding Box Annotation (YOLO format)**: For object detection training data on images\n2. **Video Bounding Box Annotation**: For object detection training data on video files\n3. **Image Classification Labeling**: For image classification training data\n\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/stable/plugins/index.html\n-->\n\n![overview](https://github.com/hiroalchem/napari-simpleannotate/raw/main/images/dog_and_cat.jpg)\n\n\n## Installation\n\nYou can install `napari-simpleannotate` via [pip]:\n\n    pip install napari-simpleannotate\n\n\n\nTo install latest development version :\n\n    pip install git+https://github.com/hiroalchem/napari-simpleannotate.git\n\n\n## How to use\n\n### Getting Started\n\nAfter installing napari-simpleannotate, launch napari and navigate to `Plugins > Add dock widget` to find three annotation widgets:\n\n- **Bbox annotation**: For bounding box annotation on images\n- **Bbox video annotation**: For bounding box annotation on video files  \n- **Label image classification**: For image classification labeling\n\n### Bounding Box Annotation (Images)\n\n**Prerequisites**: None required\n\n1. **Opening Files**:\n   - Single file: Click `Open File` to select an image file\n   - Directory: Click `Open Directory` to select a folder containing images\n   - If a `class.yaml` file exists in the directory, you'll be prompted to load existing classes\n\n2. **Class Management**:\n   - Enter class names in the text box and click `Add class`\n   - Classes are automatically assigned sequential IDs (0, 1, 2, ...)\n   - Select a class and click `Delete selected class` to remove it\n   - Classes are saved to `class.yaml` alongside annotations\n\n3. **Creating Annotations**:\n   - Select a class from the list (becomes your active class)\n   - Use napari's rectangle tool (shortcut: R) to draw bounding boxes\n   - New rectangles automatically inherit the selected class\n   - Change existing rectangles: select the shape, then click a different class\n\n4. **Saving Work**:\n   - Click `Save Annotations` to export in YOLO format\n   - Files saved: `image_name.txt` (YOLO coordinates) + `class.yaml` (class definitions)\n   - YOLO format: `class_id x_center y_center width height` (normalized 0-1)\n\n### Video Bounding Box Annotation\n\n**Prerequisites**: Install PyAV for video support: `pip install av`\n\n1. **Opening Videos**:\n   - Click `Open Video` to select MP4, AVI, MOV, MKV, WMV, FLV, or WebM files\n   - Frames load through a cached reader that keeps recently viewed frames ready for scrubbing\n\n2. **Navigation & Frame Tools**:\n   - Use napari's time slider; the widget shows `Frame: current/total` alongside live cache usage\n   - Jump between annotated frames with the `Prev (Q)` and `Next (W)` buttons or keyboard shortcuts\n   - Nearby frames are prefetched in the background to keep playback smooth during review\n\n3. **Annotating Frames**:\n   - Draw rectangles after selecting a class; each shape stores its frame index automatically\n   - Bounding boxes are only visible on the frame where they were created\n   - Class management matches the image workflow, and `class.yaml` is written in YOLO `names:` format\n\n4. **Automatic Tracking**:\n   - Use `Start` to launch trackers for the boxes in the current frame and `Stop` to halt processing\n   - Keep `Track all bounding boxes` enabled to follow every box, or disable it to track only selected shapes\n   - Choose between the default OpenCV `CSRT` tracker and the experimental `TrackerVit`\n\n5. **Saving & Exports**:\n   - `Save Annotations` writes per-frame YOLO files (`imgNNN.txt`) in a video-specific folder next to the source\n   - Annotated frames are saved once as `imgNNN.png` so you can review what was labeled later\n   - Enable `Enable crop on save` to export fixed-size crops plus matching YOLO labels under `crops/`\n   - Existing exports are reused when present so repeated saves only write new annotations\n\n### Image Classification Labeling\n\n**Prerequisites**: None required\n\n1. **Opening Directory**:\n   - Click `Open Directory` to select image folder\n   - Recursively finds all images (PNG, TIF, JPG, JPEG, TIFF)\n   - Automatically loads existing `labels.csv` and `class.txt` if present\n\n2. **Display Options**:\n   - **Split Channels**: Check to display multi-channel images as separate layers\n   - Contrast settings preserved when switching between images\n   - Navigate images using the file list on the left\n\n3. **Labeling Workflow**:\n   - Add classes: Type in text box and press Enter (or click `Add class`)\n   - Remove classes: Type existing class name and press Enter\n   - Assign labels: Select image \u2192 Click class name to label it\n   - Real-time auto-save to `labels.csv` and `class.txt`\n\n4. **Resume Sessions**:\n   - Previous work automatically loaded when reopening directories\n   - Continue labeling from where you left off\n\n## Performance Notes\n\n- **Video annotation**: Optimized with frame caching and parallel prefetching for smooth playback\n- **Large datasets**: Classification widget handles thousands of images efficiently  \n- **Memory management**: LRU cache prevents memory overflow during long annotation sessions\n\n## Output Formats\n\n| Widget | Annotation File | Class File | Format |\n|--------|----------------|------------|---------|\n| Bbox (Images) | `image.txt` | `class.yaml` | YOLO standard |\n| Bbox (Video) | `imgNNN.txt` per frame (+ optional `crops/*.txt`) | `class.yaml` | YOLO normalized (per frame/crop) |\n| Classification | `labels.csv` | `class.txt` | CSV with image-label pairs |\n\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-simpleannotate\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[file an issue]: https://github.com/hiroalchem/napari-simpleannotate/issues\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -51,7 +51,7 @@
     "provides_extra": [
       "testing"
     ],
-    "release_url": "https://pypi.org/project/napari-simpleannotate/0.1.3/",
+    "release_url": "https://pypi.org/project/napari-simpleannotate/0.1.4/",
     "requires_dist": [
       "numpy",
       "magicgui",
@@ -62,6 +62,7 @@
       "napari_video",
       "zarr",
       "numcodecs",
+      "opencv-contrib-python",
       "tox; extra == \"testing\"",
       "pytest; extra == \"testing\"",
       "pytest-cov; extra == \"testing\"",
@@ -71,11 +72,11 @@
     ],
     "requires_python": ">=3.8",
     "summary": "A napari plugin for simple image and video annotation",
-    "version": "0.1.3",
+    "version": "0.1.4",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 33193192,
+  "last_serial": 33631881,
   "releases": {
     "0.0.1": [
       {
@@ -516,48 +517,92 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.1.4": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "e9cba8b6f077e99ad8fe09405a1dc95e9f48434e8a2f5ea82af23db7520e53b2",
+          "md5": "b471c77225455cfb3e876bd76a8bc4fd",
+          "sha256": "59c946fab541e50d2666ac05a9b53b45a2a2301e414ab59c807624ac916a9e18"
+        },
+        "downloads": -1,
+        "filename": "napari_simpleannotate-0.1.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "b471c77225455cfb3e876bd76a8bc4fd",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 42703,
+        "upload_time": "2026-01-18T08:51:46",
+        "upload_time_iso_8601": "2026-01-18T08:51:46.176949Z",
+        "url": "https://files.pythonhosted.org/packages/e9/cb/a8b6f077e99ad8fe09405a1dc95e9f48434e8a2f5ea82af23db7520e53b2/napari_simpleannotate-0.1.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "b3ef759435c89849fa212c7628b4bdb150c5441e09745e1a82a52e6b9997fa62",
+          "md5": "c6474100d737b6305d2e26bdc242cfda",
+          "sha256": "30bcfd8eb8ab789102d59c6c6919b2fe9a03706773f31ac7b6c4ee8bad9bbc99"
+        },
+        "downloads": -1,
+        "filename": "napari_simpleannotate-0.1.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "c6474100d737b6305d2e26bdc242cfda",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 41151,
+        "upload_time": "2026-01-18T08:51:47",
+        "upload_time_iso_8601": "2026-01-18T08:51:47.622207Z",
+        "url": "https://files.pythonhosted.org/packages/b3/ef/759435c89849fa212c7628b4bdb150c5441e09745e1a82a52e6b9997fa62/napari_simpleannotate-0.1.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": null,
       "digests": {
-        "blake2b_256": "eddd4b052aadd181384fdfddd8df622ff60462e7b02a8deb99d8092683ca4fba",
-        "md5": "369a83c9e17d490559674c84df782876",
-        "sha256": "939677f0cce225f1429a14e6f5dd0d4387cdafa76cadcbcfe42c4565c6e58378"
+        "blake2b_256": "e9cba8b6f077e99ad8fe09405a1dc95e9f48434e8a2f5ea82af23db7520e53b2",
+        "md5": "b471c77225455cfb3e876bd76a8bc4fd",
+        "sha256": "59c946fab541e50d2666ac05a9b53b45a2a2301e414ab59c807624ac916a9e18"
       },
       "downloads": -1,
-      "filename": "napari_simpleannotate-0.1.3-py3-none-any.whl",
+      "filename": "napari_simpleannotate-0.1.4-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "369a83c9e17d490559674c84df782876",
+      "md5_digest": "b471c77225455cfb3e876bd76a8bc4fd",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.8",
-      "size": 34786,
-      "upload_time": "2025-12-25T08:03:13",
-      "upload_time_iso_8601": "2025-12-25T08:03:13.831760Z",
-      "url": "https://files.pythonhosted.org/packages/ed/dd/4b052aadd181384fdfddd8df622ff60462e7b02a8deb99d8092683ca4fba/napari_simpleannotate-0.1.3-py3-none-any.whl",
+      "size": 42703,
+      "upload_time": "2026-01-18T08:51:46",
+      "upload_time_iso_8601": "2026-01-18T08:51:46.176949Z",
+      "url": "https://files.pythonhosted.org/packages/e9/cb/a8b6f077e99ad8fe09405a1dc95e9f48434e8a2f5ea82af23db7520e53b2/napari_simpleannotate-0.1.4-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": null,
       "digests": {
-        "blake2b_256": "fec8e79dfbdf4a5b6221442b908e71a6f645762afdfe0168cf92a054bf87e254",
-        "md5": "2725b34125c268aab6c048b42e4909c2",
-        "sha256": "e5abc6c1942620debd5098511ccb9dc4409abec75b93a6e2534d77eaa4f338b5"
+        "blake2b_256": "b3ef759435c89849fa212c7628b4bdb150c5441e09745e1a82a52e6b9997fa62",
+        "md5": "c6474100d737b6305d2e26bdc242cfda",
+        "sha256": "30bcfd8eb8ab789102d59c6c6919b2fe9a03706773f31ac7b6c4ee8bad9bbc99"
       },
       "downloads": -1,
-      "filename": "napari_simpleannotate-0.1.3.tar.gz",
+      "filename": "napari_simpleannotate-0.1.4.tar.gz",
       "has_sig": false,
-      "md5_digest": "2725b34125c268aab6c048b42e4909c2",
+      "md5_digest": "c6474100d737b6305d2e26bdc242cfda",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.8",
-      "size": 32520,
-      "upload_time": "2025-12-25T08:03:14",
-      "upload_time_iso_8601": "2025-12-25T08:03:14.818610Z",
-      "url": "https://files.pythonhosted.org/packages/fe/c8/e79dfbdf4a5b6221442b908e71a6f645762afdfe0168cf92a054bf87e254/napari_simpleannotate-0.1.3.tar.gz",
+      "size": 41151,
+      "upload_time": "2026-01-18T08:51:47",
+      "upload_time_iso_8601": "2026-01-18T08:51:47.622207Z",
+      "url": "https://files.pythonhosted.org/packages/b3/ef/759435c89849fa212c7628b4bdb150c5441e09745e1a82a52e6b9997fa62/napari_simpleannotate-0.1.4.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
