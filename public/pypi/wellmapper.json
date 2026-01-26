@@ -15,7 +15,7 @@
       "Topic :: Scientific/Engineering :: Bio-Informatics",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "# WellMapper\r\n\r\nA flexible, configurable well plate layout designer and exporter for napari. Design plate layouts with dynamic field configuration and export to local or cloud storage (AWS S3, Azure Blob, Google Cloud Storage).\r\n\r\n![License](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)\r\n![Python Version](https://img.shields.io/badge/python-3.9%2B-blue)\r\n![napari hub](https://img.shields.io/badge/napari-hub-blue)\r\n\r\n## Features\r\n\r\n- **Flexible Configuration**: Define experiment and well metadata fields via YAML config\r\n- **Visual Plate Design**: Interactive grid for selecting and annotating wells\r\n- **Color-Coded Wells**: Automatic color assignment based on well metadata for easy visualization\r\n- **Multiple Storage Backends**: Export to local filesystem, AWS S3, Azure Blob Storage, or Google Cloud Storage\r\n- **Dynamic Field Types**: Support for text, integer, date fields with autocompletion\r\n- **Incomplete Well Detection**: Visual warnings for partially filled wells\r\n- **Configuration GUI**: Built-in editors for plate parameters and storage settings\r\n\r\n## Installation\r\n\r\n### Basic Installation\r\n\r\n```bash\r\npip install WellMapper\r\n```\r\n\r\n### With Cloud Storage Support\r\n\r\nFor AWS S3:\r\n```bash\r\npip install WellMapper[s3]\r\n```\r\n\r\nFor Azure Blob Storage:\r\n```bash\r\npip install WellMapper[azure]\r\n```\r\n\r\nFor Google Cloud Storage:\r\n```bash\r\npip install WellMapper[gcs]\r\n```\r\n\r\nFor all storage backends:\r\n```bash\r\npip install WellMapper[all]\r\n```\r\n\r\n### Development Installation\r\n\r\n```bash\r\ngit clone https://github.com/yourusername/WellMapper.git\r\ncd WellMapper\r\npip install -e \".[dev]\"\r\n```\r\n\r\n## Quick Start\r\n\r\n1. **Launch napari** and open the plugin:\r\n   - Plugins \u2192 WellMapper \u2192 Well Plate Layout\r\n\r\n2. **Configure your plate** (optional):\r\n   - Plugins \u2192 WellMapper \u2192 Set Plate Layout Parameters\r\n   - Add/remove experiment and well information fields\r\n\r\n3. **Set up storage** (optional):\r\n   - Plugins \u2192 WellMapper \u2192 Set Storage Solution\r\n   - Configure local or cloud storage backend\r\n\r\n4. **Design your layout**:\r\n   - Fill in experiment information (barcode, date, etc.)\r\n   - Select wells and apply metadata\r\n   - Export to CSV\r\n\r\n## Usage\r\n\r\n### Basic Workflow\r\n\r\n1. **Enter Experiment Information**\r\n   - Barcode (required)\r\n   - Number of rows and columns\r\n   - Date and any custom fields\r\n   - Click \"Confirm Experiment Info\"\r\n\r\n2. **Annotate Wells**\r\n   - Fill in well metadata fields (donor, condition, concentration, etc.)\r\n   - Select one or multiple wells in the plate grid\r\n   - Click \"Apply to Selected\"\r\n   - Wells are automatically color-coded based on their metadata\r\n\r\n3. **Export Layout**\r\n   - Click \"Export CSV\"\r\n   - File is saved to configured storage backend\r\n   - Default location: `./data/{barcode}/layout.csv`\r\n\r\n### Configuration\r\n\r\n#### Plate Parameters (`plate_config.yaml`)\r\n\r\nDefine custom fields for your experiments:\r\n\r\n```yaml\r\nexperiment_information:\r\n  barcode:\r\n    label: Barcode\r\n    type: text\r\n    required: true\r\n  date:\r\n    label: Date\r\n    type: date\r\n    default: today\r\n    required: true\r\n  interval:\r\n    label: Interval (min)\r\n    type: int\r\n    default: 10\r\n    min: 1\r\n    max: 1440\r\n\r\nwell_information:\r\n  donor:\r\n    label: Donor ID\r\n    type: text\r\n  condition:\r\n    label: Treatment\r\n    type: text\r\n    completer:\r\n      - Control\r\n      - Drug A\r\n      - Drug B\r\n  concentration:\r\n    label: Concentration (\u00b5M)\r\n    type: text\r\n    completer:\r\n      - \"0\"\r\n      - \"0.1\"\r\n      - \"1\"\r\n      - \"10\"\r\n```\r\n\r\n**Field Types:**\r\n- `text`: Free text input with optional autocomplete\r\n- `int`: Integer input with min/max constraints\r\n- `date`: Date picker\r\n\r\n**Mandatory Fields:**\r\n- `rows`, `cols`, `barcode`, `date` in experiment_information\r\n\r\n#### Storage Configuration\r\n\r\nConfigure storage via GUI (Plugins \u2192 Set Storage Solution) or manually create `.env`:\r\n\r\n**Local Storage** (default):\r\n```env\r\nSTORAGE_TYPE=local\r\nSTORAGE_PATH=./data\r\n```\r\n\r\n**AWS S3**:\r\n```env\r\nSTORAGE_TYPE=s3\r\nS3_BUCKET=my-bucket\r\nS3_PREFIX=plate-layouts\r\nAWS_REGION=us-east-1\r\nAWS_ACCESS_KEY_ID=your-key\r\nAWS_SECRET_ACCESS_KEY=your-secret\r\n```\r\n\r\n**Azure Blob Storage**:\r\n```env\r\nSTORAGE_TYPE=azure\r\nAZURE_STORAGE_CONNECTION_STRING=DefaultEndpointsProtocol=https;AccountName=...\r\nAZURE_CONTAINER=data\r\nAZURE_PREFIX=plate-layouts\r\n```\r\n\r\n**Google Cloud Storage**:\r\n```env\r\nSTORAGE_TYPE=gcs\r\nGCS_BUCKET=my-bucket\r\nGCS_PREFIX=plate-layouts\r\nGCS_PROJECT=my-project\r\nGOOGLE_APPLICATION_CREDENTIALS=/path/to/credentials.json\r\n```\r\n\r\n### CSV Output Format\r\n\r\nThe exported CSV includes all configured fields:\r\n\r\n```csv\r\nbarcode,date,interval,well,donor,condition,concentration\r\nABC123,2024-01-15,10,A1,D001,Control,0\r\nABC123,2024-01-15,10,A2,D001,Drug A,0.1\r\nABC123,2024-01-15,10,A3,D001,Drug A,1\r\nABC123,2024-01-15,10,B1,D002,Control,0\r\n...\r\n```\r\n\r\n## Advanced Features\r\n\r\n### Color Coding\r\n\r\nWells are automatically assigned distinct colors based on their complete metadata profile. This helps visually identify:\r\n- **White**: Empty wells\r\n- **Colored**: Wells with complete metadata (same metadata = same color)\r\n- **Yellow \"!\" marker**: Incomplete wells (partial metadata)\r\n\r\n### Multi-Well Selection\r\n\r\n- Click individual wells or drag to select multiple wells\r\n- Apply the same metadata to all selected wells at once\r\n- Efficient for replicates and structured plate designs\r\n\r\n### Configuration Editor\r\n\r\nUse the built-in GUI to:\r\n- Add/remove experiment and well fields\r\n- Set field types and constraints\r\n- Define autocomplete options\r\n- Configure default values\r\n\r\n### Storage Backend Testing\r\n\r\nThe storage configuration widget includes a \"Test Connection\" button to verify:\r\n- Credentials are valid\r\n- Bucket/container exists and is accessible\r\n- Write permissions are correct\r\n\r\n## File Structure\r\n\r\n```\r\nWellMapper/\r\n\u251c\u2500\u2500 WellMapper/\r\n\u2502   \u251c\u2500\u2500 __init__.py\r\n\u2502   \u251c\u2500\u2500 _layout_widget.py       # Main plate layout widget\r\n\u2502   \u251c\u2500\u2500 _parameter_widget.py    # Configuration editor\r\n\u2502   \u251c\u2500\u2500 _storage_widget.py      # Storage setup widget\r\n\u2502   \u251c\u2500\u2500 storage_backends.py     # Storage implementations\r\n\u2502   \u251c\u2500\u2500 plate_config.yaml       # Default plate configuration\r\n\u2502   \u2514\u2500\u2500 .env                    # Storage configuration (user-created)\r\n\u251c\u2500\u2500 napari.yaml                 # Plugin manifest\r\n\u251c\u2500\u2500 pyproject.toml             # Package configuration\r\n\u2514\u2500\u2500 README.md\r\n```\r\n\r\n## Examples\r\n\r\n### Example 1: Drug Screening Plate\r\n\r\n```yaml\r\nexperiment_information:\r\n  barcode:\r\n    label: Plate Barcode\r\n    type: text\r\n    required: true\r\n  assay_date:\r\n    label: Assay Date\r\n    type: date\r\n    default: today\r\n    required: true\r\n  cell_line:\r\n    label: Cell Line\r\n    type: text\r\n  passage:\r\n    label: Passage Number\r\n    type: int\r\n    min: 1\r\n    max: 100\r\n\r\nwell_information:\r\n  compound:\r\n    label: Compound\r\n    type: text\r\n    completer:\r\n      - DMSO (Control)\r\n      - Compound A\r\n      - Compound B\r\n      - Compound C\r\n  concentration:\r\n    label: Concentration (\u00b5M)\r\n    type: text\r\n    completer:\r\n      - \"0\"\r\n      - \"0.01\"\r\n      - \"0.1\"\r\n      - \"1\"\r\n      - \"10\"\r\n      - \"100\"\r\n  replicate:\r\n    label: Replicate\r\n    type: text\r\n    completer:\r\n      - \"1\"\r\n      - \"2\"\r\n      - \"3\"\r\n```\r\n\r\n## Troubleshooting\r\n\r\n### Storage Configuration Not Found\r\n\r\n**Error**: \"Could not initialize storage backend\"\r\n\r\n**Solution**: Create `.env` file in napari by Plugins -> WellMapper -> Set Storage Solution\r\n\r\n### Cloud Storage Dependencies Missing\r\n\r\n**Error**: \"boto3 required for S3 storage\"\r\n\r\n**Solution**: Install with storage extras:\r\n```bash\r\npip install WellMapper[s3]\r\n```\r\n\r\n### Wells Not Updating Colors\r\n\r\n**Issue**: Wells stay white after applying metadata\r\n\r\n**Solution**: Ensure all fields are filled. Partial data triggers incomplete well warning (yellow \"!\").\r\n\r\n### CSV Export Path Issues\r\n\r\n**Issue**: Can't find exported files\r\n\r\n**Solution**: Check storage configuration. Default is `./data/{barcode}/layout.csv` relative to where napari was launched.\r\n\r\n## License\r\n\r\nThis project is licensed under the Apache License 2.0 License - see the [LICENSE](LICENSE) file for details.\r\n\r\n## Citation\r\n\r\nIf you use this plugin in your research, please cite:\r\n\r\n```bibtex\r\n@software{napari_plate_layout,\r\n  author = {van der Steen, Krijn H.},\r\n  title = {WellMapper: Well Plate Layout Designer for napari},\r\n  year = {2026},\r\n  url = {https://github.com/Living-Technologies/WellMapper}\r\n}\r\n```\r\n\r\n## Acknowledgments\r\n\r\n- Built with [napari](https://napari.org/)\r\n",
+    "description": "# WellMapper\r\n\r\nA flexible, configurable well plate layout designer and exporter for napari. Design plate layouts with dynamic field configuration and export to local or cloud storage (AWS S3, Azure Blob, Google Cloud Storage).\r\n\r\n![License](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)\r\n![Python Version](https://img.shields.io/badge/python-3.9%2B-blue)\r\n![napari hub](https://img.shields.io/badge/napari-hub-blue)\r\n\r\n## Features\r\n\r\n- **Flexible Configuration**: Define experiment and well metadata fields via YAML config\r\n- **Visual Plate Design**: Interactive grid for selecting and annotating wells\r\n- **Color-Coded Wells**: Automatic color assignment based on well metadata for easy visualization\r\n- **Multiple Storage Backends**: Export to local filesystem, AWS S3, Azure Blob Storage, or Google Cloud Storage\r\n- **Dynamic Field Types**: Support for text, integer, date fields with autocompletion\r\n- **Incomplete Well Detection**: Visual warnings for partially filled wells\r\n- **Configuration GUI**: Built-in editors for plate parameters and storage settings\r\n\r\n## Installation\r\n\r\n### Basic Installation\r\n\r\n```bash\r\npip install WellMapper\r\n```\r\n\r\n### With Cloud Storage Support\r\n\r\nFor AWS S3:\r\n```bash\r\npip install WellMapper[s3]\r\n```\r\n\r\nFor Azure Blob Storage:\r\n```bash\r\npip install WellMapper[azure]\r\n```\r\n\r\nFor Google Cloud Storage:\r\n```bash\r\npip install WellMapper[gcs]\r\n```\r\n\r\nFor all storage backends:\r\n```bash\r\npip install WellMapper[all]\r\n```\r\n\r\n## Quick Start\r\n\r\n1. **Launch napari** and open the plugin:\r\n   - Plugins \u2192 WellMapper \u2192 Well Plate Layout\r\n\r\n2. **Configure your plate** (optional):\r\n   - Plugins \u2192 WellMapper \u2192 Set Plate Layout Parameters\r\n   - Add/remove experiment and well information fields\r\n\r\n3. **Set up storage** (optional):\r\n   - Plugins \u2192 WellMapper \u2192 Set Storage Solution\r\n   - Configure local or cloud storage backend\r\n\r\n4. **Design your layout**:\r\n   - Fill in experiment information (barcode, date, etc.)\r\n   - Select wells and apply metadata\r\n   - Export to CSV\r\n\r\n## Usage\r\n\r\n### Basic Workflow\r\n\r\n1. **Enter Experiment Information**\r\n   - Barcode (required)\r\n   - Number of rows and columns\r\n   - Date and any custom fields\r\n   - Click \"Confirm Experiment Info\"\r\n\r\n2. **Annotate Wells**\r\n   - Fill in well metadata fields (donor, condition, concentration, etc.)\r\n   - Select one or multiple wells in the plate grid\r\n   - Click \"Apply to Selected\"\r\n   - Wells are automatically color-coded based on their metadata\r\n\r\n3. **Export Layout**\r\n   - Click \"Export CSV\"\r\n   - File is saved to configured storage backend\r\n   - Default location: `./data/{barcode}/layout.csv`\r\n\r\n### Configuration\r\n\r\n#### Plate Parameters (`plate_config.yaml`)\r\n\r\nDefine custom fields for your experiments:\r\n\r\n```yaml\r\nexperiment_information:\r\n  barcode:\r\n    label: Barcode\r\n    type: text\r\n    required: true\r\n  date:\r\n    label: Date\r\n    type: date\r\n    default: today\r\n    required: true\r\n  interval:\r\n    label: Interval (min)\r\n    type: int\r\n    default: 10\r\n    min: 1\r\n    max: 1440\r\n\r\nwell_information:\r\n  donor:\r\n    label: Donor ID\r\n    type: text\r\n  condition:\r\n    label: Treatment\r\n    type: text\r\n    completer:\r\n      - Control\r\n      - Drug A\r\n      - Drug B\r\n  concentration:\r\n    label: Concentration (\u00b5M)\r\n    type: text\r\n    completer:\r\n      - \"0\"\r\n      - \"0.1\"\r\n      - \"1\"\r\n      - \"10\"\r\n```\r\n\r\n**Field Types:**\r\n- `text`: Free text input with optional autocomplete\r\n- `int`: Integer input with min/max constraints\r\n- `date`: Date picker\r\n\r\n**Mandatory Fields:**\r\n- `rows`, `cols`, `barcode`, `date` in experiment_information\r\n\r\n#### Storage Configuration\r\n\r\nConfigure storage via GUI (Plugins \u2192 Set Storage Solution) or manually create `.env`:\r\n\r\n**Local Storage** (default):\r\n```env\r\nSTORAGE_TYPE=local\r\nSTORAGE_PATH=./data\r\n```\r\n\r\n**AWS S3**:\r\n```env\r\nSTORAGE_TYPE=s3\r\nS3_BUCKET=my-bucket\r\nS3_PREFIX=plate-layouts\r\nAWS_REGION=us-east-1\r\nAWS_ACCESS_KEY_ID=your-key\r\nAWS_SECRET_ACCESS_KEY=your-secret\r\n```\r\n\r\n**Azure Blob Storage**:\r\n```env\r\nSTORAGE_TYPE=azure\r\nAZURE_STORAGE_CONNECTION_STRING=DefaultEndpointsProtocol=https;AccountName=...\r\nAZURE_CONTAINER=data\r\nAZURE_PREFIX=plate-layouts\r\n```\r\n\r\n**Google Cloud Storage**:\r\n```env\r\nSTORAGE_TYPE=gcs\r\nGCS_BUCKET=my-bucket\r\nGCS_PREFIX=plate-layouts\r\nGCS_PROJECT=my-project\r\nGOOGLE_APPLICATION_CREDENTIALS=/path/to/credentials.json\r\n```\r\n\r\n### CSV Output Format\r\n\r\nThe exported CSV includes all configured fields:\r\n\r\n```csv\r\nbarcode,date,interval,well,donor,condition,concentration\r\nABC123,2024-01-15,10,A1,D001,Control,0\r\nABC123,2024-01-15,10,A2,D001,Drug A,0.1\r\nABC123,2024-01-15,10,A3,D001,Drug A,1\r\nABC123,2024-01-15,10,B1,D002,Control,0\r\n...\r\n```\r\n\r\n## Advanced Features\r\n\r\n### Color Coding\r\n\r\nWells are automatically assigned distinct colors based on their complete metadata profile. This helps visually identify:\r\n- **White**: Empty wells\r\n- **Colored**: Wells with complete metadata (same metadata = same color)\r\n- **Yellow \"!\" marker**: Incomplete wells (partial metadata)\r\n\r\n### Multi-Well Selection\r\n\r\n- Click individual wells or drag to select multiple wells\r\n- Apply the same metadata to all selected wells at once\r\n- Efficient for replicates and structured plate designs\r\n\r\n### Configuration Editor\r\n\r\nUse the built-in GUI to:\r\n- Add/remove experiment and well fields\r\n- Set field types and constraints\r\n- Define autocomplete options\r\n- Configure default values\r\n\r\n### Storage Backend Testing\r\n\r\nThe storage configuration widget includes a \"Test Connection\" button to verify:\r\n- Credentials are valid\r\n- Bucket/container exists and is accessible\r\n- Write permissions are correct\r\n\r\n## File Structure\r\n\r\n```\r\nWellMapper/\r\n\u251c\u2500\u2500 WellMapper/\r\n\u2502   \u251c\u2500\u2500 __init__.py\r\n\u2502   \u251c\u2500\u2500 _layout_widget.py       # Main plate layout widget\r\n\u2502   \u251c\u2500\u2500 _parameter_widget.py    # Configuration editor\r\n\u2502   \u251c\u2500\u2500 _storage_widget.py      # Storage setup widget\r\n\u2502   \u251c\u2500\u2500 storage_backends.py     # Storage implementations\r\n\u2502   \u251c\u2500\u2500 plate_config.yaml       # Default plate configuration\r\n\u2502   \u2514\u2500\u2500 .env                    # Storage configuration (user-created)\r\n\u251c\u2500\u2500 napari.yaml                 # Plugin manifest\r\n\u251c\u2500\u2500 pyproject.toml             # Package configuration\r\n\u2514\u2500\u2500 README.md\r\n```\r\n\r\n## Examples\r\n\r\n### Example 1: Drug Screening Plate\r\n\r\n```yaml\r\nexperiment_information:\r\n  barcode:\r\n    label: Plate Barcode\r\n    type: text\r\n    required: true\r\n  assay_date:\r\n    label: Assay Date\r\n    type: date\r\n    default: today\r\n    required: true\r\n  cell_line:\r\n    label: Cell Line\r\n    type: text\r\n  passage:\r\n    label: Passage Number\r\n    type: int\r\n    min: 1\r\n    max: 100\r\n\r\nwell_information:\r\n  compound:\r\n    label: Compound\r\n    type: text\r\n    completer:\r\n      - DMSO (Control)\r\n      - Compound A\r\n      - Compound B\r\n      - Compound C\r\n  concentration:\r\n    label: Concentration (\u00b5M)\r\n    type: text\r\n    completer:\r\n      - \"0\"\r\n      - \"0.01\"\r\n      - \"0.1\"\r\n      - \"1\"\r\n      - \"10\"\r\n      - \"100\"\r\n  replicate:\r\n    label: Replicate\r\n    type: text\r\n    completer:\r\n      - \"1\"\r\n      - \"2\"\r\n      - \"3\"\r\n```\r\n\r\n## Troubleshooting\r\n\r\n### Storage Configuration Not Found\r\n\r\n**Error**: \"Could not initialize storage backend\"\r\n\r\n**Solution**: Create `.env` file in napari by Plugins -> WellMapper -> Set Storage Solution\r\n\r\n### Cloud Storage Dependencies Missing\r\n\r\n**Error**: \"boto3 required for S3 storage\"\r\n\r\n**Solution**: Install with storage extras:\r\n```bash\r\npip install WellMapper[s3]\r\n```\r\n\r\n### Wells Not Updating Colors\r\n\r\n**Issue**: Wells stay white after applying metadata\r\n\r\n**Solution**: Ensure all fields are filled. Partial data triggers incomplete well warning (yellow \"!\").\r\n\r\n### CSV Export Path Issues\r\n\r\n**Issue**: Can't find exported files\r\n\r\n**Solution**: Check storage configuration. Default is `./data/{barcode}/layout.csv` relative to where napari was launched.\r\n\r\n## License\r\n\r\nThis project is licensed under the Apache License 2.0 License - see the [LICENSE](LICENSE) file for details.\r\n\r\n## Citation\r\n\r\nIf you use this plugin in your research, please cite:\r\n\r\n```bibtex\r\n@software{napari_plate_layout,\r\n  author = {van der Steen, Krijn H.},\r\n  title = {WellMapper: Well Plate Layout Designer for napari},\r\n  year = {2026},\r\n  url = {https://github.com/Living-Technologies/WellMapper}\r\n}\r\n```\r\n\r\n## Acknowledgments\r\n\r\n- Built with [napari](https://napari.org/)\r\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -45,10 +45,13 @@
       "s3",
       "azure",
       "gcs",
+      "parquet",
+      "xlsx",
+      "formats",
       "all",
       "dev"
     ],
-    "release_url": "https://pypi.org/project/WellMapper/0.1.0/",
+    "release_url": "https://pypi.org/project/WellMapper/0.1.1/",
     "requires_dist": [
       "napari[all]",
       "qtpy",
@@ -58,9 +61,19 @@
       "boto3>=1.26.0; extra == \"s3\"",
       "azure-storage-blob>=12.14.0; extra == \"azure\"",
       "google-cloud-storage>=2.5.0; extra == \"gcs\"",
+      "pandas>=1.5.0; extra == \"parquet\"",
+      "pyarrow>=10.0.0; extra == \"parquet\"",
+      "pandas>=1.5.0; extra == \"xlsx\"",
+      "openpyxl>=3.0.0; extra == \"xlsx\"",
+      "pandas>=1.5.0; extra == \"formats\"",
+      "pyarrow>=10.0.0; extra == \"formats\"",
+      "openpyxl>=3.0.0; extra == \"formats\"",
       "boto3>=1.26.0; extra == \"all\"",
       "azure-storage-blob>=12.14.0; extra == \"all\"",
       "google-cloud-storage>=2.5.0; extra == \"all\"",
+      "pandas>=1.5.0; extra == \"all\"",
+      "pyarrow>=10.0.0; extra == \"all\"",
+      "openpyxl>=3.0.0; extra == \"all\"",
       "pytest>=7.0; extra == \"dev\"",
       "pytest-qt; extra == \"dev\"",
       "black; extra == \"dev\"",
@@ -68,11 +81,11 @@
     ],
     "requires_python": ">=3.9",
     "summary": "well plate layout designer and exporter for napari",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 33810392,
+  "last_serial": 33812240,
   "releases": {
     "0.1.0": [
       {
@@ -117,48 +130,92 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.1.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "a1142d6c82c84d88cda5642bbb32fcfeee23aa6ec0cc11d14768d8583cbadcba",
+          "md5": "9b152c8f066acd824d2b581fbbe9a99b",
+          "sha256": "0ceb6437566d68fd5327ef483855d599aef1f08c5dc423817a0aa20053b16bc6"
+        },
+        "downloads": -1,
+        "filename": "wellmapper-0.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "9b152c8f066acd824d2b581fbbe9a99b",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 24522,
+        "upload_time": "2026-01-26T13:07:08",
+        "upload_time_iso_8601": "2026-01-26T13:07:08.758390Z",
+        "url": "https://files.pythonhosted.org/packages/a1/14/2d6c82c84d88cda5642bbb32fcfeee23aa6ec0cc11d14768d8583cbadcba/wellmapper-0.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "6a4e50d8e8fcd8667106b22ce6efa2ca9d69083c0faccdd6c4ac9563650835e5",
+          "md5": "31daace76f7dbffb830ecb64a3776253",
+          "sha256": "765465ede86e84335a780b76f110f4be8f0e0ce005bad5172e3b39f19b539b65"
+        },
+        "downloads": -1,
+        "filename": "wellmapper-0.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "31daace76f7dbffb830ecb64a3776253",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 25446,
+        "upload_time": "2026-01-26T13:07:10",
+        "upload_time_iso_8601": "2026-01-26T13:07:10.602620Z",
+        "url": "https://files.pythonhosted.org/packages/6a/4e/50d8e8fcd8667106b22ce6efa2ca9d69083c0faccdd6c4ac9563650835e5/wellmapper-0.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": null,
       "digests": {
-        "blake2b_256": "7abc258ac2fbefc84ba6531696ae8f15d7fee6bf7284f72dd272a2cf1e14e320",
-        "md5": "57645703c0a9e5b5bfc516da5b30d003",
-        "sha256": "1537a83e3c92ad683fab3eb45be55129a32477a953bb02bd6473ef395203579b"
+        "blake2b_256": "a1142d6c82c84d88cda5642bbb32fcfeee23aa6ec0cc11d14768d8583cbadcba",
+        "md5": "9b152c8f066acd824d2b581fbbe9a99b",
+        "sha256": "0ceb6437566d68fd5327ef483855d599aef1f08c5dc423817a0aa20053b16bc6"
       },
       "downloads": -1,
-      "filename": "wellmapper-0.1.0-py3-none-any.whl",
+      "filename": "wellmapper-0.1.1-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "57645703c0a9e5b5bfc516da5b30d003",
+      "md5_digest": "9b152c8f066acd824d2b581fbbe9a99b",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.9",
-      "size": 22728,
-      "upload_time": "2026-01-26T11:30:33",
-      "upload_time_iso_8601": "2026-01-26T11:30:33.758884Z",
-      "url": "https://files.pythonhosted.org/packages/7a/bc/258ac2fbefc84ba6531696ae8f15d7fee6bf7284f72dd272a2cf1e14e320/wellmapper-0.1.0-py3-none-any.whl",
+      "size": 24522,
+      "upload_time": "2026-01-26T13:07:08",
+      "upload_time_iso_8601": "2026-01-26T13:07:08.758390Z",
+      "url": "https://files.pythonhosted.org/packages/a1/14/2d6c82c84d88cda5642bbb32fcfeee23aa6ec0cc11d14768d8583cbadcba/wellmapper-0.1.1-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": null,
       "digests": {
-        "blake2b_256": "1d7b25a046128721d99dc26f460c9e12ee80f4961e2c5c3cd13e12fffc022039",
-        "md5": "a7a10b848c539ccf308f19d1b30b1e66",
-        "sha256": "a9bacfd4923a3bb95dc3ecbc79a41739f73b824fce677afaeaeb0a155fca7438"
+        "blake2b_256": "6a4e50d8e8fcd8667106b22ce6efa2ca9d69083c0faccdd6c4ac9563650835e5",
+        "md5": "31daace76f7dbffb830ecb64a3776253",
+        "sha256": "765465ede86e84335a780b76f110f4be8f0e0ce005bad5172e3b39f19b539b65"
       },
       "downloads": -1,
-      "filename": "wellmapper-0.1.0.tar.gz",
+      "filename": "wellmapper-0.1.1.tar.gz",
       "has_sig": false,
-      "md5_digest": "a7a10b848c539ccf308f19d1b30b1e66",
+      "md5_digest": "31daace76f7dbffb830ecb64a3776253",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.9",
-      "size": 23524,
-      "upload_time": "2026-01-26T11:30:35",
-      "upload_time_iso_8601": "2026-01-26T11:30:35.419286Z",
-      "url": "https://files.pythonhosted.org/packages/1d/7b/25a046128721d99dc26f460c9e12ee80f4961e2c5c3cd13e12fffc022039/wellmapper-0.1.0.tar.gz",
+      "size": 25446,
+      "upload_time": "2026-01-26T13:07:10",
+      "upload_time_iso_8601": "2026-01-26T13:07:10.602620Z",
+      "url": "https://files.pythonhosted.org/packages/6a/4e/50d8e8fcd8667106b22ce6efa2ca9d69083c0faccdd6c4ac9563650835e5/wellmapper-0.1.1.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
