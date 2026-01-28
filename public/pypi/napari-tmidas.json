@@ -17,7 +17,7 @@
       "Programming Language :: Python :: 3.11",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "# napari-tmidas\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-tmidas.svg?color=green)](https://github.com/macromeer/napari-tmidas/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-tmidas.svg?color=green)](https://pypi.org/project/napari-tmidas)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-tmidas.svg?color=green)](https://python.org)\n[![Downloads](https://static.pepy.tech/badge/napari-tmidas)](https://pepy.tech/project/napari-tmidas)\n[![DOI](https://zenodo.org/badge/698257324.svg)](https://zenodo.org/badge/latestdoi/698257324)\n[![tests](https://github.com/macromeer/napari-tmidas/workflows/tests/badge.svg)](https://github.com/macromeer/napari-tmidas/actions)\n\nThis napari plugin consists of a growing collection of pipelines for fast batch processing of confocal and whole slide microscopy images of biological tissues. This is a WIP and based on the [T-MIDAS terminal](https://github.com/MercaderLabAnatomy/T-MIDAS).\n\n## Features\nCurrently, **napari-tmidas** provides pipelines as widgets for batch image conversion and processing, object cropping, label image inspection and ROI colocalization (cf. [usage](#usage) below). You can request new batch image processing features in [issues](https://github.com/MercaderLabAnatomy/napari-tmidas/issues).\n\n## Installation\n\n(Video installation guides: https://www.youtube.com/@macromeer/videos)\n\nFirst, install Napari in a virtual environment:\n\n    mamba create -y -n napari-tmidas -c conda-forge python=3.11\n    mamba activate napari-tmidas\n    python -m pip install \"napari[all]\"\n\nNow you can install `napari-tmidas` via [pip]:\n\n    pip install napari-tmidas\n\n**For deep learning features** (Batch Crop Anything with SAM2, Spotiflow, Careamics, Trackastra), also install:\n\n    pip install 'napari-tmidas[deep-learning]'\n\nOr install everything at once:\n\n    pip install 'napari-tmidas[all]'\n\nIt is recommended though to install the **latest development version**. Please also execute this command from time to time in the activated environment to benefit from newly added features:\n\n    pip install git+https://github.com/MercaderLabAnatomy/napari-tmidas.git\n\n### Additional Setup for Batch Crop Anything\n\nTo use the Batch Crop Anything pipeline with SAM2, you only need to install ffmpeg manually. SAM2 and its model checkpoints will be automatically installed when you first run the pipeline:\n\n    mamba install -c conda-forge ffmpeg\n\nIf you want to batch compress image data using [Zstandard](https://github.com/facebook/zstd), use the package manager of your operating system to install it:\n\n   ~~sudo apt-get install zstd~~    # Pre-installed on Linux :man_shrugging:\n\n    brew install zstd            # for macOS (requires Homebrew)\n    pip install zstandard        # Windows with Python >= 3.7\n\nAnd you are done!\n\n## Usage\n\nTo use the plugin, start napari in the activated virtual environment with this terminal command:\n\n    mamba run -n napari-tmidas napari\n\nYou can then find the installed plugin in the Plugins tab.\n\n### Microscopy Image Conversion\n\nConverts `.lif, .nd2, .czi, .ndpi` and Acquifer data to TIF or OME-Zarr formats. Scan a folder, select files, and export with preserved spatial metadata.\n\n**Supported Formats:**\n- **TIF** - Standard format for compatibility\n- **OME-Zarr** - Recommended for large datasets, [spec v0.5](https://ngff.openmicroscopy.org/latest/) compliant with automatic physical metadata extraction (voxel sizes, spacing)\n\n<img src=\"https://github.com/user-attachments/assets/e377ca71-2f30-447d-825e-d2feebf7061b\" alt=\"Microscopy Image Conversion Widget\" style=\"width:75%; height:auto;\">\n\n\n### Image Processing\n\n1. You start with entering the path to the folder containing the images to be processed (currently supports TIF, later also ZARR) and optionally a filter for filename suffix\n\n![image](https://github.com/user-attachments/assets/41ecb689-9abe-4371-83b5-9c5eb37069f9)\n\n2. After indexing the files, a table appears with the found images. You can click on them to inspect them in the viewer.\n\n![image](https://github.com/user-attachments/assets/8360942a-be8f-49ec-bc25-385ee43bd601)\n\n3. Next, select a processing function, set parameters if applicable and `Start Batch Processing`.\n\n![image](https://github.com/user-attachments/assets/05929660-6672-4f76-89da-4f17749ccfad)\n\n4. You can click on the images in the table to show them in the viewer. For example first click on one of the `Original Files`, and then the corresponding `Processed File` to see an overlay.\n\n<img src=\"https://github.com/user-attachments/assets/cfe84828-c1cc-4196-9a53-5dfb82d5bfce\" alt=\"Image Processing Widget\" style=\"width:75%; height:auto;\">\n\n\nNote that whenever you click on an `Original File` or `Processed File` in the table, it will replace the one that is currently shown in the viewer. So naturally, you'd first select the original image, and then the processed image to correctly see the image pair that you want to inspect.\n\n\n#### Processing Function Credits\n\nThe image processing capabilities are powered by several excellent open-source tools:\n- [Cellpose 4](https://github.com/MouseLand/cellpose): Advanced cell segmentation\n- [Trackastra](https://github.com/weigertlab/trackastra): Cell tracking and analysis\n- [VisCy](https://github.com/mehta-lab/VisCy): Virtual staining using deep learning\n- [CAREamics](https://github.com/CAREamics/careamics): Content-aware image restoration and enhancement\n- [Spotiflow](https://github.com/weigertlab/spotiflow): Accurate and efficient spot detection for fluorescence microscopy\n\n#### Processing Function Documentation\n\nDetailed documentation for specific processing functions:\n\n**Core Processing**\n- [Basic Processing Functions](docs/basic_processing.md) - Label and intensity operations, channel splitting/merging, time series\n- [Cellpose Segmentation](docs/cellpose_segmentation.md) - Deep learning cell/nucleus segmentation\n- [TrackAstra Tracking](docs/trackastra_tracking.md) - Cell tracking across time-lapse data\n- [VisCy Virtual Staining](docs/viscy_virtual_staining.md) - Virtual staining of phase/DIC images using deep learning\n\n**Analysis and Quality Control**\n- [Grid View: Intensity + Labels Overlay](docs/grid_view_overlay.md) - Visual QC for segmentation results\n- [Intensity-Based Label Filtering](docs/intensity_label_filter.md) - Filter labels by signal intensity\n- [Regionprops Analysis](docs/regionprops_analysis.md) - Extract quantitative properties from labels\n\n**Advanced Processing**\n- [Advanced Processing Functions](docs/advanced_processing.md) - Denoising (CAREamics), spot detection (Spotiflow), SciPy/scikit-image filters, compression, colocalization\n\n### Batch Label Inspection\nIf you have already segmented a folder full of images and now you want to maybe inspect and edit each label image, you can use the `Plugins > T-MIDAS > Batch Label Inspection`, which automatically saves your changes to the existing label image once you click the `Save Changes and Continue` button (bottom right).\n\n<img src=\"https://github.com/user-attachments/assets/0bf8c6ae-4212-449d-8183-e91b23ba740e\" alt=\"Batch Label Inspection Widget\" style=\"width:75%; height:auto;\">\n\n### Crop Anything\n\nThis pipeline combines the Segment Anything Model (SAM2; supports YX, ZYX and TYX data) for automatic object detection with an interactive interface for selecting and cropping multiple objects from images. To launch the widget, open `Plugins > T-MIDAS > Batch Crop Anything`. Cropping works like this: Enter 2D view and go to the first z slice where the object to be cropped is appearing. Activate/select the points layer and click on the object. Terminal shows progress. You can then proceed to select another object (always do this in 2D mode)\n\n<img src=\"https://github.com/user-attachments/assets/6d72c2a2-1064-4a27-b398-a9b86fcbc443\" alt=\"Crop Anything Widget\" style=\"width:75%; height:auto;\">\n\n\n\n\n### ROI Colocalization\n\nThis pipeline quantifies colocalization between labeled regions of interest (ROIs) across multiple image channels. It determines the extent of overlap between ROIs in a reference channel and those in one or two other channels. The output is a table of colocalization counts. Optionally, the size of reference channel ROIs, as well as the total or median size of colocalizing ROIs in the other channels, can be included. Colocalization is determined using Boolean masking. The number of colocalizing instances is determined by counting unique label IDs within the overlapping regions. Typically, the reference channel contains larger structures, while other channels contain smaller, potentially nested, structures. For example, the reference channel might contain cell bodies, with the second and third channels containing nuclei and sub-nuclear objects, respectively.\n\n<img src=\"https://github.com/user-attachments/assets/2f9022a0-7b88-4588-a448-250f07a634d7\" alt=\"ROI Colocalization Widget\" style=\"width:75%; height:auto;\">\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-tmidas\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[copier]: https://copier.readthedocs.io/en/stable/\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[napari-plugin-template]: https://github.com/napari/napari-plugin-template\n\n[file an issue]: https://github.com/macromeer/napari-tmidas/issues\n\n----------------------------------\n\nThis [napari] plugin was generated with [copier] using the [napari-plugin-template].\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/napari-plugin-template#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/stable/plugins/index.html\n-->\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description": "# napari-tmidas\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-tmidas.svg?color=green)](https://github.com/macromeer/napari-tmidas/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-tmidas.svg?color=green)](https://pypi.org/project/napari-tmidas)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-tmidas.svg?color=green)](https://python.org)\n[![Downloads](https://static.pepy.tech/badge/napari-tmidas)](https://pepy.tech/project/napari-tmidas)\n[![DOI](https://zenodo.org/badge/943353883.svg)](https://doi.org/10.5281/zenodo.17988815)\n[![tests](https://github.com/macromeer/napari-tmidas/workflows/tests/badge.svg)](https://github.com/macromeer/napari-tmidas/actions)\n\n**AI-powered batch processing for microscopy images**\n\nTransform, analyze, and quantify microscopy data at scale with deep learning - from file conversion to segmentation, tracking, and analysis.\n\n## \u2728 Key Features\n\n\ud83e\udd16 **5 AI Methods Built-In**\n- Virtual staining (VisCy) \u2022 Denoising (CAREamics) \u2022 Spot detection (Spotiflow) \u2022 Segmentation (Cellpose) \u2022 Tracking (Trackastra)\n- Auto-install in isolated environments \u2022 No dependency conflicts \u2022 GPU acceleration\n\n\ud83d\udd04 **Universal File Conversion**\n- Convert LIF, ND2, CZI, NDPI, Acquifer \u2192 TIFF or OME-Zarr\n- Preserve spatial metadata automatically\n\n\u26a1 **Batch Processing**\n- Process entire folders with one click \u2022 40+ processing functions \u2022 Progress tracking & quality control\n\n\ud83d\udcca **Complete Analysis Pipeline**\n- Segmentation \u2192 Tracking \u2192 Quantification \u2192 Colocalization\n\n## \ud83d\ude80 Quick Start\n\n```bash\n# Install napari and the plugin\nmamba create -y -n napari-tmidas -c conda-forge python=3.11\nmamba activate napari-tmidas\npip install \"napari[all]\"\npip install napari-tmidas\n\n# Launch napari\nnapari\n```\n\nThen find napari-tmidas in the **Plugins** menu. [Watch video tutorials \u2192](https://www.youtube.com/@macromeer/videos)\n\n> **\ud83d\udca1 Tip**: AI methods auto-install their dependencies on first use - no manual setup required!\n\n## \ud83d\udcd6 Documentation\n\n### AI-Powered Methods\n\n| Method | Description | Documentation |\n|--------|-------------|---------------|\n| \ud83c\udfa8 **VisCy** | Virtual staining from phase/DIC | [Guide](docs/viscy_virtual_staining.md) |\n| \ud83d\udd27 **CAREamics** | Noise2Void/CARE denoising | [Guide](docs/careamics_denoising.md) |\n| \ud83c\udfaf **Spotiflow** | Spot/puncta detection | [Guide](docs/spotiflow_detection.md) |\n| \ud83d\udd2c **Cellpose** | Cell/nucleus segmentation | [Guide](docs/cellpose_segmentation.md) |\n| \ud83d\udcc8 **Trackastra** | Cell tracking over time | [Guide](docs/trackastra_tracking.md) |\n\n### Core Workflows\n\n- **[Image Conversion](docs/basic_processing.md#file-conversion)** - Multi-format microscopy file conversion\n- **[Batch Processing](docs/basic_processing.md)** - Label operations, filters, channel splitting\n- **[Quality Control](docs/grid_view_overlay.md)** - Visual QC with grid overlay\n- **[Quantification](docs/regionprops_analysis.md)** - Extract measurements from labels\n- **[Colocalization](docs/advanced_processing.md#colocalization)** - Multi-channel ROI analysis\n\n### Advanced Features\n\n- [SAM2 Crop Anything](docs/advanced_processing.md#sam2) - Interactive object cropping\n- [Advanced Filters](docs/advanced_processing.md) - SciPy/scikit-image filters\n- [Batch Label Inspection](docs/basic_processing.md#label-inspection) - Manual correction workflow\n\n## \ud83d\udcbb Installation Options\n\n**Recommended (latest features):**\n```bash\npip install git+https://github.com/MercaderLabAnatomy/napari-tmidas.git\n```\n\n**Stable release:**\n```bash\npip install napari-tmidas\n```\n\n**With deep learning (optional):**\n```bash\npip install 'napari-tmidas[deep-learning]'  # Includes SAM2\npip install 'napari-tmidas[all]'            # Everything\n```\n\n**Additional setup for SAM2:**\n```bash\nmamba install -c conda-forge ffmpeg  # Required for video processing\n```\n\n## \ud83d\uddbc\ufe0f Screenshots\n\n<details>\n<summary><b>File Conversion Widget</b></summary>\n\n<img src=\"https://github.com/user-attachments/assets/e377ca71-2f30-447d-825e-d2feebf7061b\" alt=\"File Conversion\" width=\"600\">\n\nConvert proprietary formats to open standards with metadata preservation.\n</details>\n\n<details>\n<summary><b>Batch Processing Interface</b></summary>\n\n<img src=\"https://github.com/user-attachments/assets/cfe84828-c1cc-4196-9a53-5dfb82d5bfce\" alt=\"Batch Processing\" width=\"600\">\n\nSelect files \u2192 Choose processing function \u2192 Run on entire dataset.\n</details>\n\n<details>\n<summary><b>Label Inspection</b></summary>\n\n<img src=\"https://github.com/user-attachments/assets/0bf8c6ae-4212-449d-8183-e91b23ba740e\" alt=\"Label Inspection\" width=\"600\">\n\nInspect and manually correct segmentation results.\n</details>\n\n<details>\n<summary><b>SAM2 Crop Anything</b></summary>\n\n<img src=\"https://github.com/user-attachments/assets/6d72c2a2-1064-4a27-b398-a9b86fcbc443\" alt=\"Crop Anything\" width=\"600\">\n\nInteractive object selection and cropping with SAM2.\n</details>\n\n## \ud83e\udd1d Contributing\n\nContributions are welcome! Please ensure tests pass before submitting PRs:\n\n```bash\npip install tox\ntox\n```\n\n## \ud83d\udcc4 License\n\nBSD-3 License - see [LICENSE](LICENSE) for details.\n\n## \ud83d\udc1b Issues\n\nFound a bug or have a feature request? [Open an issue](https://github.com/MercaderLabAnatomy/napari-tmidas/issues)\n\n## \ud83d\ude4f Acknowledgments\n\nBuilt with [napari](https://github.com/napari/napari) and powered by:\n- [Cellpose](https://github.com/MouseLand/cellpose) \u2022 [VisCy](https://github.com/mehta-lab/VisCy) \u2022 [CAREamics](https://github.com/CAREamics/careamics) \u2022 [Spotiflow](https://github.com/weigertlab/spotiflow) \u2022 [Trackastra](https://github.com/weigertlab/trackastra) \u2022 [SAM2](https://github.com/facebookresearch/segment-anything-2)\n\n---\n\n[PyPI]: https://pypi.org/project/napari-tmidas\n[pip]: https://pypi.org/project/pip/\n[tox]: https://tox.readthedocs.io/en/latest/\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -54,9 +54,9 @@
       "deep-learning",
       "all"
     ],
-    "release_url": "https://pypi.org/project/napari-tmidas/0.2.6/",
+    "release_url": "https://pypi.org/project/napari-tmidas/0.3.0/",
     "requires_dist": [
-      "numpy<2.0,>=1.23.0",
+      "numpy<3.0,>=1.23.0",
       "magicgui",
       "tqdm",
       "qtpy",
@@ -79,6 +79,7 @@
       "napari; extra == \"testing\"",
       "pyqt5; extra == \"testing\"",
       "psygnal>=0.8.0; extra == \"testing\"",
+      "scikit-learn-extra>=0.3.0; extra == \"testing\"",
       "scikit-learn-extra>=0.3.0; extra == \"clustering\"",
       "torch>=1.12.0; extra == \"deep-learning\"",
       "torchvision>=0.13.0; extra == \"deep-learning\"",
@@ -91,11 +92,11 @@
     ],
     "requires_python": ">=3.10",
     "summary": "A plugin for batch processing of confocal and whole-slide microscopy images of biological tissues",
-    "version": "0.2.6",
+    "version": "0.3.0",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 33099453,
+  "last_serial": 33867519,
   "releases": {
     "0.1.1": [
       {
@@ -844,48 +845,92 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.3.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "8b0f2be192aa5eacd53061181394e4584072079c309734e3391c1480878e231e",
+          "md5": "ddc5d1c4d4413b3635a6daabb08a7d1e",
+          "sha256": "dce260d5d1864a18ac8f51fe4156416bd584a5584fde12f493139d70d7a84a4d"
+        },
+        "downloads": -1,
+        "filename": "napari_tmidas-0.3.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "ddc5d1c4d4413b3635a6daabb08a7d1e",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 235682,
+        "upload_time": "2026-01-28T12:00:29",
+        "upload_time_iso_8601": "2026-01-28T12:00:29.205809Z",
+        "url": "https://files.pythonhosted.org/packages/8b/0f/2be192aa5eacd53061181394e4584072079c309734e3391c1480878e231e/napari_tmidas-0.3.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "a6cb1449de7969d56ed49f8b65441c4d208ed8d3b80421b6dc4a9fa12969e2d0",
+          "md5": "d286067bc0ca7eb16bfb1b8c3147faf6",
+          "sha256": "8e83b436b3c7d8cd649b6c4ea58123eac2764a53fd2e6654a2bbfb33069876d1"
+        },
+        "downloads": -1,
+        "filename": "napari_tmidas-0.3.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d286067bc0ca7eb16bfb1b8c3147faf6",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 247664,
+        "upload_time": "2026-01-28T12:00:30",
+        "upload_time_iso_8601": "2026-01-28T12:00:30.614570Z",
+        "url": "https://files.pythonhosted.org/packages/a6/cb/1449de7969d56ed49f8b65441c4d208ed8d3b80421b6dc4a9fa12969e2d0/napari_tmidas-0.3.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": null,
       "digests": {
-        "blake2b_256": "b02e2465d6e379be336c8883f749282e89ee17142ce2d76ebc3065f17eeb995a",
-        "md5": "924860fa843677744b5bf7f51654ff30",
-        "sha256": "56087fd4e043e17f9078a4786287de300bf274a726e19f80931621048ebbf5ee"
+        "blake2b_256": "8b0f2be192aa5eacd53061181394e4584072079c309734e3391c1480878e231e",
+        "md5": "ddc5d1c4d4413b3635a6daabb08a7d1e",
+        "sha256": "dce260d5d1864a18ac8f51fe4156416bd584a5584fde12f493139d70d7a84a4d"
       },
       "downloads": -1,
-      "filename": "napari_tmidas-0.2.6-py3-none-any.whl",
+      "filename": "napari_tmidas-0.3.0-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "924860fa843677744b5bf7f51654ff30",
+      "md5_digest": "ddc5d1c4d4413b3635a6daabb08a7d1e",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.10",
-      "size": 227656,
-      "upload_time": "2025-12-19T12:37:14",
-      "upload_time_iso_8601": "2025-12-19T12:37:14.289819Z",
-      "url": "https://files.pythonhosted.org/packages/b0/2e/2465d6e379be336c8883f749282e89ee17142ce2d76ebc3065f17eeb995a/napari_tmidas-0.2.6-py3-none-any.whl",
+      "size": 235682,
+      "upload_time": "2026-01-28T12:00:29",
+      "upload_time_iso_8601": "2026-01-28T12:00:29.205809Z",
+      "url": "https://files.pythonhosted.org/packages/8b/0f/2be192aa5eacd53061181394e4584072079c309734e3391c1480878e231e/napari_tmidas-0.3.0-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": null,
       "digests": {
-        "blake2b_256": "69b6d319d808213b9c91073e6301a257c26d528099aa9546e075bfb030263622",
-        "md5": "98762d62cfefb2166468435e5b3a60d9",
-        "sha256": "24c14e33bfbdaeef9e6ff995ac2e3aad2b574d5269d3360387627d197f15279f"
+        "blake2b_256": "a6cb1449de7969d56ed49f8b65441c4d208ed8d3b80421b6dc4a9fa12969e2d0",
+        "md5": "d286067bc0ca7eb16bfb1b8c3147faf6",
+        "sha256": "8e83b436b3c7d8cd649b6c4ea58123eac2764a53fd2e6654a2bbfb33069876d1"
       },
       "downloads": -1,
-      "filename": "napari_tmidas-0.2.6.tar.gz",
+      "filename": "napari_tmidas-0.3.0.tar.gz",
       "has_sig": false,
-      "md5_digest": "98762d62cfefb2166468435e5b3a60d9",
+      "md5_digest": "d286067bc0ca7eb16bfb1b8c3147faf6",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.10",
-      "size": 232011,
-      "upload_time": "2025-12-19T12:37:15",
-      "upload_time_iso_8601": "2025-12-19T12:37:15.922814Z",
-      "url": "https://files.pythonhosted.org/packages/69/b6/d319d808213b9c91073e6301a257c26d528099aa9546e075bfb030263622/napari_tmidas-0.2.6.tar.gz",
+      "size": 247664,
+      "upload_time": "2026-01-28T12:00:30",
+      "upload_time_iso_8601": "2026-01-28T12:00:30.614570Z",
+      "url": "https://files.pythonhosted.org/packages/a6/cb/1449de7969d56ed49f8b65441c4d208ed8d3b80421b6dc4a9fa12969e2d0/napari_tmidas-0.3.0.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
