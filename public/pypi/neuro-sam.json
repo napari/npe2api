@@ -1,0 +1,427 @@
+{
+  "info": {
+    "author": null,
+    "author_email": "Nipun Arora <nipunarora8@yahoo.com>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Framework :: napari",
+      "License :: OSI Approved :: MIT License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3"
+    ],
+    "description": "<div align=\"center\">\n\n# Neuro-SAM \n#### Foundation Models from Dendrite and Dendritic Spine Segmentation\n\n[![python](https://img.shields.io/badge/-Python_3.10-blue?logo=python&logoColor=white)](https://github.com/pre-commit/pre-commit)\n[![pytorch](https://img.shields.io/badge/PyTorch_2.0+-ee4c2c?logo=pytorch&logoColor=white)](https://pytorch.org/get-started/locally/)\n[![wandb](https://img.shields.io/badge/Weights_&_Biases-FFCC33?logo=WeightsAndBiases&logoColor=black)](https://wandb.ai/site)\n\nThis project demonstrates an interactive UI to segment dendrites and dendritic spines.\nThe model of choice is SAMv2 and the framework used is pytorch.\n\n![A stack of neural dendrites and dendritic spines](./assets/merged_dendrites_spines.gif \"Dendrites and Dendritic Spines\")\n\n</div>\n\n### \ud83d\udcdd  Table of Contents\n\n- [Neuro-SAM](#neuro-sam)\n  - [\ud83d\udcd1 Table of Contents](#--table-of-contents)\n  - [\ud83e\udde0 Overview](#-overview)\n  - [\ud83d\udce6 Built With](#-built-with)\n  - [\ud83d\udcc2 Repository Structure](#-repository-structure)\n  - [\ud83d\ude80 Installation](#-installation)\n  - [\ud83d\udcca Usage](#-usage)\n  - [\ud83d\udee0 Workflow](#-workflow)\n  - [\ud83e\uddd1\u200d\ud83d\udcbb Model Training](#-model-training)\n  - [\ud83d\udcc1 Data Format](#-data-format)\n  - [\ud83d\udcc4 License](#-license)\n  - [\ud83d\udcec Contact](#-contact)\n\n\n### \ud83e\udde0 Overview\n\nNeuro-SAM provides an end-to-end pipeline for analyzing neural structures from 3D microscopy data, featuring:\n\n- **Path Tracing**: Waypoint-based A* pathfinding\n- **Dendrite Segmentation**: SAM2-based dendrite segmentation\n- **Smart Spine Detection**: Multi-view analysis for spine detection\n- **Spine Segmentation**: Individual spine segmentation using trained SAM2 model\n\n### \ud83d\udce6 Built With\n\n[PyTorch](https://pytorch.org) - an open-source machine learning library for Python, widely used for deep learning applications.\n\n[Segment Anything Model](https://segment-anything.com) - a foundation model used for segmentation built by Meta AI.\n\n[Weights and Biases](https://wandb.ai/site) - a tool for tracking and visualizing machine learning experiments.\n\n[Visual Studio Code](https://code.visualstudio.com/) - a code editor redefined and optimized for building applications.\n\n[FAU High Performance Computing](https://doc.nhr.fau.de/) - a high-performance computing cluster at Friedrich-Alexander-Universit\u00e4t Erlangen-N\u00fcrnberg.\n\n### \ud83d\udcc1 Repository Structure\n\n```\nNeuro-SAM/\n\u251c\u2500\u2500 Train-SAMv2/                    # SAM2 training infrastructure\n\u2502   \u251c\u2500\u2500 sam2/                       # SAM2 model implementation\n\u2502   \u251c\u2500\u2500 checkpoints/                # Model checkpoints\n\u2502   \u251c\u2500\u2500 results/                    # Trained model outputs\n\u2502   \u251c\u2500\u2500 utils/                      # Training utilities\n\u2502   \u251c\u2500\u2500 train_dendrites.py         # Dendrite model training\n\u2502   \u2514\u2500\u2500 train_spines.py            # Spine model training\n\u251c\u2500\u2500 brightest_path_lib/             # Advanced pathfinding algorithms\n\u2502   \u251c\u2500\u2500 algorithm/                  # A* and waypoint search implementations\n\u2502   \u251c\u2500\u2500 cost/                       # Cost function definitions\n\u2502   \u251c\u2500\u2500 heuristic/                  # Heuristic functions\n\u2502   \u251c\u2500\u2500 visualization/              # Path visualization tools\n\u2502   \u2514\u2500\u2500 ...\n\u251c\u2500\u2500 napari_utils/                   # Napari plugin components\n\u2502   \u251c\u2500\u2500 main_widget.py             # Main interface with anisotropic scaling\n\u2502   \u251c\u2500\u2500 path_tracing_module.py     # Interactive path tracing\n\u2502   \u251c\u2500\u2500 segmentation_module.py     # Dendrite segmentation interface\n\u2502   \u251c\u2500\u2500 spine_detection_module.py  # Spine detection with smart tracking\n\u2502   \u251c\u2500\u2500 spine_segmentation_module.py # Individual spine segmentation\n\u2502   \u2514\u2500\u2500 visualization_module.py    # Path management and visualization\n\u2514\u2500\u2500 neuro_sam_plugin.py            # Main plugin entry point\n```\n\n### \ud83d\ude80 Installation\n\n#### Prerequisites\n\n- Python 3.10+\n- CUDA-compatible GPU (recommended)\n- Conda/Miniconda\n\n#### Environment Setup\n\n1. **Clone the repository:**\n```bash\ngit clone https://github.com/nipunarora8/Neuro-SAM.git\ncd Neuro-SAM\n```\n\n2. **Create local environment:**\n```bash\nconda create -p ./.venv python=3.10 -c conda-forge\nconda activate ./.venv\n```\n\n3. **Install dependencies:**\n```bash\npip install uv\nuv sync\n```\n\n4. **Download SAM2 checkpoints:**\n```bash\ncd Train-SAMv2/checkpoints\nbash download_ckpts.sh\n```\n\n### \ud83d\udcca Usage\n\n#### Quick Start\n\n```python\nfrom neuro_sam_plugin import run_neuro_sam\n\n# Launch with default spacing (94nm x 94nm x 500nm)\nviewer = run_neuro_sam(image_path=\"your_image.tif\")\n\n# Launch with custom voxel spacing\nviewer = run_neuro_sam(\n    image_path=\"your_image.tif\",\n    spacing_xyz=(100.0, 100.0, 300.0)  # X, Y, Z spacing in nm\n)\n```\n\n#### Command Line Interface\n\n```bash\n# Basic usage\npython neuro_sam_plugin.py --image_path /path/to/your/image.tif\n\n# Custom spacing\npython neuro_sam_plugin.py --image_path image.tif \\\n    --x-spacing 100.0 --y-spacing 100.0 --z-spacing 300.0\n\n# Load benchmark dataset\npython neuro_sam_plugin.py\n```\n\n### \ud83d\udd2c Workflow\n\n#### 1. **Configure Voxel Spacing**\nSet accurate X, Y, Z voxel spacing in the \"Path Tracing\" tab for proper anisotropic scaling:\n- Typical two-photon: 94nm \u00d7 94nm \u00d7 500nm\n- Confocal: varies by objective and zoom\n\n#### 2. **Trace Dendritic Paths**\n- Click waypoints along dendrite structures\n- Algorithm automatically finds optimal brightess paths\n\n#### 3. **Segment Dendrites**\n- Load pre-trained SAMv2 dendrite model\n- Segment individual path with SAMv2\n\n#### 4. **Detect Spines**\n- Smart multi-view detection using tube data generation\n- Angle-based matching between 2D and tubular views\n\n#### 5. **Segment Spines**\n- Fine-grained spine segmentation using specialized SAMv2 model\n- Dendrite mask overlay to suppress background signal\n- Manual point extension across frames\n- Contrasting color system for visualization\n\n### \ud83d\udd27 Model Training\n\n#### Dendrite Model\n```bash\ncd Train-SAMv2\npython train_dendrites.py --ppn 20 --pnn 10 --batch_size 32 --model_name \"small\"\n```\n\n#### Spine Model  \n```bash\npython train_spines.py --model_name \"small\" --batch_size 16\n```\n\n### \ud83d\udcc1 Data Format\n\n#### Input Requirements\n- **Image Format**: TIFF, .d3set (to reproduce training results)\n- **Dimensions**: 3D volumes (Z\u00d7Y\u00d7X) \n- **Bit Depth**: 8-bit or 16-bit grayscale\n- **Size**: Tested up to 2048\u00d72048\u00d7500 voxels\n\n#### Output Formats\n- **Paths**: NumPy arrays with coordinates\n- **Masks**: Binary TIFF volumes\n\n### \ud83d\udcc4 License\n\nThis project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.\n\n\n#### Useful VSCode Extensions\n\n- [Remote Explorer](https://marketplace.visualstudio.com/items?itemName=ms-vscode.remote-explorer) - Open projects on remote servers.\n- [Log Viewer](https://marketplace.visualstudio.com/items?itemName=berublan.vscode-log-viewer) - A log monitoring extension.\n- [Black Formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter) - Python auto code formatter.\n- [Markdown All in One](https://marketplace.visualstudio.com/items?itemName=yzhang.markdown-all-in-one) - Markdown preview and editing.\n\n### \ud83d\udcec  Contact\n\nNipun Arora - nipun.arora@fau.de\n\n---\n<div align=\"center\">\n<b>Made with \u2665\ufe0f at Anki Lab \ud83e\udde0\u2728</b>\n</div>\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": "MIT License\n        \n        Copyright (c) 2024 Nipun Arora\n        \n        Permission is hereby granted, free of charge, to any person obtaining a copy\n        of this software and associated documentation files (the \"Software\"), to deal\n        in the Software without restriction, including without limitation the rights\n        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n        copies of the Software, and to permit persons to whom the Software is\n        furnished to do so, subject to the following conditions:\n        \n        The above copyright notice and this permission notice shall be included in all\n        copies or substantial portions of the Software.\n        \n        THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n        SOFTWARE.\n        ",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "neuro-sam",
+    "package_url": "https://pypi.org/project/neuro-sam/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/neuro-sam/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/nipunarora8/Neuro-SAM/issues",
+      "Homepage": "https://github.com/nipunarora8/Neuro-SAM"
+    },
+    "provides_extra": null,
+    "release_url": "https://pypi.org/project/neuro-sam/0.1.6/",
+    "requires_dist": [
+      "napari",
+      "numpy",
+      "scipy",
+      "imageio",
+      "torch>=2.0.0",
+      "torchvision>=0.15.0",
+      "hydra-core>=1.3.2",
+      "iopath>=0.1.10",
+      "pillow>=9.4.0",
+      "tqdm>=4.66.1",
+      "vispy",
+      "qtpy",
+      "superqt",
+      "magicgui",
+      "scikit-image",
+      "tifffile",
+      "numba",
+      "PyQt5",
+      "opencv-python-headless",
+      "matplotlib"
+    ],
+    "requires_python": ">=3.10",
+    "summary": "Neuro-SAM: Foundation Models for Dendrite and Dendritic Spine Segmentation",
+    "version": "0.1.6",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 33993711,
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "25cb708849d15de7cb54527396e415f04230d339968e471406f142b9155eb74a",
+          "md5": "61b547d8722663b368df057c3ef89b37",
+          "sha256": "2e25a9a2218865329a73c83896c87e63d677e345426799c5c92d809bcaab9cf7"
+        },
+        "downloads": -1,
+        "filename": "neuro_sam-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "61b547d8722663b368df057c3ef89b37",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 242455,
+        "upload_time": "2026-02-02T16:53:25",
+        "upload_time_iso_8601": "2026-02-02T16:53:25.583639Z",
+        "url": "https://files.pythonhosted.org/packages/25/cb/708849d15de7cb54527396e415f04230d339968e471406f142b9155eb74a/neuro_sam-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "92b86cbd64d09df79537309f330a950cb4fbd81073cfeef32f4c025494f2795d",
+          "md5": "bbe99d8044c9d4f63018cef74a17fdc0",
+          "sha256": "3ca6e738c4cb556aa77291bb9b0dc9b6e04e1e8c972cf03df749d75bf3a649e1"
+        },
+        "downloads": -1,
+        "filename": "neuro_sam-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "bbe99d8044c9d4f63018cef74a17fdc0",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 185003,
+        "upload_time": "2026-02-02T16:53:27",
+        "upload_time_iso_8601": "2026-02-02T16:53:27.762410Z",
+        "url": "https://files.pythonhosted.org/packages/92/b8/6cbd64d09df79537309f330a950cb4fbd81073cfeef32f4c025494f2795d/neuro_sam-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "c2bb4a0088ee30185f12d51a28536cbfc60f7dca9e207dc7afdfe8aae1842362",
+          "md5": "6ce4d69aeba15ddd50ae597b1467e7d2",
+          "sha256": "eea3c8c139e70d805124a415d7cb42a0f62d9f34edbc01777600044c3197d17e"
+        },
+        "downloads": -1,
+        "filename": "neuro_sam-0.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "6ce4d69aeba15ddd50ae597b1467e7d2",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 242509,
+        "upload_time": "2026-02-02T17:08:48",
+        "upload_time_iso_8601": "2026-02-02T17:08:48.877216Z",
+        "url": "https://files.pythonhosted.org/packages/c2/bb/4a0088ee30185f12d51a28536cbfc60f7dca9e207dc7afdfe8aae1842362/neuro_sam-0.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "2516bd6eccefdccedd7a343c5e368a470bd5ea46f836b03229bdda54e81b818c",
+          "md5": "d7d325ce2e05c4c768e9b99711977461",
+          "sha256": "0d644c36289f3f7627c75aad45cf4c07fc3ccfded83d308a833c978dec4b08fc"
+        },
+        "downloads": -1,
+        "filename": "neuro_sam-0.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d7d325ce2e05c4c768e9b99711977461",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 185118,
+        "upload_time": "2026-02-02T17:08:50",
+        "upload_time_iso_8601": "2026-02-02T17:08:50.852656Z",
+        "url": "https://files.pythonhosted.org/packages/25/16/bd6eccefdccedd7a343c5e368a470bd5ea46f836b03229bdda54e81b818c/neuro_sam-0.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.2": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "9a927e9bb18bd490f1cde162fddeaa90683594c6b008883c7fca3cfe93902783",
+          "md5": "1041cc9d9b01a09843739d1ccbcbb9f7",
+          "sha256": "2de9f60bf9b9df3d5667b4598ade86d27e5cf6ab8a81e897c28e0f5844f848af"
+        },
+        "downloads": -1,
+        "filename": "neuro_sam-0.1.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "1041cc9d9b01a09843739d1ccbcbb9f7",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 242479,
+        "upload_time": "2026-02-02T17:13:21",
+        "upload_time_iso_8601": "2026-02-02T17:13:21.830306Z",
+        "url": "https://files.pythonhosted.org/packages/9a/92/7e9bb18bd490f1cde162fddeaa90683594c6b008883c7fca3cfe93902783/neuro_sam-0.1.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "b457d93c907050a344f7b03cba893acf2c2da9c585678cf065d57497e0ba4dfc",
+          "md5": "e34f460a9a385f224325a3fe24f0ef71",
+          "sha256": "9beaeacd34554e7df2cb2cf5a563710b8e675bbf0eb411b0aad08a564cdea12b"
+        },
+        "downloads": -1,
+        "filename": "neuro_sam-0.1.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e34f460a9a385f224325a3fe24f0ef71",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 185141,
+        "upload_time": "2026-02-02T17:13:23",
+        "upload_time_iso_8601": "2026-02-02T17:13:23.583054Z",
+        "url": "https://files.pythonhosted.org/packages/b4/57/d93c907050a344f7b03cba893acf2c2da9c585678cf065d57497e0ba4dfc/neuro_sam-0.1.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.3": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "e7456d17a532fac10609f5b3d7c4b0f2917bf7f208c6f67dacbd2d5422dd4839",
+          "md5": "6ec528492db0e41780db7b21e9a771ca",
+          "sha256": "4adf06e117789ef21141cb393a5dd372b551925d93f421adea4041773ae91c71"
+        },
+        "downloads": -1,
+        "filename": "neuro_sam-0.1.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "6ec528492db0e41780db7b21e9a771ca",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 242493,
+        "upload_time": "2026-02-02T17:19:21",
+        "upload_time_iso_8601": "2026-02-02T17:19:21.943029Z",
+        "url": "https://files.pythonhosted.org/packages/e7/45/6d17a532fac10609f5b3d7c4b0f2917bf7f208c6f67dacbd2d5422dd4839/neuro_sam-0.1.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "2c4866fbec93a756998f2d21ba7d905b1e815d749f57295e71484da882d620d2",
+          "md5": "c18bb7d9bc621f574d4254c95f304c9e",
+          "sha256": "437288defc9c167723c0a60cf917b7d8dffa96897d6458ec91819b78010bb984"
+        },
+        "downloads": -1,
+        "filename": "neuro_sam-0.1.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "c18bb7d9bc621f574d4254c95f304c9e",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 185157,
+        "upload_time": "2026-02-02T17:19:23",
+        "upload_time_iso_8601": "2026-02-02T17:19:23.214595Z",
+        "url": "https://files.pythonhosted.org/packages/2c/48/66fbec93a756998f2d21ba7d905b1e815d749f57295e71484da882d620d2/neuro_sam-0.1.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.4": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "2875d7831fb16d8a34ec4dcf2aad386e6b51068b8869b883e46e4d4100d2f782",
+          "md5": "13ba10aef0bcd53a62faa7f6dfbac2e2",
+          "sha256": "7c64f7049c58da7d79bf026c36acdaf3431e2d1106dc977b1368ce42345d6272"
+        },
+        "downloads": -1,
+        "filename": "neuro_sam-0.1.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "13ba10aef0bcd53a62faa7f6dfbac2e2",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 242503,
+        "upload_time": "2026-02-02T17:24:58",
+        "upload_time_iso_8601": "2026-02-02T17:24:58.056340Z",
+        "url": "https://files.pythonhosted.org/packages/28/75/d7831fb16d8a34ec4dcf2aad386e6b51068b8869b883e46e4d4100d2f782/neuro_sam-0.1.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "8fb188fa983def05009050606351ea83a1e3606ec1b646704ee2a546e50cb437",
+          "md5": "d7d7685bc4b131cc5f376f07be094e36",
+          "sha256": "548ce6c446430b5c033c483f598a54d0c23ce389fd0b29762bf3b66189037b31"
+        },
+        "downloads": -1,
+        "filename": "neuro_sam-0.1.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d7d7685bc4b131cc5f376f07be094e36",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 185196,
+        "upload_time": "2026-02-02T17:24:59",
+        "upload_time_iso_8601": "2026-02-02T17:24:59.785121Z",
+        "url": "https://files.pythonhosted.org/packages/8f/b1/88fa983def05009050606351ea83a1e3606ec1b646704ee2a546e50cb437/neuro_sam-0.1.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.5": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "24849f0852558a23d8adeda5b033d670a04b4a7ce20eeaa1d3ba61767b9a3861",
+          "md5": "5ee87ff89ec69ab02b36964d2939d947",
+          "sha256": "2ffc37a48f84430a8e52e3e8840c3b9c10a2da986504048315f68b9c58486124"
+        },
+        "downloads": -1,
+        "filename": "neuro_sam-0.1.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "5ee87ff89ec69ab02b36964d2939d947",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 242504,
+        "upload_time": "2026-02-02T17:29:18",
+        "upload_time_iso_8601": "2026-02-02T17:29:18.026436Z",
+        "url": "https://files.pythonhosted.org/packages/24/84/9f0852558a23d8adeda5b033d670a04b4a7ce20eeaa1d3ba61767b9a3861/neuro_sam-0.1.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "316165c3066fe3f8d141b8f39aa6e76889b4fca12b1a5a565fb5330e876465ec",
+          "md5": "ee1e45cada28784fc9f14872bd849fd4",
+          "sha256": "fce14f91631f2c3693031adb1069b1119dea7895e9c55007e4b3a380cf5c7c82"
+        },
+        "downloads": -1,
+        "filename": "neuro_sam-0.1.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "ee1e45cada28784fc9f14872bd849fd4",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 185247,
+        "upload_time": "2026-02-02T17:29:19",
+        "upload_time_iso_8601": "2026-02-02T17:29:19.700733Z",
+        "url": "https://files.pythonhosted.org/packages/31/61/65c3066fe3f8d141b8f39aa6e76889b4fca12b1a5a565fb5330e876465ec/neuro_sam-0.1.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.6": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "c9d8a8aaa63ff629058c4f4a6cc234961bed625282001765ca38d1e91a3a7c4c",
+          "md5": "bbd6f9561331e77b39ed4244da9d38b6",
+          "sha256": "7b69433d57d4d21cac3f6ca831a4b51ecb332823e8512586240f92e75c83fe74"
+        },
+        "downloads": -1,
+        "filename": "neuro_sam-0.1.6-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "bbd6f9561331e77b39ed4244da9d38b6",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 242456,
+        "upload_time": "2026-02-02T17:31:49",
+        "upload_time_iso_8601": "2026-02-02T17:31:49.969038Z",
+        "url": "https://files.pythonhosted.org/packages/c9/d8/a8aaa63ff629058c4f4a6cc234961bed625282001765ca38d1e91a3a7c4c/neuro_sam-0.1.6-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "4421bd2966506d06c3401bdb0260e858b34a5a77ce843486e633ff79b39285f2",
+          "md5": "2276c8158dd86754de6823bfa03a77d7",
+          "sha256": "207d42086daadf535f265d3716efab9c72e98437adf1f2a286b8aa5e30f503ef"
+        },
+        "downloads": -1,
+        "filename": "neuro_sam-0.1.6.tar.gz",
+        "has_sig": false,
+        "md5_digest": "2276c8158dd86754de6823bfa03a77d7",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 185208,
+        "upload_time": "2026-02-02T17:31:52",
+        "upload_time_iso_8601": "2026-02-02T17:31:52.219115Z",
+        "url": "https://files.pythonhosted.org/packages/44/21/bd2966506d06c3401bdb0260e858b34a5a77ce843486e633ff79b39285f2/neuro_sam-0.1.6.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "c9d8a8aaa63ff629058c4f4a6cc234961bed625282001765ca38d1e91a3a7c4c",
+        "md5": "bbd6f9561331e77b39ed4244da9d38b6",
+        "sha256": "7b69433d57d4d21cac3f6ca831a4b51ecb332823e8512586240f92e75c83fe74"
+      },
+      "downloads": -1,
+      "filename": "neuro_sam-0.1.6-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "bbd6f9561331e77b39ed4244da9d38b6",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.10",
+      "size": 242456,
+      "upload_time": "2026-02-02T17:31:49",
+      "upload_time_iso_8601": "2026-02-02T17:31:49.969038Z",
+      "url": "https://files.pythonhosted.org/packages/c9/d8/a8aaa63ff629058c4f4a6cc234961bed625282001765ca38d1e91a3a7c4c/neuro_sam-0.1.6-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "4421bd2966506d06c3401bdb0260e858b34a5a77ce843486e633ff79b39285f2",
+        "md5": "2276c8158dd86754de6823bfa03a77d7",
+        "sha256": "207d42086daadf535f265d3716efab9c72e98437adf1f2a286b8aa5e30f503ef"
+      },
+      "downloads": -1,
+      "filename": "neuro_sam-0.1.6.tar.gz",
+      "has_sig": false,
+      "md5_digest": "2276c8158dd86754de6823bfa03a77d7",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.10",
+      "size": 185208,
+      "upload_time": "2026-02-02T17:31:52",
+      "upload_time_iso_8601": "2026-02-02T17:31:52.219115Z",
+      "url": "https://files.pythonhosted.org/packages/44/21/bd2966506d06c3401bdb0260e858b34a5a77ce843486e633ff79b39285f2/neuro_sam-0.1.6.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
