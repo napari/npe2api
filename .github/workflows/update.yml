@@ -2,6 +2,7 @@ name: Update Plugin Index
 
 on:
   workflow_dispatch:
+  pull_request:
   schedule:
     # "every 2 hours"
     - cron: 0 */2 * * *
@@ -45,7 +46,7 @@ jobs:
         run: |
           python scripts/fetch_manifests.py
 
-      # validate and re-index plugin versions in case new ones have been 
+      # validate and re-index plugin versions in case new ones have been
       # retrieved from bigquery
       # will update extended_summary.json, index.json and pypi.json
       # to include all plugin versions
@@ -62,3 +63,27 @@ jobs:
         with:
           commit_message: '[bot] Update Plugin Index'
           commit_author: github-actions[bot] <github-actions[bot]@users.noreply.github.com>
+
+      # prepare static files for gh-pages deployment
+      # do this AFTER the vercel commit to make sure we're not messing with anything
+      - name: Prepare gh-pages
+        run: |
+          python scripts/prepare_gh_pages.py
+
+      # upload gh-pages artifact for PRs (for inspection)
+      - name: Upload gh-pages artifact
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        with:
+          name: gh-pages-preview
+          path: ./gh-pages
+
+      # deploy to gh-pages branch (only on main/scheduled runs, not PRs)
+      - name: Deploy to GitHub Pages
+        if: github.event_name != 'pull_request'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./gh-pages
+          publish_branch: gh-pages
+          force_orphan: true
