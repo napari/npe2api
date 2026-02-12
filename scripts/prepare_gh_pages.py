@@ -69,7 +69,7 @@ def create_index_html(gh_pages_dir: Path, api_dir: Path):
 
     plugin_list_html = "\n".join(
         [
-            f'  <li><a href="/api/manifest/{name}">{name}-{version}</a></li>'
+            f'  <li><a href="api/manifest/{name}">{name}-{version}</a></li>'
             for name, version in sorted(index_data.items())
         ]
     )
@@ -94,21 +94,21 @@ def create_index_html(gh_pages_dir: Path, api_dir: Path):
             <a href="https://napari-hub.org/">napari-hub.org</a>
         </p>
         <h3>Commonly used API endpoints</h3>
-        <p>Plugin index: <a href="/api/plugins">/api/plugins</a></p>
+        <p>Plugin index: <a href="api/plugins">api/plugins</a></p>
         <p>
             Summary info:
-                <a href="/api/extended_summary">/api/extended_summary</a>
+                <a href="api/extended_summary">api/extended_summary</a>
         </p>
         <p>
             PyPI information:
-                Use <code>/api/pypi/pypi_plugin_name</code>
+                Use <code>api/pypi/pypi_plugin_name</code>
                 endpoint for an individual plugin.
         </p>
         <p>
-            Conda index: <a href="/api/conda-map">/api/conda-map</a>
-            (see conda info for each plugin at /api/conda/pypi_name)
+            Conda index: <a href="api/conda-map">api/conda-map</a>
+            (see conda info for each plugin at api/conda/pypi_name)
         </p>
-        <p>Fetch errors: <a href="/api/errors">/api/errors</a></p>
+        <p>Fetch errors: <a href="api/errors">api/errors</a></p>
         <h3>Plugin manifests</h3>
         <ul>
         {plugin_list_html}
