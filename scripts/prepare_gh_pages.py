@@ -51,6 +51,7 @@ def prepare_gh_pages():
             dest_paths.append(gh_pages_dir / "errors.json")
         elif source_file == public_dir / "extended_summary.json":
             dest_paths.append(gh_pages_dir / "extended_summary.json")
+            dest_paths.append(api_dir / "extended_summary")
         elif source_file == public_dir / "index.json":
             dest_paths.append(gh_pages_dir / "index.json")
             dest_paths.append(api_dir / "plugins")
