@@ -123,7 +123,7 @@ def create_index_html(gh_pages_dir: Path, api_dir: Path):
             Conda index: <a href="api/conda-map">api/conda-map</a>
             (see conda info for each plugin at api/conda/pypi_name)
         </p>
-        <p>Fetch errors: <a href="api/errors">api/errors</a></p>
+        <p>Fetch errors: <a href="errors.json">errors.json</a></p>
         <h3>Plugin manifests</h3>
         <ul>
         {plugin_list_html}
