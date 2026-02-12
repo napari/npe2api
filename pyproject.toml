@@ -1,7 +1,40 @@
-[tool.pytest.ini_options]
-minversion = "6.0"
-testpaths = ["tests"]
-addopts = ["-v"]
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build]
+sources = ["src"]
+
+[tool.hatch.metadata]
+# allows us to use npe2 from git in our deps
+allow-direct-references = true
+
+[project]
+name = "npe2api"
+version = "0.1.0"
+description = "napari plugins discovery, indexing, and directory api"
+readme = "README.md"
+requires-python = ">=3.12"
+# Minimal dependencies for the Cloudflare Worker runtime
+dependencies = [
+    "fastapi",
+    "packaging",
+]
+
+[dependency-groups]
+# Dependencies for data processing scripts (not needed in worker)
+pipeline = [
+    "npe2 @ git+https://github.com/napari/npe2.git",
+    "gql[requests]",
+    "boto3",
+]
+
+# Development tools
+dev = [
+    "workers-py",
+    "workers-runtime-sdk",
+    "python-dotenv",
+]
 
 [tool.ruff]
 line-length = 88

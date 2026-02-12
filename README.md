@@ -17,6 +17,70 @@ The endpoint for the API is: <https://api.napari.org>
 | Fetch errors     | [/errors.json](https://api.napari.org/errors.json)                   |                                                  |
 | manifests        | For an individual manifest: /api/manifest/{plugin_name}              |                                                  |
 
+## Development
+
+### Prerequisites
+
+- **Python 3.12+**
+- **[Conda/Miniconda](https://docs.conda.io/en/latest/miniconda.html)** - Required for the reindex script to fetch conda package metadata
+- **[uv](https://github.com/astral-sh/uv)** (optional) - Fast Python package manager
+- **Cloudflare account** with R2 and Workers enabled
+
+### Setup
+
+1. **Install conda/miniconda** if not already installed
+
+2. **Clone the repository**
+   ```bash
+   git clone https://github.com/napari/npe2api.git
+   cd npe2api
+   ```
+
+3. **Create environment and install dependencies**
+   ```bash
+   # Create conda environment
+   conda create -n npe2api python=3.12
+   conda activate npe2api
+
+   # Install conda Python package (required for reindex script)
+   conda install conda
+
+   # Install package with pipeline dependencies
+   pip install -e .[pipeline]
+   ```
+
+4. **Configure credentials** (for local testing)
+   ```bash
+   cp .env.example .env
+   # Edit .env with your Cloudflare credentials
+   ```
+
+### Running the data pipeline
+
+```bash
+# Find plugins by classifier
+python -m npe2api.find_by_classifier
+
+# Fetch manifests
+python -m npe2api.fetch_manifests
+
+# Reindex and generate summary data
+python -m npe2api.reindex
+
+# Upload to R2
+python -m npe2api.upload_to_r2
+```
+
+### Local worker development
+
+```bash
+# Generate wrangler config
+python -m npe2api.wrangler_config --prod
+
+# Run worker locally (connects to remote R2 bucket)
+npx wrangler@latest dev
+```
+
 ## Contributing
 
 If you are interested in contributing to this repo, see the [CONTRIBUTING.md](./CONTRIBUTING.md) page.

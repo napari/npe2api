@@ -1,14 +1,20 @@
-name: Update Plugin Index
+name: Update and Deploy
 
 on:
   workflow_dispatch:
   schedule:
     # "every 2 hours"
     - cron: 0 */2 * * *
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  fetch:
-    name: Fetch
+  deploy:
+    name: Update and Deploy to Cloudflare
     runs-on: ubuntu-latest
     permissions:
       contents: 'write'
@@ -20,11 +26,21 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - id: auth
-        name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+      # Restore cached plugin data to avoid re-fetching unchanged plugins
+      - name: Restore plugin data cache
+        uses: actions/cache@v4
         with:
-          credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
+          path: public/
+          key: plugin-data-${{ github.run_id }}
+          restore-keys: |
+            plugin-data-
+
+      # Uncomment if using bigquery for active version tracking
+      # - id: auth
+      #   name: Authenticate to Google Cloud
+      #   uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+      #   with:
+      #     credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
 
       # reindex requires conda to be setup
       - uses: conda-incubator/setup-miniconda@fc2d68f6413eb2d87b895e92f8584b5b94a10167 # v3.3.0
@@ -32,33 +48,60 @@ jobs:
           auto-activate-base: true
           activate-environment: ""
 
+      # Install pipeline dependencies in conda environment
+      # Note: conda Python package is already available in base environment
+      - name: Install dependencies
+        run: |
+          pip install -e .[pipeline]
+
       - name: Find packages by classifier
         run: |
-          python -m pip install -U pip
-          python -m pip install -r requirements.txt
-          python scripts/find_by_classifier.py
-          # python -m pip install -r requirements.txt google-cloud-bigquery
-          # python scripts/bigquery.py
+          python -m npe2api.find_by_classifier
+          # Alternative: use bigquery for active version tracking
+          # python -m npe2api.bigquery
 
-      # fetch new manifests for new/updated plugins, based on active versions found with bigquery
+      # fetch new manifests for new/updated plugins
       - name: Fetch manifests
         run: |
-          python scripts/fetch_manifests.py
+          python -m npe2api.fetch_manifests
 
-      # validate and re-index plugin versions in case new ones have been 
-      # retrieved from bigquery
+      # validate and re-index plugin versions
       # will update extended_summary.json, index.json and pypi.json
       # to include all plugin versions
       - name: (re)index
         run: |
-          python scripts/reindex.py
+          python -m npe2api.reindex
         env:
           GH_API_TOKEN: ${{ secrets.GH_API_TOKEN }}
           CODECOV_API_TOKEN: ${{ secrets.CODECOV_API_TOKEN }}
 
-      # push changes back to the repo, this will trigger a new vercel build
-      # https://github.com/stefanzweifel/git-auto-commit-action
-      - uses: stefanzweifel/git-auto-commit-action@04702edda442b2e678b25b537cec683a1493fcb9 # v7.1.0
+      # generate wrangler config and set bucket name for deployment
+      - name: Generate deployment config
+        id: deploy-config
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            PR_NUM=${{ github.event.pull_request.number }}
+            echo "bucket_name=npe2api-pr-$PR_NUM" >> $GITHUB_OUTPUT
+            python -m npe2api.wrangler_config --preview $PR_NUM
+          else
+            echo "bucket_name=npe2api" >> $GITHUB_OUTPUT
+            python -m npe2api.wrangler_config --prod
+          fi
+
+      # upload JSON files to R2 bucket
+      - name: Upload to R2
+        run: |
+          python -m npe2api.upload_to_r2
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME: ${{ steps.deploy-config.outputs.bucket_name }}
+
+      # deploy Worker to Cloudflare
+      - name: Deploy Worker
+        uses: cloudflare/wrangler-action@v3
         with:
-          commit_message: '[bot] Update Plugin Index'
-          commit_author: github-actions[bot] <github-actions[bot]@users.noreply.github.com>
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
