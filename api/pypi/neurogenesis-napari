@@ -1,0 +1,338 @@
+{
+  "info": {
+    "author": null,
+    "author_email": "\"TUM.ai\" <contact@tum-ai.com>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: MIT License",
+      "Operating System :: MacOS :: MacOS X",
+      "Operating System :: Microsoft :: Windows",
+      "Operating System :: OS Independent",
+      "Operating System :: POSIX :: Linux",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# TUM.ai Neurogenesis Napari Plugin\n\n[![License MIT](https://img.shields.io/pypi/l/neurogenesis-napari.svg?color=green)](https://github.com/tum-ai/neurogenesis_napari/blob/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/neurogenesis-napari.svg?color=green)](https://pypi.org/project/neurogenesis-napari)\n[![Python Version](https://img.shields.io/pypi/pyversions/neurogenesis-napari.svg?color=green)](https://python.org)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/neurogenesis-napari)](https://napari-hub.org/plugins/neurogenesis-napari)\n\nA napari plugin for automated nuclear segmentation and neural cell type classification in neurogenesis research. Supports classification of astrocytes, neurons, oligodendrocyte precursor cells (OPCs), and dead cells from multi-channel fluorescence microscopy images.\n\n## Key Features\n\n| Widget | Function | Input | Output |\n|--------|----------|-------|---------|\n| **Normalize + Denoise** | Color normalization and denoising | Bright-field image | Processed image |\n| **Segment** | Nuclear segmentation | DAPI/nuclear stain | Masks, centroids, bounding boxes |\n| **Segment + Classify** | End-to-end cell analysis | 4-channel images | Cell segmentation + classification |\n\n## Quick Start\n\n### Installation\n\n```bash\npip install neurogenesis-napari\n```\n\nOr install through napari:\n1. Open napari\n2. Go to `Plugins` \u2192 `Install/Uninstall Plugins`\n3. Search for \"TUM.ai Neurogenesis Toolkit\"\n4. Click Install\n\n### Basic Usage\n\n1. Load your images into napari\n2. Select the appropriate widget from the `Plugins` menu\n3. Choose your image layers from the dropdown menus\n4. Click the action button to process\n\nModel weights are automatically downloaded on first use.\n\n---\n\n## Widget Documentation\n\n### Normalize + Denoise\n\nStandardizes color variations and reduces noise in bright-field microscopy images.\n\n#### Usage\n1. Load a bright-field image into napari\n2. Open `Plugins` \u2192 `Normalize and Denoise`\n3. Select your bright-field image from the **BF** dropdown\n4. Click **\"Normalize + Denoise\"**\n\n#### What it does\n- **Color Normalization**: Histogram matching against an internal reference to standardize appearance across different acquisitions\n- **Denoising**: Removes noise while preserving cellular structures using Cellpose\n- **Output**: Creates a new layer named `{original_name}_denoised`\n\n---\n\n### Segment\n\nDetects and segments individual cell nuclei from DAPI-stained images using Cellpose.\n\n#### Usage\n1. Load a DAPI/nuclear staining image into napari\n2. Open `Plugins` \u2192 `Segment`\n3. Select your DAPI image from the **DAPI** dropdown\n4. Optionally adjust:\n   - **GPU**: Enable for faster processing (if CUDA available)\n   - **Model**: Choose Cellpose model (`cyto3` default)\n5. Click **\"Segment\"**\n\n#### What it does\n- **Segmentation**: Uses Cellpose to identify individual nuclei\n- **Creates 3 new layers**:\n  - `{name}_masks`: Segmentation masks for each nucleus\n  - `{name}_centroids`: Center points of detected nuclei\n  - `{name}_bboxes`: Bounding boxes (polygons) around each nucleus\n\n---\n\n### Segment + Classify\n\nEnd-to-end pipeline that segments nuclei and classifies neural cell types in multi-channel fluorescence images.\n\n#### Usage\n1. Load a **4-channel image** into napari as separate layers:\n   - **DAPI**: Nuclear staining (DAPI/Hoechst)\n   - **Tuj1**: \u03b2-III-tubulin (neuronal marker)\n   - **RFP**: Red fluorescent protein marker\n   - **BF**: Bright-field\n2. Open `Plugins` \u2192 `Segment and Classify`\n3. Select each channel from the respective dropdowns\n4. Choose **Reuse cached segmentation**:\n   - **True** (default): Reuse previous segmentation if available (faster)\n   - **False**: Perform fresh segmentation\n5. Click **\"Segment + Classify\"**\n\n#### How it works\n1. **Segmentation**: Cellpose-based nuclear segmentation on DAPI channel\n2. **Feature extraction**: Variational Autoencoder (VAE) extracts features from 4-channel patches around each nucleus\n3. **Classification**: Nearest-centroid classifier assigns cell types based on learned centroids\n\n#### Output\nCreates colored polygon overlays for each detected cell:\n- Astrocytes (magenta)\n- Neurons (cyan)\n- OPCs - Oligodendrocyte Precursor Cells (lime)\n- Dead Cells (gray)\n\nThe classification results can be manually corrected through an interactive interface. Select any cell and use keyboard shortcuts to reassign its type: Shift+A (Astrocyte), Shift+N (Neuron), Shift+O (OPC), Shift+D (Dead Cell).\n\n---\n\n---\n\n## Technical Details\n\n### Supported Image Formats\n- `.czi` (Zeiss microscopy files, via napari-czifile2)\n- `.tiff`, `.tif`\n- `.png`, `.jpg`\n\n### Cell Classification Model\n- **Feature extraction**: Variational Autoencoder (VAE) with 2304-dimensional latent space\n- **Classifier**: Scikit-learn Nearest Centroid\n- **Input**: 224\u00d7224 pixel patches from 4 channels (DAPI, BF, Tuj1, RFP)\n- **Output**: 4 cell type classes\n\n### Requirements\n- Python \u2265 3.10\n- CUDA-capable GPU (optional, for faster processing)\n- Model weights are automatically downloaded on first use via Hugging Face Hub\n\n---\n\n## Citation\n\nIf you use this plugin in your research, please cite:\n\n```\nTUM.ai Neurogenesis Napari Plugin\nTechnical University of Munich\nhttps://github.com/tum-ai/neurogenesis_napari\n```\n\n---\n\n## License\n\nMIT License - see [LICENSE](LICENSE) file for details.\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": null,
+    "home_page": null,
+    "keywords": null,
+    "license": "The MIT License (MIT)\n        \n        Copyright (c) 2025 TUM.ai\n        \n        Permission is hereby granted, free of charge, to any person obtaining a copy\n        of this software and associated documentation files (the \"Software\"), to deal\n        in the Software without restriction, including without limitation the rights\n        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n        copies of the Software, and to permit persons to whom the Software is\n        furnished to do so, subject to the following conditions:\n        \n        The above copyright notice and this permission notice shall be included in\n        all copies or substantial portions of the Software.\n        \n        THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\n        THE SOFTWARE.",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "neurogenesis-napari",
+    "package_url": "https://pypi.org/project/neurogenesis-napari/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/neurogenesis-napari/",
+    "project_urls": {
+      "Repository": "https://github.com/tum-ai/neurogenesis_napari"
+    },
+    "provides_extra": null,
+    "release_url": "https://pypi.org/project/neurogenesis-napari/0.1.0a2/",
+    "requires_dist": [
+      "cellpose==3.1.1.2",
+      "huggingface-hub>=0.33.0",
+      "magicgui",
+      "napari-czifile2",
+      "napari[pyqt5]",
+      "numpy==1.26.4",
+      "opencv-python==4.11.0.86",
+      "pandas==2.3.0",
+      "qtpy",
+      "sam2==1.1.0",
+      "scikit-image==0.25.2",
+      "scikit-learn==1.2.2",
+      "tifffile<=2023.4.12",
+      "torch==2.7.1"
+    ],
+    "requires_python": ">=3.10",
+    "summary": "A napari plugin to segment and classify cells.",
+    "version": "0.1.0a2",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 32851996,
+  "releases": {
+    "0.1.0a1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "48ba95a8683644326bbdfaa6324cbcf64b33fe56b153757377099e4a6383dc8c",
+          "md5": "227f76e3620da448f4cffc75cfd99a64",
+          "sha256": "23991776edf14889c1f65f105f4b971c474bcff6e7f26772ab19c06808d9a298"
+        },
+        "downloads": -1,
+        "filename": "neurogenesis_napari-0.1.0a1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "227f76e3620da448f4cffc75cfd99a64",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 4852,
+        "upload_time": "2025-07-29T19:45:00",
+        "upload_time_iso_8601": "2025-07-29T19:45:00.551346Z",
+        "url": "https://files.pythonhosted.org/packages/48/ba/95a8683644326bbdfaa6324cbcf64b33fe56b153757377099e4a6383dc8c/neurogenesis_napari-0.1.0a1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "f08dfeaec551ffce0e9903cfa4f21c9f2b4890449842366c17a76a3226c93bed",
+          "md5": "cd6d89fa2f9f809c0cc372985aee6df0",
+          "sha256": "003e71a4bdc83b743717b03d13129721841ddf4ce80875481bfe4fd45815ace3"
+        },
+        "downloads": -1,
+        "filename": "neurogenesis_napari-0.1.0a1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "cd6d89fa2f9f809c0cc372985aee6df0",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 2210714,
+        "upload_time": "2025-07-29T19:45:02",
+        "upload_time_iso_8601": "2025-07-29T19:45:02.208634Z",
+        "url": "https://files.pythonhosted.org/packages/f0/8d/feaec551ffce0e9903cfa4f21c9f2b4890449842366c17a76a3226c93bed/neurogenesis_napari-0.1.0a1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.0a1.post2": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "cd757b110582752c75984a4dafdd8b50418063c52b28fa4094119c06671645ce",
+          "md5": "f7f1e65ccdfeb0fd9f753588d61e053b",
+          "sha256": "855e8faa9732db7dfc8c2d17d615cd1c3891aba40e53369e08237afaadf2f365"
+        },
+        "downloads": -1,
+        "filename": "neurogenesis_napari-0.1.0a1.post2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "f7f1e65ccdfeb0fd9f753588d61e053b",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 2224939,
+        "upload_time": "2025-07-29T20:27:39",
+        "upload_time_iso_8601": "2025-07-29T20:27:39.722058Z",
+        "url": "https://files.pythonhosted.org/packages/cd/75/7b110582752c75984a4dafdd8b50418063c52b28fa4094119c06671645ce/neurogenesis_napari-0.1.0a1.post2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "de4243a26e69795a8302512ce28fd7c3cf73d898b1b49a8f8d35134045864d61",
+          "md5": "2ba6a54e047e0c53362e0e6168878626",
+          "sha256": "dc6935b62974ecf0b651d4e4f860978c54e2d46c8cda435d846de32958f90103"
+        },
+        "downloads": -1,
+        "filename": "neurogenesis_napari-0.1.0a1.post2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "2ba6a54e047e0c53362e0e6168878626",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 2210751,
+        "upload_time": "2025-07-29T20:27:41",
+        "upload_time_iso_8601": "2025-07-29T20:27:41.024550Z",
+        "url": "https://files.pythonhosted.org/packages/de/42/43a26e69795a8302512ce28fd7c3cf73d898b1b49a8f8d35134045864d61/neurogenesis_napari-0.1.0a1.post2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.0a1.post3": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "ea902cc261f10cc9d2a5b9cb372eb52c4a654d2cf7335f00f8928602e9958ed5",
+          "md5": "db24a4a10ca2e042a3f4cf8791b38551",
+          "sha256": "e7d1d2ebf21668af475b3294faa1bda01aae403eac47ee51e1535f477e7b72e5"
+        },
+        "downloads": -1,
+        "filename": "neurogenesis_napari-0.1.0a1.post3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "db24a4a10ca2e042a3f4cf8791b38551",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 2131665,
+        "upload_time": "2025-08-20T15:27:22",
+        "upload_time_iso_8601": "2025-08-20T15:27:22.565527Z",
+        "url": "https://files.pythonhosted.org/packages/ea/90/2cc261f10cc9d2a5b9cb372eb52c4a654d2cf7335f00f8928602e9958ed5/neurogenesis_napari-0.1.0a1.post3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "ec47feb1274e250a864ab02385ca522922e56765f236d4ec7de93855819e6e2c",
+          "md5": "f318221d2074bfe08fe8c3bf19ca034f",
+          "sha256": "abe42cb2a0f726123b1443032897889e726d26168c3160f024347478880bd4ad"
+        },
+        "downloads": -1,
+        "filename": "neurogenesis_napari-0.1.0a1.post3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "f318221d2074bfe08fe8c3bf19ca034f",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 2126817,
+        "upload_time": "2025-08-20T15:27:24",
+        "upload_time_iso_8601": "2025-08-20T15:27:24.264052Z",
+        "url": "https://files.pythonhosted.org/packages/ec/47/feb1274e250a864ab02385ca522922e56765f236d4ec7de93855819e6e2c/neurogenesis_napari-0.1.0a1.post3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.0a1.post4": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "eea98e827ef047a3af746028dcdc5eba6bd7399609578aa5772c07f03e201b16",
+          "md5": "7b129b7b33833155f6837f4464198f03",
+          "sha256": "f144b81f7231d32fc4189645c596b30659c36b2ec8eff8e31e4df98e51cf6c73"
+        },
+        "downloads": -1,
+        "filename": "neurogenesis_napari-0.1.0a1.post4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "7b129b7b33833155f6837f4464198f03",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 2138890,
+        "upload_time": "2025-10-08T14:11:44",
+        "upload_time_iso_8601": "2025-10-08T14:11:44.449240Z",
+        "url": "https://files.pythonhosted.org/packages/ee/a9/8e827ef047a3af746028dcdc5eba6bd7399609578aa5772c07f03e201b16/neurogenesis_napari-0.1.0a1.post4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "f56664f36cdf6892b4972b9a45e4db27eae74a7ff80a40bb70c63a7eb5855520",
+          "md5": "403f0ebed9cf28581da10ad5de9a199a",
+          "sha256": "5efef8f8208283cab733efd03aca1020a0ac9cdbd398e68391901b1f114e7a36"
+        },
+        "downloads": -1,
+        "filename": "neurogenesis_napari-0.1.0a1.post4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "403f0ebed9cf28581da10ad5de9a199a",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 2131913,
+        "upload_time": "2025-10-08T14:11:45",
+        "upload_time_iso_8601": "2025-10-08T14:11:45.648685Z",
+        "url": "https://files.pythonhosted.org/packages/f5/66/64f36cdf6892b4972b9a45e4db27eae74a7ff80a40bb70c63a7eb5855520/neurogenesis_napari-0.1.0a1.post4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.0a2": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "7851cf31641027b565640b0effc4beb22c720000294fb2a702931b076f6593f3",
+          "md5": "8e283ddd6b4af382a71549f266b8fabf",
+          "sha256": "8597a339a0b6645f0e32713a3b5066c5ed3edbb314dbce6548d4738c28785235"
+        },
+        "downloads": -1,
+        "filename": "neurogenesis_napari-0.1.0a2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "8e283ddd6b4af382a71549f266b8fabf",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 2143736,
+        "upload_time": "2025-12-07T22:24:36",
+        "upload_time_iso_8601": "2025-12-07T22:24:36.376921Z",
+        "url": "https://files.pythonhosted.org/packages/78/51/cf31641027b565640b0effc4beb22c720000294fb2a702931b076f6593f3/neurogenesis_napari-0.1.0a2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "ec81ff39c8edbe924f7d158946a468cd86e53b7f60440750d854a0e6c965a89d",
+          "md5": "072cb11cdc01a772f5162a03e40a4f4f",
+          "sha256": "ca48bc48ce0e3416e8756d5fe16118d20b8200b1d226810d7fb5e33965e348b2"
+        },
+        "downloads": -1,
+        "filename": "neurogenesis_napari-0.1.0a2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "072cb11cdc01a772f5162a03e40a4f4f",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 2134963,
+        "upload_time": "2025-12-07T22:24:37",
+        "upload_time_iso_8601": "2025-12-07T22:24:37.919621Z",
+        "url": "https://files.pythonhosted.org/packages/ec/81/ff39c8edbe924f7d158946a468cd86e53b7f60440750d854a0e6c965a89d/neurogenesis_napari-0.1.0a2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "7851cf31641027b565640b0effc4beb22c720000294fb2a702931b076f6593f3",
+        "md5": "8e283ddd6b4af382a71549f266b8fabf",
+        "sha256": "8597a339a0b6645f0e32713a3b5066c5ed3edbb314dbce6548d4738c28785235"
+      },
+      "downloads": -1,
+      "filename": "neurogenesis_napari-0.1.0a2-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "8e283ddd6b4af382a71549f266b8fabf",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.10",
+      "size": 2143736,
+      "upload_time": "2025-12-07T22:24:36",
+      "upload_time_iso_8601": "2025-12-07T22:24:36.376921Z",
+      "url": "https://files.pythonhosted.org/packages/78/51/cf31641027b565640b0effc4beb22c720000294fb2a702931b076f6593f3/neurogenesis_napari-0.1.0a2-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "ec81ff39c8edbe924f7d158946a468cd86e53b7f60440750d854a0e6c965a89d",
+        "md5": "072cb11cdc01a772f5162a03e40a4f4f",
+        "sha256": "ca48bc48ce0e3416e8756d5fe16118d20b8200b1d226810d7fb5e33965e348b2"
+      },
+      "downloads": -1,
+      "filename": "neurogenesis_napari-0.1.0a2.tar.gz",
+      "has_sig": false,
+      "md5_digest": "072cb11cdc01a772f5162a03e40a4f4f",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.10",
+      "size": 2134963,
+      "upload_time": "2025-12-07T22:24:37",
+      "upload_time_iso_8601": "2025-12-07T22:24:37.919621Z",
+      "url": "https://files.pythonhosted.org/packages/ec/81/ff39c8edbe924f7d158946a468cd86e53b7f60440750d854a0e6c965a89d/neurogenesis_napari-0.1.0a2.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

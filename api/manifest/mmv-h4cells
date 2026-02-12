@@ -1,0 +1,155 @@
+{
+  "name": "mmv_h4cells",
+  "display_name": "Cell Analyzer",
+  "visibility": "public",
+  "icon": "",
+  "categories": [],
+  "schema_version": "0.2.1",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "mmv_h4cells.get_reader",
+        "title": "Open data with Cell Analyzer",
+        "python_name": "mmv_h4cells._reader:napari_get_reader",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "mmv_h4cells.write_multiple",
+        "title": "Save multi-layer data with Cell Analyzer",
+        "python_name": "mmv_h4cells._writer:write_multiple",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "mmv_h4cells.write_single_image",
+        "title": "Save image data with Cell Analyzer",
+        "python_name": "mmv_h4cells._writer:write_single_image",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "mmv_h4cells.make_qwidget",
+        "title": "Make Cell Analyzer",
+        "python_name": "mmv_h4cells:CellAnalyzer",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": [
+      {
+        "command": "mmv_h4cells.get_reader",
+        "filename_patterns": [
+          "*.npy"
+        ],
+        "accepts_directories": false
+      }
+    ],
+    "writers": [
+      {
+        "command": "mmv_h4cells.write_multiple",
+        "layer_types": [
+          "image*",
+          "labels*"
+        ],
+        "filename_extensions": [],
+        "display_name": ""
+      },
+      {
+        "command": "mmv_h4cells.write_single_image",
+        "layer_types": [
+          "image"
+        ],
+        "filename_extensions": [
+          ".npy"
+        ],
+        "display_name": ""
+      }
+    ],
+    "widgets": [
+      {
+        "command": "mmv_h4cells.make_qwidget",
+        "display_name": "MMV_H4Cells",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.1",
+    "name": "mmv_h4cells",
+    "version": "1.1.0",
+    "dynamic": null,
+    "platform": null,
+    "supported_platform": null,
+    "summary": "A simple plugin to help with analyzing cells in napari",
+    "description": "# MMV_H4Cells\n\n[![License BSD-3](https://img.shields.io/pypi/l/mmv_h4cells.svg?color=green)](https://github.com/MMV-Lab/mmv_h4cells/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/mmv_h4cells.svg?color=green)](https://pypi.org/project/mmv_h4cells)\n[![Python Version](https://img.shields.io/pypi/pyversions/mmv_h4cells.svg?color=green)](https://python.org)\n[![tests](https://github.com/MMV-Lab/mmv_h4cells/workflows/tests/badge.svg)](https://github.com/MMV-Lab/mmv_h4cells/actions)\n[![codecov](https://codecov.io/gh/MMV-Lab/mmv_h4cells/branch/main/graph/badge.svg)](https://codecov.io/gh/MMV-Lab/mmv_h4cells)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/mmv_h4cells)](https://napari-hub.org/plugins/mmv_h4cells)\n\nA simple plugin to help with analyzing cells in napari\n\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/stable/plugins/index.html\n-->\n\n## Installation\n\nYou can install `mmv_h4cells` via [pip]:\n\n    pip install mmv_h4cells\n\n\n\nTo install latest development version :\n\n    pip install git+https://github.com/MMV-Lab/mmv_h4cells.git\n\n\n## Documentation\n\nThis plugin was developed for semi-automatic cell analysis to determine cell sizes of individual cells.\n\nThe core functionality includes the option to include or exclude individual (cell) instances in the evaluation via the include/exclude button. After a decision has been made, the plugin automatically centers on the next instance and a new decision can be made. In addition, you can include multiple cells at the same time using the \"select multiple\" function. It is also possible to analyze entire ROIs at once.\n \n### Get started\n\nTo get started, an instance segmentation must be loaded. This can be done simply via drag & drop. A raw image of the original data is optional, but certainly helps when deciding whether to include or exclude.\nOnce the layers have been loaded into napari, the plugin can be started.\nIf you have only interrupted the evaluation and exported the previous results, you can now import them again (the segmentation must be reloaded into napari). \n\n### Analysis\n\nThe analysis can be started by clicking on the \"Start analysis\" button. The next instance ID to be evaluated is shown next to \"Start analysis at\". To change the region of interest to be evaluated, a different ID can be entered there and the plugin will center on this within the next 2 decisions. Decisions are made by clicking the Include/Exclude button. If an instance is not completely recognized correctly, you can use the paint function of napari to correct this manually and then include the instance as usual using the button. The undo function can be used to undo the last decision and the \"Draw own cell\" button allows you to add unrecognized cells manually. This must be done cell by cell and confirmed each time using the button. The plugin does not allow other existing instances to be painted over. If this happens by mistake, a warning is displayed, oberlapping pixels are highlighted and users can either cancel via the cancel button within the warning or close the warning and correct this manually. \n\nWhen an instance is included, the respective instance is written to a segmentation layer, which can be exported using the export function. In addition, the ID, the size and the centroid are exported as a .csv file. We also export a .zarr file, which makes it possible to re-import previously exported results, for example to pause the analysis. To enable a smooth re-import, the .csv and the .zarr file must have the same name stem, so please either do not rename the files or rename them in the same way. \n\nFor a better overview, the included/excluded/remaining instances can be viewed using the buttons at the bottom.\n\n#### Select multiple cells\n\nWe also support the option of including several cells at once. To do so, the respective IDs must be entered at the bottom next to \"Include\" and then selected using the \"Select multiple\". This works by entering comma-separated IDs, so *1,5,100,17* would be a valid entry.\n\n#### Select ROI\n\nEntire ROIs can also be analyzed. To do this, simply enter the corner pixels in the \"Range x\" and \"Range y\" fields. All cells > the threshold are included; if, for example, cells that lie exactly at the edge of the ROI and are partially cut off are to be excluded, a corresponding threshold must be set.\n\nNote: Exported ROIs cannot be re-imported.\n\n### Hotkeys\n\n- `k` - Include\n- `g` - Exclude\n- `j` - Change visibility of all label layers for better inspection\n- `h` - Undo\n\n### Don'ts\n\nThis is a tool for analyzing cells. However, we do not catch every possible error and in order for the tool to run stable, it is important to avoid some operations:\n\n- Do not create new layers during the analysis.\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"mmv_h4cells\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[file an issue]: https://github.com/MMV-Lab/mmv_h4cells/issues\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": "https://github.com/MMV-Lab/mmv_h4cells",
+    "download_url": null,
+    "author": "Lennart Kowitz",
+    "author_email": "lennart.kowitz@isas.de",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "BSD-3-Clause",
+    "classifier": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Programming Language :: Python :: 3.10",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "requires_dist": [
+      "numpy",
+      "qtpy",
+      "scikit-image",
+      "scipy",
+      "aicsimageio",
+      "opencv-python",
+      "pandas",
+      "tox; extra == \"testing\"",
+      "pytest; extra == \"testing\"",
+      "pytest-cov; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "napari; extra == \"testing\"",
+      "pyqt5; extra == \"testing\""
+    ],
+    "requires_python": ">=3.8",
+    "requires_external": null,
+    "project_url": [
+      "Bug Tracker, https://github.com/MMV-Lab/mmv_h4cells/issues",
+      "Documentation, https://github.com/MMV-Lab/mmv_h4cells#README.md",
+      "Source Code, https://github.com/MMV-Lab/mmv_h4cells",
+      "User Support, https://github.com/MMV-Lab/mmv_h4cells/issues"
+    ],
+    "provides_extra": [
+      "testing"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}

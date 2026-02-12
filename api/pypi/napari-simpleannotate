@@ -1,0 +1,655 @@
+{
+  "info": {
+    "author": null,
+    "author_email": "Hiroki Kawai <h.kawai888@gmail.com>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-simpleannotate\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-simpleannotate.svg?color=green)](https://github.com/hiroalchem/napari-simpleannotate/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-simpleannotate.svg?color=green)](https://pypi.org/project/napari-simpleannotate)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-simpleannotate.svg?color=green)](https://python.org)\n[![tests](https://github.com/hiroalchem/napari-simpleannotate/workflows/tests/badge.svg)](https://github.com/hiroalchem/napari-simpleannotate/actions)\n[![codecov](https://codecov.io/gh/hiroalchem/napari-simpleannotate/branch/main/graph/badge.svg)](https://codecov.io/gh/hiroalchem/napari-simpleannotate)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-simpleannotate)](https://napari-hub.org/plugins/napari-simpleannotate)\n\nA napari plugin for simple image and video annotation that provides three main annotation workflows:\n\n1. **Bounding Box Annotation (YOLO format)**: For object detection training data on images\n2. **Video Bounding Box Annotation**: For object detection training data on video files\n3. **Image Classification Labeling**: For image classification training data\n\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/stable/plugins/index.html\n-->\n\n![overview](https://github.com/hiroalchem/napari-simpleannotate/raw/main/images/dog_and_cat.jpg)\n\n\n## Installation\n\nYou can install `napari-simpleannotate` via [pip]:\n\n    pip install napari-simpleannotate\n\n\n\nTo install latest development version :\n\n    pip install git+https://github.com/hiroalchem/napari-simpleannotate.git\n\n\n## How to use\n\n### Getting Started\n\nAfter installing napari-simpleannotate, launch napari and navigate to `Plugins > Add dock widget` to find three annotation widgets:\n\n- **Bbox annotation**: For bounding box annotation on images\n- **Bbox video annotation**: For bounding box annotation on video files  \n- **Label image classification**: For image classification labeling\n\n### Bounding Box Annotation (Images)\n\n**Prerequisites**: None required\n\n1. **Opening Files**:\n   - Single file: Click `Open File` to select an image file\n   - Directory: Click `Open Directory` to select a folder containing images\n   - If a `class.yaml` file exists in the directory, you'll be prompted to load existing classes\n\n2. **Class Management**:\n   - Enter class names in the text box and click `Add class`\n   - Classes are automatically assigned sequential IDs (0, 1, 2, ...)\n   - Select a class and click `Delete selected class` to remove it\n   - Classes are saved to `class.yaml` alongside annotations\n\n3. **Creating Annotations**:\n   - Select a class from the list (becomes your active class)\n   - Use napari's rectangle tool (shortcut: R) to draw bounding boxes\n   - New rectangles automatically inherit the selected class\n   - Change existing rectangles: select the shape, then click a different class\n\n4. **Saving Work**:\n   - Click `Save Annotations` to export in YOLO format\n   - Files saved: `image_name.txt` (YOLO coordinates) + `class.yaml` (class definitions)\n   - YOLO format: `class_id x_center y_center width height` (normalized 0-1)\n\n### Video Bounding Box Annotation\n\n**Prerequisites**: Install PyAV for video support: `pip install av`\n\n1. **Opening Videos**:\n   - Click `Open Video` to select MP4, AVI, MOV, MKV, WMV, FLV, or WebM files\n   - Frames load through a cached reader that keeps recently viewed frames ready for scrubbing\n\n2. **Navigation & Frame Tools**:\n   - Use napari's time slider; the widget shows `Frame: current/total` alongside live cache usage\n   - Jump between annotated frames with the `Prev (Q)` and `Next (W)` buttons or keyboard shortcuts\n   - Nearby frames are prefetched in the background to keep playback smooth during review\n\n3. **Annotating Frames**:\n   - Draw rectangles after selecting a class; each shape stores its frame index automatically\n   - Bounding boxes are only visible on the frame where they were created\n   - Class management matches the image workflow, and `class.yaml` is written in YOLO `names:` format\n\n4. **Automatic Tracking**:\n   - Use `Start` to launch trackers for the boxes in the current frame and `Stop` to halt processing\n   - Keep `Track all bounding boxes` enabled to follow every box, or disable it to track only selected shapes\n   - Choose between the default OpenCV `CSRT` tracker and the experimental `TrackerVit`\n\n5. **Saving & Exports**:\n   - `Save Annotations` writes per-frame YOLO files (`imgNNN.txt`) in a video-specific folder next to the source\n   - Annotated frames are saved once as `imgNNN.png` so you can review what was labeled later\n   - Enable `Enable crop on save` to export fixed-size crops plus matching YOLO labels under `crops/`\n   - Existing exports are reused when present so repeated saves only write new annotations\n\n### Image Classification Labeling\n\n**Prerequisites**: None required\n\n1. **Opening Directory**:\n   - Click `Open Directory` to select image folder\n   - Recursively finds all images (PNG, TIF, JPG, JPEG, TIFF)\n   - Automatically loads existing `labels.csv` and `class.txt` if present\n\n2. **Display Options**:\n   - **Split Channels**: Check to display multi-channel images as separate layers\n   - Contrast settings preserved when switching between images\n   - Navigate images using the file list on the left\n\n3. **Labeling Workflow**:\n   - Add classes: Type in text box and press Enter (or click `Add class`)\n   - Remove classes: Type existing class name and press Enter\n   - Assign labels: Select image \u2192 Click class name to label it\n   - Real-time auto-save to `labels.csv` and `class.txt`\n\n4. **Resume Sessions**:\n   - Previous work automatically loaded when reopening directories\n   - Continue labeling from where you left off\n\n## Performance Notes\n\n- **Video annotation**: Optimized with frame caching and parallel prefetching for smooth playback\n- **Large datasets**: Classification widget handles thousands of images efficiently  \n- **Memory management**: LRU cache prevents memory overflow during long annotation sessions\n\n## Output Formats\n\n| Widget | Annotation File | Class File | Format |\n|--------|----------------|------------|---------|\n| Bbox (Images) | `image.txt` | `class.yaml` | YOLO standard |\n| Bbox (Video) | `imgNNN.txt` per frame (+ optional `crops/*.txt`) | `class.yaml` | YOLO normalized (per frame/crop) |\n| Classification | `labels.csv` | `class.txt` | CSV with image-label pairs |\n\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-simpleannotate\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[file an issue]: https://github.com/hiroalchem/napari-simpleannotate/issues\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": "BSD-3-Clause",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-simpleannotate",
+    "package_url": "https://pypi.org/project/napari-simpleannotate/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-simpleannotate/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/hiroalchem/napari-simpleannotate/issues",
+      "User Support": "https://github.com/hiroalchem/napari-simpleannotate/issues",
+      "documentation": "https://github.com/hiroalchem/napari-simpleannotate#README.md",
+      "homepage": "https://github.com/hiroalchem/napari-simpleannotate",
+      "repository": "https://github.com/hiroalchem/napari-simpleannotate"
+    },
+    "provides_extra": [
+      "testing"
+    ],
+    "release_url": "https://pypi.org/project/napari-simpleannotate/0.1.5/",
+    "requires_dist": [
+      "numpy",
+      "magicgui",
+      "pyyaml",
+      "qtpy",
+      "scikit-image",
+      "pandas",
+      "napari_video",
+      "zarr",
+      "numcodecs",
+      "opencv-contrib-python",
+      "tox; extra == \"testing\"",
+      "pytest; extra == \"testing\"",
+      "pytest-cov; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "napari; extra == \"testing\"",
+      "pyqt5; extra == \"testing\""
+    ],
+    "requires_python": ">=3.8",
+    "summary": "A napari plugin for simple image and video annotation",
+    "version": "0.1.5",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 33643243,
+  "releases": {
+    "0.0.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "4feb6a2f6b8381c75df2eaaa7219b78f142d0740f3f994301799e48fb3da9d7f",
+          "md5": "7966da5bfa666d69ea7b78e76b11a233",
+          "sha256": "c5c2ef59e00f86d5da97af87364579e978dfe484f2ce1dbbcb782a9c51ec871a"
+        },
+        "downloads": -1,
+        "filename": "napari_simpleannotate-0.0.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "7966da5bfa666d69ea7b78e76b11a233",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 10166,
+        "upload_time": "2023-10-29T01:52:49",
+        "upload_time_iso_8601": "2023-10-29T01:52:49.415748Z",
+        "url": "https://files.pythonhosted.org/packages/4f/eb/6a2f6b8381c75df2eaaa7219b78f142d0740f3f994301799e48fb3da9d7f/napari_simpleannotate-0.0.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "a2fe272e3cbfb0399155f00bd3ebb84eba9b46ed497e4b7771982f13e907b4bb",
+          "md5": "ecee549a571e7ab1e07a7264af1395e8",
+          "sha256": "b37df298f3dedbf5f974f29cc26c94c3602fcc1a59eb5e38dc81037233a99959"
+        },
+        "downloads": -1,
+        "filename": "napari-simpleannotate-0.0.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "ecee549a571e7ab1e07a7264af1395e8",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 11085,
+        "upload_time": "2023-10-29T01:52:52",
+        "upload_time_iso_8601": "2023-10-29T01:52:52.257015Z",
+        "url": "https://files.pythonhosted.org/packages/a2/fe/272e3cbfb0399155f00bd3ebb84eba9b46ed497e4b7771982f13e907b4bb/napari-simpleannotate-0.0.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "294e79cf2891f016ffb4f3d2d38d877a38736da5eded42f6de71e53d72eb60c1",
+          "md5": "f892681cb6b4f0926980269f32638799",
+          "sha256": "eb3839d977e5f793a110eddddf25936595481d10332797809b9e37375a0c20a4"
+        },
+        "downloads": -1,
+        "filename": "napari_simpleannotate-0.0.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "f892681cb6b4f0926980269f32638799",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 10741,
+        "upload_time": "2023-10-29T01:55:52",
+        "upload_time_iso_8601": "2023-10-29T01:55:52.610735Z",
+        "url": "https://files.pythonhosted.org/packages/29/4e/79cf2891f016ffb4f3d2d38d877a38736da5eded42f6de71e53d72eb60c1/napari_simpleannotate-0.0.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "f458e4f390501a21038c26d928c73cb4a136b51dacb66d642949af95d3c5dd57",
+          "md5": "2c173ec45c60e7b55d8df1f3b78827a4",
+          "sha256": "4d35496776ddb08282ff3a6776e183279f18a113ca472a6eeb2ef78966396fa0"
+        },
+        "downloads": -1,
+        "filename": "napari-simpleannotate-0.0.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "2c173ec45c60e7b55d8df1f3b78827a4",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 12165,
+        "upload_time": "2023-10-29T01:55:54",
+        "upload_time_iso_8601": "2023-10-29T01:55:54.339256Z",
+        "url": "https://files.pythonhosted.org/packages/f4/58/e4f390501a21038c26d928c73cb4a136b51dacb66d642949af95d3c5dd57/napari-simpleannotate-0.0.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.3": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "1274f736cb74206027c02fa89779a54d51a1f38fdc3792649f8a6480b14db7f8",
+          "md5": "2216eda99d77b4c430319ab51c758518",
+          "sha256": "ae228501a251dc9b8117da894f0bb1c804e6bb7a13c3b3ea25979206124e1a60"
+        },
+        "downloads": -1,
+        "filename": "napari_simpleannotate-0.0.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "2216eda99d77b4c430319ab51c758518",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 10741,
+        "upload_time": "2023-10-29T02:03:21",
+        "upload_time_iso_8601": "2023-10-29T02:03:21.682181Z",
+        "url": "https://files.pythonhosted.org/packages/12/74/f736cb74206027c02fa89779a54d51a1f38fdc3792649f8a6480b14db7f8/napari_simpleannotate-0.0.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "e1ab360cf80c72d474db39bfe459219f49fbb4fc2b45cb441f5656769ff3b2c8",
+          "md5": "2d307dd1eae044fb5cdc3548fb524f3a",
+          "sha256": "08bba922f7c5ec6243f4ec13b06d099814d7ee03c2c9986de9352081effe4ca5"
+        },
+        "downloads": -1,
+        "filename": "napari-simpleannotate-0.0.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "2d307dd1eae044fb5cdc3548fb524f3a",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 12187,
+        "upload_time": "2023-10-29T02:03:23",
+        "upload_time_iso_8601": "2023-10-29T02:03:23.797007Z",
+        "url": "https://files.pythonhosted.org/packages/e1/ab/360cf80c72d474db39bfe459219f49fbb4fc2b45cb441f5656769ff3b2c8/napari-simpleannotate-0.0.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.5": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "f3fd28658fc0477819df5c1f4ef68969b20d87487fa6764f709c280e5fd6d124",
+          "md5": "654a4a720cf3fac9260caef88288557b",
+          "sha256": "1d06923ad9d63bb0f6d1947c9f37530e4acb78056c0571146240f9990089dda0"
+        },
+        "downloads": -1,
+        "filename": "napari_simpleannotate-0.0.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "654a4a720cf3fac9260caef88288557b",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 11241,
+        "upload_time": "2024-08-05T06:30:47",
+        "upload_time_iso_8601": "2024-08-05T06:30:47.511101Z",
+        "url": "https://files.pythonhosted.org/packages/f3/fd/28658fc0477819df5c1f4ef68969b20d87487fa6764f709c280e5fd6d124/napari_simpleannotate-0.0.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "7e526833b5b3af062f92cf9b51b77ebb7edbc7f714e2b93ecbbaa9193bc30242",
+          "md5": "d2f295c53ee942e34b1977942d8e6ff3",
+          "sha256": "2d9d4d5f93dd1fc027163d05f7a7ed5a8ae70fafc596a91a704de9b641acb97a"
+        },
+        "downloads": -1,
+        "filename": "napari_simpleannotate-0.0.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d2f295c53ee942e34b1977942d8e6ff3",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 12272,
+        "upload_time": "2024-08-05T06:30:49",
+        "upload_time_iso_8601": "2024-08-05T06:30:49.935088Z",
+        "url": "https://files.pythonhosted.org/packages/7e/52/6833b5b3af062f92cf9b51b77ebb7edbc7f714e2b93ecbbaa9193bc30242/napari_simpleannotate-0.0.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.8": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "621b70c8ea77ab9a8c1cb977dad92a9f6a8209732828f9af86fae2aada625009",
+          "md5": "7316c82b5fd94caf8370883c7d8ebb19",
+          "sha256": "6a43b2bb88f4c1494e5fd8e5636d98f459b5c83fa5f7baa632da0c4e22a328bc"
+        },
+        "downloads": -1,
+        "filename": "napari_simpleannotate-0.0.8-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "7316c82b5fd94caf8370883c7d8ebb19",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 28309,
+        "upload_time": "2025-07-11T09:45:16",
+        "upload_time_iso_8601": "2025-07-11T09:45:16.857045Z",
+        "url": "https://files.pythonhosted.org/packages/62/1b/70c8ea77ab9a8c1cb977dad92a9f6a8209732828f9af86fae2aada625009/napari_simpleannotate-0.0.8-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "d6b665cd95b6183246ade0791bf5385f018ad3425c0d122afb3a5a1604ef837a",
+          "md5": "e39bf432b9a3e289b193c3321512bc36",
+          "sha256": "95ff90749b871e4cc8147aeae5b4e3e4481403176ef95b2cb3cf949cdd6a3094"
+        },
+        "downloads": -1,
+        "filename": "napari_simpleannotate-0.0.8.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e39bf432b9a3e289b193c3321512bc36",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 25515,
+        "upload_time": "2025-07-11T09:45:18",
+        "upload_time_iso_8601": "2025-07-11T09:45:18.236227Z",
+        "url": "https://files.pythonhosted.org/packages/d6/b6/65cd95b6183246ade0791bf5385f018ad3425c0d122afb3a5a1604ef837a/napari_simpleannotate-0.0.8.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.9": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "75f4fa6512d1818012ba29de6b885a8e2bec1d9531c7a9f2b3382e29b9d0ea81",
+          "md5": "1e814e1eba457fa201d83586fef3987d",
+          "sha256": "0dbf2a03e3dcd0241c109f7a13e32b3e34be83184a4398598477c19a74b3030f"
+        },
+        "downloads": -1,
+        "filename": "napari_simpleannotate-0.0.9-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "1e814e1eba457fa201d83586fef3987d",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 28312,
+        "upload_time": "2025-07-14T04:49:37",
+        "upload_time_iso_8601": "2025-07-14T04:49:37.647488Z",
+        "url": "https://files.pythonhosted.org/packages/75/f4/fa6512d1818012ba29de6b885a8e2bec1d9531c7a9f2b3382e29b9d0ea81/napari_simpleannotate-0.0.9-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "44b1190138fc2f2c1040bf979d10559d62a422407a27641c26c0c453ca678980",
+          "md5": "98ae30c16a8659f998dc68d3fd6bde7b",
+          "sha256": "853d8abd7d7066476432f098be59bb3cc431edd6488dc74ad69898848e976afa"
+        },
+        "downloads": -1,
+        "filename": "napari_simpleannotate-0.0.9.tar.gz",
+        "has_sig": false,
+        "md5_digest": "98ae30c16a8659f998dc68d3fd6bde7b",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 25526,
+        "upload_time": "2025-07-14T04:49:39",
+        "upload_time_iso_8601": "2025-07-14T04:49:39.510373Z",
+        "url": "https://files.pythonhosted.org/packages/44/b1/190138fc2f2c1040bf979d10559d62a422407a27641c26c0c453ca678980/napari_simpleannotate-0.0.9.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "2f684d1241c0639b957b362f1cb211d88032d787e4923ed4f6f0e851ce5cdd5c",
+          "md5": "372869d44fd221038ce1ecf1fa4b6941",
+          "sha256": "cde73525e8cba1c5ae6634c59f862fb9540ef9259ebfd241a1dc3f48e2ec788a"
+        },
+        "downloads": -1,
+        "filename": "napari_simpleannotate-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "372869d44fd221038ce1ecf1fa4b6941",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 28297,
+        "upload_time": "2025-07-16T09:54:39",
+        "upload_time_iso_8601": "2025-07-16T09:54:39.086636Z",
+        "url": "https://files.pythonhosted.org/packages/2f/68/4d1241c0639b957b362f1cb211d88032d787e4923ed4f6f0e851ce5cdd5c/napari_simpleannotate-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "27a4845d9ba411cb370a191fe6a91a8f78df7bd5afa7dd680c264f26bc27c017",
+          "md5": "bbf44e8c7224eec1ecdba98ac9275917",
+          "sha256": "57812e9117fc3c2543329af49dfd04a24abbc8c7ae0bf0bae215d1729ba66875"
+        },
+        "downloads": -1,
+        "filename": "napari_simpleannotate-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "bbf44e8c7224eec1ecdba98ac9275917",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 25523,
+        "upload_time": "2025-07-16T09:54:40",
+        "upload_time_iso_8601": "2025-07-16T09:54:40.619821Z",
+        "url": "https://files.pythonhosted.org/packages/27/a4/845d9ba411cb370a191fe6a91a8f78df7bd5afa7dd680c264f26bc27c017/napari_simpleannotate-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "d2a1f26400841d1fd878f1341b0d3ca5acd20a59549f88779d765f3eeb8f6f04",
+          "md5": "0218ad682af1a3451b2fd46aec8c5c78",
+          "sha256": "eba49d5d7addd6933917a1d4498ffc5db3cb7558a89a1c8d86e96e43e689c754"
+        },
+        "downloads": -1,
+        "filename": "napari_simpleannotate-0.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "0218ad682af1a3451b2fd46aec8c5c78",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 34315,
+        "upload_time": "2025-07-22T10:34:51",
+        "upload_time_iso_8601": "2025-07-22T10:34:51.970351Z",
+        "url": "https://files.pythonhosted.org/packages/d2/a1/f26400841d1fd878f1341b0d3ca5acd20a59549f88779d765f3eeb8f6f04/napari_simpleannotate-0.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "7c5a95334eb6133a09d41eba998bb9ce3876eb44578e565c2d340a893ae3275b",
+          "md5": "26d794edea6b04a3bdb3039b487b5305",
+          "sha256": "150b6c0aa2d436a465287e5286b6dbc24542ba0a802c94317b7e7ca7239aadc0"
+        },
+        "downloads": -1,
+        "filename": "napari_simpleannotate-0.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "26d794edea6b04a3bdb3039b487b5305",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 32030,
+        "upload_time": "2025-07-22T10:34:53",
+        "upload_time_iso_8601": "2025-07-22T10:34:53.172356Z",
+        "url": "https://files.pythonhosted.org/packages/7c/5a/95334eb6133a09d41eba998bb9ce3876eb44578e565c2d340a893ae3275b/napari_simpleannotate-0.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.2": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "4d1dcf9626decd7b604d22155a4675bfa3a5962a3d5494251595004f4192ae48",
+          "md5": "bea02dd0e01c3d5927d92760f868176c",
+          "sha256": "48790bbd011565d2834af93a88aee9590ced2fc22cf57d589c1dc71fd8567edb"
+        },
+        "downloads": -1,
+        "filename": "napari_simpleannotate-0.1.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "bea02dd0e01c3d5927d92760f868176c",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 34781,
+        "upload_time": "2025-07-23T04:16:38",
+        "upload_time_iso_8601": "2025-07-23T04:16:38.382651Z",
+        "url": "https://files.pythonhosted.org/packages/4d/1d/cf9626decd7b604d22155a4675bfa3a5962a3d5494251595004f4192ae48/napari_simpleannotate-0.1.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "11fcef0def6bfa03d75f62de08def13db0c8faf38dc3dd186404a8e36972e58e",
+          "md5": "40c2aaa786b078e4fd6aa7a1ec392945",
+          "sha256": "8cad01876778202e238d8d097ce9aeedc3bb03ff6bf6ec01ce6d3a6c29cc7503"
+        },
+        "downloads": -1,
+        "filename": "napari_simpleannotate-0.1.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "40c2aaa786b078e4fd6aa7a1ec392945",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 32522,
+        "upload_time": "2025-07-23T04:16:39",
+        "upload_time_iso_8601": "2025-07-23T04:16:39.857349Z",
+        "url": "https://files.pythonhosted.org/packages/11/fc/ef0def6bfa03d75f62de08def13db0c8faf38dc3dd186404a8e36972e58e/napari_simpleannotate-0.1.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.3": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "eddd4b052aadd181384fdfddd8df622ff60462e7b02a8deb99d8092683ca4fba",
+          "md5": "369a83c9e17d490559674c84df782876",
+          "sha256": "939677f0cce225f1429a14e6f5dd0d4387cdafa76cadcbcfe42c4565c6e58378"
+        },
+        "downloads": -1,
+        "filename": "napari_simpleannotate-0.1.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "369a83c9e17d490559674c84df782876",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 34786,
+        "upload_time": "2025-12-25T08:03:13",
+        "upload_time_iso_8601": "2025-12-25T08:03:13.831760Z",
+        "url": "https://files.pythonhosted.org/packages/ed/dd/4b052aadd181384fdfddd8df622ff60462e7b02a8deb99d8092683ca4fba/napari_simpleannotate-0.1.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "fec8e79dfbdf4a5b6221442b908e71a6f645762afdfe0168cf92a054bf87e254",
+          "md5": "2725b34125c268aab6c048b42e4909c2",
+          "sha256": "e5abc6c1942620debd5098511ccb9dc4409abec75b93a6e2534d77eaa4f338b5"
+        },
+        "downloads": -1,
+        "filename": "napari_simpleannotate-0.1.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "2725b34125c268aab6c048b42e4909c2",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 32520,
+        "upload_time": "2025-12-25T08:03:14",
+        "upload_time_iso_8601": "2025-12-25T08:03:14.818610Z",
+        "url": "https://files.pythonhosted.org/packages/fe/c8/e79dfbdf4a5b6221442b908e71a6f645762afdfe0168cf92a054bf87e254/napari_simpleannotate-0.1.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.4": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "e9cba8b6f077e99ad8fe09405a1dc95e9f48434e8a2f5ea82af23db7520e53b2",
+          "md5": "b471c77225455cfb3e876bd76a8bc4fd",
+          "sha256": "59c946fab541e50d2666ac05a9b53b45a2a2301e414ab59c807624ac916a9e18"
+        },
+        "downloads": -1,
+        "filename": "napari_simpleannotate-0.1.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "b471c77225455cfb3e876bd76a8bc4fd",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 42703,
+        "upload_time": "2026-01-18T08:51:46",
+        "upload_time_iso_8601": "2026-01-18T08:51:46.176949Z",
+        "url": "https://files.pythonhosted.org/packages/e9/cb/a8b6f077e99ad8fe09405a1dc95e9f48434e8a2f5ea82af23db7520e53b2/napari_simpleannotate-0.1.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "b3ef759435c89849fa212c7628b4bdb150c5441e09745e1a82a52e6b9997fa62",
+          "md5": "c6474100d737b6305d2e26bdc242cfda",
+          "sha256": "30bcfd8eb8ab789102d59c6c6919b2fe9a03706773f31ac7b6c4ee8bad9bbc99"
+        },
+        "downloads": -1,
+        "filename": "napari_simpleannotate-0.1.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "c6474100d737b6305d2e26bdc242cfda",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 41151,
+        "upload_time": "2026-01-18T08:51:47",
+        "upload_time_iso_8601": "2026-01-18T08:51:47.622207Z",
+        "url": "https://files.pythonhosted.org/packages/b3/ef/759435c89849fa212c7628b4bdb150c5441e09745e1a82a52e6b9997fa62/napari_simpleannotate-0.1.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.5": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "9221bd9c8dec26f04d7bfc71c6bccde7c8058a81dbc6a904ae378264e8c7e5bd",
+          "md5": "0f79e4f010e4aa7543a5cbae202d59e2",
+          "sha256": "e457febd84261c5bc4602565a9b857e2137479240859a4b4accb2481f6a25696"
+        },
+        "downloads": -1,
+        "filename": "napari_simpleannotate-0.1.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "0f79e4f010e4aa7543a5cbae202d59e2",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 42741,
+        "upload_time": "2026-01-19T01:33:19",
+        "upload_time_iso_8601": "2026-01-19T01:33:19.155590Z",
+        "url": "https://files.pythonhosted.org/packages/92/21/bd9c8dec26f04d7bfc71c6bccde7c8058a81dbc6a904ae378264e8c7e5bd/napari_simpleannotate-0.1.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "afdbf7c4cfc0dade9953b194c55441cfa12d7ce62c9c61065972ee393d5d7ca2",
+          "md5": "ce44d947504b79be7b27a6ec49de312e",
+          "sha256": "cf785ab73e33ca0a3c6150314aea7a3e479a614fa74248087379bb6c57f6d59e"
+        },
+        "downloads": -1,
+        "filename": "napari_simpleannotate-0.1.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "ce44d947504b79be7b27a6ec49de312e",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 41178,
+        "upload_time": "2026-01-19T01:33:21",
+        "upload_time_iso_8601": "2026-01-19T01:33:21.009554Z",
+        "url": "https://files.pythonhosted.org/packages/af/db/f7c4cfc0dade9953b194c55441cfa12d7ce62c9c61065972ee393d5d7ca2/napari_simpleannotate-0.1.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "9221bd9c8dec26f04d7bfc71c6bccde7c8058a81dbc6a904ae378264e8c7e5bd",
+        "md5": "0f79e4f010e4aa7543a5cbae202d59e2",
+        "sha256": "e457febd84261c5bc4602565a9b857e2137479240859a4b4accb2481f6a25696"
+      },
+      "downloads": -1,
+      "filename": "napari_simpleannotate-0.1.5-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "0f79e4f010e4aa7543a5cbae202d59e2",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.8",
+      "size": 42741,
+      "upload_time": "2026-01-19T01:33:19",
+      "upload_time_iso_8601": "2026-01-19T01:33:19.155590Z",
+      "url": "https://files.pythonhosted.org/packages/92/21/bd9c8dec26f04d7bfc71c6bccde7c8058a81dbc6a904ae378264e8c7e5bd/napari_simpleannotate-0.1.5-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "afdbf7c4cfc0dade9953b194c55441cfa12d7ce62c9c61065972ee393d5d7ca2",
+        "md5": "ce44d947504b79be7b27a6ec49de312e",
+        "sha256": "cf785ab73e33ca0a3c6150314aea7a3e479a614fa74248087379bb6c57f6d59e"
+      },
+      "downloads": -1,
+      "filename": "napari_simpleannotate-0.1.5.tar.gz",
+      "has_sig": false,
+      "md5_digest": "ce44d947504b79be7b27a6ec49de312e",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.8",
+      "size": 41178,
+      "upload_time": "2026-01-19T01:33:21",
+      "upload_time_iso_8601": "2026-01-19T01:33:21.009554Z",
+      "url": "https://files.pythonhosted.org/packages/af/db/f7c4cfc0dade9953b194c55441cfa12d7ce62c9c61065972ee393d5d7ca2/napari_simpleannotate-0.1.5.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

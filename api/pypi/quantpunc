@@ -1,0 +1,207 @@
+{
+  "info": {
+    "author": "tehahn",
+    "author_email": null,
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 4 - Beta",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# QuantPunc\n\n[![PyPI](https://img.shields.io/pypi/v/quantpunc.svg?color=green)](https://pypi.org/project/quantpunc)\n[![Python Version](https://img.shields.io/pypi/pyversions/quantpunc.svg?color=green)](https://python.org)\n[![License BSD-3](https://img.shields.io/pypi/l/quantpunc.svg?color=green)](https://github.com/tehahn/quantpunc/blob/main/LICENSE)\n\nQuantPunc is a Napari plugin for puncta analysis and quantification in 2D microscopy images. A brief overview of QuantPunc's workflow can be found below. \n\nA comprehensive guide to QuantPunc can be found at https://tehahn.github.io/quantpunc/.\n\nQuantPunc is currently in beta. Please report any problems to the [issues page].\n\n## Features\n1. Automated puncta labeling and counting\n2. Watershed segmentation\n3. Colocalization analysis \n4. Exportable counts and stats\n\n## Installation\nYou can install `quantpunc` via Napari's plugin manager:\n\n1. Click on \"Plugins\" in the toolbar.\n2. Click on \"Install/Uninstall Plugins...\" in the context menu.\n3. Type \"quantpunc\" in the searchbar.\n4. Click install.\n\nYou can also install `quantpunc` via [pip]:\n\n    pip install quantpunc\n\n## Puncta Quantification and Workflow\nHere\u2019s an ideal, high-level workflow for puncta segmentation and quantification. This is the recommended way of using QuantPunc. However, QuantPunc\u2019s widgets are modularly designed so that they can be used as standalone tools. If this is your first time working with these tools, you can access the more in-depth guide mentioned above [here].\n\n### 1. Preprocessing (optional but recommended)\nQuantPunc uses wavelet denoising and adaptive histogram equalization to enhance edge information and contrast in your image. If you feel that your image has sufficient contrast and minimal noise, feel free to skip this step.\n\n<img \nsrc=\"https://raw.githubusercontent.com/tehahn/quantpunc/refs/heads/main/demo_imgs/preprocessing_example.gif\" \nalt=\"\" \nwidth=\"1000\"\nstyle=\"border-radius: 10px; max-width: 100%;\">\n\n### 2. Automated labeling\nThere are two automated labeling methods. One of them uses [skimage\u2019s blob detection] algorithms and the other uses a random forest classifier with features inspired by [ilastik]. You also have the option to only segment puncta within ROIs. You can provide your own ROIs or create them using a labels layer in Napari.\n\n### Random forest classifier (RFC)\nYou can use Napari to create annotations or provide your own. After annotating your puncta and specifying your integer labels, you can then train the RFC. Click on *Label puncta* to segment your puncta.\n\n<img \nsrc=\"https://raw.githubusercontent.com/tehahn/quantpunc/refs/heads/main/demo_imgs/rfc_example.gif\" \nalt=\"\" \nwidth=\"1000\"\nstyle=\"border-radius: 10px; max-width: 100%;\">\n\n### Skimage blob detection\nSelect your favorite blob detection algorithm from the *Method* dropdown menu. After parameterizing it, click on *Label puncta*.\n\n<img \nsrc=\"https://raw.githubusercontent.com/tehahn/quantpunc/refs/heads/main/demo_imgs/skimage_blob_example.gif\" \nalt=\"\" \nwidth=\"1000\"\nstyle=\"border-radius: 10px; max-width: 100%;\">\n\n### 3. Manual labeling\nYou can remove any puncta labels you don\u2019t want from automated segmentation by using Napari\u2019s layer control toolbar. You also have the option to do a full manual segmentation using a labels layer and quantify your annotations after.\n\n### 4. Watershed segmentation (optional)\nIf your puncta exhibits lots of clumping, you can use the watershed tool to perform instance segmentation on your puncta labels layer. You can choose either to use a distance transform or Sobel filter to generate the elevation map.\n\n<img \nsrc=\"https://raw.githubusercontent.com/tehahn/quantpunc/refs/heads/main/demo_imgs/watershed_example.gif\"\nalt=\"\" \nwidth=\"1000\"\nstyle=\"border-radius: 10px; max-width: 100%;\">\n\n### Seed point generation\nYou can either provide your own seed points or generate them using skimage\u2019s blob counting algorithms with a low min and max sigma.\n\n### 5. Puncta counting\nAfter you have a segmentation you\u2019re happy with, select the image you want to quantify and click *Count puncta*. Make sure that your puncta labels layer is named after the image you\u2019re quantifying with \u201c_puncta\u201d as its suffix, e.g., \u201cyour_img_puncta\u201d.\n\n<img \nsrc=\"https://raw.githubusercontent.com/tehahn/quantpunc/refs/heads/main/demo_imgs/counts_example.gif\" \nalt=\"\" \nheight=\"750\"\nstyle=\"border-radius: 10px; max-width: 100%;\">\n\n### 6. Colocalization analysis (optional)\nColocalization is measured using the intersection over union (IoU), aka the Jaccard Index. Select two puncta labels layers and click on *Compute IoU*.\n\n<img \nsrc=\"https://raw.githubusercontent.com/tehahn/quantpunc/refs/heads/main/demo_imgs/coloc_example.gif\" \nalt=\"\" \nheight=\"750\"\nstyle=\"border-radius: 10px; max-width: 100%;\">\n\n### 7. Displaying stats and saving\nClick on any of the tabs in the table widget to view different summaries of the puncta you\u2019ve quantified. To export the tables as a csv for the layer you\u2019ve selected, click on *Save selected data*. If you want to save the data for all the images you\u2019ve quantified click on *Save all data*.\n\n## Contributing\nContributions are very, very welcome. QuantPunc allows you to implement your own automated puncta labeler. Look in the Github repo at [abstract_puncta_labeler] to see what methods need to be implemented and [default_puncta_labelers] for examples. If you're interested in making it available to everyone else or have any other improvements, feel free to send a pull request!\n\n## License\nDistributed under the terms of the [BSD-3] license,\nQuantPunc is free and open source software\n\n## Issues\nQuantPunc is still in beta, so bugs are to be expected. Please report any problems to the [issues page].\n\n\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[pip]: https://pypi.org/project/pip/\n\n[ilastik]: https://www.ilastik.org/\n[skimage\u2019s blob detection]: https://scikit-image.org/docs/0.25.x/auto_examples/features_detection/plot_blob.html\n\n[abstract_puncta_labeler]: https://github.com/tehahn/quantpunc/blob/main/src/quantpunc/quantification/abstract_puncta_labeler.py\n[default_puncta_labelers]: https://github.com/tehahn/quantpunc/blob/main/src/quantpunc/quantification/default_puncta_labelers.py\n\n[Napari hub]: https://napari-hub.org/plugins/quantpunc.html\n[here]: https://tehahn.github.io/quantpunc/\n[issues page]: https://github.com/tehahn/quantpunc/issues\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": null,
+    "license_expression": "BSD-3-Clause",
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "quantpunc",
+    "package_url": "https://pypi.org/project/quantpunc/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/quantpunc/",
+    "project_urls": {
+      "Documentation": "https://tehahn.github.io/quantpunc/",
+      "Repository": "https://github.com/tehahn/quantpunc/"
+    },
+    "provides_extra": [
+      "testing"
+    ],
+    "release_url": "https://pypi.org/project/quantpunc/0.0.1.post1/",
+    "requires_dist": [
+      "numpy<2.3",
+      "magicgui",
+      "qtpy",
+      "scikit-image",
+      "scikit-learn>=1.6.1",
+      "pywavelets>=1.6.0",
+      "tox; extra == \"testing\"",
+      "pytest; extra == \"testing\"",
+      "pytest-cov; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "napari; extra == \"testing\"",
+      "pyqt5; extra == \"testing\""
+    ],
+    "requires_python": ">=3.10",
+    "summary": "A Napari plugin for puncta analysis and quantification in 2D microscopy images.",
+    "version": "0.0.1.post1",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 30450542,
+  "releases": {
+    "0.0.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "4db3ea9631765378657f3124a0cfa4b144de7a0084872663f670083681587a53",
+          "md5": "887647c3c78592f53485926a47532f03",
+          "sha256": "d39fae0992c392b914c1c6f0b0f0733f9fce490b81069aaeafe5fe42737ba2a2"
+        },
+        "downloads": -1,
+        "filename": "quantpunc-0.0.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "887647c3c78592f53485926a47532f03",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 22685,
+        "upload_time": "2025-07-30T12:14:35",
+        "upload_time_iso_8601": "2025-07-30T12:14:35.498772Z",
+        "url": "https://files.pythonhosted.org/packages/4d/b3/ea9631765378657f3124a0cfa4b144de7a0084872663f670083681587a53/quantpunc-0.0.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "db13496e034e9cb21029933c80f9aafdfd991a58c2208a78fa9864cd27b8a113",
+          "md5": "d3fead46281458bd278992c5a361fed0",
+          "sha256": "27d174e1567691258709ab4fb2038d674868ab58b9bee655c6a61b952221a453"
+        },
+        "downloads": -1,
+        "filename": "quantpunc-0.0.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d3fead46281458bd278992c5a361fed0",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 20170,
+        "upload_time": "2025-07-30T12:14:36",
+        "upload_time_iso_8601": "2025-07-30T12:14:36.572259Z",
+        "url": "https://files.pythonhosted.org/packages/db/13/496e034e9cb21029933c80f9aafdfd991a58c2208a78fa9864cd27b8a113/quantpunc-0.0.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.1.post1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "d68f649af93fa31c83525d00e2b411b6c6a91acc8298994c19f94caa14891f66",
+          "md5": "d037cfc39405548625934e7efc421764",
+          "sha256": "8232ec208d2b7ae52851e4e094947379450329880df331e709cf067feb44e89f"
+        },
+        "downloads": -1,
+        "filename": "quantpunc-0.0.1.post1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "d037cfc39405548625934e7efc421764",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 24168,
+        "upload_time": "2025-07-31T15:10:23",
+        "upload_time_iso_8601": "2025-07-31T15:10:23.632925Z",
+        "url": "https://files.pythonhosted.org/packages/d6/8f/649af93fa31c83525d00e2b411b6c6a91acc8298994c19f94caa14891f66/quantpunc-0.0.1.post1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "82f036a3e8cf5e5dd33bf483b5da990cb1dfa38da82f56ca436f28f69fe728b8",
+          "md5": "a797bff39dae4b243a4a5069579eb3f7",
+          "sha256": "3f225316ce895101268a94cd0469c7aaa6d0e280bc7c6d4c1574da296814da75"
+        },
+        "downloads": -1,
+        "filename": "quantpunc-0.0.1.post1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "a797bff39dae4b243a4a5069579eb3f7",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 21745,
+        "upload_time": "2025-07-31T15:10:24",
+        "upload_time_iso_8601": "2025-07-31T15:10:24.969985Z",
+        "url": "https://files.pythonhosted.org/packages/82/f0/36a3e8cf5e5dd33bf483b5da990cb1dfa38da82f56ca436f28f69fe728b8/quantpunc-0.0.1.post1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "d68f649af93fa31c83525d00e2b411b6c6a91acc8298994c19f94caa14891f66",
+        "md5": "d037cfc39405548625934e7efc421764",
+        "sha256": "8232ec208d2b7ae52851e4e094947379450329880df331e709cf067feb44e89f"
+      },
+      "downloads": -1,
+      "filename": "quantpunc-0.0.1.post1-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "d037cfc39405548625934e7efc421764",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.10",
+      "size": 24168,
+      "upload_time": "2025-07-31T15:10:23",
+      "upload_time_iso_8601": "2025-07-31T15:10:23.632925Z",
+      "url": "https://files.pythonhosted.org/packages/d6/8f/649af93fa31c83525d00e2b411b6c6a91acc8298994c19f94caa14891f66/quantpunc-0.0.1.post1-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "82f036a3e8cf5e5dd33bf483b5da990cb1dfa38da82f56ca436f28f69fe728b8",
+        "md5": "a797bff39dae4b243a4a5069579eb3f7",
+        "sha256": "3f225316ce895101268a94cd0469c7aaa6d0e280bc7c6d4c1574da296814da75"
+      },
+      "downloads": -1,
+      "filename": "quantpunc-0.0.1.post1.tar.gz",
+      "has_sig": false,
+      "md5_digest": "a797bff39dae4b243a4a5069579eb3f7",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.10",
+      "size": 21745,
+      "upload_time": "2025-07-31T15:10:24",
+      "upload_time_iso_8601": "2025-07-31T15:10:24.969985Z",
+      "url": "https://files.pythonhosted.org/packages/82/f0/36a3e8cf5e5dd33bf483b5da990cb1dfa38da82f56ca436f28f69fe728b8/quantpunc-0.0.1.post1.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

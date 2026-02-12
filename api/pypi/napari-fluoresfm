@@ -1,0 +1,401 @@
+{
+  "info": {
+    "author": "Qiqi Lu",
+    "author_email": "136303971@qq.com",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: MIT License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-fluoresfm\n\n[![License MIT](https://img.shields.io/pypi/l/napari-fluoresfm.svg?color=green)](https://github.com/qiqi-lu/napari-fluoresfm/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-fluoresfm.svg?color=green)](https://pypi.org/project/napari-fluoresfm)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-fluoresfm.svg?color=green)](https://python.org)\n[![tests](https://github.com/qiqi-lu/napari-fluoresfm/workflows/tests/badge.svg)](https://github.com/qiqi-lu/napari-fluoresfm/actions)\n[![codecov](https://codecov.io/gh/qiqi-lu/napari-fluoresfm/branch/main/graph/badge.svg)](https://codecov.io/gh/qiqi-lu/napari-fluoresfm)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-fluoresfm)](https://napari-hub.org/plugins/napari-fluoresfm)\n[![npe2](https://img.shields.io/badge/plugin-npe2-blue?link=https://napari.org/stable/plugins/index.html)](https://napari.org/stable/plugins/index.html)\n[![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-purple.json)](https://github.com/copier-org/copier)\n\nThis is a `napari` plugin developed for using FluoResFM model in napari.\nFluoresFM is a deep learning-based foundation model for multi-task cross-distribution restoration of fluorescence microscopic images.\nThe original code for FluoResFM algortihm is publicly accessable at https://github.com/qiqi-lu/fluoResfm.\n\nThe guideline video is availabel at https://www.bilibili.com/video/BV16JeFzuEof.\n\nFluoResFM's `napari` plugin is in early satge, therefore I highly encourage any feedback and suggestions.\n\n----------------------------------\n\nThis [napari] plugin was generated with [copier] using the [napari-plugin-template].\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/napari-plugin-template#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/stable/plugins/index.html\n-->\n\n## Before Installation\nAs FluoResFM is a deep learning-based model, it is recommended to use a GPU for inference and training on Linux system. So no choice to use CPU is provided in the plugin. Besides, as the code is depended on PyTorch and `triton` packages, you should install the plugin through command lines.\n\nI recommand you to install the plugin in a new envoroment created by `conda` .\n\n First, create a new environment with `conda` and activate it.\n```\nconda create -y --name napari-fluoresfm python=3.12\nconda activate napari-fluoresfm\n```\n\nThen, install `napari`.\n```\npip install -U \"napari[all]\"\n```\n\nTo use GPU for inference and training, you should install the GPU version of PyTorch. You can use `nvcc -V` to check the cuda version. Then install the corresponding version of PyTorch by check the [table](https://pytorch.org/get-started/previous-versions/) provided by PyTorch. For example, if you have `cuda 12.4`, you should install the following version of PyTorch.\n```\npip install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cu124\n```\n\nWe recommend you using Linux for training and inference, as the `triton` support for Windows is not stable. And the with Linux system, the acceleration of `triton` is much better than Windows, which allow larger `batch size` and `patch size` to be used in training and inference.\n\nIf you are using Windows, you should install the `triton` package first according the PyTorch version you installed. Please check this [link](https://github.com/woct0rdho/triton-windows?tab=readme-ov-file#3-pytorch) for more details.\n```\npip install -U \"triton-windows<3.3\"\n```\n\n## Installation\n\nYou can install `napari-fluoresfm` via [pip]:\n\n```\npip install napari-fluoresfm\n```\n\nTo install latest development version :\n\n```\npip install git+https://github.com/qiqi-lu/napari-fluoresfm.git\n```\n\n## Functions\nThis plugin can be used for data preprocessing, model training, and model inference.\n\n![interface](src/napari_fluoresfm/images/interface.png)\n**Figure 1: The interface of the plugin.** **a** The label page uased for prediction of restored images. **b** The page for data preprocessing, including data patching and text embedding modules. **c** The page for model training.\n\n**Each page can be run independetly. You only need to input the data and model information as described below from top to bottom, and click `run` button to start. To train or fine-tune the mdoel, you need to preprocess the data firstly using the `Preprocess` page. The training and fine-tuning can both be done in `Train` page.**\n\n### Predict\nThis label page is used for prediction of restored images. You can select the pretrained model and the input image to predict the restored image.\n#### PATH box\nThis box is used to select the folder for data and models.\n- **Input Folder**: The folder containing the input images. The input images should be in `.tif` format with a shape of `(1, H, W)` or `(H, W)`. The model will restored the images one by one and save them into the **Output Folder**.\n- **Index File**: This should be a `.txt` file containing all the file names of the images to be restored in each line. The file name should be the same as the file name of the input images.\n- **Output Folder** (optional): The folder to save the restored images. If not specified, the restored images will be saved into the `#Input Folder#_fluoresfm`.\n- **Embedder**: The folder saved the text embedder model. You can download the text model from my [Google Drive](https://drive.google.com/drive/folders/1pfiCHtXrf5ne6fjKJQAvwQhgBO_yVpWy?usp=sharing).\n- **Checkpoint**: The pre-trained FluoResFM model checkpoint with a suffix `.pt`.\n\n#### PARAMETERS box\nThis box is used to set the parameters for prediction.\n- **Device**: The device to run the model. Only support `cuda`.\n- **Compile model**: Whether to compile the model. If checked, the model will be compiled with `triton` for faster inference and lower BPU memory usage. But the compile process will take a few minutes. if only a few image to be restored, you can uncheck this box.\n- **Input interpolation (nearest)**: Do nearest interpolation on the input image to implement super-resolution task, as the input and output image of FluoResFM have the save shape.\n- **Batch size**: The batch size used during inference. Larger batch size will use more memory and faster inference. If your GPU memory is not enough, you can reduce this value.\n- **Patch size**: The patch size used during inference. Larger patch size will use more memory. If your GPU memory is not enough, you can reduce this value. Different pacth size may lead to slightly different results due to the patch stiching process.\n#### TEXT box\nThis box is used to set the text prompt for the model.\n- **Task**: The task to be performed. For example, \"denoising\", \"deconvolution\", or \"super-resolution with a scale factor of 2\". When inputing \"super-resolution with a scale factor of 2\", the **Input interpolation (nearest)** should be also set as 2. Other tasks may result in unexpected results as the model is not trained for these tasks.\n- **Sample**: The image sample. For example, \"fixed COS-7 cell line\".\n- **Structure**: The imaging structure. For example, \"microtubules\".\n- **Fluorescence indicator**: The fluorescence indicator. For example, \"mEmerald (GFP)\".\n- **INPUT**: The imaging condition of image image.\n    - **Microscope**: The microscope used for imaging. Such as, \"wide-field microscope\".\n    - **Mircoscopy params**: The microscope parameters. For example, \"with excitation numrical aperture (NA) of 1.35, detection namerical aperture (NA) of 1.3\".\n    - **Pixel size**: The pixel size of the image. For example, \"62.6 x 62.6 nm\".\n\n- **OUTPUT**: The imaging condition of the target image.\n    - **Microscope**: The microscope used for imaging. Such as, \"linear structured illumination microscopy\".\n    - **Mircoscopy params**: The microscope parameters. For example, \"with excitation numrical aperture (NA) of 1.35, detection namerical aperture (NA) of 1.3\".\n    - **Pixel size**: The pixel size of the image. For example, \"62.6 x 62.6 nm\".\n\n#### RUN box\nThis box is used to start, stop, and watch the prediction process. Press the **run** button to start the prediction. Press the **stop** button to stop the prediction. The prediciton process will be shown in the progress bar.\n\n### Preprocess\nThis page is used for data preprocessing, including data patching and text embedding modules.\n#### IMAGE PATCHING box\n- **PATH**\n    - **Dataset Folder**: The folder containing the images to be patched. The images should be in `.tif` format with a shape of `(1, H, W)` or `(H, W)`. The model will patch the images one by one and save them into a folder named `#Dataset Folder#_p#patch size#_s#patch stride#_2d`.\n    - **Index File**: This should be a `.txt` file containing all the file names of the images to be patched in each line. The file name should be the same as that of images in the **Dataset Folder**.\n\n- **PARAMETERS**\n    - **Patch size**: The size of the patch. Deault is `64`, which is same as that used for FluoResFM pretraining.\n    - **Patch stride**: The stride of the patch. Deault is `64`, i.e., no overlap between patches, which is same as that used for FluoResFM pretraining.\n    - **Normalization (low)**: The lower bound of the percentile-based normalization. Deault is `0.03`.\n    - **Normalization (high)**: The upper bound of the percentile-based normalization. Deault is `0.995`.\n\n- **RUN**\n\n    This box is used to start, stop, and watch the preprocessing process. Same function as the **RUN box** in the **Predict** page.\n\n#### EMBEDDING box\n- **PATH**\n    - **Excel File**: The excel file containing all the information for the datasets used for training or fine-tuning. The excel file should be in `.xlsx` format. The excel file should contain the all the columns as shown in the example data.\n    - **Output Folder**: The folder to save the text embeddings. The generated text will be saved into a `.txt` file named as `dataset_text_#Text type#.txt`. The corresponding text embedding will be saved into a folder named `dataset_text_#Text type#_#Context length#`. Each `.npy` file is for each dataset. The id is corresponding to the order of the dataset in the excel file.\n    - **Embedder**: The folder saved the text embedder model.\n\n- **PARAMETERS**\n    - **Device**: The device to run the model. Only support `cuda`.\n    - **Context length**: The context length of the text embedding. Deault is `160`, which is same as that used for FluoResFM pretraining.\n    - **Text type**: The type of the text. [\"ALL\", \"T\", \"TS\"], where \"ALL\" means all the text informatio will be used, \"T\" means only the task informaiton will be used, and \"TS\" means only the task and structure informaiton will be used.\n\n- **RUN**: This box is used to start, stop, and watch the preprocessing process. Same function as the **RUN box** in the **Predict** page.\n\n#### STRUCTURE PREDICTION box\n- **PATH**\n    - **Image Path**: The path of the image to be predicted. The image commonly should be in `.tif` format.\n    - **Database Path**: The path of the database for structure prediction. The database should be in `.npy` format.\n    - **Embedder Path**: The path of the text embedder model.\n    - **Device**: The device to run the model. Only support `cuda`.\n- **PARAMETERS**\n    - **Top k**: The top k similar images is used for determining the structure of the target image. Deault is `10`.\n    - **Num patch**: The number of patches cropped from the query image. Default is `1`.\n- **RUN**: This box is used to start the prediction process. (the stop button is disabled in this box)\n\n\n### Train\nThis page is used for model training.\n#### PATH box\n- **Information Folder**: The folder containing the information for the datasets used for training or fine-tuning, includeingt the path of input and reference images and the path of their corresponding index files. Other information should be same as the provided example.\n- **Text Embedding**: The folder containing the text embeddings for the datasets used for training or fine-tuning, which should be generated first using the **EMBEDDING box** in the **Preprocess** page.\n- **Checkpoint (load from)**: The pre-trained FluoResFM model checkpoint with a suffix `.pt`. If not specified, the model will be trained from scratch.\n- **Finetune**: Whether to fine-tune the model. If checked, **Checkpoint (load from)** must be specified and will be fine-tuned (only the first and last convolution layers will be trainable). If not checked, all the parameters in the model wil be setted as trainable.\n- **Checkpoint (save to)**: The folder  to save the trained model checkpoint. The checkpoint will be saved into a folder named `unet_sd_c_mae_bs#bactch size#_lr_#learning rate#-160-res1-att0123`. It `finetune` is checked, the folder will be added a suffix of `-ft-in-out`.\n#### PARAMETERS box\n- **Device**: : The device to run the model. Only support `cuda`.\n- **Compile**: Whether to compile the model. The compiling of model will take a few minutes, but will accelerate the training/fine-tuning process and save the GPU memory. On Linux system, the compiling of model will be more efficient than on Windows system.\n- **Batch size**: The batch size used during training.\n- **Epochs**: The number of epochs used during training.\n- **Learning rate**: The start learning rate.\n- **Decay (every iter)**: The learning rate will decay every `#Decay (every iter)#` iterations. The decay rate is 0.5.\n- **Validation (every iter)**: The validation will be performed every `#Validation (every iter)#` iterations.\n- **Validation (fraction)**: The fraction of the dataset used for validation. If it is set as 0, the validation will not be performed. (0,1)*100% dataset will be used for validation.\n- **Save Model (every iter)**: The model will be saved every `#Save Model (every iter)#` iterations.\n\n#### RUN box\nThis box is used to start, stop, and watch the training process. Same function as the **RUN box** in the **Predict** page.\n\n### Log\nThis page is used to show the working log.\nPress the **CLEAR** button to clear the log.\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [MIT] license,\n\"napari-fluoresfm\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[copier]: https://copier.readthedocs.io/en/stable/\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[napari-plugin-template]: https://github.com/napari/napari-plugin-template\n\n[file an issue]: https://github.com/qiqi-lu/napari-fluoresfm/issues\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": "The MIT License (MIT)\n        \n        Copyright (c) 2025 Qiqi Lu\n        \n        Permission is hereby granted, free of charge, to any person obtaining a copy\n        of this software and associated documentation files (the \"Software\"), to deal\n        in the Software without restriction, including without limitation the rights\n        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n        copies of the Software, and to permit persons to whom the Software is\n        furnished to do so, subject to the following conditions:\n        \n        The above copyright notice and this permission notice shall be included in\n        all copies or substantial portions of the Software.\n        \n        THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\n        THE SOFTWARE.\n        ",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-fluoresfm",
+    "package_url": "https://pypi.org/project/napari-fluoresfm/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-fluoresfm/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/qiqi-lu/napari-fluoresfm/issues",
+      "Documentation": "https://github.com/qiqi-lu/napari-fluoresfm#README.md",
+      "Source Code": "https://github.com/qiqi-lu/napari-fluoresfm",
+      "User Support": "https://github.com/qiqi-lu/napari-fluoresfm/issues"
+    },
+    "provides_extra": [
+      "all",
+      "testing"
+    ],
+    "release_url": "https://pypi.org/project/napari-fluoresfm/0.3.4/",
+    "requires_dist": [
+      "numpy",
+      "magicgui",
+      "qtpy",
+      "napari",
+      "scikit-image",
+      "torch",
+      "torchvision",
+      "torchaudio",
+      "tqdm",
+      "scipy",
+      "open_clip_torch",
+      "pandas",
+      "pytorch_msssim",
+      "pydicom",
+      "torchinfo",
+      "tensorboard",
+      "transformers",
+      "openpyxl",
+      "napari[all]; extra == \"all\"",
+      "tox; extra == \"testing\"",
+      "pytest; extra == \"testing\"",
+      "pytest-cov; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "napari[qt]; extra == \"testing\""
+    ],
+    "requires_python": ">=3.10",
+    "summary": "A plugin to use FluoResFM model in napari.",
+    "version": "0.3.4",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 33304381,
+  "releases": {
+    "0.1.2": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "9632e6864bdb2a39da6dc1cc4fd22c8907aefff36c0a1d59f20d44024d4cf79f",
+          "md5": "fcaa340cbb40616df9099e89318ac687",
+          "sha256": "daa2fdea7906f3c49701d2b6e60d5b846be5a71fbed7f37f6d0dc6551eff145d"
+        },
+        "downloads": -1,
+        "filename": "napari_fluoresfm-0.1.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "fcaa340cbb40616df9099e89318ac687",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 12973,
+        "upload_time": "2025-07-22T13:57:53",
+        "upload_time_iso_8601": "2025-07-22T13:57:53.733238Z",
+        "url": "https://files.pythonhosted.org/packages/96/32/e6864bdb2a39da6dc1cc4fd22c8907aefff36c0a1d59f20d44024d4cf79f/napari_fluoresfm-0.1.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "811843cac3a25a10d991f236c0adf14b389351b42079be1b3e0ceb4739e2e682",
+          "md5": "7a04bf0a35ed5b87d91d5638bd880866",
+          "sha256": "f6ee3cabf194d4c0227862c853f8999a8ecf6156790129eca8b6090a514a3daf"
+        },
+        "downloads": -1,
+        "filename": "napari_fluoresfm-0.1.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "7a04bf0a35ed5b87d91d5638bd880866",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 17407,
+        "upload_time": "2025-07-22T13:57:55",
+        "upload_time_iso_8601": "2025-07-22T13:57:55.154132Z",
+        "url": "https://files.pythonhosted.org/packages/81/18/43cac3a25a10d991f236c0adf14b389351b42079be1b3e0ceb4739e2e682/napari_fluoresfm-0.1.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "371626437827fd530e21307ac25184cd8555bd6006ca686fcb26f020daa23ad4",
+          "md5": "8b0709b71bd80673777eccd2099cca0c",
+          "sha256": "122f948a1b55c4ba56cf75b51eb33364f9dd37f6bf446fce1ac9060d10f5bf6a"
+        },
+        "downloads": -1,
+        "filename": "napari_fluoresfm-0.2.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "8b0709b71bd80673777eccd2099cca0c",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 55859,
+        "upload_time": "2025-07-28T15:27:53",
+        "upload_time_iso_8601": "2025-07-28T15:27:53.514762Z",
+        "url": "https://files.pythonhosted.org/packages/37/16/26437827fd530e21307ac25184cd8555bd6006ca686fcb26f020daa23ad4/napari_fluoresfm-0.2.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "694ce4577b559f6cb4dd625b940b29aac16c95f41c24d52c748f1034711c8fe6",
+          "md5": "32bb4caa02877cc3fae9bf4a8dcb623a",
+          "sha256": "74deeb2d6270aaadb23529c21d6ed21cf2e5cc1fefefbcc43a85449373589c7b"
+        },
+        "downloads": -1,
+        "filename": "napari_fluoresfm-0.2.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "32bb4caa02877cc3fae9bf4a8dcb623a",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 54247,
+        "upload_time": "2025-07-28T15:27:54",
+        "upload_time_iso_8601": "2025-07-28T15:27:54.821301Z",
+        "url": "https://files.pythonhosted.org/packages/69/4c/e4577b559f6cb4dd625b940b29aac16c95f41c24d52c748f1034711c8fe6/napari_fluoresfm-0.2.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.2": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "588231ac18c9adf95a69e80c5de028c4d83a89a9c535bfc941ab4bd87cdb66e5",
+          "md5": "2323c31e49c5a1d2f08745f4f3f7563c",
+          "sha256": "27d9c6a0f43f9cc469484bebb25e516fc4f734d8ab0df49ea34de91549a798e3"
+        },
+        "downloads": -1,
+        "filename": "napari_fluoresfm-0.2.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "2323c31e49c5a1d2f08745f4f3f7563c",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 55872,
+        "upload_time": "2025-07-28T16:38:38",
+        "upload_time_iso_8601": "2025-07-28T16:38:38.181812Z",
+        "url": "https://files.pythonhosted.org/packages/58/82/31ac18c9adf95a69e80c5de028c4d83a89a9c535bfc941ab4bd87cdb66e5/napari_fluoresfm-0.2.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "585abbf5de1ebadfbbbb881ec9e8cc0a02b3984e9989165aa9843fb6457a4b3a",
+          "md5": "a54a3e6b9faed81fb1d3f082200824e6",
+          "sha256": "41bf64f44c6c5f0f15cc797ff079882bd227f38b3d0056feba68a2d812d916ac"
+        },
+        "downloads": -1,
+        "filename": "napari_fluoresfm-0.2.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "a54a3e6b9faed81fb1d3f082200824e6",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 54269,
+        "upload_time": "2025-07-28T16:38:40",
+        "upload_time_iso_8601": "2025-07-28T16:38:40.237227Z",
+        "url": "https://files.pythonhosted.org/packages/58/5a/bbf5de1ebadfbbbb881ec9e8cc0a02b3984e9989165aa9843fb6457a4b3a/napari_fluoresfm-0.2.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.3": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "1cf8243528df431ecab6450408ccf7db2b29e9f5c0d532ae3c8c1826a062c0e7",
+          "md5": "8e7f86e3f2409223817797ab18c9170b",
+          "sha256": "05584b111d1499926391281d7f8cff85a83c063202c724d7fbfcb7501f171e8f"
+        },
+        "downloads": -1,
+        "filename": "napari_fluoresfm-0.2.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "8e7f86e3f2409223817797ab18c9170b",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 2892405,
+        "upload_time": "2025-07-29T15:05:20",
+        "upload_time_iso_8601": "2025-07-29T15:05:20.754362Z",
+        "url": "https://files.pythonhosted.org/packages/1c/f8/243528df431ecab6450408ccf7db2b29e9f5c0d532ae3c8c1826a062c0e7/napari_fluoresfm-0.2.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "e2f629482c37232cbc16e4415002d62075898ff536706bf399b9c1d5194dac68",
+          "md5": "5dfdeac8c5df0003c7bf104c38a9894c",
+          "sha256": "ea705887643ed621d33fba6396ff02c1b55d9e9e97530d2bcd1ed228c4eae829"
+        },
+        "downloads": -1,
+        "filename": "napari_fluoresfm-0.2.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "5dfdeac8c5df0003c7bf104c38a9894c",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 2894055,
+        "upload_time": "2025-07-29T15:05:22",
+        "upload_time_iso_8601": "2025-07-29T15:05:22.290094Z",
+        "url": "https://files.pythonhosted.org/packages/e2/f6/29482c37232cbc16e4415002d62075898ff536706bf399b9c1d5194dac68/napari_fluoresfm-0.2.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.3": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "e3384be1d1dc5ff7083ac63240e39430fc1e76040aa3bfb474382faec37c2666",
+          "md5": "677df99d742abe8bb226d18d866101ed",
+          "sha256": "94f6810ef508d76b65d79b1dda283de9d48d27c750ce87a37b44c5cb4606f9c1"
+        },
+        "downloads": -1,
+        "filename": "napari_fluoresfm-0.3.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "677df99d742abe8bb226d18d866101ed",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 2895999,
+        "upload_time": "2026-01-02T03:20:17",
+        "upload_time_iso_8601": "2026-01-02T03:20:17.323109Z",
+        "url": "https://files.pythonhosted.org/packages/e3/38/4be1d1dc5ff7083ac63240e39430fc1e76040aa3bfb474382faec37c2666/napari_fluoresfm-0.3.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "3bb989d4a7048b0db561f56cc540a32d8452dbb6d9d12dd4d39cf11d575c023b",
+          "md5": "13360af191defc82d0eeaeaf118cd994",
+          "sha256": "937cebc3f0320e3e61bb01fac8bb596c24902a37fc7fd391aa4087d3b3579f82"
+        },
+        "downloads": -1,
+        "filename": "napari_fluoresfm-0.3.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "13360af191defc82d0eeaeaf118cd994",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 2897405,
+        "upload_time": "2026-01-02T03:20:19",
+        "upload_time_iso_8601": "2026-01-02T03:20:19.187987Z",
+        "url": "https://files.pythonhosted.org/packages/3b/b9/89d4a7048b0db561f56cc540a32d8452dbb6d9d12dd4d39cf11d575c023b/napari_fluoresfm-0.3.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.4": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "8ccddcd5833473633f0a324e5243a049523f405549558aaa77687f5bd167127a",
+          "md5": "9b8e6cd6cc73a907f2775f1767b0c199",
+          "sha256": "734178db7d4bf62190b40797701936a9caea90ddfca4cd8b6d1d328d3b742bc3"
+        },
+        "downloads": -1,
+        "filename": "napari_fluoresfm-0.3.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "9b8e6cd6cc73a907f2775f1767b0c199",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 2896029,
+        "upload_time": "2026-01-02T03:22:35",
+        "upload_time_iso_8601": "2026-01-02T03:22:35.145041Z",
+        "url": "https://files.pythonhosted.org/packages/8c/cd/dcd5833473633f0a324e5243a049523f405549558aaa77687f5bd167127a/napari_fluoresfm-0.3.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "fd0722e28eeb8101948f1fc986685704114d20f72d76488612172feabfdccf7f",
+          "md5": "e068618d0512f1b84e6e17589e7bdb2f",
+          "sha256": "e25057675f3abd9033a6f4dbb188085e87059cba2dffd325cbd66939e54e82d8"
+        },
+        "downloads": -1,
+        "filename": "napari_fluoresfm-0.3.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e068618d0512f1b84e6e17589e7bdb2f",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 2897415,
+        "upload_time": "2026-01-02T03:22:37",
+        "upload_time_iso_8601": "2026-01-02T03:22:37.045412Z",
+        "url": "https://files.pythonhosted.org/packages/fd/07/22e28eeb8101948f1fc986685704114d20f72d76488612172feabfdccf7f/napari_fluoresfm-0.3.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "8ccddcd5833473633f0a324e5243a049523f405549558aaa77687f5bd167127a",
+        "md5": "9b8e6cd6cc73a907f2775f1767b0c199",
+        "sha256": "734178db7d4bf62190b40797701936a9caea90ddfca4cd8b6d1d328d3b742bc3"
+      },
+      "downloads": -1,
+      "filename": "napari_fluoresfm-0.3.4-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "9b8e6cd6cc73a907f2775f1767b0c199",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.10",
+      "size": 2896029,
+      "upload_time": "2026-01-02T03:22:35",
+      "upload_time_iso_8601": "2026-01-02T03:22:35.145041Z",
+      "url": "https://files.pythonhosted.org/packages/8c/cd/dcd5833473633f0a324e5243a049523f405549558aaa77687f5bd167127a/napari_fluoresfm-0.3.4-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "fd0722e28eeb8101948f1fc986685704114d20f72d76488612172feabfdccf7f",
+        "md5": "e068618d0512f1b84e6e17589e7bdb2f",
+        "sha256": "e25057675f3abd9033a6f4dbb188085e87059cba2dffd325cbd66939e54e82d8"
+      },
+      "downloads": -1,
+      "filename": "napari_fluoresfm-0.3.4.tar.gz",
+      "has_sig": false,
+      "md5_digest": "e068618d0512f1b84e6e17589e7bdb2f",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.10",
+      "size": 2897415,
+      "upload_time": "2026-01-02T03:22:37",
+      "upload_time_iso_8601": "2026-01-02T03:22:37.045412Z",
+      "url": "https://files.pythonhosted.org/packages/fd/07/22e28eeb8101948f1fc986685704114d20f72d76488612172feabfdccf7f/napari_fluoresfm-0.3.4.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

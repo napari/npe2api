@@ -1,0 +1,989 @@
+{
+  "info": {
+    "author": null,
+    "author_email": "\"Austin E. Y. T. Lefebvre\" <austin.e.lefebvre+nellie@gmail.com>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Framework :: napari"
+    ],
+    "description": "# Nellie\n## Automated organelle segmentation, tracking, and hierarchical feature extraction in 2D/3D live-cell microscopy\n\n<img src=\"https://github.com/aelefebv/nellie/assets/26515909/96b7a113-be60-4028-bcd9-b444bdb943f6\" width=\"200px\" align=\"left\" /> *Nature Methods (2025)* \n\n  [Article Link](https://www.nature.com/articles/s41592-025-02612-7) | [Cite](#reference)\n\n**Abstract:** Cellular organelles undergo constant morphological changes and dynamic interactions that are fundamental to cell homeostasis, stress responses and disease progression. Despite their importance, quantifying organelle morphology and motility remains challenging due to their complex architectures, rapid movements and the technical limitations of existing analysis tools. Here we introduce Nellie, an automated and unbiased pipeline for segmentation, tracking and feature extraction of diverse intracellular structures. Nellie adapts to image metadata and employs hierarchical segmentation to resolve sub-organellar regions, while its radius-adaptive pattern matching enables precise motion tracking. Through a user-friendly Napari-based interface, Nellie enables comprehensive organelle analysis without coding expertise. We demonstrate Nellie\u2019s versatility by unmixing multiple organelles from single-channel data, quantifying mitochondrial responses to ionomycin via graph autoencoders and characterizing endoplasmic reticulum networks across cell types and time points. This tool addresses a critical need in cell biology by providing accessible, automated analysis of organelle dynamics. \n\n**Nellie's pipeline and Napari plugin are both very much in early stages,** therefore [I highly encourage any and all feedback](#getting-help).\n## Please read the [documentation](https://aelefebv.github.io/nellie/api/)\nhttps://aelefebv.github.io/nellie/api/\n\n## Example output intermediates\n\nhttps://github.com/aelefebv/nellie/assets/26515909/1df8bf1b-7116-4d19-b5fb-9658f744675b\n\n## Installation (~ 1 minute)\n\n**Notes:** \n- It is recommended (but usually not required) to create a new environment [via venv](https://docs.python.org/3/library/venv.html) or [via conda](https://docs.conda.io/projects/conda/en/latest/user-guide/getting-started.html#creating-environments) before installing Nellie to avoid conflicts with other packages.\n- May take several minutes to install.\n- Choose one of the following methods, and only one!\n\n### Step 0: If you do not already have Python 3.10 or higher installed, download it via the [python website](https://www.python.org/downloads/):\n\nhttps://github.com/user-attachments/assets/50b1cd4b-6df7-4f19-8db3-4dcc03388513\n\n### Option 1. If you already have Napari installed:\n1. Open Napari\n2. Go to ```Plugins > Install/Uninstall Plugins...```\n3. Search for Nellie and click ```Install```\n4. Make sure Nellie is updated to the latest version.\n5. Restart Napari.\n\n\nhttps://github.com/user-attachments/assets/0d44abe5-f575-4bd4-962a-2c102faf737c\n\n\n### Option 2. If you don't have Nellie installed or Option 1 didn't work:\n1. Open up Terminal (or Powershell on Windows)\n- (optional but recommended) Create and activate a new [Python](https://docs.python.org/3/library/venv.html) or [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/getting-started.html#creating-environments) environment.\n2. pip install nellie:\n```bash\npython3 -m pip install nellie\n```\n\n\nhttps://github.com/user-attachments/assets/b63df093-e3e1-49cb-925b-7efce36b9015\n\n\n#### Option 2a for NVIDIA GPU acceleration, optional (Windows, Linux):\nTo use GPU acceleration via NVIDIA GPUs, you also need to install cupy:\n```bash\npython3 -m pip install cupy-cudaXXx\n```\n- replace ```cupy-cudaXXx``` with the [appropriate version](https://docs.cupy.dev/en/stable/install.html#installing-cupy) for your CUDA version.\n  - i.e. ```cupy-cuda11x``` for CUDA 11.x or ```cupy-cuda12x``` for CUDA 12.x\n- if you don't have CUDA installed, [go here](https://docs.cupy.dev/en/stable/install.html).\n- Mac Metal GPU-acceleration coming... eventually. Let me know if this is important to you!\n\n## Usage\nThe sample dataset shown below is in the repo if you want to play around without, and can be downloaded [here](https://github.com/aelefebv/nellie/tree/main/sample_data).\n\n### General data preparation\n- It is strongly recommended to have your data in a parsable format, such as .ome.tif, .nd2, or other raw data files from microscopes.\n  - Importing into ImageJ/FIJI and saving via BioFormats with the proper image dimensions should do the trick.\n  - If the metadata cannot be parsed, you will have to manually enter it.\n- It is also recommended to crop your image as much as possible to reduce processing time and memory usage. But really, unless you have massive lightsheet data, it should be pretty fast (seconds to minutes on a typical modern desktop computer).\n\n### 3D + Timeseries dataset\n\nhttps://github.com/user-attachments/assets/531f76ee-f58e-4058-b5dc-4fdf09af3660\n\n### 3D (no Timeseries) dataset\n\nhttps://github.com/user-attachments/assets/30d55bfa-bade-4987-88f0-255bb36cb7e8\n\n### 2D + Timeseries dataset\n\nhttps://github.com/user-attachments/assets/d534c6e1-df31-4964-9c12-edff56228be3\n\n### Running Nellie's processing pipeline\n1. Start Napari (open a Terminal and type napari)\n    ```bash\n    napari\n    ```\n2. Go to \n```Plugins > Nellie (nellie)``` then to the ```File select``` tab.\n3. Click ```Select File``` of ```Select Folder``` to select your image(s).\n   - If the metadata boxes do not fill in automatically and turn red, this means Nellie did not detect that metadata portion from your image, and you must manually enter it or reformat your image and try again.\n     - The metadata slot will appear green if it is in the correct format.\n   - *Note, if you are batch processing, the metadata must be the same for all images if any of them are in an incorrect format (this will be fixed eventually). If they are different, but all pass validation, then it will process fine.\n   - You can preview your image via the ```Open preview``` button once the metadata is filled in to ensure it looks correct.\n   - From this tab, you can also choose what time points and channel you want to analyze, if your file contains more than one slice in those dimensions.\n4. Click the ```Process``` tab.\n5. You can run the full pipeline with ```Run Nellie```, or run individual steps below.\n    - Steps can only be run once its previous step has been run.\n    - Likewise, visualizations in the ```Visualization``` tab can only be opened once its respective step has been run.\n6. All intermediate files and output csvs will be saved to ```[image_directory]/nellie_output/```, which can be accessed via the ```Open output directory``` button.\n   - A separate .csv is created for each level of the organellar hierarchy.\n7. Once features have been exported, Nellie will automatically detect this, and allow analysis via the ```Analyze``` tab.\n   - Analysis at this point is optional, but can be helpful for visualizing, and selectively exporting data.\n\n### Using Nellie's visualization plugin\n1. Follow the previous processing steps, you only need to do this once per file as long as you don't move or delete the files.\n2. Open the ```Visualization``` tab\n3. Select a visualization from the list.\n   1. ```Raw```: Visualize the raw data for the processed channel.\n   2. ```Preprocessed```: Visualize the contrast-enhanced data.\n   3. ```Segmentation```: Visualize the organelle and branch instance segmentation masks.\n   4. ```Mocap Markers```: Visualize the mocap markers used for waypoints.\n   5. ```Reassigned Labels```: Visualize the organelle and branch instance segmentation masks where voxels are reassigned based on the first timepoint.\n4. To visualize tracks, open and select one of the segmentation layers.\n5. To visualize all tracks of all organelles/branches, click the ```Visualize all frame labels' tracks``` button.\n6. To visualize all tracks of a specific organelle/branch:\n   1. Click on the layer, and use the eyedropper tool at the top to select an organelle/branch to track.\n   2. Click the ```Visualize selected label's tracks```.\n\n### Using Nellie's analysis plugin\n1. Follow the previous processing steps, you only need to do this once per file as long as you don't move or delete the files.\n2. Open the ```Analyze``` tab, select the hierarchy level you want to visualize from the dropdown.\n3. Select the level-specific feature you want to visualize from the new dropdown.\n4. A histogram of all the data will be displayed.\n   - This histogram can be directly exported via the ```Save graph``` button. A .png will be saved to ```[image_directory]/nellie_output/graphs/``` with the current datetime.\n   - The values of the histogram can be exported via the ```Export graph data``` button. A .csv will be saved to ```[image_directory]/nellie_output/graphs/``` with the current datetime.\n   - The histogram's x-axis can be viewed in log10 scale via the ```Log scale``` checkbox.\n   - By default, the histogram shows lines at the mean +/- 1 standard deviation. This can instead be switched to median and quartiles via the ```Median view``` checkbox.\n5. Press the ```Overlay mask``` button to colormap the organelle mask based on your selected feature.\n   - Once overlaid, toggle the ```Timepoint data``` checkbox to allow you to select a specific timepoint to visualize via the slider.\n\n## Other features\n- Nellie's plugin offers an ```Easy screenshot``` feature:\n  - Press the button under ```Easy screenshot``` or hit Ctrl/Cmd-Shift-E after clicking your image.\n  - The .png will be saved to ```[image_directory]/nellie_output/screenshots/``` with the current datetime.\n\n## Feedback / Getting Help\nA few options are available for providing feedback or getting help with Nellie:\n\n[Github Issues](https://github.com/aelefebv/nellie/issues/new) | [email](mailto:austin.e.lefebvre+nellie@gmail.com) | [X](https://twitter.com/Austin_Lefebvre) | wherever else you can find me!\n\nTo avoid any unnecessary back-and-forth, please include any/all (if possible) of the following information in your bug report:\n- What kind of computer do you have, and what are its specs?\n- Send me screenshots of what is not working.\n- Send me any error logs in your terminal.\n- Send me the file you ran (if possible).\n- Any other information that might be helpful\n\n## Other Info\nFor a 16bit dataset, the output:input ratio is ~15x. There is an option in the GUI to automatically delete intermediates after processing, keeping only the CSV files containing the extracted features.\n\n## Requirements\nNellie has been tested on the following configurations:\n- Mac, Linux, and Windows operating systems\n- Python >= 3.10\n\n## License\nNellie \u00a9 2024 by [Austin E. Y. T. Lefebvre](https://github.com/aelefebv) is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)\n\n## Reference\nIf you used Nellie or found this work useful in your own research, please cite our [Nature Methods Paper](https://www.nature.com/articles/s41592-025-02612-7):\n\n```\nLefebvre, A.E.Y.T., Sturm, G., Lin, TY. et al. Nellie: automated organelle segmentation, tracking and hierarchical feature extraction in 2D/3D live-cell microscopy. Nat Methods (2025). https://doi.org/10.1038/s41592-025-02612-7\n```\n\n## More fun examples\n### Microtubule growing ends:\n\nhttps://github.com/aelefebv/nellie/assets/26515909/88578dc9-f5c5-4188-a0e2-4e37037a44a9\n\n### Endoplasmic reticulum:\n\nhttps://github.com/aelefebv/nellie/assets/26515909/db76d388-a9cc-4650-b93d-69d357ace418\n\n### Peroxisomes:\n\nhttps://github.com/aelefebv/nellie/assets/26515909/58bda3cb-6489-4620-8584-a3728cd6b2ec\n\n## Code contents:\nFull documentation can be found within the code, and compiled by Sphinx in the file docs/_build/html/index.html\n\n### Nellie pipeline\nAll the Nellie pipeline code is found within the nellie folder\n- File and metadata loading, and file preparation is found at nellie/im_info/verifier.py\n- Preprocessing is found at nellie/segmentation/filtering.py\n- Segmentation of organelles is found at nellie/segmentation/labelling.py\n- Skeletonization and segmentation of branches is found at nellie/segmentation/networking.py\n- Mocap marker detection is found at nellie/segmentation/mocap_marking.py\n- Mocap marker tracking is found at nellie/tracking/hu_tracking.py\n- Voxel reassignment via flow interpolation is found at nellie/tracking/voxel_reassignment.py\n- Hierarchical feature extraction is found at nellie/feature_extraction/hierarchical.py\n\n### Nellie Napari plugin\nAll the Napari plugin code is found with the nellie_napari folder\n- The home tab is found at nellie_napari/nellie_home.py\n- The file selection tab is found at nellie_napari/nellie_fileselect.py\n- The processing tab is found at nellie_napari/nellie_processor.py\n- The visualization tab is found at nellie_napari/nellie_visualizer.py\n- The analysis tab is found at nellie_napari/nellie_analysis.py\n- The settings tab is found at nellie_napari/nellie_settings.py\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": null,
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "nellie",
+    "package_url": "https://pypi.org/project/nellie/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/nellie/",
+    "project_urls": {
+      "Homepage": "https://github.com/aelefebv/nellie"
+    },
+    "provides_extra": [
+      "docs"
+    ],
+    "release_url": "https://pypi.org/project/nellie/1.0.3/",
+    "requires_dist": [
+      "numpy",
+      "scipy",
+      "scikit-image",
+      "nd2",
+      "ome-types",
+      "pandas",
+      "matplotlib",
+      "napari[all]",
+      "imagecodecs",
+      "mkdocs; extra == \"docs\"",
+      "mkdocs-material; extra == \"docs\"",
+      "mkdocstrings[python]; extra == \"docs\""
+    ],
+    "requires_python": ">=3.10",
+    "summary": "Automated organelle segmentation, tracking, and hierarchical feature extraction in 2D/3D live-cell microscopy",
+    "version": "1.0.3",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 33561956,
+  "releases": {
+    "0.1.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "2e6425cf038a2ba172eaa24478ec3d3f421d283cb0ca3065dd3b5527eec5510d",
+          "md5": "9235acf25500308eb5ba1ab87f56f888",
+          "sha256": "4db7dcab254daa342d3b329724578834b4bb3f438fed54422de82e9a96462216"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "9235acf25500308eb5ba1ab87f56f888",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 165868,
+        "upload_time": "2024-03-21T00:28:03",
+        "upload_time_iso_8601": "2024-03-21T00:28:03.765932Z",
+        "url": "https://files.pythonhosted.org/packages/2e/64/25cf038a2ba172eaa24478ec3d3f421d283cb0ca3065dd3b5527eec5510d/nellie-0.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "a9d4e241cbfa3e09c8b5875d02b28ac6bf6b9c3a0ee7a274b8d4b442bd2e4f71",
+          "md5": "482f6bbe2838308f955545c77cd3a64d",
+          "sha256": "850643215d23afebe2d763d60fca2ba820d1b44d79272eee85ef5b81d7724996"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "482f6bbe2838308f955545c77cd3a64d",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 159168,
+        "upload_time": "2024-03-21T00:28:06",
+        "upload_time_iso_8601": "2024-03-21T00:28:06.552828Z",
+        "url": "https://files.pythonhosted.org/packages/a9/d4/e241cbfa3e09c8b5875d02b28ac6bf6b9c3a0ee7a274b8d4b442bd2e4f71/nellie-0.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "061bc0b15684613409d8762c4490f52ab1dc54768d4ed86531d9f0ddd6b8c00b",
+          "md5": "28e143c53e3f09e88dc72e209aee1e66",
+          "sha256": "9057ec6090585d94a4177cf7011b9d961244a7c455dd3da29a521479addf2b27"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.1.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "28e143c53e3f09e88dc72e209aee1e66",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 165319,
+        "upload_time": "2024-03-23T02:40:11",
+        "upload_time_iso_8601": "2024-03-23T02:40:11.204496Z",
+        "url": "https://files.pythonhosted.org/packages/06/1b/c0b15684613409d8762c4490f52ab1dc54768d4ed86531d9f0ddd6b8c00b/nellie-0.1.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "a87a210aa59545c7093f0ff32af04cca633e80a8cabc5c31813d09951c84c8e0",
+          "md5": "a105842a4bc064dfce1dfdd3f7099dff",
+          "sha256": "d671e7eedbdf81e5b6d042422a2dab1486e1a2fb4854a5297954f80f151f38be"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.1.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "a105842a4bc064dfce1dfdd3f7099dff",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 158916,
+        "upload_time": "2024-03-23T02:40:13",
+        "upload_time_iso_8601": "2024-03-23T02:40:13.653374Z",
+        "url": "https://files.pythonhosted.org/packages/a8/7a/210aa59545c7093f0ff32af04cca633e80a8cabc5c31813d09951c84c8e0/nellie-0.1.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.3": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "fcf5175135d48857b3677c75afcce19c8c2854e73aaa68b36780d5e028cd9684",
+          "md5": "1a1856139a35dc4a81d360b494f9bd5a",
+          "sha256": "6340241cd2e44c5c6ec090d8a56e778b481a7c2f5d4012207f0fdcacbf35e85b"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.1.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "1a1856139a35dc4a81d360b494f9bd5a",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 165571,
+        "upload_time": "2024-03-23T03:58:16",
+        "upload_time_iso_8601": "2024-03-23T03:58:16.473493Z",
+        "url": "https://files.pythonhosted.org/packages/fc/f5/175135d48857b3677c75afcce19c8c2854e73aaa68b36780d5e028cd9684/nellie-0.1.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "0fd860eb3ee9eb588399ffef3c95e4f19f63f7e09c15c20f39658f082f756e3c",
+          "md5": "ca043ad602573dfdf07fc7bf25f10922",
+          "sha256": "8009b4b2bc35f4363ce66151f48d966aeb1d3e7db362e2a3b001d7fdf8a4a256"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.1.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "ca043ad602573dfdf07fc7bf25f10922",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 159124,
+        "upload_time": "2024-03-23T03:58:18",
+        "upload_time_iso_8601": "2024-03-23T03:58:18.853689Z",
+        "url": "https://files.pythonhosted.org/packages/0f/d8/60eb3ee9eb588399ffef3c95e4f19f63f7e09c15c20f39658f082f756e3c/nellie-0.1.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.4": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "609d18e11a183cd87db72a9dbb259a22957c777564888f4b98ef23d35dacb0d6",
+          "md5": "6b4e1923100bf5066b3d7d22418b22b6",
+          "sha256": "ae449ec6686b3dff52e9df5ff3cf3a96a09597f062df486dedc698e3a865bab1"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.1.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "6b4e1923100bf5066b3d7d22418b22b6",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 165663,
+        "upload_time": "2024-04-01T17:27:22",
+        "upload_time_iso_8601": "2024-04-01T17:27:22.123084Z",
+        "url": "https://files.pythonhosted.org/packages/60/9d/18e11a183cd87db72a9dbb259a22957c777564888f4b98ef23d35dacb0d6/nellie-0.1.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "1bd219e81145d39d0908bdc719412cf92f99ed394b16ca0d9c0a22347eb7e78d",
+          "md5": "05d7a32b05d1382842005591549f5f90",
+          "sha256": "6e184f7c311111b2d1ab1e92a73b9e727a9b8ccff7587db906ddfa9b5bde9f08"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.1.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "05d7a32b05d1382842005591549f5f90",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 159242,
+        "upload_time": "2024-04-01T17:27:24",
+        "upload_time_iso_8601": "2024-04-01T17:27:24.282156Z",
+        "url": "https://files.pythonhosted.org/packages/1b/d2/19e81145d39d0908bdc719412cf92f99ed394b16ca0d9c0a22347eb7e78d/nellie-0.1.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.5": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "99d03472546a7ccef678bfe1511af06d220ac8972743590c85f36bcb07514edf",
+          "md5": "32750e26458a433247297d08f7a4d407",
+          "sha256": "3963bce139250f824701c1e47b4d7c79b99775fbd083aa2a10ea0164b685eb59"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.1.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "32750e26458a433247297d08f7a4d407",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 165700,
+        "upload_time": "2024-04-01T22:22:17",
+        "upload_time_iso_8601": "2024-04-01T22:22:17.120279Z",
+        "url": "https://files.pythonhosted.org/packages/99/d0/3472546a7ccef678bfe1511af06d220ac8972743590c85f36bcb07514edf/nellie-0.1.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "4c58122629af20747b5c56f2079d88d3c73c8021a7cdebc5d5b42451f232a8e6",
+          "md5": "e4f4fcb6050c098f097ff0819f4e27ee",
+          "sha256": "7e1f0eddf1c106e28f3eccac23303c70457b2f3bbbadf7159548c79bf17d15e4"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.1.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e4f4fcb6050c098f097ff0819f4e27ee",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 159268,
+        "upload_time": "2024-04-01T22:22:19",
+        "upload_time_iso_8601": "2024-04-01T22:22:19.166036Z",
+        "url": "https://files.pythonhosted.org/packages/4c/58/122629af20747b5c56f2079d88d3c73c8021a7cdebc5d5b42451f232a8e6/nellie-0.1.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.6": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "f79966a5bbd20c89c5bfc2db037c501306a4a182d201f822f4adc37821881e94",
+          "md5": "9e038f5b6fe27772078f6dab719fec73",
+          "sha256": "19d4920a0b2be54a7e486e64a8ea75e6abae66ad3d0bba33f341d4aa51c4258a"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.1.6-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "9e038f5b6fe27772078f6dab719fec73",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 165706,
+        "upload_time": "2024-04-05T16:01:12",
+        "upload_time_iso_8601": "2024-04-05T16:01:12.679202Z",
+        "url": "https://files.pythonhosted.org/packages/f7/99/66a5bbd20c89c5bfc2db037c501306a4a182d201f822f4adc37821881e94/nellie-0.1.6-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "009f1be4a56d2ee5e7d1f88f7c37b66e35dd3b234de7760cdbb2546e62d55197",
+          "md5": "495147fccf7beea5856ac8c3cd4f9859",
+          "sha256": "2c6f89bd13ea65ffaec32fe5db55c7be9939d9dd33481816bbf3f9269d9b0542"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.1.6.tar.gz",
+        "has_sig": false,
+        "md5_digest": "495147fccf7beea5856ac8c3cd4f9859",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 159306,
+        "upload_time": "2024-04-05T16:01:15",
+        "upload_time_iso_8601": "2024-04-05T16:01:15.596187Z",
+        "url": "https://files.pythonhosted.org/packages/00/9f/1be4a56d2ee5e7d1f88f7c37b66e35dd3b234de7760cdbb2546e62d55197/nellie-0.1.6.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.7": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "80eb93e0ac833e04a8ac787d91993a17ab4bdde104b811aff4363181c85154ce",
+          "md5": "3e5c10abe12dfd6d1b32dc612e27c5dc",
+          "sha256": "1f13d71bc20c25d504444cfca6d1a8aab40d3e8901991f74519d52053c369f4c"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.1.7-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "3e5c10abe12dfd6d1b32dc612e27c5dc",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 165706,
+        "upload_time": "2024-04-05T16:12:13",
+        "upload_time_iso_8601": "2024-04-05T16:12:13.316798Z",
+        "url": "https://files.pythonhosted.org/packages/80/eb/93e0ac833e04a8ac787d91993a17ab4bdde104b811aff4363181c85154ce/nellie-0.1.7-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "0204bca8a0dfbd5b44ac193a3f1809859674dfa148929c32bddf3645b8ab5080",
+          "md5": "47a4f712a60c7a61372f7d8ee4ef84e2",
+          "sha256": "395a321a8d4ada9678d03102f864326496b156f772bfbcca8cdd3187cc92e840"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.1.7.tar.gz",
+        "has_sig": false,
+        "md5_digest": "47a4f712a60c7a61372f7d8ee4ef84e2",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 159296,
+        "upload_time": "2024-04-05T16:12:15",
+        "upload_time_iso_8601": "2024-04-05T16:12:15.822254Z",
+        "url": "https://files.pythonhosted.org/packages/02/04/bca8a0dfbd5b44ac193a3f1809859674dfa148929c32bddf3645b8ab5080/nellie-0.1.7.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.8": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "20936ef88bd0f6f67acf6ec7034e5a60e3b7300946c48d057b4dc81c181e5fbb",
+          "md5": "ad12d924a181cee550c153daaf5b6fa7",
+          "sha256": "ec1b742891559d225e7675bdeaefa51c5860cbb9d1dd9ce4dc51a4227cb2f6be"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.1.8-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "ad12d924a181cee550c153daaf5b6fa7",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 165707,
+        "upload_time": "2024-04-26T16:18:41",
+        "upload_time_iso_8601": "2024-04-26T16:18:41.886093Z",
+        "url": "https://files.pythonhosted.org/packages/20/93/6ef88bd0f6f67acf6ec7034e5a60e3b7300946c48d057b4dc81c181e5fbb/nellie-0.1.8-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "36a889e7ddb89ad5f199e32f03183a31cb26aa753c0149735875b3e71422109f",
+          "md5": "cec1a5759d7288bbfbacc97ea60fd4cd",
+          "sha256": "598bc237182a1b38634fdf0dcb5c7fdf75d9eb31668c0d547c6285f71548ac4e"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.1.8.tar.gz",
+        "has_sig": false,
+        "md5_digest": "cec1a5759d7288bbfbacc97ea60fd4cd",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 159315,
+        "upload_time": "2024-04-26T16:18:47",
+        "upload_time_iso_8601": "2024-04-26T16:18:47.936106Z",
+        "url": "https://files.pythonhosted.org/packages/36/a8/89e7ddb89ad5f199e32f03183a31cb26aa753c0149735875b3e71422109f/nellie-0.1.8.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "8f9b1da4842d12db71455d1b2f56ccaeb54d8574318e59fb0aac7e2f7349500f",
+          "md5": "058c457f9bbcd0f2d0486022adc84553",
+          "sha256": "3a9dac8d603f32ad0ecadada45e997dc945d01142582a27c1cdc5196a9fcb311"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "058c457f9bbcd0f2d0486022adc84553",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 166027,
+        "upload_time": "2024-05-20T18:20:19",
+        "upload_time_iso_8601": "2024-05-20T18:20:19.976384Z",
+        "url": "https://files.pythonhosted.org/packages/8f/9b/1da4842d12db71455d1b2f56ccaeb54d8574318e59fb0aac7e2f7349500f/nellie-0.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "40ffaafa1d54f78f588e0fa5d071b84fb19d0302fbe24aa0c0d432ddb0b8a7af",
+          "md5": "f7d3a2a06613424f93632c1f72eb33fe",
+          "sha256": "a6d1400ff1df4114b678dc3865d5eb73e588fdaf79ce3fe44e6f925bd21f41fe"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "f7d3a2a06613424f93632c1f72eb33fe",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 159486,
+        "upload_time": "2024-05-20T18:20:24",
+        "upload_time_iso_8601": "2024-05-20T18:20:24.334720Z",
+        "url": "https://files.pythonhosted.org/packages/40/ff/aafa1d54f78f588e0fa5d071b84fb19d0302fbe24aa0c0d432ddb0b8a7af/nellie-0.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "90b14574957adb2bca492f523a7a1bc49e20866b2d99059b54860e08d7c482ba",
+          "md5": "9a4c54add771b8170f47874268adb1ad",
+          "sha256": "906ef02ecdcb18cc2fe282f771bc9736e8ecbdeee391ed098a8379e28a095758"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.2.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "9a4c54add771b8170f47874268adb1ad",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 167087,
+        "upload_time": "2024-06-13T20:53:57",
+        "upload_time_iso_8601": "2024-06-13T20:53:57.445091Z",
+        "url": "https://files.pythonhosted.org/packages/90/b1/4574957adb2bca492f523a7a1bc49e20866b2d99059b54860e08d7c482ba/nellie-0.2.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "0ee543baff1b8ad28d70de32b0380b9357fe7492b052e8c39458a08ac2f41fad",
+          "md5": "a9950f60ccc573710ea3a2fa18aa242d",
+          "sha256": "56218623bbaf0b6b2c46439ec244b8aa62cec25b82d563e14bc6fd26b2975626"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.2.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "a9950f60ccc573710ea3a2fa18aa242d",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 160236,
+        "upload_time": "2024-06-13T20:53:59",
+        "upload_time_iso_8601": "2024-06-13T20:53:59.929856Z",
+        "url": "https://files.pythonhosted.org/packages/0e/e5/43baff1b8ad28d70de32b0380b9357fe7492b052e8c39458a08ac2f41fad/nellie-0.2.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "61fe7e498e128d039dc2aeec93cad4a834ce7b1a254477c69e6c96ef1cb7f461",
+          "md5": "8feea4e3958ec5740a9c7d785ef7e0cf",
+          "sha256": "0f86fc155a99ae87ec4089dce32126c543e7c4c76255178ba41a19e29dd49a07"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.2.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "8feea4e3958ec5740a9c7d785ef7e0cf",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 169675,
+        "upload_time": "2024-07-22T22:49:56",
+        "upload_time_iso_8601": "2024-07-22T22:49:56.023555Z",
+        "url": "https://files.pythonhosted.org/packages/61/fe/7e498e128d039dc2aeec93cad4a834ce7b1a254477c69e6c96ef1cb7f461/nellie-0.2.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "e4b60950bf1755111365b70633fb9952aecf01cd2570d3cc7b093930552e71bf",
+          "md5": "37bcfa52248515bf1c07f66a82ded4ca",
+          "sha256": "43dabb13e2676b81961919eb542d70d52f0c3431ac7da79c2ae079a914b0d12a"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.2.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "37bcfa52248515bf1c07f66a82ded4ca",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 162409,
+        "upload_time": "2024-07-22T22:49:59",
+        "upload_time_iso_8601": "2024-07-22T22:49:59.193637Z",
+        "url": "https://files.pythonhosted.org/packages/e4/b6/0950bf1755111365b70633fb9952aecf01cd2570d3cc7b093930552e71bf/nellie-0.2.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "02a48f2be3b89ab52c3e188a42cc5f73b6779c42001a540cb94db2fb5d8a5870",
+          "md5": "1ff9445bf498df305b38a9d148a307cf",
+          "sha256": "f8766c64cafbd237852deec8161f68c4376fe17dad2d0904ec08e78e077e83ae"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "1ff9445bf498df305b38a9d148a307cf",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 167644,
+        "upload_time": "2024-08-07T02:41:56",
+        "upload_time_iso_8601": "2024-08-07T02:41:56.938619Z",
+        "url": "https://files.pythonhosted.org/packages/02/a4/8f2be3b89ab52c3e188a42cc5f73b6779c42001a540cb94db2fb5d8a5870/nellie-0.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "55e3e734fcd7adf5d4f9957268fed861e1c997c2ba74b4b7d4bbfbe37cc3f95f",
+          "md5": "853c4a968bb8e50f1f79b50e508370fe",
+          "sha256": "ef2da9b2c4f0fb4c63574f66ba3729e66fd61788527bf449f4884ad97825895f"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "853c4a968bb8e50f1f79b50e508370fe",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 161171,
+        "upload_time": "2024-08-07T02:42:00",
+        "upload_time_iso_8601": "2024-08-07T02:42:00.863380Z",
+        "url": "https://files.pythonhosted.org/packages/55/e3/e734fcd7adf5d4f9957268fed861e1c997c2ba74b4b7d4bbfbe37cc3f95f/nellie-0.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "7e8377d0aea45eecfdb978e0969717df5dd2e3c25815d251bf40ec7b5752dab6",
+          "md5": "34089e44fb5fe41cdbe9462755bd7c93",
+          "sha256": "78fa3933d53723186a4c2ccad153164e97a316c7d27bb61bf168790579569948"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.3.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "34089e44fb5fe41cdbe9462755bd7c93",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 168920,
+        "upload_time": "2024-08-09T18:33:30",
+        "upload_time_iso_8601": "2024-08-09T18:33:30.376760Z",
+        "url": "https://files.pythonhosted.org/packages/7e/83/77d0aea45eecfdb978e0969717df5dd2e3c25815d251bf40ec7b5752dab6/nellie-0.3.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "8a3a21036d089988d955a60277332489a83fa4b0e50ec83419381d7dac81ad52",
+          "md5": "549d05cd2f0b90d2ea376bc2fda4903b",
+          "sha256": "3fd85bd1c7df5a8f24bff2118805cd7c82140b08871d520b2131d4d9a8c00d94"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.3.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "549d05cd2f0b90d2ea376bc2fda4903b",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 162440,
+        "upload_time": "2024-08-09T18:33:33",
+        "upload_time_iso_8601": "2024-08-09T18:33:33.727041Z",
+        "url": "https://files.pythonhosted.org/packages/8a/3a/21036d089988d955a60277332489a83fa4b0e50ec83419381d7dac81ad52/nellie-0.3.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "f3c0affe7972975752e99d62020c57517d493df1829c2db4289f8fd9a0f31220",
+          "md5": "c5cd4ba3c8cfd79812316bef47e033cb",
+          "sha256": "9eae66e2f21d1b118a241ca31a21c8e0d8feb7c88e6d301472678b1d790b4d1d"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.3.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "c5cd4ba3c8cfd79812316bef47e033cb",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 169083,
+        "upload_time": "2024-09-29T00:59:51",
+        "upload_time_iso_8601": "2024-09-29T00:59:51.120570Z",
+        "url": "https://files.pythonhosted.org/packages/f3/c0/affe7972975752e99d62020c57517d493df1829c2db4289f8fd9a0f31220/nellie-0.3.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "585b16bd3ff30425250cb619d83f33cf743d62df2ccf1b113db830b3bf6131e7",
+          "md5": "5299c3b1f9bdfab05aeddd6913fc01b2",
+          "sha256": "1825478fafd5a17f5bcfaee277940f9acca66bd09ef9e68e0bcdb0cd79d26a4e"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.3.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "5299c3b1f9bdfab05aeddd6913fc01b2",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 162744,
+        "upload_time": "2024-09-29T00:59:54",
+        "upload_time_iso_8601": "2024-09-29T00:59:54.812778Z",
+        "url": "https://files.pythonhosted.org/packages/58/5b/16bd3ff30425250cb619d83f33cf743d62df2ccf1b113db830b3bf6131e7/nellie-0.3.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.4.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "ec1756b21d6e62a15255b4b6d0f20026f981c4dc04f952b8f49722678304243c",
+          "md5": "699bc809ffca7cfcfaef7ecf8fb215de",
+          "sha256": "f849781c4e6de8848a172d72155de7e39c792e76dad417cc657e3440021bab6a"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.4.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "699bc809ffca7cfcfaef7ecf8fb215de",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 197166,
+        "upload_time": "2024-10-03T15:02:25",
+        "upload_time_iso_8601": "2024-10-03T15:02:25.298723Z",
+        "url": "https://files.pythonhosted.org/packages/ec/17/56b21d6e62a15255b4b6d0f20026f981c4dc04f952b8f49722678304243c/nellie-0.4.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "03af13d3133789bb37ac85e65340377c5f9cb639320657860e86a500e3d21059",
+          "md5": "01a201c5bef7cb81316ee70907247beb",
+          "sha256": "9faaf1a66844a1ff20aad437c378529ca5033de50509ff1ddb18196d62bc97ec"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.4.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "01a201c5bef7cb81316ee70907247beb",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 186938,
+        "upload_time": "2024-10-03T15:02:28",
+        "upload_time_iso_8601": "2024-10-03T15:02:28.352690Z",
+        "url": "https://files.pythonhosted.org/packages/03/af/13d3133789bb37ac85e65340377c5f9cb639320657860e86a500e3d21059/nellie-0.4.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.4.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "57c1be46915cc6221705a60d39eea5287844d27e2303c8bf16c9dc350fbc7e8a",
+          "md5": "7b8257f20867ccba45c21d91f46af693",
+          "sha256": "59ee07db3ceb0ffaeb1899e21009d5b70adb78c182d003228deff0974942c8c8"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.4.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "7b8257f20867ccba45c21d91f46af693",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 197299,
+        "upload_time": "2024-10-31T18:30:33",
+        "upload_time_iso_8601": "2024-10-31T18:30:33.664191Z",
+        "url": "https://files.pythonhosted.org/packages/57/c1/be46915cc6221705a60d39eea5287844d27e2303c8bf16c9dc350fbc7e8a/nellie-0.4.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "2c09979fb4a080c34102fcacbfe4b4791a77a7628189c8004bfb31a5b77042da",
+          "md5": "be3ded238fe3de60e166c46a939ac0c7",
+          "sha256": "27263b1ebd9cd8f5078c40c0b49dab0a1c8353f1915f84721d2f2b74091ff0c6"
+        },
+        "downloads": -1,
+        "filename": "nellie-0.4.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "be3ded238fe3de60e166c46a939ac0c7",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 187099,
+        "upload_time": "2024-10-31T18:30:35",
+        "upload_time_iso_8601": "2024-10-31T18:30:35.591357Z",
+        "url": "https://files.pythonhosted.org/packages/2c/09/979fb4a080c34102fcacbfe4b4791a77a7628189c8004bfb31a5b77042da/nellie-0.4.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "d33cd40d18045818c073b1b7480605b619dc6118d810528957c2e31f7a4bddc1",
+          "md5": "20033b63df943d7a12803096bb572a0d",
+          "sha256": "09c9ecc492a354ff448ec74009d6fda870758808fd953d39af3ef0e1d176124b"
+        },
+        "downloads": -1,
+        "filename": "nellie-1.0.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "20033b63df943d7a12803096bb572a0d",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 248018,
+        "upload_time": "2026-01-12T19:11:29",
+        "upload_time_iso_8601": "2026-01-12T19:11:29.012465Z",
+        "url": "https://files.pythonhosted.org/packages/d3/3c/d40d18045818c073b1b7480605b619dc6118d810528957c2e31f7a4bddc1/nellie-1.0.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "2261e1ed46527d0fcc0de1e5065e0500e214b8bd7a3279395472e94b7dad4da9",
+          "md5": "6444e4e50c508aaf2d7c0682d435382c",
+          "sha256": "6a61868bd787f0cfafad440e4f2e791e94d3d0478beaeaae3387fbd393583ff5"
+        },
+        "downloads": -1,
+        "filename": "nellie-1.0.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "6444e4e50c508aaf2d7c0682d435382c",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 237803,
+        "upload_time": "2026-01-12T19:11:30",
+        "upload_time_iso_8601": "2026-01-12T19:11:30.505567Z",
+        "url": "https://files.pythonhosted.org/packages/22/61/e1ed46527d0fcc0de1e5065e0500e214b8bd7a3279395472e94b7dad4da9/nellie-1.0.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "7a5ed26e10c9c834a6c15b592e132c5ce4d18fd649f4ff742942f1a05b71e815",
+          "md5": "087e7e15d3798fa50be4e6a834eb3f8c",
+          "sha256": "3bf2e54aefd6c78d715792f4704f83cd16072181742b4271d9f8b6a508b14d65"
+        },
+        "downloads": -1,
+        "filename": "nellie-1.0.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "087e7e15d3798fa50be4e6a834eb3f8c",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 249701,
+        "upload_time": "2026-01-12T19:21:57",
+        "upload_time_iso_8601": "2026-01-12T19:21:57.711771Z",
+        "url": "https://files.pythonhosted.org/packages/7a/5e/d26e10c9c834a6c15b592e132c5ce4d18fd649f4ff742942f1a05b71e815/nellie-1.0.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "61b42ddb42a1345dd482afb21e852debe426cba507d784b7ae2b96744d1b8b9e",
+          "md5": "e5151c7531f36365c4153988709af4a4",
+          "sha256": "daa2122ab1dbf1ec968980a94a4ced56b0d65bb64e34b16fe195f5ebcc3f20c7"
+        },
+        "downloads": -1,
+        "filename": "nellie-1.0.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e5151c7531f36365c4153988709af4a4",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 239515,
+        "upload_time": "2026-01-12T19:21:59",
+        "upload_time_iso_8601": "2026-01-12T19:21:59.411716Z",
+        "url": "https://files.pythonhosted.org/packages/61/b4/2ddb42a1345dd482afb21e852debe426cba507d784b7ae2b96744d1b8b9e/nellie-1.0.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.2": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "8399fa1efe14afd3ccd2bc0bd6591d60e1587b6f1ebae973ad1f816e6633bd65",
+          "md5": "eac88386130c73292323e63e78b33b88",
+          "sha256": "92259b71ad8d2ea612578d0b426cddd604961d1709ab799780789d391bb803e1"
+        },
+        "downloads": -1,
+        "filename": "nellie-1.0.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "eac88386130c73292323e63e78b33b88",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 249687,
+        "upload_time": "2026-01-12T19:26:47",
+        "upload_time_iso_8601": "2026-01-12T19:26:47.386534Z",
+        "url": "https://files.pythonhosted.org/packages/83/99/fa1efe14afd3ccd2bc0bd6591d60e1587b6f1ebae973ad1f816e6633bd65/nellie-1.0.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "6ece8348b9cea41b2b22a3075cc74ac03afb4a45884d430b5c0c98414bae59a5",
+          "md5": "ec590ea22d7e78bc3d25dba40460b5df",
+          "sha256": "97d50c744c9f143f8529d82cb17c64687b86774fd6639029eed3842c0dcde6bb"
+        },
+        "downloads": -1,
+        "filename": "nellie-1.0.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "ec590ea22d7e78bc3d25dba40460b5df",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 239469,
+        "upload_time": "2026-01-12T19:26:49",
+        "upload_time_iso_8601": "2026-01-12T19:26:49.103932Z",
+        "url": "https://files.pythonhosted.org/packages/6e/ce/8348b9cea41b2b22a3075cc74ac03afb4a45884d430b5c0c98414bae59a5/nellie-1.0.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.3": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "1bc593002589c3e04c2580c4cc6b6d8d4851a5542762c705852d4f306d1c28a0",
+          "md5": "89618bd7113cf1284482a122f9ccae8f",
+          "sha256": "95f307b3cdde0d655f46bd8accf9f94280d53c6e9e6d58261a71d9e3ccda5fb3"
+        },
+        "downloads": -1,
+        "filename": "nellie-1.0.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "89618bd7113cf1284482a122f9ccae8f",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 249964,
+        "upload_time": "2026-01-14T22:55:08",
+        "upload_time_iso_8601": "2026-01-14T22:55:08.930307Z",
+        "url": "https://files.pythonhosted.org/packages/1b/c5/93002589c3e04c2580c4cc6b6d8d4851a5542762c705852d4f306d1c28a0/nellie-1.0.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "817f483416ed58d6a5dda1c649274901249cda8f13dd4e4c29ed85fc020ed817",
+          "md5": "3a63eba6afac9cb84e82039b93b56524",
+          "sha256": "252a376c974cbc368a33ab7c7d44715bd1870c6b35e7be60538ef6da20eb7498"
+        },
+        "downloads": -1,
+        "filename": "nellie-1.0.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "3a63eba6afac9cb84e82039b93b56524",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 239795,
+        "upload_time": "2026-01-14T22:55:11",
+        "upload_time_iso_8601": "2026-01-14T22:55:11.235451Z",
+        "url": "https://files.pythonhosted.org/packages/81/7f/483416ed58d6a5dda1c649274901249cda8f13dd4e4c29ed85fc020ed817/nellie-1.0.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "1bc593002589c3e04c2580c4cc6b6d8d4851a5542762c705852d4f306d1c28a0",
+        "md5": "89618bd7113cf1284482a122f9ccae8f",
+        "sha256": "95f307b3cdde0d655f46bd8accf9f94280d53c6e9e6d58261a71d9e3ccda5fb3"
+      },
+      "downloads": -1,
+      "filename": "nellie-1.0.3-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "89618bd7113cf1284482a122f9ccae8f",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.10",
+      "size": 249964,
+      "upload_time": "2026-01-14T22:55:08",
+      "upload_time_iso_8601": "2026-01-14T22:55:08.930307Z",
+      "url": "https://files.pythonhosted.org/packages/1b/c5/93002589c3e04c2580c4cc6b6d8d4851a5542762c705852d4f306d1c28a0/nellie-1.0.3-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "817f483416ed58d6a5dda1c649274901249cda8f13dd4e4c29ed85fc020ed817",
+        "md5": "3a63eba6afac9cb84e82039b93b56524",
+        "sha256": "252a376c974cbc368a33ab7c7d44715bd1870c6b35e7be60538ef6da20eb7498"
+      },
+      "downloads": -1,
+      "filename": "nellie-1.0.3.tar.gz",
+      "has_sig": false,
+      "md5_digest": "3a63eba6afac9cb84e82039b93b56524",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.10",
+      "size": 239795,
+      "upload_time": "2026-01-14T22:55:11",
+      "upload_time_iso_8601": "2026-01-14T22:55:11.235451Z",
+      "url": "https://files.pythonhosted.org/packages/81/7f/483416ed58d6a5dda1c649274901249cda8f13dd4e4c29ed85fc020ed817/nellie-1.0.3.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

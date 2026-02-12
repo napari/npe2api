@@ -1,0 +1,347 @@
+{
+  "info": {
+    "author": "Simon Leclerc",
+    "author_email": "simon.leclerc@gu.se",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: MIT License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-omero-downloader-cci\n\n[![License MIT](https://img.shields.io/pypi/l/napari-omero-downloader-cci.svg?color=green)](https://github.com/CCI-GU-Sweden/napari-omero-downloader-cci/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-omero-downloader-cci.svg?color=green)](https://pypi.org/project/napari-omero-downloader-cci)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-omero-downloader-cci.svg?color=green)](https://python.org)\n[![tests](https://github.com/CCI-GU-Sweden/napari-omero-downloader-cci/workflows/tests/badge.svg)](https://github.com/CCI-GU-Sweden/napari-omero-downloader-cci/actions)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-omero-downloader-cci)](https://napari-hub.org/plugins/napari-omero-downloader-cci)\n[![npe2](https://img.shields.io/badge/plugin-npe2-blue?link=https://napari.org/stable/plugins/index.html)](https://napari.org/stable/plugins/index.html)\n[![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-purple.json)](https://github.com/copier-org/copier)\n\nA plugin that allows napari to connect to the Omero CCI server to visualize and download image data.\n\n---\n\n## Contents\n\n- [Installation](#installation)\n- [Plugin function](#plugin)\n- [Troubleshooting](#troubleshooting)\n\n---\n\n## Installation\n\n## Standalone napari\n\nA standalone version of napari is available at [napari.org](https://napari.org/dev/tutorials/fundamentals/installation_bundle_conda.html), and the plugin is available on the [napari hub](https://napari-hub.org/plugins/napari-omero-downloader-cci.html). Just follow the installation instruction from napari. You can install the plugin from the [plugin manager](#plugin-installation).\n\nOnly work from version v0.3.8 and upward.\n\n## Via Conda Forge\n\n### First napari installation\n\nFirst install miniconda from conda forge: [https://conda-forge.org/download/]. This is mandatory!\n\nRecommanded, create an environment for napari, bundling both napari and omero.\n\n```shell\nconda create -n napari -c conda-forge napari pyqt --yes\nconda activate napari\nnapari\n```\n\nOr you can download from [my github repo](https://github.com/CCI-GU-Sweden/napari-omero-downloader-cci/tree/main/scripts) the install_napari_omero (bat for window, sh for Mac/Linux). This will also install the plugin!\n\n**Note:** conda-forge does *not* provide OMERO-py or ICE bindings for Python \u22653.10.\nWhen installing the plugin via pip, the plugin will install its own OMERO + Ice wheels.\nThis is normal and expected.\n\n### Plugin installation\n\nYou can install the plugin through the napari plugin manager: Plugins -> Install/Uninstall Plugins.. -> search for 'omero'.\n\n![napari plugin](https://raw.githubusercontent.com/CCI-GU-Sweden/napari-omero-downloader-cci/main/assets/napari_omero.png)\n\nThe plugin is named Omero Downloader CCI.\n\nOr you can install `napari-omero-downloader-cci` via [pip]:\n\n```shell\npip install napari-omero-downloader-cci\n```\n\nThis will automatically install:\n\n- Qt (via napari)\n- all plugin dependencies\n\nNo conda required.\n\nWhen you first start the plugin, napari will prompt you to install:\n\n- the correct **zeroc-ice** wheel for your OS and Python version\n- **omero-py 5.21.2**\n\nThe plugin will check and install these for you.\n\nTo install latest development version :\n\n```shell\npip install git+https://github.com/CCI-GU-Sweden/napari-omero-downloader-cci.git\n```\n\n\u2014 or, during development \u2014\n\n```shell\npip install -e .\n```\n\nFor power user, the option to install the plugin **without** the dependencies:\n\n```shell\npip install --no-deps napari-omero-downloader-cci\n```\n\nDependency list:\n\n- [dask](https://pypi.org/project/dask/) - to display images\n- [numpy](https://pypi.org/project/numpy/) - to display images\n- [qtpy](https://pypi.org/project/QtPy/) \u2013 abstraction layer for Qt (used by napari).\n  A Qt backend (PyQt / PySide) is installed automatically with napari.\n- [zeroc-ice wheel based on your system](https://github.com/glencoesoftware) for the connection handling\n- [omero-py](https://pypi.org/project/omero-py/) version 5.21.2\n\nNapari is also required, but not in the dependency.\n\nPython version support locked by zeroc-ice: from 3.8 to 3.12. Default is python 3.10.\n\n### Python version support\n\nThis plugin supports **Python 3.8 \u2013 3.12**, matching the available zeroc-ice wheels by Glencoe Software.\nNewer Python versions will be supported once Glencoe publishes corresponding wheels.\n\n## Running the plugin after Installation\n\nThe easy step: download from [my github repo](https://github.com/CCI-GU-Sweden/napari-omero-downloader-cci/tree/main/scripts) the start_napari (bat for window, sh for Mac/Linux) and run it. It should open python, activate the env then run napari (can take 10-30 seconds the first time!)\n\nOtherwise, open the conda-forge CLI, then:\n\n```shell\nconda activate napari\nnapari\n```\n\nThe plug will be in the plugin tab.\n\n![plugin](https://raw.githubusercontent.com/CCI-GU-Sweden/napari-omero-downloader-cci/main/assets/plugin.png)\n\n## Plugin\n\nThe plugin requires that you have access to Omero with the following features:\n\n- CLI enable\n- OAuth enable (2FA token)\n\n### Why this plugin?\n\nAnother solution outside of this plugin is available: omero.insight ([openmicroscopy website](https://www.openmicroscopy.org/omero/downloads/)), as well as a FiJi plugin.\n\nHowever, they do not fullfill the prerequiste at the CCI: A simple tool to quickly visualize and download data while being secure with 2FA.\n\n### Login\n\nIn 'Options...', indicate the omero server address and port. The default is the one for the CCI at the University of Gothenburg.\n\n![options](https://raw.githubusercontent.com/CCI-GU-Sweden/napari-omero-downloader-cci/main/assets/options.png)\n\nClick on the link, login on Omero and grab a key. This key is valid only for a certain amount of time and for this session. Generating a new key, or closing your session (via the 'Disconnect') will invalidate the key.\n\nEnter the key in the field and click on 'Connect'.\n\n![login](https://raw.githubusercontent.com/CCI-GU-Sweden/napari-omero-downloader-cci/main/assets/login.png)\n\nThe square next to the connect button is indicating the connection status:\n\n- Red: not connected\n- Yellow: busy\n- Green: ready\n\n### Groups and users\n\nIf you are part of multiple group, you can change group with the drop down menu. If your Omero administrator allows it, you can also see the data of other people in the same group. If data are being imported on the Omero server, you may need to refresh the visualization to be able to see them.\n\n### Queuing data for download\n\nThe data will be organized as a hierachical tree. Project -> Database -> Image.\n\nClicking on the arrow allow you to reveal the contained data.\n\nDouble click to add the element in the 'Download Queue'. Double clicking on a project will queue the whole project. Same for a dataset. However, double clicking on one image will download only this image.\n\nThere is a color on the 'OMERO Data' as well:\n\n- Green: will download all the child of the element\n- Yellow: will partially download the child of the element\n\nYou can remove an element by double clicking on it in the 'Download queue'.\n\n![trees](https://raw.githubusercontent.com/CCI-GU-Sweden/napari-omero-downloader-cci/main/assets/tree.png)\n\n### Data Visualization\n\nIt is possible to visualize the selected data (in the 'OMERO Data' tree) by clicking on the 'Visualize' button. This will download and display only one plane (first time point, middle of stack in case of multi-dimensional image). It is possible to scroll the data, but keep in mind that this is streamed from the Omero server. Do not expect high performance specially if the image is large!\n\n![visualize](https://raw.githubusercontent.com/CCI-GU-Sweden/napari-omero-downloader-cci/main/assets/visualize.png)\n\n### Data Downloading\n\nTo download the data that are queued, select a directory to save them (with the 'Browse...' button) then it the 'Download' button.\n\nThe data will be organized in a similar way that they are on the Omero server. If you have a key-value pair called 'Folder' associated to an image, the image will be nested on level deeper, in this folder.\n\nIn option, if download attachement and key-value pair is enable, these files will also be downloaded alongside the image.\n\n![progressbar](https://raw.githubusercontent.com/CCI-GU-Sweden/napari-omero-downloader-cci/main/assets/progressbar.png)\n\n![folder](https://raw.githubusercontent.com/CCI-GU-Sweden/napari-omero-downloader-cci/main/assets/folder.png)\n\n### Data deletion\n\nThis napari plugin is **NOT** allowed to delete data on the Omero server. If you need to delete data, you should do it via Omero.web.\n\n## Troubleshooting\n\n### \u274c \"No Qt bindings found\"\n\nInstall napari with Qt:\n\n```bash\npip install \"napari[qt]\"\n```\n\n### \u274c \"Cannot import Ice\"\n\nThis means the correct zeroc-ice wheel was not installed.\nCheck your Python version (3.8\u20133.12) and OS match the supported versions. Search for the correct wheel on [Glencoe](https://github.com/glencoesoftware), then you can install them with (for example, windows and python 3.10):\n\n```bash\npip install @ \"zeroc-ice @ https://github.com/glencoesoftware/zeroc-ice-py-win-x86_64/releases/download/20240325/zeroc_ice-3.6.5-cp310-cp310-win_amd64.whl\"\n```\n\nDo **NOT** install directly zeroc-ice from pip: it will fail.\n\n### \u274c \"Cannot import omero\"\n\nEnsure the plugin was installed normally:\n\n```bash\npip install napari-omero-downloader-cci\n```\n\nIf needed, force the reinstall of omero for the correct version:\n\n```bash\npip install --upgrade \"omero-py == 5.21.2\"\n```\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [MIT] license,\n\"napari-omero-downloader-cci\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[MIT]: http://opensource.org/licenses/MIT\n[file an issue]: https://github.com/CCI-GU-Sweden/napari-omero-downloader-cci/issues\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": "The MIT License (MIT)\n        \n        Copyright (c) 2025 Simon Leclerc\n        \n        Permission is hereby granted, free of charge, to any person obtaining a copy\n        of this software and associated documentation files (the \"Software\"), to deal\n        in the Software without restriction, including without limitation the rights\n        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n        copies of the Software, and to permit persons to whom the Software is\n        furnished to do so, subject to the following conditions:\n        \n        The above copyright notice and this permission notice shall be included in\n        all copies or substantial portions of the Software.\n        \n        THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\n        THE SOFTWARE.\n        ",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-omero-downloader-cci",
+    "package_url": "https://pypi.org/project/napari-omero-downloader-cci/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-omero-downloader-cci/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/CCI-GU-Sweden/napari-omero-downloader-cci/issues",
+      "Documentation": "https://github.com/CCI-GU-Sweden/napari-omero-downloader-cci#README.md",
+      "Source Code": "https://github.com/CCI-GU-Sweden/napari-omero-downloader-cci",
+      "User Support": "https://github.com/CCI-GU-Sweden/napari-omero-downloader-cci/issues"
+    },
+    "provides_extra": [
+      "all",
+      "testing",
+      "dev"
+    ],
+    "release_url": "https://pypi.org/project/napari-omero-downloader-cci/0.4.6/",
+    "requires_dist": [
+      "numpy",
+      "qtpy",
+      "dask>=2025.9.0",
+      "napari[all]; extra == \"all\"",
+      "tox; extra == \"testing\"",
+      "pytest; extra == \"testing\"",
+      "pytest-cov; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "napari[qt]; extra == \"testing\"",
+      "napari-omero-downloader-cci[testing]; extra == \"dev\"",
+      "black; extra == \"dev\"",
+      "ruff; extra == \"dev\""
+    ],
+    "requires_python": "<3.13,>=3.8",
+    "summary": "A plugin that allows napari to connect to the Omero CCI server to visualize and download image data",
+    "version": "0.4.6",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 32635391,
+  "releases": {
+    "0.1.5": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "e834d2e6c618a3f4537c11c41e795e73b984673db3c08e5dc3aa18a5024f5f02",
+          "md5": "6b22321f4fe3538cc23dc63ecd206b41",
+          "sha256": "7860836985de2ae7651f33bc3c5528a909edd6a4f062fe5c4f9afb73c640676c"
+        },
+        "downloads": -1,
+        "filename": "napari_omero_downloader_cci-0.1.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "6b22321f4fe3538cc23dc63ecd206b41",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 22744,
+        "upload_time": "2025-09-04T07:08:28",
+        "upload_time_iso_8601": "2025-09-04T07:08:28.585778Z",
+        "url": "https://files.pythonhosted.org/packages/e8/34/d2e6c618a3f4537c11c41e795e73b984673db3c08e5dc3aa18a5024f5f02/napari_omero_downloader_cci-0.1.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "9007430a9a5fab79c1aa43a45ca64ad0e3f17bf03cfbca3f5857d604bb7a3e75",
+          "md5": "4c2814c48efe3b716a406431cb7650c5",
+          "sha256": "0125a298e9c570dd420833a711505138f05af53df8c3aec7327f8ae5a80a34b2"
+        },
+        "downloads": -1,
+        "filename": "napari_omero_downloader_cci-0.1.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "4c2814c48efe3b716a406431cb7650c5",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 27594,
+        "upload_time": "2025-09-04T07:08:29",
+        "upload_time_iso_8601": "2025-09-04T07:08:29.704645Z",
+        "url": "https://files.pythonhosted.org/packages/90/07/430a9a5fab79c1aa43a45ca64ad0e3f17bf03cfbca3f5857d604bb7a3e75/napari_omero_downloader_cci-0.1.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.3": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "2f1a69ea8d03ba66871b02026b314bf7fbd860bd7c70df88c7954fab3f2104fb",
+          "md5": "1d95de153e89edb44947e888ce4ac5b7",
+          "sha256": "b00ec210fe420858c32d2c6e66a423099d57dea849ed6e84bdab523c0485cd5c"
+        },
+        "downloads": -1,
+        "filename": "napari_omero_downloader_cci-0.2.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "1d95de153e89edb44947e888ce4ac5b7",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 23539,
+        "upload_time": "2025-09-04T15:10:52",
+        "upload_time_iso_8601": "2025-09-04T15:10:52.336731Z",
+        "url": "https://files.pythonhosted.org/packages/2f/1a/69ea8d03ba66871b02026b314bf7fbd860bd7c70df88c7954fab3f2104fb/napari_omero_downloader_cci-0.2.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "8cb4709983a98de3f9d35a1e1ad6718e34db740ea1815abd930779a8a91fd885",
+          "md5": "b0a1be092ca794b4cbcdd405e0f9b9a9",
+          "sha256": "7729cc6738c45172a73e535c177e7e5e467478bd1a921ba0330cc1d64d4c019c"
+        },
+        "downloads": -1,
+        "filename": "napari_omero_downloader_cci-0.2.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "b0a1be092ca794b4cbcdd405e0f9b9a9",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 28390,
+        "upload_time": "2025-09-04T15:10:53",
+        "upload_time_iso_8601": "2025-09-04T15:10:53.471449Z",
+        "url": "https://files.pythonhosted.org/packages/8c/b4/709983a98de3f9d35a1e1ad6718e34db740ea1815abd930779a8a91fd885/napari_omero_downloader_cci-0.2.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "548d36b23294fc9045990d314b08dbd069214fd927f8bc0452ac94c1d1ff5891",
+          "md5": "7de87059b663e012bea6be7a266a4bce",
+          "sha256": "dff4f28c15e7165e3393c5ee4860809554b49319dbce6124977559e13eb52027"
+        },
+        "downloads": -1,
+        "filename": "napari_omero_downloader_cci-0.3.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "7de87059b663e012bea6be7a266a4bce",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 26463,
+        "upload_time": "2025-11-14T15:51:18",
+        "upload_time_iso_8601": "2025-11-14T15:51:18.159868Z",
+        "url": "https://files.pythonhosted.org/packages/54/8d/36b23294fc9045990d314b08dbd069214fd927f8bc0452ac94c1d1ff5891/napari_omero_downloader_cci-0.3.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "f91d2d3d9cc6437a30ada0e31633ff993b032ad3b576911fd36d2d55795e8852",
+          "md5": "8cba326a830c1a7a3501036d429852b7",
+          "sha256": "27609ead72c3c00ba22f57486b68b069ef1c442064b1865e4aeb7c383c7b44ae"
+        },
+        "downloads": -1,
+        "filename": "napari_omero_downloader_cci-0.3.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "8cba326a830c1a7a3501036d429852b7",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 755094,
+        "upload_time": "2025-11-14T15:51:19",
+        "upload_time_iso_8601": "2025-11-14T15:51:19.349073Z",
+        "url": "https://files.pythonhosted.org/packages/f9/1d/2d3d9cc6437a30ada0e31633ff993b032ad3b576911fd36d2d55795e8852/napari_omero_downloader_cci-0.3.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.2": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "9b4c4e135a459a70657168aec94a649e607a10f058485ce03f86866e1bec80b9",
+          "md5": "21c0542f371c71595187fd876fb1f295",
+          "sha256": "dc2262fedb2597b53538e716cf64b51b82d813d68165f00191f553d48e2f05e4"
+        },
+        "downloads": -1,
+        "filename": "napari_omero_downloader_cci-0.3.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "21c0542f371c71595187fd876fb1f295",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 26495,
+        "upload_time": "2025-11-14T16:32:53",
+        "upload_time_iso_8601": "2025-11-14T16:32:53.502294Z",
+        "url": "https://files.pythonhosted.org/packages/9b/4c/4e135a459a70657168aec94a649e607a10f058485ce03f86866e1bec80b9/napari_omero_downloader_cci-0.3.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "9b7db97eab58fbabe5a002804e71a200601e3ea732331e5af8fb8720148a4e03",
+          "md5": "6baffcf45c2e46a921fb88dbb03225e0",
+          "sha256": "2d93acc85d076a2c24754ff3eea46e9cb83d553868cee51f39906d520d2ca845"
+        },
+        "downloads": -1,
+        "filename": "napari_omero_downloader_cci-0.3.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "6baffcf45c2e46a921fb88dbb03225e0",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 755270,
+        "upload_time": "2025-11-14T16:32:54",
+        "upload_time_iso_8601": "2025-11-14T16:32:54.977023Z",
+        "url": "https://files.pythonhosted.org/packages/9b/7d/b97eab58fbabe5a002804e71a200601e3ea732331e5af8fb8720148a4e03/napari_omero_downloader_cci-0.3.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.4.6": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "63a592223fe84404a233cf049a9492c519178fa797b3705df7eecfc9f3617596",
+          "md5": "1df22aaf43a70d3f37a7a77a85c7cdc9",
+          "sha256": "3ef3a9b01facc7d80338b50ffc084e707ccda27df6559d8cd5e21d43b339c91b"
+        },
+        "downloads": -1,
+        "filename": "napari_omero_downloader_cci-0.4.6-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "1df22aaf43a70d3f37a7a77a85c7cdc9",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.8",
+        "size": 27290,
+        "upload_time": "2025-11-26T15:00:27",
+        "upload_time_iso_8601": "2025-11-26T15:00:27.030062Z",
+        "url": "https://files.pythonhosted.org/packages/63/a5/92223fe84404a233cf049a9492c519178fa797b3705df7eecfc9f3617596/napari_omero_downloader_cci-0.4.6-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "40f6e704bdbcd5d1b6ad8da24a1e7e0a20d489c9dd2924e72d332cd03f30faf6",
+          "md5": "31b54b8e09d6d15d2c1b6480770ad0ad",
+          "sha256": "d6f7836e41fe02456152d9619491c887569387e292263f56786d241813417b9e"
+        },
+        "downloads": -1,
+        "filename": "napari_omero_downloader_cci-0.4.6.tar.gz",
+        "has_sig": false,
+        "md5_digest": "31b54b8e09d6d15d2c1b6480770ad0ad",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.8",
+        "size": 757401,
+        "upload_time": "2025-11-26T15:00:28",
+        "upload_time_iso_8601": "2025-11-26T15:00:28.425193Z",
+        "url": "https://files.pythonhosted.org/packages/40/f6/e704bdbcd5d1b6ad8da24a1e7e0a20d489c9dd2924e72d332cd03f30faf6/napari_omero_downloader_cci-0.4.6.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "63a592223fe84404a233cf049a9492c519178fa797b3705df7eecfc9f3617596",
+        "md5": "1df22aaf43a70d3f37a7a77a85c7cdc9",
+        "sha256": "3ef3a9b01facc7d80338b50ffc084e707ccda27df6559d8cd5e21d43b339c91b"
+      },
+      "downloads": -1,
+      "filename": "napari_omero_downloader_cci-0.4.6-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "1df22aaf43a70d3f37a7a77a85c7cdc9",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": "<3.13,>=3.8",
+      "size": 27290,
+      "upload_time": "2025-11-26T15:00:27",
+      "upload_time_iso_8601": "2025-11-26T15:00:27.030062Z",
+      "url": "https://files.pythonhosted.org/packages/63/a5/92223fe84404a233cf049a9492c519178fa797b3705df7eecfc9f3617596/napari_omero_downloader_cci-0.4.6-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "40f6e704bdbcd5d1b6ad8da24a1e7e0a20d489c9dd2924e72d332cd03f30faf6",
+        "md5": "31b54b8e09d6d15d2c1b6480770ad0ad",
+        "sha256": "d6f7836e41fe02456152d9619491c887569387e292263f56786d241813417b9e"
+      },
+      "downloads": -1,
+      "filename": "napari_omero_downloader_cci-0.4.6.tar.gz",
+      "has_sig": false,
+      "md5_digest": "31b54b8e09d6d15d2c1b6480770ad0ad",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": "<3.13,>=3.8",
+      "size": 757401,
+      "upload_time": "2025-11-26T15:00:28",
+      "upload_time_iso_8601": "2025-11-26T15:00:28.425193Z",
+      "url": "https://files.pythonhosted.org/packages/40/f6/e704bdbcd5d1b6ad8da24a1e7e0a20d489c9dd2924e72d332cd03f30faf6/napari_omero_downloader_cci-0.4.6.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

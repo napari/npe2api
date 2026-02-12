@@ -1,0 +1,601 @@
+{
+  "info": {
+    "author": "Joel Luethi and Max Hess",
+    "author_email": "joel.luethi@uzh.ch",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 3 - Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Software Development :: Testing"
+    ],
+    "description": "# napari-feature-classifier\n\n[![License](https://img.shields.io/pypi/l/napari-feature-classifier.svg?color=green)](https://github.com/fractal-napari-plugins-collection/napari-feature-classifier/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-feature-classifier.svg?color=green)](https://pypi.org/project/napari-feature-classifier)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-feature-classifier.svg?color=green)](https://python.org)\n[![tests](https://github.com/fractal-napari-plugins-collection/napari-feature-classifier/workflows/tests/badge.svg)](https://github.com/fractal-napari-plugins-collection/napari-feature-classifier/actions)\n[![codecov](https://codecov.io/gh/fractal-napari-plugins-collection/napari-feature-classifier/branch/main/graph/badge.svg)](https://codecov.io/gh/fractal-napari-plugins-collection/napari-feature-classifier)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-feature-classifier)](https://napari-hub.org/plugins/napari-feature-classifier)\n\nAn interactive classifier plugin that allows the user to assign objects in a label image to multiple classes and train a classifier to learn those classes based on a feature dataframe.\n\n## Usage\n<p align=\"center\"><img src=\"https://github.com/fractal-napari-plugins-collection/napari-feature-classifier/assets/18033446/1ebf0890-1a7b-4e4b-a21c-88ca8f1dd800\" /></p>\n\nTo use the napari-feature-classifier, you need to have a label image and corresponding measurements: as a csv file, loaded to layer.features or in an [OME-Zarr Anndata table loaded with another plugin](https://github.com/fractal-napari-plugins-collection/napari-ome-zarr-navigator). Your feature measurements need to contain a `label` column that matches the label objects in the label image.\nThese interactive classification workflows are well suited to visually define cell types, find mitotic cells in images, do quality control by automatically detecting missegmented cells and other tasks where a user can easily assign objects to groups.\n\n#### Prepare the label layer:\n- Load your label layer into napari and add the features measurements to layer.features of the corresponding label layer. You can have multiple label layers with their features open at the same time\n    - To load features from a CSV file: `Plugins -> napari-feature-classifier -> CSV Feature Loader`, then load the features for the correct label image.\n    - To load features from an OME-Zarr file: Get both the label layer into memory as a normal label layer (not a pyramidal label layer, currently untested) and the corresponding features. If your OME-Zarr file is created by [Fractal](https://fractal-analytics-platform.github.io/), you can use [this ROI loader plugin](https://github.com/jluethi/napari-ome-zarr-roi-loader).\n    - To load features from anywhere else, load them manually to your label_layer.features\n- Your feature table should have 2 columns used for indexing (but stored as normal columns in layer.features):\n    - The `label` column to match the object in the label image\n    - The `roi_id` column to identify the image you're currently classifying (used when a classifier is trained on multiple label images)\n\n\n#### Initialize a classifier:\n- Start the classifier in napari by going to `Plugins -> napari-feature-classifier -> Initialize a Classifier`  \n- Select the features you want to use for the classifier (you need to do the feature selection before initializing. The feature selection can't be changed after initialization anymore). Hold the command key to select multiple features. Feature options are always shown for the features available in the last selected label layer, based on layer.features available features.\n- (Optional) Give your classes recognizable names (e.g. Mitotic & Interphase, Cell Type a, b and c etc.)\n<img width=\"1606\" alt=\"Screenshot 2023-05-09 at 11 46 35\" src=\"https://github.com/fractal-napari-plugins-collection/napari-feature-classifier/assets/18033446/452c0d6a-98a3-4e2d-9233-33bfd5bcad19\">\n\n\n\n\n#### Classify objects:\n<img width=\"1802\" alt=\"Classifier_annotation\" src=\"https://github.com/fractal-napari-plugins-collection/napari-feature-classifier/assets/18033446/556739b8-972b-4570-9da4-637738fc6a75\">\n\n- Make sure you have the label layer selected on which you want to classify\n- Select the current class with the radio buttons or by pressing 0, 1, 2, etc.\n- Click on label objects in the viewer to assign them to the currently selected class\n- Once you have trained enough examples, click \"Run Classifier\" to run the classifier and have it make a prediction for all objects. Aim for at least a dozen annotations per class, as the classifier divides your annotations 80/20 in training and test sets. \n- Once you get predictions, correct mistakes the classifier made and retrain it to improve its performance.\n- You can save the classifier under a different name or in a different location. Define the new output location and then click `Save Classifier` (you need to click the Save Classifier button. Just defining the new output path does not save it yet. But every run of the classifier triggers an autosave)\n<img width=\"1802\" alt=\"Classifier_prediction\" src=\"https://github.com/fractal-napari-plugins-collection/napari-feature-classifier/assets/18033446/69cff600-4585-4a66-9274-d2e7caeb335f\">\n\n\n\n#### Apply the classifier to additional images:\n- You can apply a classifier trained on one image to additional label images. Use `Plugins -> napari-feature-classifier -> Load Classifier`  \n- Select the classifier (.clf file with the name you gave above) while already having the label images ready (see `Prepare the label layer` above).\n- Click Load Classifier, proceed as above.\n<img width=\"1606\" alt=\"Screenshot 2023-05-09 at 12 01 00\" src=\"https://github.com/fractal-napari-plugins-collection/napari-feature-classifier/assets/18033446/e1143f9f-9729-4f8e-979c-2ab195e0aaca\">\n\n\n\n#### Export classifier results\n- To export the training data and the results of the classifier, define an Export Name (full path to an output file or just a filename ending in .csv) where the results of the classifier shall be saved. It defaults to the layer name for the selected layer in the last directory you chose (or the current working directory if none was chosen so far)\n- Click `Export Classifier Result` (Just selecting a filename is not enough, you need to click the export button). This will export the predictions for the currently selected layer.\n- The results of the classifier are save in a csv file. The label is an integer of the label object within that image. The prediction column contains predictions of the classifier for all objects (except those that contained NaNs in their feature data) and the annotation column contains the annotations you made (NaN for unclassified objects, -1 for objects you deselected, 1 - 9 for the classes)\n<img width=\"1802\" alt=\"Classifier_prediction\" src=\"https://github.com/fractal-napari-plugins-collection/napari-feature-classifier/assets/18033446/e8f6f7b7-d88b-44f8-b43e-8a2fa81e18d4\">\n\n\n#### Batch mode result export\n(To be updated: Create a new notebook to run batch processing, this is for the older version of the classifier)\nThere is a simple workflow for the classifier in the examples folder:\n- Install jupyter-lab (`pip install jupyterlab`)\n- Open the notebook in jupyter lab (Type `jupyter-lab` in the terminal when you are in the examples folder)\n- Follow the instructions to generate an example dataframe and an example label image\n- Use the classifier in napari with this simplified data\n\n\n#### Initializing the Annotator\nYou can use the annotation functionality also independently from the classifier\nStart the annotator widget by going to `Plugins -> napari-feature-classifier -> Annotator`\nSelect names for your classes. You can name up to 9 classes. Only classes that you give a name will be created upon initialization.\nThen click `Initialize`.\n\n<img width=\"1411\" alt=\"Screenshot 2023-02-16 at 14 49 38\" src=\"https://user-images.githubusercontent.com/18033446/219384524-9873bd66-270b-4cdd-b913-60d390f6c77a.png\">\n\nA annotator widget opens. Use the Radio-Buttons to select what class you're annotating (or keybindings for 1-9 for classes, 0 for deselect).\nThe annotator will always work on the currently selected label layer. While the annotator is open, you can't edit the labels. Restart napari to allow editing of labels again.\n\n<img width=\"1411\" alt=\"Screenshot 2023-02-16 at 14 50 00\" src=\"https://user-images.githubusercontent.com/18033446/219384925-b20e4c1a-2eca-4070-8269-902493c5d5ef.png\">\n\nThe annotations are saved in the `layer.features` table of the corresponding label layer as an `annotations` column.\n<img width=\"1411\" alt=\"Screenshot 2023-02-16 at 15 01 01\" src=\"https://user-images.githubusercontent.com/18033446/219385788-f61bd0a5-fbb6-42d7-81e5-f77ee4d1b4ff.png\">\n\n\n## Installation\n\nThis plugin is written for the new napari npe2 plugin engine. Thus, it requires napari >= 0.4.13.\nActivate your environment where you have napari installed (or install napari using `pip install \"napari[all]\"`), then install the classifier plugin:\n\n    pip install napari-feature-classifier\n\nThe layer.features dataframes have some issues in napari 0.4.17 (see [here](https://github.com/napari/napari/issues/5617)). They seem to be working again in the nighlty builds. To set up a nightly builds napari env, do the following:\n\n```\nconda create -n classifier-dev-napari-main -c \"napari/label/nightly\" -c conda-forge napari python=3.10 -y\n```\n    \n## Similar napari plugins\nIf you're looking for other classification approaches, [apoc](https://github.com/haesleinhuepf/apoc) by [Robert Haase](https://github.com/haesleinhuepf) has a pixel classifier in napari and an object classification workflow:  \n[napari-accelerated-pixel-and-object-classification (APOC)](https://github.com/haesleinhuepf/napari-accelerated-pixel-and-object-classification)  \nAlternatively, Cl\u00e9ment Cazorla has built [napari-svetlana, a deep learning based classifier](https://www.napari-hub.org/plugins/napari-svetlana)\n\n## Release process\n1. Update the version number in src/napari-feature-classifier/__init__.py\n2. Update the version in setup.cfg\n3. Add a Github release with a new version tag (matching the version set above)\n4. Once tests pass, this should automatically be deployed to pypi\n5. Wait for conda automation to make a PR for an updated conda release (see https://github.com/conda-forge/napari-feature-classifier-feedstock). This can take 1-2 days. Make sure that PR gets merged.\n\n\n## Contributing\n\nContributions are very welcome.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-feature-classifier\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n## Contributors\n[Joel L\u00fcthi](https://github.com/jluethi) & [Max Hess](https://github.com/MaksHess)\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": "https://github.com/fractal-napari-plugins-collection/napari-feature-classifier",
+    "keywords": null,
+    "license": "BSD-3-Clause",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-feature-classifier",
+    "package_url": "https://pypi.org/project/napari-feature-classifier/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-feature-classifier/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/fractal-napari-plugins-collection/napari-feature-classifier/issues",
+      "Documentation": "https://github.com/fractal-napari-plugins-collection/napari-feature-classifier#napari-feature-classifier",
+      "Homepage": "https://github.com/fractal-napari-plugins-collection/napari-feature-classifier",
+      "Source Code": "https://github.com/fractal-napari-plugins-collection/napari-feature-classifier",
+      "User Support": "https://github.com/fractal-napari-plugins-collection/napari-feature-classifier/issues"
+    },
+    "provides_extra": null,
+    "release_url": "https://pypi.org/project/napari-feature-classifier/0.3.2/",
+    "requires_dist": [
+      "numpy",
+      "napari",
+      "matplotlib",
+      "magicgui",
+      "pandas>=2.2.0",
+      "scikit-learn>=1.2.2",
+      "pandera",
+      "xxhash",
+      "hypothesis"
+    ],
+    "requires_python": ">=3.9",
+    "summary": "An interactive classifier plugin to use with label images and feature measurements",
+    "version": "0.3.2",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 29842880,
+  "releases": {
+    "0.0.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "58cb743e4e9038f0d729810204ee30df498af4727be3882f4b020dd0ef5b9abb",
+          "md5": "33876febd424c8cfa995a4ce5234dfee",
+          "sha256": "18d9834a2f033d8885b73d87cb7c330bd9c5af352cfc90eed2c39c4284f2a057"
+        },
+        "downloads": -1,
+        "filename": "napari_feature_classifier-0.0.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "33876febd424c8cfa995a4ce5234dfee",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 19818,
+        "upload_time": "2022-02-12T22:19:29",
+        "upload_time_iso_8601": "2022-02-12T22:19:29.954607Z",
+        "url": "https://files.pythonhosted.org/packages/58/cb/743e4e9038f0d729810204ee30df498af4727be3882f4b020dd0ef5b9abb/napari_feature_classifier-0.0.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "04c3b46c81b220187b64cb8eb378ec0cc5c78e1e2112c524d6ea6544d8e1751a",
+          "md5": "7a3a3451f22d4b2bd2fc0e1f4d9db648",
+          "sha256": "22be3bdc3265772bb0f00cec840cd22f5a100ec3e3332bf9d1bd6a44ccb5f4f1"
+        },
+        "downloads": -1,
+        "filename": "napari-feature-classifier-0.0.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "7a3a3451f22d4b2bd2fc0e1f4d9db648",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 20329,
+        "upload_time": "2022-02-12T22:19:31",
+        "upload_time_iso_8601": "2022-02-12T22:19:31.788422Z",
+        "url": "https://files.pythonhosted.org/packages/04/c3/b46c81b220187b64cb8eb378ec0cc5c78e1e2112c524d6ea6544d8e1751a/napari-feature-classifier-0.0.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "9ec2f9c4b6916a97ad792c013aedd30e8f350a08d4c13f61ea7bbb2bd33218a0",
+          "md5": "5a0009ee22d53cc7f455be57ce25f040",
+          "sha256": "39fb6b0b9a053035a2b81cb506a3bfbd892652fa755e022158cf30b439d5afdb"
+        },
+        "downloads": -1,
+        "filename": "napari_feature_classifier-0.0.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "5a0009ee22d53cc7f455be57ce25f040",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 25007,
+        "upload_time": "2023-02-16T18:26:21",
+        "upload_time_iso_8601": "2023-02-16T18:26:21.852367Z",
+        "url": "https://files.pythonhosted.org/packages/9e/c2/f9c4b6916a97ad792c013aedd30e8f350a08d4c13f61ea7bbb2bd33218a0/napari_feature_classifier-0.0.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "45966ab47f866a02efe0828a73491d1c89d0b316e364f4cb0bb4e0f17611382e",
+          "md5": "f329e9319d77f9b34056669125d3a5c3",
+          "sha256": "e91a501c32c0694e0738e9112beaf690bb49c66557ab0b7de9e15863aea22b52"
+        },
+        "downloads": -1,
+        "filename": "napari-feature-classifier-0.0.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "f329e9319d77f9b34056669125d3a5c3",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 24680,
+        "upload_time": "2023-02-16T18:26:23",
+        "upload_time_iso_8601": "2023-02-16T18:26:23.431728Z",
+        "url": "https://files.pythonhosted.org/packages/45/96/6ab47f866a02efe0828a73491d1c89d0b316e364f4cb0bb4e0f17611382e/napari-feature-classifier-0.0.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.3": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "0f6efa51bed09f3c57c55a915ee374a2a9f1ef0e985cfc108cd25a275c15cf56",
+          "md5": "65bb4b5f32819d86c43b6eae1c27d37d",
+          "sha256": "a7607f515b2af6dadadcb2a6a6bb90e5d03ca11e81ba715cbea449d1c61e3b25"
+        },
+        "downloads": -1,
+        "filename": "napari_feature_classifier-0.0.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "65bb4b5f32819d86c43b6eae1c27d37d",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.7",
+        "size": 25141,
+        "upload_time": "2023-03-03T13:58:51",
+        "upload_time_iso_8601": "2023-03-03T13:58:51.730045Z",
+        "url": "https://files.pythonhosted.org/packages/0f/6e/fa51bed09f3c57c55a915ee374a2a9f1ef0e985cfc108cd25a275c15cf56/napari_feature_classifier-0.0.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "4f9f96e24e94d13df21ead7cb1e92a5dcd1c7dd0ce52404266268ec383762a4f",
+          "md5": "8e920873880c190529361de8d3028ae4",
+          "sha256": "fe938055249960b2f2c725c231042e1b798559f1f6c1107825e1b78f0aa7d70d"
+        },
+        "downloads": -1,
+        "filename": "napari-feature-classifier-0.0.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "8e920873880c190529361de8d3028ae4",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.7",
+        "size": 24967,
+        "upload_time": "2023-03-03T13:58:52",
+        "upload_time_iso_8601": "2023-03-03T13:58:52.853020Z",
+        "url": "https://files.pythonhosted.org/packages/4f/9f/96e24e94d13df21ead7cb1e92a5dcd1c7dd0ce52404266268ec383762a4f/napari-feature-classifier-0.0.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "5c2350cc7998e55e16f4884afd6a804d2a7d9a1fae1eb0e3da0ebe1660058b83",
+          "md5": "d6608c37d30da523a349551a5d4378e1",
+          "sha256": "edaa4f4919701f4177eed2d38da81526def4716207433be0ba2b25b8ff43d93e"
+        },
+        "downloads": -1,
+        "filename": "napari_feature_classifier-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "d6608c37d30da523a349551a5d4378e1",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 28798,
+        "upload_time": "2023-05-09T18:05:36",
+        "upload_time_iso_8601": "2023-05-09T18:05:36.935595Z",
+        "url": "https://files.pythonhosted.org/packages/5c/23/50cc7998e55e16f4884afd6a804d2a7d9a1fae1eb0e3da0ebe1660058b83/napari_feature_classifier-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "fb36a9614d2b92312b5e799853a50373d5e576af0dba4fcfa04b6f780c87352e",
+          "md5": "6c96a8fc8f5d1e45120494fe1c745464",
+          "sha256": "c4d97444911ddc5b6992bfe3d458527fa28dad861c5a6f14791bff4075d2ee0e"
+        },
+        "downloads": -1,
+        "filename": "napari-feature-classifier-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "6c96a8fc8f5d1e45120494fe1c745464",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 27883,
+        "upload_time": "2023-05-09T18:05:38",
+        "upload_time_iso_8601": "2023-05-09T18:05:38.867743Z",
+        "url": "https://files.pythonhosted.org/packages/fb/36/a9614d2b92312b5e799853a50373d5e576af0dba4fcfa04b6f780c87352e/napari-feature-classifier-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "48e40ba67f73fc0542aeee846184bcf06adb9918aa822702701fccf46730c561",
+          "md5": "8884820aca088f9bbc71ffe3435aa193",
+          "sha256": "1a557ae9d4ff8bfc1902cf0b54bccac46692c17a766f87383e6c2e1910c067d4"
+        },
+        "downloads": -1,
+        "filename": "napari_feature_classifier-0.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "8884820aca088f9bbc71ffe3435aa193",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 29068,
+        "upload_time": "2023-05-17T18:52:46",
+        "upload_time_iso_8601": "2023-05-17T18:52:46.075993Z",
+        "url": "https://files.pythonhosted.org/packages/48/e4/0ba67f73fc0542aeee846184bcf06adb9918aa822702701fccf46730c561/napari_feature_classifier-0.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "9f31aef337192f5d7898e6cebe5f937529e91ff1d04a66f67937b0477745c21d",
+          "md5": "7aa6e4cf1373247e0ec055b9d4527331",
+          "sha256": "9d7171ee21a1f1cba7d810f4b05a07a2cf7bcc6587c888ab11a61b45d9a177b0"
+        },
+        "downloads": -1,
+        "filename": "napari-feature-classifier-0.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "7aa6e4cf1373247e0ec055b9d4527331",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 28122,
+        "upload_time": "2023-05-17T18:52:48",
+        "upload_time_iso_8601": "2023-05-17T18:52:48.407857Z",
+        "url": "https://files.pythonhosted.org/packages/9f/31/aef337192f5d7898e6cebe5f937529e91ff1d04a66f67937b0477745c21d/napari-feature-classifier-0.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "9e845fb276856ce311138d07e0ab2b26799f7538daa61a34f2ba033d06d57405",
+          "md5": "c6b50a073f044a51c878e222a5ff9eb7",
+          "sha256": "084dccdc14554fe8391953ff2dc1aba99928c52544552c59655cb6cf1a029d31"
+        },
+        "downloads": -1,
+        "filename": "napari_feature_classifier-0.1.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "c6b50a073f044a51c878e222a5ff9eb7",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 31194,
+        "upload_time": "2024-07-19T17:58:12",
+        "upload_time_iso_8601": "2024-07-19T17:58:12.192898Z",
+        "url": "https://files.pythonhosted.org/packages/9e/84/5fb276856ce311138d07e0ab2b26799f7538daa61a34f2ba033d06d57405/napari_feature_classifier-0.1.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "297358a68d8312252ebf5fa37bd0efb17ea7a7132093c93adfd166a318f24c78",
+          "md5": "7d4e01b37d87e0abe03da4bab70f1122",
+          "sha256": "e38a6e918c6f7a9746903189417ef7a51c4eceb4481b35814f53fddda0cfb512"
+        },
+        "downloads": -1,
+        "filename": "napari_feature_classifier-0.1.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "7d4e01b37d87e0abe03da4bab70f1122",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 29802,
+        "upload_time": "2024-07-19T17:58:14",
+        "upload_time_iso_8601": "2024-07-19T17:58:14.080667Z",
+        "url": "https://files.pythonhosted.org/packages/29/73/58a68d8312252ebf5fa37bd0efb17ea7a7132093c93adfd166a318f24c78/napari_feature_classifier-0.1.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "478c3307db086c953e00e6ea71d58d9787db075769af0fe81db31f931d9a4618",
+          "md5": "8e2c92f8953e176f010abddeb4210af7",
+          "sha256": "3884bd1cf591c8069cd790aa508e2140b7f9c4064657900ce30315b1979e2c70"
+        },
+        "downloads": -1,
+        "filename": "napari_feature_classifier-0.2.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "8e2c92f8953e176f010abddeb4210af7",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 31525,
+        "upload_time": "2024-07-26T18:34:14",
+        "upload_time_iso_8601": "2024-07-26T18:34:14.986773Z",
+        "url": "https://files.pythonhosted.org/packages/47/8c/3307db086c953e00e6ea71d58d9787db075769af0fe81db31f931d9a4618/napari_feature_classifier-0.2.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "f81a2614fbe257fd880cb24764d9cb13fb77e75ec0e5d570ce12082ad49f1e99",
+          "md5": "5d6335c7ad94a9cf27fdbb0c0b2f8306",
+          "sha256": "dbf21b897216e9d9fcaa65b26b7f54b0c4aa6b1779b7b638584402adf147e6aa"
+        },
+        "downloads": -1,
+        "filename": "napari_feature_classifier-0.2.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "5d6335c7ad94a9cf27fdbb0c0b2f8306",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 30265,
+        "upload_time": "2024-07-26T18:34:16",
+        "upload_time_iso_8601": "2024-07-26T18:34:16.397214Z",
+        "url": "https://files.pythonhosted.org/packages/f8/1a/2614fbe257fd880cb24764d9cb13fb77e75ec0e5d570ce12082ad49f1e99/napari_feature_classifier-0.2.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "775d7c2ba056502941745f3c421d48497da36d5a7f060cb76c38c4a13ca42680",
+          "md5": "e2c74e04bc6084747906d0b72883cef5",
+          "sha256": "3a30a6d83023ded48d46e20f6b2019f1d875bdeae59bc7e6ac0f0d6bd52cc11b"
+        },
+        "downloads": -1,
+        "filename": "napari_feature_classifier-0.2.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "e2c74e04bc6084747906d0b72883cef5",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 31993,
+        "upload_time": "2024-09-16T17:33:14",
+        "upload_time_iso_8601": "2024-09-16T17:33:14.068072Z",
+        "url": "https://files.pythonhosted.org/packages/77/5d/7c2ba056502941745f3c421d48497da36d5a7f060cb76c38c4a13ca42680/napari_feature_classifier-0.2.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "0861a38d17c8a9d24ce2af628a84302ace99e5990ffa1df4545521fcacbb8c5a",
+          "md5": "e561ac9d4f3416646fc43bc7b75f3520",
+          "sha256": "4d9e4ca7fbc4c088afaacf4d376b28c444230827c8f0b14fe13cd36294da3c52"
+        },
+        "downloads": -1,
+        "filename": "napari_feature_classifier-0.2.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e561ac9d4f3416646fc43bc7b75f3520",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 30746,
+        "upload_time": "2024-09-16T17:33:15",
+        "upload_time_iso_8601": "2024-09-16T17:33:15.581550Z",
+        "url": "https://files.pythonhosted.org/packages/08/61/a38d17c8a9d24ce2af628a84302ace99e5990ffa1df4545521fcacbb8c5a/napari_feature_classifier-0.2.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "c6d0eafb87118e8489dc79f8843ec2866f511262497d0015181acc1efe53fd6b",
+          "md5": "bce6292b3356da8171c8ec98bf23fab6",
+          "sha256": "2391b645c5a0d79e69c2f7e7f0722860328fd564dea502134f23e94dba0d7e68"
+        },
+        "downloads": -1,
+        "filename": "napari_feature_classifier-0.3.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "bce6292b3356da8171c8ec98bf23fab6",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 31789,
+        "upload_time": "2025-04-18T12:12:46",
+        "upload_time_iso_8601": "2025-04-18T12:12:46.750111Z",
+        "url": "https://files.pythonhosted.org/packages/c6/d0/eafb87118e8489dc79f8843ec2866f511262497d0015181acc1efe53fd6b/napari_feature_classifier-0.3.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "0483d49e966b4226b23c17072e006fa05a474cadee516181c86aea850bdbdf46",
+          "md5": "0bb119a27d7c0514fbd9a1b61a57155f",
+          "sha256": "162def5ebee74d289842b7466223a0bcfca614889e59b28fbb805d8958f85abd"
+        },
+        "downloads": -1,
+        "filename": "napari_feature_classifier-0.3.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "0bb119a27d7c0514fbd9a1b61a57155f",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 30689,
+        "upload_time": "2025-04-18T12:12:48",
+        "upload_time_iso_8601": "2025-04-18T12:12:48.090278Z",
+        "url": "https://files.pythonhosted.org/packages/04/83/d49e966b4226b23c17072e006fa05a474cadee516181c86aea850bdbdf46/napari_feature_classifier-0.3.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "c06203d263091dc4fb17a8f37e5e4cff2c288149bd8a4e8edbd43bb6a8bcf432",
+          "md5": "db11604805384c7fc18d2550d5b7cf20",
+          "sha256": "db5e1bf874593d79d36158d1d120e7a771b94d1a5cb341b9d7543532aa32c514"
+        },
+        "downloads": -1,
+        "filename": "napari_feature_classifier-0.3.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "db11604805384c7fc18d2550d5b7cf20",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 32261,
+        "upload_time": "2025-05-08T12:00:36",
+        "upload_time_iso_8601": "2025-05-08T12:00:36.544533Z",
+        "url": "https://files.pythonhosted.org/packages/c0/62/03d263091dc4fb17a8f37e5e4cff2c288149bd8a4e8edbd43bb6a8bcf432/napari_feature_classifier-0.3.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "d9514923d9e36ba2df0c268ea5b58b03162dc4905905063184f49df9b5ac8343",
+          "md5": "3e969131baa88fc0dede4a8700a1e647",
+          "sha256": "028417cce9d514846ca5d2a2a20dcba6b0d8aa3bc9dbb5b8e21bcc9da36ef759"
+        },
+        "downloads": -1,
+        "filename": "napari_feature_classifier-0.3.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "3e969131baa88fc0dede4a8700a1e647",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 30950,
+        "upload_time": "2025-05-08T12:00:37",
+        "upload_time_iso_8601": "2025-05-08T12:00:37.852021Z",
+        "url": "https://files.pythonhosted.org/packages/d9/51/4923d9e36ba2df0c268ea5b58b03162dc4905905063184f49df9b5ac8343/napari_feature_classifier-0.3.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.2": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "eb9b1f85893128ab43b06caa5ee43e01d864002862e4a6c0cce210e55b4f6f24",
+          "md5": "4070ef940035f8a0dc802af2ba2ee8a2",
+          "sha256": "2f58de81f4a59214fc88e3385702e498ba5ca2d58d34e750d101fa0f9c53462e"
+        },
+        "downloads": -1,
+        "filename": "napari_feature_classifier-0.3.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "4070ef940035f8a0dc802af2ba2ee8a2",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 32267,
+        "upload_time": "2025-06-27T07:53:52",
+        "upload_time_iso_8601": "2025-06-27T07:53:52.981619Z",
+        "url": "https://files.pythonhosted.org/packages/eb/9b/1f85893128ab43b06caa5ee43e01d864002862e4a6c0cce210e55b4f6f24/napari_feature_classifier-0.3.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "fe594e38f0eb8f5a6fdef834c6e5355fe5f3073d2fcadb617b2cf345e2cba46c",
+          "md5": "9d5aa8f0572399d72c8b51762225b52d",
+          "sha256": "c0fc795ab3d614cb172dcb0230d8931f4e8db29d3824a32412b32be31afb41d2"
+        },
+        "downloads": -1,
+        "filename": "napari_feature_classifier-0.3.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "9d5aa8f0572399d72c8b51762225b52d",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 30958,
+        "upload_time": "2025-06-27T07:53:54",
+        "upload_time_iso_8601": "2025-06-27T07:53:54.102498Z",
+        "url": "https://files.pythonhosted.org/packages/fe/59/4e38f0eb8f5a6fdef834c6e5355fe5f3073d2fcadb617b2cf345e2cba46c/napari_feature_classifier-0.3.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "eb9b1f85893128ab43b06caa5ee43e01d864002862e4a6c0cce210e55b4f6f24",
+        "md5": "4070ef940035f8a0dc802af2ba2ee8a2",
+        "sha256": "2f58de81f4a59214fc88e3385702e498ba5ca2d58d34e750d101fa0f9c53462e"
+      },
+      "downloads": -1,
+      "filename": "napari_feature_classifier-0.3.2-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "4070ef940035f8a0dc802af2ba2ee8a2",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.9",
+      "size": 32267,
+      "upload_time": "2025-06-27T07:53:52",
+      "upload_time_iso_8601": "2025-06-27T07:53:52.981619Z",
+      "url": "https://files.pythonhosted.org/packages/eb/9b/1f85893128ab43b06caa5ee43e01d864002862e4a6c0cce210e55b4f6f24/napari_feature_classifier-0.3.2-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "fe594e38f0eb8f5a6fdef834c6e5355fe5f3073d2fcadb617b2cf345e2cba46c",
+        "md5": "9d5aa8f0572399d72c8b51762225b52d",
+        "sha256": "c0fc795ab3d614cb172dcb0230d8931f4e8db29d3824a32412b32be31afb41d2"
+      },
+      "downloads": -1,
+      "filename": "napari_feature_classifier-0.3.2.tar.gz",
+      "has_sig": false,
+      "md5_digest": "9d5aa8f0572399d72c8b51762225b52d",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.9",
+      "size": 30958,
+      "upload_time": "2025-06-27T07:53:54",
+      "upload_time_iso_8601": "2025-06-27T07:53:54.102498Z",
+      "url": "https://files.pythonhosted.org/packages/fe/59/4e38f0eb8f5a6fdef834c6e5355fe5f3073d2fcadb617b2cf345e2cba46c/napari_feature_classifier-0.3.2.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

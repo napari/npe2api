@@ -1,0 +1,689 @@
+{
+  "info": {
+    "author": null,
+    "author_email": "Jordao Bragantini <jordao.bragantini@czbiohub.org>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "License :: OSI Approved :: BSD License",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Scientific/Engineering",
+      "Topic :: Scientific/Engineering :: Artificial Intelligence",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "\n<div align=\"left\">\n<picture>\n  <!-- loads when the visitor is in dark\u2011mode -->\n  <source media=\"(prefers-color-scheme: dark)\" srcset=\"logo/ultrack_dark_bkg.svg\" />\n\n  <!-- loads when the visitor is in light\u2011mode -->\n  <source media=\"(prefers-color-scheme: light)\" srcset=\"logo/ultrack_no_bkg.svg\" />\n\n  <!-- fallback if the browser doesn\u2019t understand <picture> -->\n  <img alt=\"Ultrack Logo\" src=\"logo/ultrack_no_bkg.svg\" style=\"width:400px;\"  />\n</picture>\n</div>\n\n![tests](https://github.com/royerlab/ultrack/actions/workflows/test_pull_request.yml/badge.svg)\n[![codecov](https://codecov.io/gh/royerlab/ultrack/branch/main/graph/badge.svg?token=9FFo4zNtYP)](https://codecov.io/gh/royerlab/ultrack)\n[![PyPI version](https://badge.fury.io/py/ultrack.svg)](https://badge.fury.io/py/ultrack)\n[![Downloads](https://pepy.tech/badge/ultrack)](https://pepy.tech/project/ultrack)\n[![Downloads](https://pepy.tech/badge/ultrack/month)](https://pepy.tech/project/ultrack)\n[![Python version](https://img.shields.io/pypi/pyversions/ultrack)](https://pypistats.org/packages/ultrack)\n[![Licence: BSD-3](https://img.shields.io/github/license/royerlab/ultrack)](https://github.com/royerlab/ultrack/blob/main/LICENSE)\n[![Contributors](https://img.shields.io/github/contributors-anon/royerlab/ultrack)](https://github.com/royerlab/ultrack/graphs/contributors)\n[![GitHub stars](https://img.shields.io/github/stars/royerlab/ultrack?style=social)](https://github.com/royerlab/ultrack/)\n[![GitHub forks](https://img.shields.io/github/forks/royerlab/ultrack?style=social)](https://git:hub.com/royerlab/ultrack/)\n\nLarge-scale cell tracking under segmentation uncertainty.\n\n## Overview\n\nUltrack is a versatile and scalable cell tracking method designed to address the challenges of tracking cells across 2D, 3D, and multichannel timelapse recordings, especially in complex and crowded tissues where segmentation is often ambiguous. By evaluating multiple candidate segmentations and employing temporal consistency, Ultrack ensures robust performance under segmentation uncertainty. Ultrack's methodology is explained [here](https://arxiv.org/pdf/2308.04526).\n\nhttps://github.com/royerlab/ultrack/assets/21022743/10aace9c-0e0e-4310-a103-f846683cfc77\n\nZebrafish imaged using [DaXi](https://www.nature.com/articles/s41592-022-01417-2) whole embryo tracking.\n\n## Features\n\n- **Versatile Cell Tracking:** Supports 2D, 3D, and multichannel datasets.\n- **Robust Under Segmentation Uncertainty:** Evaluates multiple candidate segmentations.\n- **High Performance:** Scales from small in vitro datasets to terabyte-scale developmental time-lapses.\n- **Integration:** Compatible with FiJi, napari, and high-performance clusters via SLURM.\n\n## Installation\n\nInstall or update [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html).\n\nTo avoid conflicts between different packages, we recommend using conda to create an isolated environment:\n\n```bash\nconda create -n ultrack python=3.11 higra gurobi pytorch pyqt -c pytorch -c gurobi -c conda-forge\nconda activate ultrack\npip install ultrack\n```\n\nThe installation should take a few minutes, depending on your internet speed and conda.\n\nNOTE: `gurobi` and `-c gurobi` are optional but recommended; they can be installed later, as shown below.\n\nOptionally, we provide multiple Docker images. For instructions, see the [docker folder](https://github.com/royerlab/ultrack/tree/main/docker).\n\n## Usage\n\n**ATTENTION**: every time you need to run this software, you'll have to activate this environment\n\n```bash\nconda activate ultrack\n```\n\nHere is a basic example to get you started:\n\n```python\nimport napari\nfrom ultrack import MainConfig, Tracker\n\n# __main__ is recommended to avoid multi-processing errors\nif __name__ == \"__main__\":\n      # Load your data\n      foreground = ...\n      contours = ...\n\n      # Create config\n      config = MainConfig()\n\n      # Run tracking\n      tracker = Tracker(config)\n      tracker.track(foreground=foreground, edges=contours)\n\n      # Visualize results in napari\n      tracks, graph = tracker.to_tracks_layer()\n      napari.view_tracks(tracks[[\"track_id\", \"t\", \"z\", \"y\", \"x\"]], graph=graph)\n      napari.run()\n```\n\nMore usage examples can be found [here](examples), including their environment files and installation instructions.\n\n## Documentation\n\nComprehensive documentation is available [here](https://royerlab.github.io/ultrack/).\n\nThese additional developer documentation are available:\n\n- Parameter [configuration schema](docs/source/configuration.rst).\n- Intermediate segmentation and tracking SQL database are [here](ultrack/core/README.md).\n\n## Gurobi Setup\n\n### Install Gurobi using Conda\n\nIn your existing Conda environment, install Gurobi with the following command:\n```bash\nconda install -c gurobi gurobi\n```\n\n### Obtain and Activate an Academic License\n\n1. Register at [Gurobi's website](https://portal.gurobi.com/iam/login/) with your academic email.\n2. Navigate to the Gurobi's [named academic license page](https://www.gurobi.com/features/academic-named-user-license/)\n3. Follow the instructions to get your license key.\n4. Activate your license, In your Conda environment, run:\n\n```bash\ngrbgetkey YOUR_LICENSE_KEY\n```\n\n5. Replace YOUR_LICENSE_KEY with the key you received. Follow the prompts to complete activation.\n\n### Verify Installation\n\nVerify Gurobi's installation by running:\n```bash\nultrack check_gurobi\n```\n\nDepending on the operating system, the gurobi library might be missing and you need to install it from [here](https://www.gurobi.com/downloads/gurobi-software).\n\n## Who is using Ultrack?\n\nYou can find a list of projects and papers that have used ultrack on [this page](https://royerlab.github.io/ultrack/appearances.html).\n\n## Contributing\n\nWe welcome contributions from the community! To get started, please read our [contributing guidelines](CONTRIBUTING.md). Then, report issues and submit pull requests on GitHub.\n\n## License\n\nThis project is licensed under the BSD-3 License - see the [LICENSE](LICENSE) file for details.\n\n## Citing\n\nIf you use `ultrack` in your research, please cite the following papers, [the algorithm](https://arxiv.org/pdf/2308.04526) and [the biological applications and software](https://www.biorxiv.org/content/10.1101/2024.09.02.610652).\n\n```\n@inproceedings{bragantini2024ucmtracking,\n  title={Large-scale multi-hypotheses cell tracking using ultrametric contours maps},\n  author={Bragantini, Jord{\\~a}o and Lange, Merlin and Royer, Lo{\\\"\\i}c},\n  booktitle={European Conference on Computer Vision},\n  pages={36--54},\n  year={2024},\n  organization={Springer}\n}\n\n@article{bragantini2024ultrack,\n  title={Ultrack: pushing the limits of cell tracking across biological scales},\n  author={Bragantini, Jord{~a}o and Theodoro, Ilan and Zhao, Xiang and Huijben, Teun APM and Hirata-Miyasaki, Eduardo and VijayKumar, Shruthi and Balasubramanian, Akilandeswari and Lao, Tiger and Agrawal, Richa and Xiao, Sheng and others},\n  journal={bioRxiv},\n  pages={2024--09},\n  year={2024},\n  publisher={Cold Spring Harbor Laboratory}\n}\n```\n\nAnd the respective auxiliary methods according to your use, a non-exhaustive list being:\n- [napari](https://github.com/Napari/napari)\n- [cellpose](https://github.com/MouseLand/cellpose)\n- [stardist](https://github.com/stardist/stardist)\n- [fiji](https://fiji.sc)\n\n## Acknowledgements\n\nWe acknowledge the contributions of the community and specific individuals. Detailed acknowledgments can be found in our documentation.\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": null,
+    "home_page": null,
+    "keywords": null,
+    "license": null,
+    "license_expression": "BSD-3-Clause",
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "ultrack",
+    "package_url": "https://pypi.org/project/ultrack/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/ultrack/",
+    "project_urls": null,
+    "provides_extra": [
+      "docs",
+      "ml",
+      "test"
+    ],
+    "release_url": "https://pypi.org/project/ultrack/0.7.1/",
+    "requires_dist": [
+      "blosc2>=2.2.0",
+      "click>=8.1.3",
+      "cloudpickle>=3.0.0",
+      "edt>=2.3.2",
+      "fastapi>=0.109.2",
+      "fasteners>=0.20",
+      "geff>=1.0.0",
+      "gurobipy!=12.0.0,>=9.0.0",
+      "higra>=0.6.10",
+      "httpx>=0.26.0",
+      "imagecodecs>=2023.3.16",
+      "imageio>=2.28.0",
+      "magicgui>=0.7.2",
+      "mip>=1.16rc0",
+      "napari>=0.4.18",
+      "numba>=0.57.0",
+      "numcodecs",
+      "ome-zarr>=0.9.0",
+      "pandas>=2.0.1",
+      "pillow>=10.0.0",
+      "psycopg2-binary>=2.9.6",
+      "psygnal>=0.9.0",
+      "pyarrow<20,>=16.1.0",
+      "pydantic-settings",
+      "pydantic>=2.11.0",
+      "pydot>=2.0.0",
+      "qtawesome>=1.3.1",
+      "qtpy",
+      "rich>=13.3.5",
+      "scikit-image>=0.23.0",
+      "seaborn>=0.13.0",
+      "sqlalchemy>=2.0.0",
+      "toml>=0.10.2",
+      "torch>=2.0.1",
+      "urllib3",
+      "uvicorn>=0.27.0.post1",
+      "websockets>=12.0",
+      "zarr>=3.0.0",
+      "autodoc-pydantic; extra == \"docs\"",
+      "furo; extra == \"docs\"",
+      "myst-parser>=2.0.0; extra == \"docs\"",
+      "nbsphinx>=0.9.3; extra == \"docs\"",
+      "sphinx-click<6.0.0,>=5.0.1; extra == \"docs\"",
+      "sphinx-copybutton; extra == \"docs\"",
+      "sphinx-gallery==0.15.0; extra == \"docs\"",
+      "sphinx==6.2.1; extra == \"docs\"",
+      "sphinxcontrib-applehelp==1.0.8; extra == \"docs\"",
+      "catboost>=1.2.7; extra == \"ml\"",
+      "scikit-learn>=1.6.0; extra == \"ml\"",
+      "asv>=0.5.1; extra == \"test\"",
+      "napari[testing]>0.4.18; extra == \"test\"",
+      "pre-commit>=3.2.2; extra == \"test\"",
+      "pyqt5>=5.15.4; extra == \"test\"",
+      "pytest-qt>=4.2.0; extra == \"test\"",
+      "pytest>=7.3.1; extra == \"test\"",
+      "pytrackmate>=1.3.4; extra == \"test\""
+    ],
+    "requires_python": "<3.13,>=3.9",
+    "summary": "Large-scale multi-hypotheses cell tracking",
+    "version": "0.7.1",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 33531293,
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "c25d2a62f6f43abc569415fc1edf8e3aae465bbb7a7618d32c9012e9de77904b",
+          "md5": "6a941ee91c00a9dc75382d4dc7707166",
+          "sha256": "a7c3dd5130ed65f371334179c74a307aeaf7279db01e9c1340c91af529b0b5f9"
+        },
+        "downloads": -1,
+        "filename": "ultrack-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "6a941ee91c00a9dc75382d4dc7707166",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8,<3.12",
+        "size": 108497,
+        "upload_time": "2023-06-07T20:19:39",
+        "upload_time_iso_8601": "2023-06-07T20:19:39.684584Z",
+        "url": "https://files.pythonhosted.org/packages/c2/5d/2a62f6f43abc569415fc1edf8e3aae465bbb7a7618d32c9012e9de77904b/ultrack-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "e0ec0a8b48d65c67508198bed0d9a777f334cd93a994332e31281297b46ff4a0",
+          "md5": "0aa76966edd67c9ec5ea162eaa9a1544",
+          "sha256": "6d51098c2a3ed2fbe898a7dad3d58e822850db9bb129343678f2cf8cde2ca9c5"
+        },
+        "downloads": -1,
+        "filename": "ultrack-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "0aa76966edd67c9ec5ea162eaa9a1544",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8,<3.12",
+        "size": 69835,
+        "upload_time": "2023-06-07T20:19:41",
+        "upload_time_iso_8601": "2023-06-07T20:19:41.886968Z",
+        "url": "https://files.pythonhosted.org/packages/e0/ec/0a8b48d65c67508198bed0d9a777f334cd93a994332e31281297b46ff4a0/ultrack-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "241a640c7f270146f30b4d8a0e5a788b3c7d5f8e4b7658cab2514c87c772db95",
+          "md5": "11773834670962dabfcd27da8eb6da4f",
+          "sha256": "df9935e22fb4a146dd86f93fdef3fc610dedd1cad98c4c2e9bdc748a291f5220"
+        },
+        "downloads": -1,
+        "filename": "ultrack-0.2.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "11773834670962dabfcd27da8eb6da4f",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8,<3.12",
+        "size": 134414,
+        "upload_time": "2023-08-21T15:52:27",
+        "upload_time_iso_8601": "2023-08-21T15:52:27.891852Z",
+        "url": "https://files.pythonhosted.org/packages/24/1a/640c7f270146f30b4d8a0e5a788b3c7d5f8e4b7658cab2514c87c772db95/ultrack-0.2.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "e792712f29a2e48038cf6db541b62dab44e26b6d7d27ef85240a43283b57aebb",
+          "md5": "813d9f91f430686302095f492fa20624",
+          "sha256": "3145b85e7d969a53af451137c641cfa8c0b258efbb84bebc0990d3aed4298bf4"
+        },
+        "downloads": -1,
+        "filename": "ultrack-0.2.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "813d9f91f430686302095f492fa20624",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8,<3.12",
+        "size": 89580,
+        "upload_time": "2023-08-21T15:52:29",
+        "upload_time_iso_8601": "2023-08-21T15:52:29.637134Z",
+        "url": "https://files.pythonhosted.org/packages/e7/92/712f29a2e48038cf6db541b62dab44e26b6d7d27ef85240a43283b57aebb/ultrack-0.2.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "1229fbeb5afa5e936ed0471fe83ca796a40cd363319defa46e9ad6cce821b9d9",
+          "md5": "40bd46c63ba864fa177cc6d24af6e129",
+          "sha256": "4003f576d008ec0d6e95be4905cfe3369dea7a64d07dc72f3e165c36a016acc8"
+        },
+        "downloads": -1,
+        "filename": "ultrack-0.3.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "40bd46c63ba864fa177cc6d24af6e129",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9,<3.12",
+        "size": 154098,
+        "upload_time": "2023-09-29T22:48:59",
+        "upload_time_iso_8601": "2023-09-29T22:48:59.062269Z",
+        "url": "https://files.pythonhosted.org/packages/12/29/fbeb5afa5e936ed0471fe83ca796a40cd363319defa46e9ad6cce821b9d9/ultrack-0.3.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "3f5e04bf936a8bdc667217e11d1cbbf7c1ab0cdc67060014a6fecda2e00af546",
+          "md5": "fd8ee2e2834444c70f68ea7275bc0267",
+          "sha256": "0a806d64d277677912356d4aca63a1a4a7b9b2b8083256974a298e0549791d12"
+        },
+        "downloads": -1,
+        "filename": "ultrack-0.3.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "fd8ee2e2834444c70f68ea7275bc0267",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9,<3.12",
+        "size": 103724,
+        "upload_time": "2023-09-29T22:49:00",
+        "upload_time_iso_8601": "2023-09-29T22:49:00.967600Z",
+        "url": "https://files.pythonhosted.org/packages/3f/5e/04bf936a8bdc667217e11d1cbbf7c1ab0cdc67060014a6fecda2e00af546/ultrack-0.3.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "56c0af987142bb684207ff9971ada53727bf996541b8129ce436688d6de4f8e2",
+          "md5": "ab2272232fbfcbfc8c3aed49de85d65b",
+          "sha256": "5d6477b7fe184409394aa2349bcd07615cfd918f8d79dbbb6c88f2d306378306"
+        },
+        "downloads": -1,
+        "filename": "ultrack-0.3.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "ab2272232fbfcbfc8c3aed49de85d65b",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9,<3.12",
+        "size": 159787,
+        "upload_time": "2024-02-02T01:00:44",
+        "upload_time_iso_8601": "2024-02-02T01:00:44.244986Z",
+        "url": "https://files.pythonhosted.org/packages/56/c0/af987142bb684207ff9971ada53727bf996541b8129ce436688d6de4f8e2/ultrack-0.3.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "db01231542238c34485999d9ccbd35e5422ca8f633e9a2ac11d393718bb0610e",
+          "md5": "b5aa979bda7c074b8b1cb9651dd9b6b2",
+          "sha256": "c2e47d2c0f2f920f1c2fb947d63a20d9ade41b24f5be7eac5a30b7b11b14e8de"
+        },
+        "downloads": -1,
+        "filename": "ultrack-0.3.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "b5aa979bda7c074b8b1cb9651dd9b6b2",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9,<3.12",
+        "size": 107940,
+        "upload_time": "2024-02-02T01:00:46",
+        "upload_time_iso_8601": "2024-02-02T01:00:46.450573Z",
+        "url": "https://files.pythonhosted.org/packages/db/01/231542238c34485999d9ccbd35e5422ca8f633e9a2ac11d393718bb0610e/ultrack-0.3.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.5.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "98590d349013c40d987a0aa5839c36f458708984d110b343460edf5ab5f3824e",
+          "md5": "9070353cb5b8999df1c3134e1dee6c82",
+          "sha256": "e9447043ec71fe7ffd22909be697f524cc1bd5e728947e3331df6c3f28dcaaa0"
+        },
+        "downloads": -1,
+        "filename": "ultrack-0.5.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "9070353cb5b8999df1c3134e1dee6c82",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.12,>=3.9",
+        "size": 228550,
+        "upload_time": "2024-07-03T19:18:20",
+        "upload_time_iso_8601": "2024-07-03T19:18:20.391236Z",
+        "url": "https://files.pythonhosted.org/packages/98/59/0d349013c40d987a0aa5839c36f458708984d110b343460edf5ab5f3824e/ultrack-0.5.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "f0a4b25f6785a96ff8c3c391d8f961b41a7b6d48dfed6ef85e3aed4956a151b7",
+          "md5": "b87ba289bdbfe8d464341e3e5ceeaefb",
+          "sha256": "9d6db6f2ad7565971d140c06f298a89270d266e05d8ca5f555f3f9d99700fe68"
+        },
+        "downloads": -1,
+        "filename": "ultrack-0.5.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "b87ba289bdbfe8d464341e3e5ceeaefb",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.12,>=3.9",
+        "size": 169581,
+        "upload_time": "2024-07-03T19:18:22",
+        "upload_time_iso_8601": "2024-07-03T19:18:22.937087Z",
+        "url": "https://files.pythonhosted.org/packages/f0/a4/b25f6785a96ff8c3c391d8f961b41a7b6d48dfed6ef85e3aed4956a151b7/ultrack-0.5.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.6.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "10c09c58f45cf3b44f113f094f8f9424cb85fdbbc48ada32e8bd2911f8ec96ce",
+          "md5": "68784c3dc44be4d087e3bc4f9e16f60b",
+          "sha256": "08e13a50b0752623c579cf452f18ae5d073bd8350cc16450a72063539cc030cb"
+        },
+        "downloads": -1,
+        "filename": "ultrack-0.6.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "68784c3dc44be4d087e3bc4f9e16f60b",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.9",
+        "size": 229576,
+        "upload_time": "2024-08-31T21:10:58",
+        "upload_time_iso_8601": "2024-08-31T21:10:58.174150Z",
+        "url": "https://files.pythonhosted.org/packages/10/c0/9c58f45cf3b44f113f094f8f9424cb85fdbbc48ada32e8bd2911f8ec96ce/ultrack-0.6.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "46350c748b1996fb73226ce777d272ce177aec314c415eb26e16136ab09e6cad",
+          "md5": "a99c8a36afbe95fbcb29486a846d661e",
+          "sha256": "95d5f365cb4115503798ffb2e198db46a31d647f71c8bed6b61ba0e822342134"
+        },
+        "downloads": -1,
+        "filename": "ultrack-0.6.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "a99c8a36afbe95fbcb29486a846d661e",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.9",
+        "size": 157514,
+        "upload_time": "2024-08-31T21:10:59",
+        "upload_time_iso_8601": "2024-08-31T21:10:59.958754Z",
+        "url": "https://files.pythonhosted.org/packages/46/35/0c748b1996fb73226ce777d272ce177aec314c415eb26e16136ab09e6cad/ultrack-0.6.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.6.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "1820bb1a0a6ea9d16476ae1367f33c86e240f019849e2efbc3e3d89251fe03f6",
+          "md5": "ae0bc742c8583a15d422e84e21b78c1a",
+          "sha256": "4bc5d862c4262181b313d350d1e88b4f87cdb9f8eb9ac2a877f695a37f229d36"
+        },
+        "downloads": -1,
+        "filename": "ultrack-0.6.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "ae0bc742c8583a15d422e84e21b78c1a",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.9",
+        "size": 235520,
+        "upload_time": "2024-10-21T16:24:03",
+        "upload_time_iso_8601": "2024-10-21T16:24:03.363891Z",
+        "url": "https://files.pythonhosted.org/packages/18/20/bb1a0a6ea9d16476ae1367f33c86e240f019849e2efbc3e3d89251fe03f6/ultrack-0.6.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "94a34b7c9596e19a3a5ef0c65b51b610e233f68b098f70e9fed103b49f8d7b8e",
+          "md5": "0a2505bc36563a73a557a7723b3485f8",
+          "sha256": "2c72685dc46326c703cf73de0cedda2997fcb474536e850526af26980c4b06da"
+        },
+        "downloads": -1,
+        "filename": "ultrack-0.6.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "0a2505bc36563a73a557a7723b3485f8",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.9",
+        "size": 163007,
+        "upload_time": "2024-10-21T16:24:05",
+        "upload_time_iso_8601": "2024-10-21T16:24:05.899825Z",
+        "url": "https://files.pythonhosted.org/packages/94/a3/4b7c9596e19a3a5ef0c65b51b610e233f68b098f70e9fed103b49f8d7b8e/ultrack-0.6.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.6.3": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "8ff37f6165cd465b59856011e8875f1267ae5c54b1a1dbf0b25bf403b09359ab",
+          "md5": "d571e216a11bef59f2f2be1142b53862",
+          "sha256": "e6f3a378c2d27fad6d2719d1dcec4deebea71a56ec878678f2bfb4e51d857e4f"
+        },
+        "downloads": -1,
+        "filename": "ultrack-0.6.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "d571e216a11bef59f2f2be1142b53862",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.9",
+        "size": 243718,
+        "upload_time": "2025-01-30T17:53:57",
+        "upload_time_iso_8601": "2025-01-30T17:53:57.701420Z",
+        "url": "https://files.pythonhosted.org/packages/8f/f3/7f6165cd465b59856011e8875f1267ae5c54b1a1dbf0b25bf403b09359ab/ultrack-0.6.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "1daf35198c880c0a9dc632e27781793b4b4f57dc0a1f01a8318f3f666f77db94",
+          "md5": "32120466327aea59f33b5a7adf311bbc",
+          "sha256": "0fdcaf9d53a9f12e5f28de883c4ad510ba11676f68e173a06a8f350d09c73468"
+        },
+        "downloads": -1,
+        "filename": "ultrack-0.6.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "32120466327aea59f33b5a7adf311bbc",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.9",
+        "size": 169135,
+        "upload_time": "2025-01-30T17:54:01",
+        "upload_time_iso_8601": "2025-01-30T17:54:01.679027Z",
+        "url": "https://files.pythonhosted.org/packages/1d/af/35198c880c0a9dc632e27781793b4b4f57dc0a1f01a8318f3f666f77db94/ultrack-0.6.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.7.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "a4d002f5493485bb501b009cc1c8c22b019f2ca0c25d099204ba6da59fa40117",
+          "md5": "836dc19e6f7ed6401dd24a61c93470a9",
+          "sha256": "195a884ad98ea412c6b6a01eb58032b25eb2a2a73b694220a6faf2a86a7036ee"
+        },
+        "downloads": -1,
+        "filename": "ultrack-0.7.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "836dc19e6f7ed6401dd24a61c93470a9",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.9",
+        "size": 266493,
+        "upload_time": "2025-11-05T23:53:19",
+        "upload_time_iso_8601": "2025-11-05T23:53:19.821974Z",
+        "url": "https://files.pythonhosted.org/packages/a4/d0/02f5493485bb501b009cc1c8c22b019f2ca0c25d099204ba6da59fa40117/ultrack-0.7.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "f4666ab7cf4364c145616d4054cc17e84fb35658a9a6a6d95ea13e16d63da0a8",
+          "md5": "753f71a46c102fe52fa229662d6e5634",
+          "sha256": "f6942dd3ba0326e60d20618af395e64a1dab48d7d2f6b7882ed6bf1b1fcc2412"
+        },
+        "downloads": -1,
+        "filename": "ultrack-0.7.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "753f71a46c102fe52fa229662d6e5634",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.9",
+        "size": 186062,
+        "upload_time": "2025-11-05T23:53:22",
+        "upload_time_iso_8601": "2025-11-05T23:53:22.026537Z",
+        "url": "https://files.pythonhosted.org/packages/f4/66/6ab7cf4364c145616d4054cc17e84fb35658a9a6a6d95ea13e16d63da0a8/ultrack-0.7.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.7.0rc1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "e18849d847a824be89c0505d77a584913bc2e384d9432cd536078e54794edee6",
+          "md5": "d5bd32647bb94735dcb06e01a36100c0",
+          "sha256": "d73c082228693330b0424ad7f6ffa513a5a49c2bdcfe0cb4e09869eaaa26add8"
+        },
+        "downloads": -1,
+        "filename": "ultrack-0.7.0rc1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "d5bd32647bb94735dcb06e01a36100c0",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.9",
+        "size": 265826,
+        "upload_time": "2025-08-14T16:30:23",
+        "upload_time_iso_8601": "2025-08-14T16:30:23.137646Z",
+        "url": "https://files.pythonhosted.org/packages/e1/88/49d847a824be89c0505d77a584913bc2e384d9432cd536078e54794edee6/ultrack-0.7.0rc1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "2e1b99ec8888e927f103d609f25dc658f1ea4d637a14f319c9ca3bc5f3ef7c51",
+          "md5": "9033e8939b4fa84d2cedb59df0657117",
+          "sha256": "0e4f89fa30090cf070aa90d156f727a943b01a63e2a9b0e74371df6fde96aeea"
+        },
+        "downloads": -1,
+        "filename": "ultrack-0.7.0rc1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "9033e8939b4fa84d2cedb59df0657117",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.9",
+        "size": 185381,
+        "upload_time": "2025-08-14T16:30:24",
+        "upload_time_iso_8601": "2025-08-14T16:30:24.420104Z",
+        "url": "https://files.pythonhosted.org/packages/2e/1b/99ec8888e927f103d609f25dc658f1ea4d637a14f319c9ca3bc5f3ef7c51/ultrack-0.7.0rc1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.7.0rc2": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "80b7bff17fa178b7c468beee65155f5d27d923961b74a37112edfd33ed643d54",
+          "md5": "0e5b260f2bdb62d922ebb67ce84cbc53",
+          "sha256": "799dab63156011cc59624bfee3f3a491e53ec87e3d8e15d22c46067747af264d"
+        },
+        "downloads": -1,
+        "filename": "ultrack-0.7.0rc2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "0e5b260f2bdb62d922ebb67ce84cbc53",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.9",
+        "size": 266379,
+        "upload_time": "2025-10-28T19:55:39",
+        "upload_time_iso_8601": "2025-10-28T19:55:39.235273Z",
+        "url": "https://files.pythonhosted.org/packages/80/b7/bff17fa178b7c468beee65155f5d27d923961b74a37112edfd33ed643d54/ultrack-0.7.0rc2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "97dac72c29ea9a366935fb724e3b9668faca638985d54eb3bbf90a7dca363a91",
+          "md5": "f8c6ba2c8fb9e0c2d126d597c960e4ad",
+          "sha256": "2e781a28d046001b6d93820ff848d1e574b2bf78b7c6e5a11657df2fa90610af"
+        },
+        "downloads": -1,
+        "filename": "ultrack-0.7.0rc2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "f8c6ba2c8fb9e0c2d126d597c960e4ad",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.9",
+        "size": 185855,
+        "upload_time": "2025-10-28T19:55:40",
+        "upload_time_iso_8601": "2025-10-28T19:55:40.816133Z",
+        "url": "https://files.pythonhosted.org/packages/97/da/c72c29ea9a366935fb724e3b9668faca638985d54eb3bbf90a7dca363a91/ultrack-0.7.0rc2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.7.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "ea604f1053887dd408c88911dbc1b180c10d8937d82ee3dea25b6f02961352b2",
+          "md5": "ca9217d971154007b162367db74d6b31",
+          "sha256": "ccb3eda8ce34ec0cd94b1258c1baef897d3391e1d40db63cfaceaff5e6ca665e"
+        },
+        "downloads": -1,
+        "filename": "ultrack-0.7.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "ca9217d971154007b162367db74d6b31",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.9",
+        "size": 267664,
+        "upload_time": "2026-01-13T16:52:43",
+        "upload_time_iso_8601": "2026-01-13T16:52:43.151446Z",
+        "url": "https://files.pythonhosted.org/packages/ea/60/4f1053887dd408c88911dbc1b180c10d8937d82ee3dea25b6f02961352b2/ultrack-0.7.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "f7e10df56f7a21c7a92d4f6680297cfe45530e4d98a97ec1e6c12b11d5ed6dfb",
+          "md5": "cb348151f8b0c64dded07510fc7032be",
+          "sha256": "86b0283306b553b53938f0cefde53e4b1d22cf06fb7cbaf83be7852731bfddcb"
+        },
+        "downloads": -1,
+        "filename": "ultrack-0.7.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "cb348151f8b0c64dded07510fc7032be",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.9",
+        "size": 187186,
+        "upload_time": "2026-01-13T16:52:45",
+        "upload_time_iso_8601": "2026-01-13T16:52:45.854634Z",
+        "url": "https://files.pythonhosted.org/packages/f7/e1/0df56f7a21c7a92d4f6680297cfe45530e4d98a97ec1e6c12b11d5ed6dfb/ultrack-0.7.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "ea604f1053887dd408c88911dbc1b180c10d8937d82ee3dea25b6f02961352b2",
+        "md5": "ca9217d971154007b162367db74d6b31",
+        "sha256": "ccb3eda8ce34ec0cd94b1258c1baef897d3391e1d40db63cfaceaff5e6ca665e"
+      },
+      "downloads": -1,
+      "filename": "ultrack-0.7.1-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "ca9217d971154007b162367db74d6b31",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": "<3.13,>=3.9",
+      "size": 267664,
+      "upload_time": "2026-01-13T16:52:43",
+      "upload_time_iso_8601": "2026-01-13T16:52:43.151446Z",
+      "url": "https://files.pythonhosted.org/packages/ea/60/4f1053887dd408c88911dbc1b180c10d8937d82ee3dea25b6f02961352b2/ultrack-0.7.1-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "f7e10df56f7a21c7a92d4f6680297cfe45530e4d98a97ec1e6c12b11d5ed6dfb",
+        "md5": "cb348151f8b0c64dded07510fc7032be",
+        "sha256": "86b0283306b553b53938f0cefde53e4b1d22cf06fb7cbaf83be7852731bfddcb"
+      },
+      "downloads": -1,
+      "filename": "ultrack-0.7.1.tar.gz",
+      "has_sig": false,
+      "md5_digest": "cb348151f8b0c64dded07510fc7032be",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": "<3.13,>=3.9",
+      "size": 187186,
+      "upload_time": "2026-01-13T16:52:45",
+      "upload_time_iso_8601": "2026-01-13T16:52:45.854634Z",
+      "url": "https://files.pythonhosted.org/packages/f7/e1/0df56f7a21c7a92d4f6680297cfe45530e4d98a97ec1e6c12b11d5ed6dfb/ultrack-0.7.1.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

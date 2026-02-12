@@ -1,0 +1,171 @@
+{
+  "name": "ultrack",
+  "display_name": "ultrack",
+  "visibility": "public",
+  "icon": "",
+  "categories": [],
+  "schema_version": "0.2.1",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "ultrack.get_reader",
+        "title": "Open data with ultrack",
+        "python_name": "ultrack.reader.napari_reader:napari_get_reader",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "ultrack.main_widget",
+        "title": "Ultrack",
+        "python_name": "ultrack.widgets:UltrackWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "ultrack.hierarchy_viz_widget",
+        "title": "Hierarchy visualization",
+        "python_name": "ultrack.widgets:HierarchyVizWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": [
+      {
+        "command": "ultrack.get_reader",
+        "filename_patterns": [
+          "*.csv",
+          "*.parquet"
+        ],
+        "accepts_directories": false
+      }
+    ],
+    "writers": null,
+    "widgets": [
+      {
+        "command": "ultrack.main_widget",
+        "display_name": "Ultrack",
+        "autogenerate": false
+      },
+      {
+        "command": "ultrack.hierarchy_viz_widget",
+        "display_name": "Hierarchy visualization",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "ultrack",
+    "version": "0.7.1",
+    "dynamic": null,
+    "platform": null,
+    "supported_platform": null,
+    "summary": "Large-scale multi-hypotheses cell tracking",
+    "description": "\n<div align=\"left\">\n<picture>\n  <!-- loads when the visitor is in dark\u2011mode -->\n  <source media=\"(prefers-color-scheme: dark)\" srcset=\"logo/ultrack_dark_bkg.svg\" />\n\n  <!-- loads when the visitor is in light\u2011mode -->\n  <source media=\"(prefers-color-scheme: light)\" srcset=\"logo/ultrack_no_bkg.svg\" />\n\n  <!-- fallback if the browser doesn\u2019t understand <picture> -->\n  <img alt=\"Ultrack Logo\" src=\"logo/ultrack_no_bkg.svg\" style=\"width:400px;\"  />\n</picture>\n</div>\n\n![tests](https://github.com/royerlab/ultrack/actions/workflows/test_pull_request.yml/badge.svg)\n[![codecov](https://codecov.io/gh/royerlab/ultrack/branch/main/graph/badge.svg?token=9FFo4zNtYP)](https://codecov.io/gh/royerlab/ultrack)\n[![PyPI version](https://badge.fury.io/py/ultrack.svg)](https://badge.fury.io/py/ultrack)\n[![Downloads](https://pepy.tech/badge/ultrack)](https://pepy.tech/project/ultrack)\n[![Downloads](https://pepy.tech/badge/ultrack/month)](https://pepy.tech/project/ultrack)\n[![Python version](https://img.shields.io/pypi/pyversions/ultrack)](https://pypistats.org/packages/ultrack)\n[![Licence: BSD-3](https://img.shields.io/github/license/royerlab/ultrack)](https://github.com/royerlab/ultrack/blob/main/LICENSE)\n[![Contributors](https://img.shields.io/github/contributors-anon/royerlab/ultrack)](https://github.com/royerlab/ultrack/graphs/contributors)\n[![GitHub stars](https://img.shields.io/github/stars/royerlab/ultrack?style=social)](https://github.com/royerlab/ultrack/)\n[![GitHub forks](https://img.shields.io/github/forks/royerlab/ultrack?style=social)](https://git:hub.com/royerlab/ultrack/)\n\nLarge-scale cell tracking under segmentation uncertainty.\n\n## Overview\n\nUltrack is a versatile and scalable cell tracking method designed to address the challenges of tracking cells across 2D, 3D, and multichannel timelapse recordings, especially in complex and crowded tissues where segmentation is often ambiguous. By evaluating multiple candidate segmentations and employing temporal consistency, Ultrack ensures robust performance under segmentation uncertainty. Ultrack's methodology is explained [here](https://arxiv.org/pdf/2308.04526).\n\nhttps://github.com/royerlab/ultrack/assets/21022743/10aace9c-0e0e-4310-a103-f846683cfc77\n\nZebrafish imaged using [DaXi](https://www.nature.com/articles/s41592-022-01417-2) whole embryo tracking.\n\n## Features\n\n- **Versatile Cell Tracking:** Supports 2D, 3D, and multichannel datasets.\n- **Robust Under Segmentation Uncertainty:** Evaluates multiple candidate segmentations.\n- **High Performance:** Scales from small in vitro datasets to terabyte-scale developmental time-lapses.\n- **Integration:** Compatible with FiJi, napari, and high-performance clusters via SLURM.\n\n## Installation\n\nInstall or update [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html).\n\nTo avoid conflicts between different packages, we recommend using conda to create an isolated environment:\n\n```bash\nconda create -n ultrack python=3.11 higra gurobi pytorch pyqt -c pytorch -c gurobi -c conda-forge\nconda activate ultrack\npip install ultrack\n```\n\nThe installation should take a few minutes, depending on your internet speed and conda.\n\nNOTE: `gurobi` and `-c gurobi` are optional but recommended; they can be installed later, as shown below.\n\nOptionally, we provide multiple Docker images. For instructions, see the [docker folder](https://github.com/royerlab/ultrack/tree/main/docker).\n\n## Usage\n\n**ATTENTION**: every time you need to run this software, you'll have to activate this environment\n\n```bash\nconda activate ultrack\n```\n\nHere is a basic example to get you started:\n\n```python\nimport napari\nfrom ultrack import MainConfig, Tracker\n\n# __main__ is recommended to avoid multi-processing errors\nif __name__ == \"__main__\":\n      # Load your data\n      foreground = ...\n      contours = ...\n\n      # Create config\n      config = MainConfig()\n\n      # Run tracking\n      tracker = Tracker(config)\n      tracker.track(foreground=foreground, edges=contours)\n\n      # Visualize results in napari\n      tracks, graph = tracker.to_tracks_layer()\n      napari.view_tracks(tracks[[\"track_id\", \"t\", \"z\", \"y\", \"x\"]], graph=graph)\n      napari.run()\n```\n\nMore usage examples can be found [here](examples), including their environment files and installation instructions.\n\n## Documentation\n\nComprehensive documentation is available [here](https://royerlab.github.io/ultrack/).\n\nThese additional developer documentation are available:\n\n- Parameter [configuration schema](docs/source/configuration.rst).\n- Intermediate segmentation and tracking SQL database are [here](ultrack/core/README.md).\n\n## Gurobi Setup\n\n### Install Gurobi using Conda\n\nIn your existing Conda environment, install Gurobi with the following command:\n```bash\nconda install -c gurobi gurobi\n```\n\n### Obtain and Activate an Academic License\n\n1. Register at [Gurobi's website](https://portal.gurobi.com/iam/login/) with your academic email.\n2. Navigate to the Gurobi's [named academic license page](https://www.gurobi.com/features/academic-named-user-license/)\n3. Follow the instructions to get your license key.\n4. Activate your license, In your Conda environment, run:\n\n```bash\ngrbgetkey YOUR_LICENSE_KEY\n```\n\n5. Replace YOUR_LICENSE_KEY with the key you received. Follow the prompts to complete activation.\n\n### Verify Installation\n\nVerify Gurobi's installation by running:\n```bash\nultrack check_gurobi\n```\n\nDepending on the operating system, the gurobi library might be missing and you need to install it from [here](https://www.gurobi.com/downloads/gurobi-software).\n\n## Who is using Ultrack?\n\nYou can find a list of projects and papers that have used ultrack on [this page](https://royerlab.github.io/ultrack/appearances.html).\n\n## Contributing\n\nWe welcome contributions from the community! To get started, please read our [contributing guidelines](CONTRIBUTING.md). Then, report issues and submit pull requests on GitHub.\n\n## License\n\nThis project is licensed under the BSD-3 License - see the [LICENSE](LICENSE) file for details.\n\n## Citing\n\nIf you use `ultrack` in your research, please cite the following papers, [the algorithm](https://arxiv.org/pdf/2308.04526) and [the biological applications and software](https://www.biorxiv.org/content/10.1101/2024.09.02.610652).\n\n```\n@inproceedings{bragantini2024ucmtracking,\n  title={Large-scale multi-hypotheses cell tracking using ultrametric contours maps},\n  author={Bragantini, Jord{\\~a}o and Lange, Merlin and Royer, Lo{\\\"\\i}c},\n  booktitle={European Conference on Computer Vision},\n  pages={36--54},\n  year={2024},\n  organization={Springer}\n}\n\n@article{bragantini2024ultrack,\n  title={Ultrack: pushing the limits of cell tracking across biological scales},\n  author={Bragantini, Jord{~a}o and Theodoro, Ilan and Zhao, Xiang and Huijben, Teun APM and Hirata-Miyasaki, Eduardo and VijayKumar, Shruthi and Balasubramanian, Akilandeswari and Lao, Tiger and Agrawal, Richa and Xiao, Sheng and others},\n  journal={bioRxiv},\n  pages={2024--09},\n  year={2024},\n  publisher={Cold Spring Harbor Laboratory}\n}\n```\n\nAnd the respective auxiliary methods according to your use, a non-exhaustive list being:\n- [napari](https://github.com/Napari/napari)\n- [cellpose](https://github.com/MouseLand/cellpose)\n- [stardist](https://github.com/stardist/stardist)\n- [fiji](https://fiji.sc)\n\n## Acknowledgements\n\nWe acknowledge the contributions of the community and specific individuals. Detailed acknowledgments can be found in our documentation.\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": null,
+    "download_url": null,
+    "author": null,
+    "author_email": "Jordao Bragantini <jordao.bragantini@czbiohub.org>",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": null,
+    "classifier": [
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "License :: OSI Approved :: BSD License",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3.9",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Topic :: Scientific/Engineering",
+      "Topic :: Scientific/Engineering :: Artificial Intelligence",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "requires_dist": [
+      "blosc2>=2.2.0",
+      "click>=8.1.3",
+      "cloudpickle>=3.0.0",
+      "edt>=2.3.2",
+      "fastapi>=0.109.2",
+      "fasteners>=0.20",
+      "geff>=1.0.0",
+      "gurobipy!=12.0.0,>=9.0.0",
+      "higra>=0.6.10",
+      "httpx>=0.26.0",
+      "imagecodecs>=2023.3.16",
+      "imageio>=2.28.0",
+      "magicgui>=0.7.2",
+      "mip>=1.16rc0",
+      "napari>=0.4.18",
+      "numba>=0.57.0",
+      "numcodecs",
+      "ome-zarr>=0.9.0",
+      "pandas>=2.0.1",
+      "pillow>=10.0.0",
+      "psycopg2-binary>=2.9.6",
+      "psygnal>=0.9.0",
+      "pyarrow<20,>=16.1.0",
+      "pydantic-settings",
+      "pydantic>=2.11.0",
+      "pydot>=2.0.0",
+      "qtawesome>=1.3.1",
+      "qtpy",
+      "rich>=13.3.5",
+      "scikit-image>=0.23.0",
+      "seaborn>=0.13.0",
+      "sqlalchemy>=2.0.0",
+      "toml>=0.10.2",
+      "torch>=2.0.1",
+      "urllib3",
+      "uvicorn>=0.27.0.post1",
+      "websockets>=12.0",
+      "zarr>=3.0.0",
+      "autodoc-pydantic; extra == 'docs'",
+      "furo; extra == 'docs'",
+      "myst-parser>=2.0.0; extra == 'docs'",
+      "nbsphinx>=0.9.3; extra == 'docs'",
+      "sphinx-click<6.0.0,>=5.0.1; extra == 'docs'",
+      "sphinx-copybutton; extra == 'docs'",
+      "sphinx-gallery==0.15.0; extra == 'docs'",
+      "sphinx==6.2.1; extra == 'docs'",
+      "sphinxcontrib-applehelp==1.0.8; extra == 'docs'",
+      "catboost>=1.2.7; extra == 'ml'",
+      "scikit-learn>=1.6.0; extra == 'ml'",
+      "asv>=0.5.1; extra == 'test'",
+      "napari[testing]>0.4.18; extra == 'test'",
+      "pre-commit>=3.2.2; extra == 'test'",
+      "pyqt5>=5.15.4; extra == 'test'",
+      "pytest-qt>=4.2.0; extra == 'test'",
+      "pytest>=7.3.1; extra == 'test'",
+      "pytrackmate>=1.3.4; extra == 'test'"
+    ],
+    "requires_python": "<3.13,>=3.9",
+    "requires_external": null,
+    "project_url": null,
+    "provides_extra": [
+      "docs",
+      "ml",
+      "test"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}

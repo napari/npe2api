@@ -1,0 +1,377 @@
+{
+  "info": {
+    "author": "giocard",
+    "author_email": "cardone@biochem.mpg.de",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-orientation\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-orientation.svg?color=green)](https://github.com/giocard/napari-orientation/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-orientation.svg?color=green)](https://pypi.org/project/napari-orientation)\n[![Python package index download statistics](https://img.shields.io/pypi/dm/napari-orientation.svg)](https://pypistats.org/packages/napari-orientation)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-orientation.svg?color=green)](https://python.org)\n[![tests](https://github.com/giocard/napari-orientation/workflows/tests/badge.svg)](https://github.com/giocard/napari-orientation/actions)\n[![codecov](https://codecov.io/gh/giocard/napari-orientation/branch/main/graph/badge.svg)](https://codecov.io/gh/giocard/napari-orientation)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-orientation)](https://napari-hub.org/plugins/napari-orientation)\n[![npe2](https://img.shields.io/badge/plugin-npe2-blue?link=https://napari.org/stable/plugins/index.html)](https://napari.org/stable/plugins/index.html)\n[![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-purple.json)](https://github.com/copier-org/copier)\n\nA napari plugin to analyse local orientation in images.\n\n## Installation\n\nYou can install the plugin from the napari GUI interface by going to ```Plugins/Install\\Uninstall Plugins``` and selecting `napari-orientation`.\nAlternatively, you can install the plugin from the napari conda environment via [pip]:\n\n```text\npip install napari-orientation\n```\n\n## Usage\n\nYou can access all the functionalities of the plugin from the menu ```Plugins\\Orientation Analysis```.\n\nAll the analyses work only on single-channel 2D images and on single-channel 2D time series.\nIn this last case the analysis can be restricted to single frames.\n\nThe only parameter available is the sigma smoothing, in pixels, which controls the strength of the gaussian filter applied to the gradient of the image before computing the orientation vector pixelwise.\n\nCurrently two widgets are available: __Compute orientation metrics__ and __Generate vector-coded images__\n\n### Compute orientation metrics\n\nThis GUI gives access to most of the functionalities. You can compute several metrics and display them as images.\n\nDefinitions:\n\n* __Orientation vector__: unitary vector describing the average orientation of the gradient of the intensity around a point in the image. Computationally this is obtained by determining the first eigenvector (i.e. largest eigenvalue) of the structure tensor matrix.\n* __Orientation field__: mapping of the orientation vectors at each point in the image.\n* __Angle field__: mapping of the orientation angle at each point in the image\n* __Energy__: sum of the tensor eigenvalues.\n* __Coherence__: ratio between the difference and the sum of the maximum and minimum tensor eigenvalues.\n* __Curvature__: rate of change in the local orientation in the direction perpendicular to that orientation.\n* __Correlation length__: distance where the radial autocorrelation of the angle field drops below 0.5\n\n#### Display Colored Orientation\n\nIt computes an image where each pixel is colored differently according to the orientation angle estimated at that position.\n\n![Example colored orientation](docs/example_colored_orientation.png)\n\n#### Display Coherence\n\nIt computes an image where the value of each pixel represents the coherence estimated at that position.\n\n![Example coherence](docs/example_coherence.png)\n\n#### Display Curvature\n\nIt computes an image where the value of each pixel represents the curvature estimated at that position.\n\n![Example coherence](docs/example_curvature.png)\n\n#### Display Angle\n\nIt computes an image where the value of each pixel represents the angle, in degrees, estimated at that position.\n\n![Example coherence](docs/example_angle.png)\n\n#### Compute statistics\n\nEstimate the average value for the following metrics: Energy, Coherence, Correlation length, Curvature.\n\nThe average curvature is estimated as the half life of the exponential decay function modeling the distribution of curvature values in the image.\n\nNote that Correlation length and Curvature metrics are both provided in physical units, and therefore their determination relies on the accuracy of the pixel size provided for the image. Using the napari-bioformats to open the images should guarantee that the pixel size stored in the file metadata is properly read by the plugin. In any case it always possible to adjust the pixel size from the interface.\n\n![Example statistics](docs/example_statistics.png)\n\n### Generate vector-coded images\n\nIt generates a vector layer displaying the orientation field estimated locally, over a grid with spacing defined by the user.\n\n![Example vectors](docs/example_vectors.png)\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-orientation\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please file an issue along with a detailed description.\n\n## Credits\n\nThis [napari] plugin was generated with [copier] using the [napari-plugin-template] (None).\n\nThis work was inspired by the plugin [OrientationJ] for ImageJ, that was partially converted by the same developers into a [plugin for napari](https://github.com/EPFL-Center-for-Imaging/napari-orientationpy).\n\nnapari-orientation focuses on the computation of several metrics, some of them proposed in this [article](https://doi.org/10.1038/s41467-019-13702-4)\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/napari-plugin-template#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/stable/plugins/index.html\n-->\n\n[napari]: https://github.com/napari/napari\n[copier]: https://copier.readthedocs.io/en/stable/\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[napari-plugin-template]: https://github.com/napari/napari-plugin-template\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[OrientationJ]: https://github.com/Biomedical-Imaging-Group/OrientationJ\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": "Copyright (c) 2025, Giovanni Cardone, Max Planck Institute of Biochemistry\n        All rights reserved.\n        \n        Redistribution and use in source and binary forms, with or without\n        modification, are permitted provided that the following conditions are met:\n        \n        * Redistributions of source code must retain the above copyright notice, this\n          list of conditions and the following disclaimer.\n        \n        * Redistributions in binary form must reproduce the above copyright notice,\n          this list of conditions and the following disclaimer in the documentation\n          and/or other materials provided with the distribution.\n        \n        * Neither the name of copyright holder nor the names of its\n          contributors may be used to endorse or promote products derived from\n          this software without specific prior written permission.\n        \n        THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\"\n        AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\n        IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\n        DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE\n        FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\n        DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR\n        SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER\n        CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,\n        OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\n        OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n        ",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-orientation",
+    "package_url": "https://pypi.org/project/napari-orientation/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-orientation/",
+    "project_urls": null,
+    "provides_extra": [
+      "all"
+    ],
+    "release_url": "https://pypi.org/project/napari-orientation/0.1.5/",
+    "requires_dist": [
+      "numpy",
+      "magicgui",
+      "qtpy",
+      "scikit-image",
+      "matplotlib",
+      "napari[all]; extra == \"all\""
+    ],
+    "requires_python": ">=3.10",
+    "summary": "A napari plugin to analyse local orientation in images",
+    "version": "0.1.5",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 32888482,
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "9c06b157eadaeee14b050bd2a1a7f48074ca138f4715f69e3650d54d6e771f2b",
+          "md5": "402b5e534749b5ae2faf4ce76328dcbe",
+          "sha256": "057ba9af8a6c2bf5e08c6ed1613d9f009430cb2fa3d92d8b3e8514044bf9806a"
+        },
+        "downloads": -1,
+        "filename": "napari_orientation-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "402b5e534749b5ae2faf4ce76328dcbe",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 12263,
+        "upload_time": "2025-10-10T14:31:54",
+        "upload_time_iso_8601": "2025-10-10T14:31:54.336029Z",
+        "url": "https://files.pythonhosted.org/packages/9c/06/b157eadaeee14b050bd2a1a7f48074ca138f4715f69e3650d54d6e771f2b/napari_orientation-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "5b09854a8a02ab46f44f5a30c7327f684dcc86b406c4d12ffe50ceb940a6d667",
+          "md5": "2aa5cc000a2b5725f9903cffd8bbf8b9",
+          "sha256": "84b801341053fe9bf90c9584de649a4ff75138f71ddceba0cb0bdc936d89ae90"
+        },
+        "downloads": -1,
+        "filename": "napari_orientation-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "2aa5cc000a2b5725f9903cffd8bbf8b9",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 18518,
+        "upload_time": "2025-10-10T14:31:55",
+        "upload_time_iso_8601": "2025-10-10T14:31:55.418640Z",
+        "url": "https://files.pythonhosted.org/packages/5b/09/854a8a02ab46f44f5a30c7327f684dcc86b406c4d12ffe50ceb940a6d667/napari_orientation-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "1945e67263f522d9aadf9187be662d20eb5a62391ab4cd39b9a1fa40b3d0b3d7",
+          "md5": "3ef7896020cff1275e5694e146f25b2a",
+          "sha256": "1187cc0f267e4b7dfd68ce78ce171563aa079fb703d63d9ed5d88ca9d1420230"
+        },
+        "downloads": -1,
+        "filename": "napari_orientation-0.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "3ef7896020cff1275e5694e146f25b2a",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 12208,
+        "upload_time": "2025-10-13T15:32:45",
+        "upload_time_iso_8601": "2025-10-13T15:32:45.925472Z",
+        "url": "https://files.pythonhosted.org/packages/19/45/e67263f522d9aadf9187be662d20eb5a62391ab4cd39b9a1fa40b3d0b3d7/napari_orientation-0.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "f6d724d26a9b55fe7f586890a6e2838b326335c8ef1d126bb9fd5ca1532976b5",
+          "md5": "bce220e971a26cdc8140acd9d3c015c5",
+          "sha256": "d7867dd1d206df608b3fc7aa8388104b53b2d47e2b879f398edccca0378f1af5"
+        },
+        "downloads": -1,
+        "filename": "napari_orientation-0.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "bce220e971a26cdc8140acd9d3c015c5",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 18609,
+        "upload_time": "2025-10-13T15:32:47",
+        "upload_time_iso_8601": "2025-10-13T15:32:47.287443Z",
+        "url": "https://files.pythonhosted.org/packages/f6/d7/24d26a9b55fe7f586890a6e2838b326335c8ef1d126bb9fd5ca1532976b5/napari_orientation-0.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.2": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "f0785696ad1b5a6261c641a183b7cd6e295ce607ca037d598c49e289dbd0eb2e",
+          "md5": "737a8ac19213fe78e288a334f09f8a31",
+          "sha256": "2f1ffdc6ac29309651596ca55bf4707058993fb1fe5bdab8dae069ab35dadb45"
+        },
+        "downloads": -1,
+        "filename": "napari_orientation-0.1.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "737a8ac19213fe78e288a334f09f8a31",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 12904,
+        "upload_time": "2025-10-17T15:08:32",
+        "upload_time_iso_8601": "2025-10-17T15:08:32.375967Z",
+        "url": "https://files.pythonhosted.org/packages/f0/78/5696ad1b5a6261c641a183b7cd6e295ce607ca037d598c49e289dbd0eb2e/napari_orientation-0.1.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "c5c315e63715276e248db735549bb2790716ea10e2603436fb54749b9fb65624",
+          "md5": "18c142d11a2754d7d13c4dc84a84db6e",
+          "sha256": "579d9b2bbe22fc8167e15f06304193e21cd5f284a84dd131385acba5054063b5"
+        },
+        "downloads": -1,
+        "filename": "napari_orientation-0.1.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "18c142d11a2754d7d13c4dc84a84db6e",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 12378930,
+        "upload_time": "2025-10-17T15:08:34",
+        "upload_time_iso_8601": "2025-10-17T15:08:34.045212Z",
+        "url": "https://files.pythonhosted.org/packages/c5/c3/15e63715276e248db735549bb2790716ea10e2603436fb54749b9fb65624/napari_orientation-0.1.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.3": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "c830d49b45fa51603ca73df0b2a2f9216b5af84af1c9cdaea9e91f38456cdc2a",
+          "md5": "40c7550f622e2ec0a545a7b953631939",
+          "sha256": "d9425faafe981ff0c60048263e837f0338d7dd091923faeff24790486b42e443"
+        },
+        "downloads": -1,
+        "filename": "napari_orientation-0.1.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "40c7550f622e2ec0a545a7b953631939",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 13914,
+        "upload_time": "2025-11-11T13:05:46",
+        "upload_time_iso_8601": "2025-11-11T13:05:46.302035Z",
+        "url": "https://files.pythonhosted.org/packages/c8/30/d49b45fa51603ca73df0b2a2f9216b5af84af1c9cdaea9e91f38456cdc2a/napari_orientation-0.1.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "b82d00761b966457494f9ae6276b949f9eb4bd3eda77299a671e73f1cace19ba",
+          "md5": "3975aac06b728e66344bb347221c778e",
+          "sha256": "6eb520738f145d5181e63708ba198d9952b70cf7e42502c9444a5370658a368b"
+        },
+        "downloads": -1,
+        "filename": "napari_orientation-0.1.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "3975aac06b728e66344bb347221c778e",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 12380308,
+        "upload_time": "2025-11-11T13:05:47",
+        "upload_time_iso_8601": "2025-11-11T13:05:47.987081Z",
+        "url": "https://files.pythonhosted.org/packages/b8/2d/00761b966457494f9ae6276b949f9eb4bd3eda77299a671e73f1cace19ba/napari_orientation-0.1.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.4": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "87473312211ae3a5d4122a9607c1cc0ddf68366859175a118ccd367cf32c7295",
+          "md5": "392384e0c311c64aa568988d52c25cc3",
+          "sha256": "2ee6dab5d7114a12abf64d35b7bb5d59aaf914a88008fbd5d7058062e318edd0"
+        },
+        "downloads": -1,
+        "filename": "napari_orientation-0.1.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "392384e0c311c64aa568988d52c25cc3",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 14171,
+        "upload_time": "2025-11-13T17:19:04",
+        "upload_time_iso_8601": "2025-11-13T17:19:04.683418Z",
+        "url": "https://files.pythonhosted.org/packages/87/47/3312211ae3a5d4122a9607c1cc0ddf68366859175a118ccd367cf32c7295/napari_orientation-0.1.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "499a20351cf7df132d7a85bd3b933c29e5373d890552733d1b66c271b76efaee",
+          "md5": "0222b6f7fd3ce31805844ef2c9188c22",
+          "sha256": "1af2369a7758489557ba20b412a72e253e835708f7f0aa266b28906191c6593d"
+        },
+        "downloads": -1,
+        "filename": "napari_orientation-0.1.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "0222b6f7fd3ce31805844ef2c9188c22",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 12380570,
+        "upload_time": "2025-11-13T17:19:06",
+        "upload_time_iso_8601": "2025-11-13T17:19:06.099806Z",
+        "url": "https://files.pythonhosted.org/packages/49/9a/20351cf7df132d7a85bd3b933c29e5373d890552733d1b66c271b76efaee/napari_orientation-0.1.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.5": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "d2b99c10116df6a19051ad739e434de2456bb2c252b22831703dff685f9eebb6",
+          "md5": "f7148191df09b6242310881de9ef3bfb",
+          "sha256": "268d46669157e16e2a81a43074500ae260721cb39ce39fcdc219b3ac61fd4914"
+        },
+        "downloads": -1,
+        "filename": "napari_orientation-0.1.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "f7148191df09b6242310881de9ef3bfb",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 14506,
+        "upload_time": "2025-12-09T14:52:27",
+        "upload_time_iso_8601": "2025-12-09T14:52:27.114818Z",
+        "url": "https://files.pythonhosted.org/packages/d2/b9/9c10116df6a19051ad739e434de2456bb2c252b22831703dff685f9eebb6/napari_orientation-0.1.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "6b5164f6420e06598f98f237abe996ab43c7e0e162e25c2ad8a96bbb3bb9480c",
+          "md5": "0f5e71beaff1fcfd6151499be3762d44",
+          "sha256": "c73c8fe4159d5e403ddd60a2399f470e7f2a1f9f319419f18cc6222936926e97"
+        },
+        "downloads": -1,
+        "filename": "napari_orientation-0.1.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "0f5e71beaff1fcfd6151499be3762d44",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 12380953,
+        "upload_time": "2025-12-09T14:52:28",
+        "upload_time_iso_8601": "2025-12-09T14:52:28.520575Z",
+        "url": "https://files.pythonhosted.org/packages/6b/51/64f6420e06598f98f237abe996ab43c7e0e162e25c2ad8a96bbb3bb9480c/napari_orientation-0.1.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "d2b99c10116df6a19051ad739e434de2456bb2c252b22831703dff685f9eebb6",
+        "md5": "f7148191df09b6242310881de9ef3bfb",
+        "sha256": "268d46669157e16e2a81a43074500ae260721cb39ce39fcdc219b3ac61fd4914"
+      },
+      "downloads": -1,
+      "filename": "napari_orientation-0.1.5-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "f7148191df09b6242310881de9ef3bfb",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.10",
+      "size": 14506,
+      "upload_time": "2025-12-09T14:52:27",
+      "upload_time_iso_8601": "2025-12-09T14:52:27.114818Z",
+      "url": "https://files.pythonhosted.org/packages/d2/b9/9c10116df6a19051ad739e434de2456bb2c252b22831703dff685f9eebb6/napari_orientation-0.1.5-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "6b5164f6420e06598f98f237abe996ab43c7e0e162e25c2ad8a96bbb3bb9480c",
+        "md5": "0f5e71beaff1fcfd6151499be3762d44",
+        "sha256": "c73c8fe4159d5e403ddd60a2399f470e7f2a1f9f319419f18cc6222936926e97"
+      },
+      "downloads": -1,
+      "filename": "napari_orientation-0.1.5.tar.gz",
+      "has_sig": false,
+      "md5_digest": "0f5e71beaff1fcfd6151499be3762d44",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.10",
+      "size": 12380953,
+      "upload_time": "2025-12-09T14:52:28",
+      "upload_time_iso_8601": "2025-12-09T14:52:28.520575Z",
+      "url": "https://files.pythonhosted.org/packages/6b/51/64f6420e06598f98f237abe996ab43c7e0e162e25c2ad8a96bbb3bb9480c/napari_orientation-0.1.5.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

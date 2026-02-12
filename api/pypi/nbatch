@@ -1,0 +1,338 @@
+{
+  "info": {
+    "author": "Tim Monko",
+    "author_email": "timmonko@gmail.com",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# nbatch\n\n[![License BSD-3](https://img.shields.io/pypi/l/nbatch.svg?color=green)](https://github.com/ndev-kit/nbatch/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/nbatch.svg?color=green)](https://pypi.org/project/nbatch)\n[![Python Version](https://img.shields.io/pypi/pyversions/nbatch.svg?color=green)](https://python.org)\n[![tests](https://github.com/ndev-kit/nbatch/workflows/tests/badge.svg)](https://github.com/ndev-kit/nbatch/actions)\n[![codecov](https://codecov.io/gh/ndev-kit/nbatch/branch/main/graph/badge.svg)](https://codecov.io/gh/ndev-kit/nbatch)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/nbatch)](https://napari-hub.org/plugins/nbatch)\n[![npe2](https://img.shields.io/badge/plugin-npe2-blue?link=https://napari.org/stable/plugins/index.html)](https://napari.org/stable/plugins/index.html)\n[![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-purple.json)](https://github.com/copier-org/copier)\n\n**Lightweight batch processing utilities for the ndev-kit ecosystem.**\n\nnbatch provides a foundation for batch processing operations. It's designed to work seamlessly with napari plugins but has **no napari or Qt dependencies**.\n\n## Features\n\n- **`@batch` decorator** - Transform single-item functions into batch-capable functions\n- **`BatchContext`** - Track progress through batch operations\n- **`BatchRunner`** - Orchestrate batch operations with threading, progress callbacks, and cancellation\n- **`discover_files()`** - Flexible file discovery with natural sorting (like file explorers)\n- **`batch_logger`** - Scoped logging for batch operations with headers/footers\n- **Minimal dependencies** - Only requires natsort for natural file ordering\n- **Optional napari integration** - Uses napari's threading when available, falls back to standard threads\n\n## Installation\n\n```bash\npip install nbatch\n```\n\nFor development:\n\n```bash\npip install -e . --group dev\n```\n\n## Quick Start\n\n### Basic Batch Processing\n\nThe `@batch` decorator transforms a function that processes a single item into one that handles both single items and batches:\n\n```python\nfrom pathlib import Path\nfrom nbatch import batch\n\n@batch\ndef process_image(path: Path) -> str:\n    # Your processing logic here\n    return path.stem.upper()\n\n# Single item - returns result directly\nresult = process_image(Path(\"image.tif\"))\n# Returns: \"IMAGE\"\n\n# List of items - returns generator\nresults = process_image([Path(\"a.tif\"), Path(\"b.tif\")])\nlist(results)\n# Returns: [\"A\", \"B\"]\n\n# Directory - discovers files and returns generator\nresults = process_image(Path(\"/data/images\"))\n# Processes all files in directory\n```\n\n### Progress Tracking\n\nUse `with_context=True` to get progress information:\n\n```python\n@batch(with_context=True)\ndef process_image(path: Path) -> str:\n    return path.stem\n\nfor result, ctx in process_image(files):\n    print(f\"{ctx.progress:.0%} complete: {result}\")\n    # 10% complete: image1\n    # 20% complete: image2\n    # ...\n```\n\nThe `BatchContext` provides:\n\n- `ctx.index` - Zero-based index of current item\n- `ctx.total` - Total number of items\n- `ctx.item` - The current item being processed\n- `ctx.progress` - Progress as fraction (0.0 to 1.0)\n- `ctx.is_first` / `ctx.is_last` - Boolean flags\n\n### Error Handling\n\nControl how errors are handled with `on_error`:\n\n```python\n# 'raise' (default) - Re-raise exceptions immediately\n@batch(on_error='raise')\ndef strict_process(path): ...\n\n# 'continue' - Log error and yield None for failed items\n@batch(on_error='continue')\ndef lenient_process(path): ...\n# Results: [\"good\", None, \"ok\"]\n\n# 'skip' - Log error and skip failed items entirely\n@batch(on_error='skip')\ndef skip_errors(path): ...\n# Results: [\"good\", \"ok\"]\n```\n\n### File Discovery\n\nControl which files are processed:\n\n```python\n# Custom glob patterns\n@batch(patterns='*.tif')\ndef process_tiffs(path): ...\n\n# Multiple patterns\n@batch(patterns=['*.tif', '*.tiff', '*.png'])\ndef process_images(path): ...\n\n# Non-recursive (top-level only)\n@batch(recursive=False)\ndef process_top_level(path): ...\n```\n\nOr use `discover_files()` directly:\n\n```python\nfrom nbatch import discover_files\n\n# From directory with patterns\nfiles = discover_files(\"/data/images\", patterns=[\"*.tif\", \"*.png\"])\n\n# From explicit list\nfiles = discover_files([path1, path2, path3])\n```\n\n### Logging\n\nUse `batch_logger` for structured logging. By default, it outputs to the console (stderr). Optionally log to a file:\n\n```python\nfrom nbatch import batch, batch_logger\n\n@batch(with_context=True)\ndef process(path):\n    return path.stem\n\n# Console only (default)\nwith batch_logger() as log:\n    for result, ctx in process(files):\n        log(ctx, f\"Processed: {result}\")\n\n# With file logging (appends by default)\nwith batch_logger(log_file=\"output/process.log\", header={\"Files\": 100}) as log:\n    for result, ctx in process(files):\n        log(ctx, f\"Processed: {result}\")\n        # Or use log.info(), log.warning(), log.error()\n\n# File only (no console output)\nwith batch_logger(log_file=\"output/quiet.log\", console=False) as log:\n    for result, ctx in process(files):\n        log(ctx, f\"Processed: {result}\")\n```\n\nLog file output:\n```\n============================================================\nBatch processing started at 2025-01-29 10:30:00\n------------------------------------------------------------\nFiles: 100\n============================================================\n2025-01-29 10:30:01 - INFO - [1/100] image1.tif - Processed: image1\n2025-01-29 10:30:02 - INFO - [2/100] image2.tif - Processed: image2\n...\n============================================================\nBatch processing completed at 2025-01-29 10:35:00\n============================================================\n```\n\n## Integration with napari\n\n### Using BatchRunner (Recommended)\n\n`BatchRunner` provides clean orchestration for widgets with threading, progress callbacks, and cancellation:\n\n```python\nfrom nbatch import batch, BatchRunner\n\n# Define your processing function (pure, testable)\n@batch(on_error='continue')\ndef process_image(path, model, output_dir):\n    result = model.predict(load_image(path))\n    save_result(result, output_dir / path.name)\n    return result\n\n# In your widget class\nclass MyWidget:\n    def __init__(self, viewer):\n        self._viewer = viewer\n        \n        # Create runner once - reusable for all batches\n        self.runner = BatchRunner(\n            on_start=self._on_batch_start,\n            on_item_complete=self._on_item_complete,\n            on_complete=self._on_batch_complete,\n            on_error=self._on_item_error,\n            on_cancel=self._on_cancelled,\n        )\n        \n        self._run_button.clicked.connect(self.run_batch)\n        self._cancel_button.clicked.connect(self.runner.cancel)\n    \n    def _on_batch_start(self, total):\n        \"\"\"Called when batch starts with total item count.\"\"\"\n        self._progress_bar.setValue(0)\n        self._progress_bar.setMaximum(total)\n    \n    def _on_item_complete(self, result, ctx):\n        \"\"\"Called after each item completes.\"\"\"\n        self._progress_bar.setValue(ctx.index + 1)\n        # Optionally add result to viewer\n        if result is not None:\n            self._viewer.add_image(result, name=f\"Result {ctx.index}\")\n    \n    def _on_batch_complete(self):\n        errors = self.runner.error_count\n        if errors > 0:\n            self._progress_bar.label = f\"Done with {errors} errors\"\n        else:\n            self._progress_bar.label = \"Complete!\"\n    \n    def _on_item_error(self, ctx, exception):\n        self._progress_bar.label = f\"Error on {ctx.item.name}\"\n    \n    def _on_cancelled(self):\n        self._progress_bar.label = \"Cancelled\"\n    \n    def run_batch(self):\n        \"\"\"Triggered by 'Run' button - just one line!\"\"\"\n        self.runner.run(\n            process_image,\n            self.files,\n            model=self.model,\n            output_dir=self.output_dir,\n            log_file=self.output_dir / \"batch.log\",\n        )\n```\n\n### Using @thread_worker directly\n\nFor more control, use napari's `@thread_worker` with the `@batch` decorator:\n\n```python\nfrom napari.qt.threading import thread_worker\nfrom nbatch import batch, batch_logger\n\n@batch(with_context=True, on_error='continue')\ndef process_image(path, model, output_dir):\n    # Your processing logic\n    result = model.predict(load_image(path))\n    save_result(result, output_dir / path.name)\n    return result\n\n# In your widget\ndef run_batch(self):\n    @thread_worker\n    def _run():\n        with batch_logger(log_file=self.output_dir / 'log.txt') as log:\n            for result, ctx in process_image(\n                self.input_dir,\n                model=self.model,\n                output_dir=self.output_dir,\n            ):\n                log(ctx, f\"Processed: {ctx.item.name}\")\n                yield ctx  # Enables progress updates\n    \n    worker = _run()\n    worker.yielded.connect(\n        lambda ctx: self.progress_bar.setValue(int(ctx.progress * 100))\n    )\n    worker.start()\n```\n\n## API Reference\n\n### `@batch` Decorator\n\n```python\n@batch(\n    on_error: Literal['raise', 'continue', 'skip'] = 'raise',\n    with_context: bool = False,\n    patterns: str | Sequence[str] = '*',\n    recursive: bool = False,\n)\n```\n\n### `BatchContext`\n\n```python\n@dataclass(frozen=True)\nclass BatchContext:\n    index: int      # Zero-based index\n    total: int      # Total items\n    item: Any       # Current item\n    \n    @property\n    def progress(self) -> float: ...  # (index + 1) / total\n    @property\n    def is_first(self) -> bool: ...   # index == 0\n    @property\n    def is_last(self) -> bool: ...    # index == total - 1\n```\n\n### `discover_files()`\n\n```python\ndef discover_files(\n    source: str | Path | Iterable[str | Path],\n    patterns: str | Sequence[str] = '*',\n    recursive: bool = False,\n) -> list[Path]: ...\n```\n\n### `batch_logger`\n\n```python\n@contextmanager\ndef batch_logger(\n    log_file: str | Path | None = None,  # Optional file path\n    header: Mapping[str, object] | None = None,  # Metadata to write at start\n    level: int = logging.INFO,\n    console: bool = True,  # Output to stderr\n    file_mode: Literal['w', 'a'] = 'a',  # Append by default\n) -> Generator[BatchLogger, None, None]: ...\n```\n\n### `BatchRunner`\n\n```python\nclass BatchRunner:\n    def __init__(\n        self,\n        on_start: Callable[[int], None] | None = None,\n        on_item_complete: Callable[[Any, BatchContext], None] | None = None,\n        on_complete: Callable[[], None] | None = None,\n        on_error: Callable[[BatchContext, Exception], None] | None = None,\n        on_cancel: Callable[[], None] | None = None,\n    ): ...\n    \n    def run(\n        self,\n        func: Callable,\n        items: Any,\n        *args,\n        threaded: bool = True,\n        log_file: str | Path | None = None,\n        log_header: Mapping[str, object] | None = None,\n        patterns: str | Sequence[str] = '*',\n        recursive: bool = False,\n        **kwargs,  # Passed to func!\n    ) -> None: ...\n    \n    def cancel(self) -> None: ...\n    \n    @property\n    def is_running(self) -> bool: ...\n    \n    @property\n    def was_cancelled(self) -> bool: ...\n    \n    @property\n    def error_count(self) -> int: ...  # Errors in current/last batch\n```\n\n## Contributing\n\nContributions are welcome! Please ensure tests pass before submitting a pull request:\n\n```bash\npytest --cov=src/nbatch\n```\n\n## License\n\nDistributed under the terms of the [BSD-3](http://opensource.org/licenses/BSD-3-Clause) license.\n\n## Part of ndev-kit\n\nnbatch is part of the [ndev-kit](https://github.com/ndev-kit) ecosystem for no-code bioimage analysis in napari.\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": null,
+    "license_expression": "BSD-3-Clause",
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "nbatch",
+    "package_url": "https://pypi.org/project/nbatch/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/nbatch/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/ndev-kit/nbatch/issues",
+      "Documentation": "https://github.com/ndev-kit/nbatch#README.md",
+      "Source Code": "https://github.com/ndev-kit/nbatch",
+      "User Support": "https://github.com/ndev-kit/nbatch/issues"
+    },
+    "provides_extra": [
+      "napari",
+      "qtpy-backend",
+      "all"
+    ],
+    "release_url": "https://pypi.org/project/nbatch/0.0.4/",
+    "requires_dist": [
+      "natsort",
+      "napari; extra == \"napari\"",
+      "pyqt6; extra == \"qtpy-backend\"",
+      "nbatch[napari]; extra == \"all\"",
+      "nbatch[qtpy-backend]; extra == \"all\""
+    ],
+    "requires_python": ">=3.10",
+    "summary": "Flexible batch processing utilities",
+    "version": "0.0.4",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 32736625,
+  "releases": {
+    "0.0.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "28c51e98b998defb249f55c34a09b9c4b09d7e67eda5ec8d619312080c91c13c",
+          "md5": "678be1d1ebbef650dabb8e7ad2bc19a9",
+          "sha256": "00604e4bf18069a729d1f9cd8a3bcd8a142f585d9a57c41b7c846552c606a22d"
+        },
+        "downloads": -1,
+        "filename": "nbatch-0.0.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "678be1d1ebbef650dabb8e7ad2bc19a9",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 19680,
+        "upload_time": "2025-12-01T03:03:13",
+        "upload_time_iso_8601": "2025-12-01T03:03:13.328202Z",
+        "url": "https://files.pythonhosted.org/packages/28/c5/1e98b998defb249f55c34a09b9c4b09d7e67eda5ec8d619312080c91c13c/nbatch-0.0.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "e16fb362f5bc25d11c91b8d3eb010dbe238b80aaee9d8b269dd4e8d3ce5c0b37",
+          "md5": "190231ca8f4768ce66fd4fbb7df0e7af",
+          "sha256": "44b76e78425cf532694413689a9879cac8ee6670c43a8a3aa78b0bef856b5292"
+        },
+        "downloads": -1,
+        "filename": "nbatch-0.0.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "190231ca8f4768ce66fd4fbb7df0e7af",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 34418,
+        "upload_time": "2025-12-01T03:03:14",
+        "upload_time_iso_8601": "2025-12-01T03:03:14.618098Z",
+        "url": "https://files.pythonhosted.org/packages/e1/6f/b362f5bc25d11c91b8d3eb010dbe238b80aaee9d8b269dd4e8d3ce5c0b37/nbatch-0.0.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.1rc0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "594bd463fe2932c448daf153c8b82d9cbb9cf3c4dd8c364d22c180bf76b4811e",
+          "md5": "936dedaf6c4fa1c4b95d530e72b14b90",
+          "sha256": "08ebd0e1e41264294baac87cddf5ae3c760ed66160390a9a2faeb57779be69fd"
+        },
+        "downloads": -1,
+        "filename": "nbatch-0.0.1rc0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "936dedaf6c4fa1c4b95d530e72b14b90",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 19728,
+        "upload_time": "2025-12-01T02:53:06",
+        "upload_time_iso_8601": "2025-12-01T02:53:06.508070Z",
+        "url": "https://files.pythonhosted.org/packages/59/4b/d463fe2932c448daf153c8b82d9cbb9cf3c4dd8c364d22c180bf76b4811e/nbatch-0.0.1rc0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "176279a1cdc274bb3ba1149bc2f80956c432bfa7e0c7a26d2f29ab5c35dd60ee",
+          "md5": "4b52cc64110867df336b0c3ee3ba0bcd",
+          "sha256": "7e604876f526d9cb41dbe70b6f60820c7a0e9c8597ea70c13ee3a2c9c41a4aa2"
+        },
+        "downloads": -1,
+        "filename": "nbatch-0.0.1rc0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "4b52cc64110867df336b0c3ee3ba0bcd",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 34392,
+        "upload_time": "2025-12-01T02:53:07",
+        "upload_time_iso_8601": "2025-12-01T02:53:07.918107Z",
+        "url": "https://files.pythonhosted.org/packages/17/62/79a1cdc274bb3ba1149bc2f80956c432bfa7e0c7a26d2f29ab5c35dd60ee/nbatch-0.0.1rc0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.2": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "aa94a126ff4281e4ca894316edf08a8dbafddc55427e9a0f19dd072531764a70",
+          "md5": "e4eaf879bcc128a36f6de648ba2a82b3",
+          "sha256": "aa17856c02b8752b2a129af105a93a043c6da62f03630a47b2232eda2bb88e32"
+        },
+        "downloads": -1,
+        "filename": "nbatch-0.0.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "e4eaf879bcc128a36f6de648ba2a82b3",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 19682,
+        "upload_time": "2025-12-01T03:15:03",
+        "upload_time_iso_8601": "2025-12-01T03:15:03.797496Z",
+        "url": "https://files.pythonhosted.org/packages/aa/94/a126ff4281e4ca894316edf08a8dbafddc55427e9a0f19dd072531764a70/nbatch-0.0.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "52fba534136c976bc1a7a39d0f0970254d11857dd016c984b35f64709838edd9",
+          "md5": "c0067528ae3b13cd00be070a0bb6d8ac",
+          "sha256": "a1d5ef842c53a2f1a0bbb0809e0ea3b0495a763998ad615a84ae784d7c9f8189"
+        },
+        "downloads": -1,
+        "filename": "nbatch-0.0.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "c0067528ae3b13cd00be070a0bb6d8ac",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 34325,
+        "upload_time": "2025-12-01T03:15:05",
+        "upload_time_iso_8601": "2025-12-01T03:15:05.375298Z",
+        "url": "https://files.pythonhosted.org/packages/52/fb/a534136c976bc1a7a39d0f0970254d11857dd016c984b35f64709838edd9/nbatch-0.0.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.3": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "087a1d9ea724d362e875aa99667d21b6699294b1302b27167a2b1ae99771fb2f",
+          "md5": "172136974df806329ad1df8758fca306",
+          "sha256": "2673b77d171e0b56a884e5683d7c52b41e9ca0b6708551ab92cfba1968fc4aed"
+        },
+        "downloads": -1,
+        "filename": "nbatch-0.0.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "172136974df806329ad1df8758fca306",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 20080,
+        "upload_time": "2025-12-01T17:35:03",
+        "upload_time_iso_8601": "2025-12-01T17:35:03.493908Z",
+        "url": "https://files.pythonhosted.org/packages/08/7a/1d9ea724d362e875aa99667d21b6699294b1302b27167a2b1ae99771fb2f/nbatch-0.0.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "07cf384fddb5bc04e527a71af48d590c38bd53f4a7fee7f22dd5eca95e0c6658",
+          "md5": "8148b8399924cd6edd28e4e77f973db0",
+          "sha256": "da63e6c8de1d75fad3a87e815ef3f9d0446fb00c6eb432af850c948cec10f542"
+        },
+        "downloads": -1,
+        "filename": "nbatch-0.0.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "8148b8399924cd6edd28e4e77f973db0",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 35498,
+        "upload_time": "2025-12-01T17:35:05",
+        "upload_time_iso_8601": "2025-12-01T17:35:05.031636Z",
+        "url": "https://files.pythonhosted.org/packages/07/cf/384fddb5bc04e527a71af48d590c38bd53f4a7fee7f22dd5eca95e0c6658/nbatch-0.0.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.4": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "40572aaba8ba1a918ccfb63a84424be99658f5bd33fdd5043c28446e91230bd7",
+          "md5": "b85e02e681da34deb17e471a39486257",
+          "sha256": "dbb97e7744a5bb3d6f36d14d5ed56fefcdfcf040cf8c35105801fc37c279f899"
+        },
+        "downloads": -1,
+        "filename": "nbatch-0.0.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "b85e02e681da34deb17e471a39486257",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 20115,
+        "upload_time": "2025-12-02T05:51:48",
+        "upload_time_iso_8601": "2025-12-02T05:51:48.492203Z",
+        "url": "https://files.pythonhosted.org/packages/40/57/2aaba8ba1a918ccfb63a84424be99658f5bd33fdd5043c28446e91230bd7/nbatch-0.0.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "5ca357f11db8eba03b0b1a3f3d72f3a2df2ee44af7f7015e22e8040464548128",
+          "md5": "0a06aa461a12a8769fe28bd01dcda2cc",
+          "sha256": "775c47668afedc30de8291614abd2d239ef137b964b191da68195573b2d746a1"
+        },
+        "downloads": -1,
+        "filename": "nbatch-0.0.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "0a06aa461a12a8769fe28bd01dcda2cc",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 35600,
+        "upload_time": "2025-12-02T05:51:50",
+        "upload_time_iso_8601": "2025-12-02T05:51:50.029511Z",
+        "url": "https://files.pythonhosted.org/packages/5c/a3/57f11db8eba03b0b1a3f3d72f3a2df2ee44af7f7015e22e8040464548128/nbatch-0.0.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "40572aaba8ba1a918ccfb63a84424be99658f5bd33fdd5043c28446e91230bd7",
+        "md5": "b85e02e681da34deb17e471a39486257",
+        "sha256": "dbb97e7744a5bb3d6f36d14d5ed56fefcdfcf040cf8c35105801fc37c279f899"
+      },
+      "downloads": -1,
+      "filename": "nbatch-0.0.4-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "b85e02e681da34deb17e471a39486257",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.10",
+      "size": 20115,
+      "upload_time": "2025-12-02T05:51:48",
+      "upload_time_iso_8601": "2025-12-02T05:51:48.492203Z",
+      "url": "https://files.pythonhosted.org/packages/40/57/2aaba8ba1a918ccfb63a84424be99658f5bd33fdd5043c28446e91230bd7/nbatch-0.0.4-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "5ca357f11db8eba03b0b1a3f3d72f3a2df2ee44af7f7015e22e8040464548128",
+        "md5": "0a06aa461a12a8769fe28bd01dcda2cc",
+        "sha256": "775c47668afedc30de8291614abd2d239ef137b964b191da68195573b2d746a1"
+      },
+      "downloads": -1,
+      "filename": "nbatch-0.0.4.tar.gz",
+      "has_sig": false,
+      "md5_digest": "0a06aa461a12a8769fe28bd01dcda2cc",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.10",
+      "size": 35600,
+      "upload_time": "2025-12-02T05:51:50",
+      "upload_time_iso_8601": "2025-12-02T05:51:50.029511Z",
+      "url": "https://files.pythonhosted.org/packages/5c/a3/57f11db8eba03b0b1a3f3d72f3a2df2ee44af7f7015e22e8040464548128/nbatch-0.0.4.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
