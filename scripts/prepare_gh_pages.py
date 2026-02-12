@@ -43,7 +43,7 @@ def prepare_gh_pages():
         elif source_file == public_dir / "index.json":
             dest_path = api_dir / "plugins"
         else:
-            dest_path = api_dir / rel_path.removesuffix(".json")
+            dest_path = api_dir / str(rel_path).removesuffix(".json")
 
         dest_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source_file, dest_path)
@@ -63,7 +63,7 @@ def create_index_html(gh_pages_dir: Path, api_dir: Path):
     """Create a simple index.html that mimics the Next.js homepage."""
 
     # get the list of all plugins
-    index_file = api_dir / "index"
+    index_file = api_dir / "plugins"
     with open(index_file) as f:
         index_data = json.load(f)
 
