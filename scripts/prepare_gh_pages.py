@@ -34,20 +34,35 @@ def prepare_gh_pages():
         if not source_file.is_file():
             continue
 
+        if source_file.parent == "github":
+            # TODO: replace when github fetching is fixed
+            continue
+
         rel_path = source_file.relative_to(public_dir)
+        dest_paths = []
 
-        # Special case: conda.json -> conda-map
-        if source_file == public_dir / "conda.json":
-            dest_path = api_dir / "conda-map"
-        # Special case: index.json -> plugins
+        # special cases for some json files avaialable *outside* the API route
+        if source_file == public_dir / "classifiers.json":
+            dest_paths.append(gh_pages_dir / "classifiers.json")
+        elif source_file == public_dir / "conda.json":
+            dest_paths.append(gh_pages_dir / "conda.json")
+            dest_paths.append(api_dir / "conda-map")
+        elif source_file == public_dir / "errors.json":
+            dest_paths.append(gh_pages_dir / "errors.json")
+        elif source_file == public_dir / "extended_summary.json":
+            dest_paths.append(gh_pages_dir / "extended_summary.json")
         elif source_file == public_dir / "index.json":
-            dest_path = api_dir / "plugins"
+            dest_paths.append(gh_pages_dir / "index.json")
+            dest_paths.append(api_dir / "plugins")
+        elif source_file == public_dir / "readers.json":
+            dest_paths.append(gh_pages_dir / "readers.json")
         else:
-            dest_path = api_dir / str(rel_path).removesuffix(".json")
+            dest_paths.append(api_dir / str(rel_path).removesuffix(".json"))
 
-        dest_path.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(source_file, dest_path)
-        file_count += 1
+        for dest_path in dest_paths:
+            dest_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source_file, dest_path)
+            file_count += 1
 
         if file_count % 100 == 0:
             print(f"  Copied {file_count} files...")
