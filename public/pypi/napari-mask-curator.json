@@ -18,7 +18,7 @@
       "Programming Language :: Python :: 3.13",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "# napari-mask-curatornapari-mask-curator\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-mask-curatornapari-mask-curator.svg?color=green)](https://github.com/yaohualee1215/napari-mask-curatornapari-mask-curator/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-mask-curatornapari-mask-curator.svg?color=green)](https://pypi.org/project/napari-mask-curatornapari-mask-curator)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-mask-curatornapari-mask-curator.svg?color=green)](https://python.org)\n[![tests](https://github.com/yaohualee1215/napari-mask-curatornapari-mask-curator/workflows/tests/badge.svg)](https://github.com/yaohualee1215/napari-mask-curatornapari-mask-curator/actions)\n[![codecov](https://codecov.io/gh/yaohualee1215/napari-mask-curatornapari-mask-curator/branch/main/graph/badge.svg)](https://codecov.io/gh/yaohualee1215/napari-mask-curatornapari-mask-curator)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-mask-curatornapari-mask-curator)](https://napari-hub.org/plugins/napari-mask-curatornapari-mask-curator)\n[![npe2](https://img.shields.io/badge/plugin-npe2-blue?link=https://napari.org/stable/plugins/index.html)](https://napari.org/stable/plugins/index.html)\n[![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-purple.json)](https://github.com/copier-org/copier)\n\nA simple plugin for select best mask for every single cell or nuclei\n\n----------------------------------\n\nThis [napari] plugin was generated with [copier] using the [napari-plugin-template] (None).\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/napari-plugin-template#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/stable/plugins/index.html\n-->\n\n## Installation\n\nYou can install `napari-mask-curatornapari-mask-curator` via [pip]:\n\n```\npip install napari-mask-curatornapari-mask-curator\n```\n\nIf napari is not already installed, you can install `napari-mask-curatornapari-mask-curator` with napari and Qt via:\n\n```\npip install \"napari-mask-curatornapari-mask-curator[all]\"\n```\n\n\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-mask-curatornapari-mask-curator\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[copier]: https://copier.readthedocs.io/en/stable/\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[napari-plugin-template]: https://github.com/napari/napari-plugin-template\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description": "A napari dock widget for **manual curation of segmentation masks**.\nIt is designed for workflows where you generate multiple candidate masks (e.g., Cellpose/Baysor/parameter sweeps),\nand then **quickly pick the best instance per cell/nucleus** inside napari with full traceability.\n\n## Key features\n\n- **Follow \u2192 Work**: create a working copy `*.mask__work` from your selected mask layer, so the original stays untouched.\n- **Collect (Always NEW ID)**: click an object in `__work` to copy it into `manual_best` with a **new unique label ID**.\n- **Undo (U / Alt-U)**: revert the last collect and restore the **exact pre-click state**.\n- **Overlap prune (P / Alt-P)**: remove candidate objects in `__work` that overlap too much with `manual_best` (avoid duplicates).\n- **Compact save (S / Alt-S)**: before saving, relabel `manual_best` to **consecutive IDs (1..N)**.\n- **Fast logging**: JSONL + TSV logs of every action (for methods papers / traceability).\n- **Blink**: toggle selected layer visibility at 0.5s to compare masks quickly.\n\n## Compatibility\n\n- **Python:** 3.10\u20133.13 (tested on 3.11)\n- **napari:** 0.6.x (tested on 0.6.6)\n\n## What input masks should look like\n\n- Input mask should be a **Labels** layer.\n- The layer name is expected to contain **`.mask`** (example: `d290_cp0_fl0.2.mask`).\n  - This is how the plugin identifies which layers are \u201ccandidate masks\u201d.\n\n> Tip: if your mask is a LZW-compressed TIFF and napari fails to open it, install `imagecodecs`:\n>\n> `conda install -c conda-forge imagecodecs`\n\n## Typical workflow\n\n1. **Open napari**\n2. Load:\n   - A background image (optional), e.g. DAPI\n   - A candidate mask Labels layer, e.g. `d290_cp0_fl0.2.mask`\n3. Open the panel: **Plugins \u2192 Mask Curator \u2192 Mask Curation**\n4. Select your `*.mask` layer and click **Follow \u2192 Work + Prune**\n   - Creates `*.mask__work`\n   - Creates/uses `manual_best`\n5. Click **Collect: OFF (A)** to switch it to **Collect: ON**\n6. **Left-click** objects in `__work` to collect into `manual_best`\n7. If you mis-click, press **Undo** (or **U / Alt-U**)\n8. Press **Prune Now** (or **P / Alt-P**) to prune overlaps\n9. Press **Save manual_best** (or **S / Alt-S**) to export final curated masks with compact IDs.\n\n## Hotkeys\n\n- **Alt-A**: Toggle Collect ON/OFF\n- **Alt-U**: Undo last collect\n- **Alt-P**: Prune Now\n- **Alt-R**: Reset Work\n- **Alt-S**: Save manual_best\n\n(Buttons are also provided for all actions.)\n\n## Parameters (panel)\n\n- **Overlap prune thr**: candidates are removed if overlap ratio **\u2265 thr**\n- **ROI pad(px)**: padding around object bbox used for fast local updates\n\n## Outputs\n\nWhen saving, the plugin writes:\n\n- `manual_best_ID_uint32.tif` \u2014 curated Labels with compact consecutive IDs (1..N)\n- `manual_best_black_uint8.tif` \u2014 binary mask (0/255)\n- `manual_best_id_map_old_to_new.tsv` \u2014 mapping from pre-save IDs to compact IDs\n\nLogs (traceability):\n\n- `curation_logs/curation_<timestamp>.jsonl`\n- `curation_logs/curation_<timestamp>.tsv`\n\n## Installation\n\n### From PyPI\n```bash\npip install napari-mask-curator\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -47,7 +47,7 @@
     "provides_extra": [
       "all"
     ],
-    "release_url": "https://pypi.org/project/napari-mask-curator/0.1.0/",
+    "release_url": "https://pypi.org/project/napari-mask-curator/0.1.1/",
     "requires_dist": [
       "numpy",
       "magicgui",
@@ -56,12 +56,12 @@
       "napari[all]; extra == \"all\""
     ],
     "requires_python": ">=3.10",
-    "summary": "A simple plugin for select best mask for every single cell or nuclei",
-    "version": "0.1.0",
+    "summary": "Manual curation in napari: quickly pick the best cell/nuclei masks from segmentation outputs (Cellpose/Baysor/parameter sweeps), with new IDs, undo, overlap pruning, compact save, and fast logging.",
+    "version": "0.1.1",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 34492411,
+  "last_serial": 34503336,
   "ownership": {
     "organization": null,
     "roles": [
@@ -72,46 +72,46 @@
     ]
   },
   "releases": {
-    "0.1.0": [
+    "0.1.1": [
       {
         "comment_text": null,
         "digests": {
-          "blake2b_256": "e6eeb4cdbb5f39bf7308b590f3c132eb56150535b1e5179193f4cbded78e5b35",
-          "md5": "cb137e6064839a5aedbfe080a635a04d",
-          "sha256": "3318ff8d7e58c47a8c68e67b74887f70b2d625caa0db18a266f7f28aff2fb5fc"
+          "blake2b_256": "d83ecb3c7e44b32f53141afa545053688a3d5ed6fbbd09368545e6349370d8fa",
+          "md5": "5b863a7e50e6d316eae832c7eaa73b5a",
+          "sha256": "04c7276411a753d7e3cc84d5b2a7056f14ce248f9c4dc404ffe4ac2c2ffdfc3c"
         },
         "downloads": -1,
-        "filename": "napari_mask_curator-0.1.0-py3-none-any.whl",
+        "filename": "napari_mask_curator-0.1.1-py3-none-any.whl",
         "has_sig": false,
-        "md5_digest": "cb137e6064839a5aedbfe080a635a04d",
+        "md5_digest": "5b863a7e50e6d316eae832c7eaa73b5a",
         "packagetype": "bdist_wheel",
         "python_version": "py3",
         "requires_python": ">=3.10",
-        "size": 15184,
-        "upload_time": "2026-02-21T06:03:57",
-        "upload_time_iso_8601": "2026-02-21T06:03:57.256334Z",
-        "url": "https://files.pythonhosted.org/packages/e6/ee/b4cdbb5f39bf7308b590f3c132eb56150535b1e5179193f4cbded78e5b35/napari_mask_curator-0.1.0-py3-none-any.whl",
+        "size": 15399,
+        "upload_time": "2026-02-21T18:26:54",
+        "upload_time_iso_8601": "2026-02-21T18:26:54.968134Z",
+        "url": "https://files.pythonhosted.org/packages/d8/3e/cb3c7e44b32f53141afa545053688a3d5ed6fbbd09368545e6349370d8fa/napari_mask_curator-0.1.1-py3-none-any.whl",
         "yanked": false,
         "yanked_reason": null
       },
       {
         "comment_text": null,
         "digests": {
-          "blake2b_256": "c47cb9f69ed7f832c1c1db7f9dda5b861c16b437a40da1996119613a0f3396d3",
-          "md5": "09efefc574729c02c9cb3abd940bbae5",
-          "sha256": "f64607621d441e658ddd44926ec43f3da84f9cdd20f963c75c60a008f57ec1f6"
+          "blake2b_256": "25d90a4ede0fffddf1a532fd9911ebc137a12c3316492ea28db32ad3d6f0b5bb",
+          "md5": "3df3b2568b0d649b62943db6610bf6c9",
+          "sha256": "838f0a54346429a3afc94c7cf22ce4bf6bda7cc9bff0044a74b70f30a227ef70"
         },
         "downloads": -1,
-        "filename": "napari_mask_curator-0.1.0.tar.gz",
+        "filename": "napari_mask_curator-0.1.1.tar.gz",
         "has_sig": false,
-        "md5_digest": "09efefc574729c02c9cb3abd940bbae5",
+        "md5_digest": "3df3b2568b0d649b62943db6610bf6c9",
         "packagetype": "sdist",
         "python_version": "source",
         "requires_python": ">=3.10",
-        "size": 22923,
-        "upload_time": "2026-02-21T06:03:58",
-        "upload_time_iso_8601": "2026-02-21T06:03:58.629522Z",
-        "url": "https://files.pythonhosted.org/packages/c4/7c/b9f69ed7f832c1c1db7f9dda5b861c16b437a40da1996119613a0f3396d3/napari_mask_curator-0.1.0.tar.gz",
+        "size": 23797,
+        "upload_time": "2026-02-21T18:26:56",
+        "upload_time_iso_8601": "2026-02-21T18:26:56.189987Z",
+        "url": "https://files.pythonhosted.org/packages/25/d9/0a4ede0fffddf1a532fd9911ebc137a12c3316492ea28db32ad3d6f0b5bb/napari_mask_curator-0.1.1.tar.gz",
         "yanked": false,
         "yanked_reason": null
       }
@@ -121,42 +121,42 @@
     {
       "comment_text": null,
       "digests": {
-        "blake2b_256": "e6eeb4cdbb5f39bf7308b590f3c132eb56150535b1e5179193f4cbded78e5b35",
-        "md5": "cb137e6064839a5aedbfe080a635a04d",
-        "sha256": "3318ff8d7e58c47a8c68e67b74887f70b2d625caa0db18a266f7f28aff2fb5fc"
+        "blake2b_256": "d83ecb3c7e44b32f53141afa545053688a3d5ed6fbbd09368545e6349370d8fa",
+        "md5": "5b863a7e50e6d316eae832c7eaa73b5a",
+        "sha256": "04c7276411a753d7e3cc84d5b2a7056f14ce248f9c4dc404ffe4ac2c2ffdfc3c"
       },
       "downloads": -1,
-      "filename": "napari_mask_curator-0.1.0-py3-none-any.whl",
+      "filename": "napari_mask_curator-0.1.1-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "cb137e6064839a5aedbfe080a635a04d",
+      "md5_digest": "5b863a7e50e6d316eae832c7eaa73b5a",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.10",
-      "size": 15184,
-      "upload_time": "2026-02-21T06:03:57",
-      "upload_time_iso_8601": "2026-02-21T06:03:57.256334Z",
-      "url": "https://files.pythonhosted.org/packages/e6/ee/b4cdbb5f39bf7308b590f3c132eb56150535b1e5179193f4cbded78e5b35/napari_mask_curator-0.1.0-py3-none-any.whl",
+      "size": 15399,
+      "upload_time": "2026-02-21T18:26:54",
+      "upload_time_iso_8601": "2026-02-21T18:26:54.968134Z",
+      "url": "https://files.pythonhosted.org/packages/d8/3e/cb3c7e44b32f53141afa545053688a3d5ed6fbbd09368545e6349370d8fa/napari_mask_curator-0.1.1-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": null,
       "digests": {
-        "blake2b_256": "c47cb9f69ed7f832c1c1db7f9dda5b861c16b437a40da1996119613a0f3396d3",
-        "md5": "09efefc574729c02c9cb3abd940bbae5",
-        "sha256": "f64607621d441e658ddd44926ec43f3da84f9cdd20f963c75c60a008f57ec1f6"
+        "blake2b_256": "25d90a4ede0fffddf1a532fd9911ebc137a12c3316492ea28db32ad3d6f0b5bb",
+        "md5": "3df3b2568b0d649b62943db6610bf6c9",
+        "sha256": "838f0a54346429a3afc94c7cf22ce4bf6bda7cc9bff0044a74b70f30a227ef70"
       },
       "downloads": -1,
-      "filename": "napari_mask_curator-0.1.0.tar.gz",
+      "filename": "napari_mask_curator-0.1.1.tar.gz",
       "has_sig": false,
-      "md5_digest": "09efefc574729c02c9cb3abd940bbae5",
+      "md5_digest": "3df3b2568b0d649b62943db6610bf6c9",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.10",
-      "size": 22923,
-      "upload_time": "2026-02-21T06:03:58",
-      "upload_time_iso_8601": "2026-02-21T06:03:58.629522Z",
-      "url": "https://files.pythonhosted.org/packages/c4/7c/b9f69ed7f832c1c1db7f9dda5b861c16b437a40da1996119613a0f3396d3/napari_mask_curator-0.1.0.tar.gz",
+      "size": 23797,
+      "upload_time": "2026-02-21T18:26:56",
+      "upload_time_iso_8601": "2026-02-21T18:26:56.189987Z",
+      "url": "https://files.pythonhosted.org/packages/25/d9/0a4ede0fffddf1a532fd9911ebc137a12c3316492ea28db32ad3d6f0b5bb/napari_mask_curator-0.1.1.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
