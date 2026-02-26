@@ -4,7 +4,7 @@
 This script creates a gh-pages directory with the same structure as public/
 but formatted for static file serving:
 - No .json file extensions (to match API routes)
-- conda.json -> conda-map (to avoid /conda conflicts with /conda/{plugin_name})
+- conda.json -> conda_map (to avoid /conda conflicts with /conda/{plugin_name})
 - Everything nested under an 'api' directory
 - Simple index.html at the root
 """
@@ -46,7 +46,7 @@ def prepare_gh_pages():
             dest_paths.append(gh_pages_dir / "classifiers.json")
         elif source_file == public_dir / "conda.json":
             dest_paths.append(gh_pages_dir / "conda.json")
-            dest_paths.append(api_dir / "conda-map")
+            dest_paths.append(api_dir / "conda_map")
         elif source_file == public_dir / "errors.json":
             dest_paths.append(gh_pages_dir / "errors.json")
         elif source_file == public_dir / "extended_summary.json":
@@ -121,7 +121,7 @@ def create_index_html(gh_pages_dir: Path, api_dir: Path):
                 endpoint for an individual plugin.
         </p>
         <p>
-            Conda index: <a href="api/conda-map">api/conda-map</a>
+            Conda index: <a href="api/conda_map">api/conda_map</a>
             (see conda info for each plugin at api/conda/pypi_name)
         </p>
         <p>Fetch errors: <a href="errors.json">errors.json</a></p>
