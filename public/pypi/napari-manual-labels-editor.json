@@ -18,7 +18,7 @@
       "Programming Language :: Python :: 3.13",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "# napari-manual-labels-editor\n\nManual fine-tuning toolkit for **napari Labels** (integer label masks).\nDesigned for \u201cafter segmentation\u201d workflows where you need to **inspect, fix, and export** large label images safely (e.g., TIFF/LZW/BigTIFF).\n\nTutorial video: https://www.youtube.com/watch?v=cQf_7ExGQHk&t=15s\n\n## What it does\n\nThis plugin operates on a **napari Labels layer** (background must be `0`) and provides a small, fast panel to:\n\n- **Pick Active Layer**: choose the current active Image/Labels layer; if it\u2019s an Image, it can be converted to Labels (integer).\n- **Compute Stats (safe)**: compute `maxID` and `cells` without heavy `np.unique` (safer for large arrays).\n- **New ID (max+1)**: set selected label to `maxID + 1` so you can paint a new object.\n- **Delete selected ID**: delete the currently selected label ID (set its pixels to `0`).\n- **Compact IDs Order (1..N)**: relabel present IDs to consecutive `1..N` (useful before export).\n- **Merge (Shift-click)**: when merge is enabled, **Shift-click A**, then **Shift-click B** to merge **B \u2192 A** (into A).\n- **Fill closed shape**: draw a closed outline, then fill the enclosed region for the selected label.\n- **Filter small labels (to new layer)**: remove tiny fragments by area threshold while keeping the original layer unchanged.\n- **Undo / Redo**: revert recent edits made through the plugin\u2019s actions.\n- **Blink**: quick visibility toggling for spot-checking edits.\n\nExport:\n\n- **Save labels to TIFF (LZW)** (BigTIFF enabled).\n  If you provide a directory as \u201cSave path\u201d, the plugin auto-appends a filename.\n\n## Compatibility\n\n- Python: 3.10\u20133.13 (tested on 3.11)\n- napari: 0.6.x\n- Layer type: **Labels** (integer), background `0`\n\n## Installation\n\n### From PyPI (recommended)\n\n```bash\npip install napari-manual-labels-editor\n```\n\nIf you don\u2019t have napari yet:\n\n```bash\npip install \"napari[all]\" napari-manual-labels-editor\n```\n\n### From GitHub (latest main)\n\n```bash\npip install -U \"git+https://github.com/yaohualee1215-bit/napari-manual-labels-editor.git\"\n```\n\n## Usage (inside napari)\n\n1. Launch napari and load your **Labels** layer (and optional background image).\n2. Open the plugin panel:\n\n   **Plugins \u2192 Manual Labels Editor \u2192 Manual Labels Editor**\n\n3. Click **Pick Active Layer (Image or Labels)**\n   Make sure the layer you want is the **active** layer in the layer list first.\n4. (Optional but recommended) Click **Compute Stats (safe)**\n   The status area will show `selected`, `cells`, `maxID`, and `merge` state.\n\n### Hotkeys\n\nThese are convenience hotkeys for faster manual editing.\n\n- `N` \u2014 **New ID (max+1)**\n- `F` \u2014 **Fill closed shape**\n- `Shift+F` \u2014 **Fill closed shape + Next ID**\n\nNotes:\n- Hotkeys are captured by the napari viewer. If a key seems unresponsive, **click once on the canvas** to give the viewer focus.\n- napari also has its own built-in tools/hotkeys (e.g., paint/fill modes); you can keep using those alongside this plugin.\n\n### Undo / Redo behavior\n\n- Undo/Redo reverts **recent pixel edits** made via the plugin\u2019s actions (e.g., fill closed, delete, merge, relabel/filter).\n- **Changing the selected label / \u201cNew ID\u201d alone does not change pixels**, so it is not treated as an edit step to undo.\n- Standard behavior: if you Undo and then make a new edit, the Redo history is cleared.\n\n### Export\n\n1. Set **Save path** (file path or directory)\n2. Click **Save labels to TIFF (LZW)**\n\nNotes:\n- TIFF writer uses `compression=\"lzw\"` and `bigtiff=True`.\n- If \u201cSave path\u201d is a directory, output becomes:\n  `<dir>/<layer_name>_edited_LZW.tif` (or your configured suffix).\n\n## Notes\n\n### Large LZW TIFF support\n\nIf LZW read/write fails or is slow, install `imagecodecs`:\n\n```bash\nconda install -c conda-forge imagecodecs\n```\n\n\n## License\n\nBSD-3-Clause\n",
+    "description": "# napari-manual-labels-editor\n\nManual fine-tuning toolkit for **napari Labels** (integer label masks).\nDesigned for \u201cafter segmentation\u201d workflows where you need to **inspect, fix, and export** large label images safely (e.g., TIFF/LZW/BigTIFF).\n\nTutorial video: https://www.youtube.com/watch?v=cQf_7ExGQHk&t=15s\n\n## What it does\n\nThis plugin operates on a **napari Labels layer** (background must be `0`) and provides a small, fast panel to:\n\n- **Pick Active Layer**: choose the current active Image/Labels layer; if it\u2019s an Image, it can be converted to Labels (integer).\n- **Compute Stats (safe)**: compute `maxID` and `cells` without heavy `np.unique` (safer for large arrays).\n- **New ID (max+1)**: set selected label to `maxID + 1` so you can paint a new object.\n- **Delete selected ID**: delete the currently selected label ID (set its pixels to `0`).\n- **Compact IDs Order (1..N)**: relabel present IDs to consecutive `1..N` (useful before export).\n- **Merge (Shift-click)**: when merge is enabled, **Shift-click A**, then **Shift-click B** to merge **B \u2192 A** (into A).\n- **Fill closed shape**: draw a closed outline, then fill the enclosed region for the selected label.\n- **Filter small labels (to new layer)**: remove tiny fragments by area threshold while keeping the original layer unchanged.\n- **Undo / Redo**: revert recent edits made through the plugin\u2019s actions (pixel edits only).\n- **Blink**: quick visibility toggling for spot-checking edits.\n- **Jump to label (J)**: jump to a specific label ID via a dialog (sets `selected_label`).\n\nExport:\n\n- **Save labels to TIFF** (LZW + BigTIFF enabled).\n  Use **Browse\u2026** to pick an output path, then click **Save**.\n\n## Compatibility\n\n- Python: 3.10\u20133.13 (tested on 3.11)\n- napari: 0.6.x\n- Layer type: **Labels** (integer), background `0`\n\n## Installation\n\n### From PyPI (recommended)\n\n```bash\npip install napari-manual-labels-editor\n```\n\nIf you don\u2019t have napari yet:\n\n```bash\npip install \"napari[all]\" napari-manual-labels-editor\n```\n\n### From GitHub (latest main)\n\n```bash\npip install -U \"git+https://github.com/yaohualee1215-bit/napari-manual-labels-editor.git\"\n```\n\n## Usage (inside napari)\n\n1. Launch napari and load your **Labels** layer (and optional background image).\n2. Open the plugin panel:\n\n   **Plugins \u2192 Manual Labels Editor \u2192 Manual Labels Editor**\n\n3. Click **Pick Active Layer (Image or Labels)**\n   Make sure the layer you want is the **active** layer in the layer list first.\n4. (Optional but recommended) Click **Compute Stats (safe)**\n   The status area will show `selected`, `cells`, `maxID`, and `merge` state.\n\n### Hotkeys\n\n- `N` \u2014 **New ID (max+1)**\n- `F` \u2014 **Fill closed shape**\n- `Shift+F` \u2014 **Fill closed shape + Next ID**\n- `J` \u2014 **Jump to label ID** (dialog)\n\nNotes:\n- Hotkeys are captured by the napari viewer. If a key seems unresponsive, click once on the canvas to give the viewer focus.\n- napari also has its own built-in tools/hotkeys (e.g., paint/fill modes); you can keep using those alongside this plugin.\n\n### UI behavior (narrow dock)\n\n- The dock panel can be resized narrower without hiding critical controls.\n- **Browse\u2026** and **Save** are protected from being shrunk to zero width.\n\n### Undo / Redo behavior\n\n- Undo/Redo reverts recent pixel edits made via the plugin\u2019s actions (e.g., fill closed, delete, merge, relabel/filter).\n- Changing the selected label / \u201cNew ID\u201d alone does not change pixels, so it is not treated as an edit step to undo.\n- Standard behavior: if you Undo and then make a new edit, the Redo history is cleared.\n\n### Export\n\n1. Click **Browse\u2026** to choose an output file path (TIFF).\n2. Click **Save**.\n\nNotes:\n- TIFF writer uses `compression=\"lzw\"` and `bigtiff=True`.\n\n## Notes\n\n### Large LZW TIFF support\n\nIf LZW read/write fails or is slow, install `imagecodecs`:\n\n```bash\nconda install -c conda-forge imagecodecs\n```\n\n## License\n\nBSD-3-Clause\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -47,7 +47,7 @@
     "provides_extra": [
       "all"
     ],
-    "release_url": "https://pypi.org/project/napari-manual-labels-editor/0.1.3/",
+    "release_url": "https://pypi.org/project/napari-manual-labels-editor/0.1.4/",
     "requires_dist": [
       "numpy",
       "magicgui",
@@ -57,11 +57,11 @@
     ],
     "requires_python": ">=3.10",
     "summary": "Manual fine-tuning toolkit for napari Labels: compute stats, assign new IDs, delete/merge labels, relabel to 1..N, and save LZW BigTIFF safely.",
-    "version": "0.1.3",
+    "version": "0.1.4",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 34661898,
+  "last_serial": 34699520,
   "ownership": {
     "organization": null,
     "roles": [
@@ -247,48 +247,92 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.1.4": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "00b504888977cf8f95467eeab27f7f6b6d69a80b73b911199bf25ab10ffe47dc",
+          "md5": "17c18ddc89b9df6fcba19ee5ee9754ef",
+          "sha256": "5d17f74ef1b377d07663586d042341ea89bf838703051d7483665ed1956c37f4"
+        },
+        "downloads": -1,
+        "filename": "napari_manual_labels_editor-0.1.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "17c18ddc89b9df6fcba19ee5ee9754ef",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 20302,
+        "upload_time": "2026-02-28T17:43:14",
+        "upload_time_iso_8601": "2026-02-28T17:43:14.467289Z",
+        "url": "https://files.pythonhosted.org/packages/00/b5/04888977cf8f95467eeab27f7f6b6d69a80b73b911199bf25ab10ffe47dc/napari_manual_labels_editor-0.1.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "af3c37531f116defddbdcf0f81c9865e4cb965f23e8e2988f152d0f87e4177e7",
+          "md5": "9016f992a5638a6c24f0c80fae8b80e3",
+          "sha256": "907d87af733e4c29ec873da7d8330d84798116daa180ddae7964a7fb0c1ce1da"
+        },
+        "downloads": -1,
+        "filename": "napari_manual_labels_editor-0.1.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "9016f992a5638a6c24f0c80fae8b80e3",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 28911,
+        "upload_time": "2026-02-28T17:43:15",
+        "upload_time_iso_8601": "2026-02-28T17:43:15.723979Z",
+        "url": "https://files.pythonhosted.org/packages/af/3c/37531f116defddbdcf0f81c9865e4cb965f23e8e2988f152d0f87e4177e7/napari_manual_labels_editor-0.1.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": null,
       "digests": {
-        "blake2b_256": "6788dd9e34ccc4a6509a6e29f1d2c46a5eebc2a1228abfbdfa5309b65532efcb",
-        "md5": "dca12395daff7dce662b0042809fc3f1",
-        "sha256": "c4e8f6e008700901b0f8231bfe95a4909f8e5a2b461ed41f89928586449dbec4"
+        "blake2b_256": "00b504888977cf8f95467eeab27f7f6b6d69a80b73b911199bf25ab10ffe47dc",
+        "md5": "17c18ddc89b9df6fcba19ee5ee9754ef",
+        "sha256": "5d17f74ef1b377d07663586d042341ea89bf838703051d7483665ed1956c37f4"
       },
       "downloads": -1,
-      "filename": "napari_manual_labels_editor-0.1.3-py3-none-any.whl",
+      "filename": "napari_manual_labels_editor-0.1.4-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "dca12395daff7dce662b0042809fc3f1",
+      "md5_digest": "17c18ddc89b9df6fcba19ee5ee9754ef",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.10",
-      "size": 17631,
-      "upload_time": "2026-02-27T06:41:48",
-      "upload_time_iso_8601": "2026-02-27T06:41:48.815756Z",
-      "url": "https://files.pythonhosted.org/packages/67/88/dd9e34ccc4a6509a6e29f1d2c46a5eebc2a1228abfbdfa5309b65532efcb/napari_manual_labels_editor-0.1.3-py3-none-any.whl",
+      "size": 20302,
+      "upload_time": "2026-02-28T17:43:14",
+      "upload_time_iso_8601": "2026-02-28T17:43:14.467289Z",
+      "url": "https://files.pythonhosted.org/packages/00/b5/04888977cf8f95467eeab27f7f6b6d69a80b73b911199bf25ab10ffe47dc/napari_manual_labels_editor-0.1.4-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": null,
       "digests": {
-        "blake2b_256": "1a4d0fade1809cac5c0fc379b54c4c8b26ce57470c96c8ea1296540c7b747373",
-        "md5": "ff27998b7567c1b6b439ee461986edea",
-        "sha256": "8dc3dfcb128f40cba717beba991679eeb184ef1d05b663ef18f46a09af53e436"
+        "blake2b_256": "af3c37531f116defddbdcf0f81c9865e4cb965f23e8e2988f152d0f87e4177e7",
+        "md5": "9016f992a5638a6c24f0c80fae8b80e3",
+        "sha256": "907d87af733e4c29ec873da7d8330d84798116daa180ddae7964a7fb0c1ce1da"
       },
       "downloads": -1,
-      "filename": "napari_manual_labels_editor-0.1.3.tar.gz",
+      "filename": "napari_manual_labels_editor-0.1.4.tar.gz",
       "has_sig": false,
-      "md5_digest": "ff27998b7567c1b6b439ee461986edea",
+      "md5_digest": "9016f992a5638a6c24f0c80fae8b80e3",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.10",
-      "size": 26205,
-      "upload_time": "2026-02-27T06:41:49",
-      "upload_time_iso_8601": "2026-02-27T06:41:49.753078Z",
-      "url": "https://files.pythonhosted.org/packages/1a/4d/0fade1809cac5c0fc379b54c4c8b26ce57470c96c8ea1296540c7b747373/napari_manual_labels_editor-0.1.3.tar.gz",
+      "size": 28911,
+      "upload_time": "2026-02-28T17:43:15",
+      "upload_time_iso_8601": "2026-02-28T17:43:15.723979Z",
+      "url": "https://files.pythonhosted.org/packages/af/3c/37531f116defddbdcf0f81c9865e4cb965f23e8e2988f152d0f87e4177e7/napari_manual_labels_editor-0.1.4.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
