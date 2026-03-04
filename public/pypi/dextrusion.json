@@ -1,0 +1,566 @@
+{
+  "info": {
+    "author": "Ga\u00eblle Letort, Alexis Villars",
+    "author_email": null,
+    "bugtrack_url": null,
+    "classifiers": [
+      "Framework :: napari",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# DeXtrusion <img src=https://github.com/Image-Analysis-Hub/Dextrusion/blob/main/images/DeX.png caption=\"DeXtrusion logo\"/> \n\n<img src=https://github.com/Image-Analysis-Hub/Dextrusion/blob/main/images/dextrusion_maps.png caption=\"DeXtrusion maps\" width=150 align=\"left\"/> \n</br></br></br>\n<p align=\"center\"><b>Automatic detection of cellular events in epithelia.</b></p>\n</br>\n\nDeXtrusion is  a machine learning based python pipeline to detect cell extrusions in epithelial tissues movies. It can also detect cell divisions and SOPs, and can easily be trained to detect other dynamic events. \n\nThis repository contains the code source of the python DeXtrusion library, the trained neural networks (ready to use) with Jupyter notebooks to run, train or retrain DeXtrusion networks, and Fiji macros for visualization/analysis of the results.\n\n* [Presentation](#presentation)\n* [Installation](#installation)\n* [Usage](#usage)\n    * [Troubleshooting](#trouble-shooting)\n* [Data](#data)\n* [DeXtrusion networks](#dexnets-dextrusion-neural-networks)\n* [Fiji macros](#fiji-macros)\n* [Jupyter notebooks](#jupyter-notebooks)\n* [References](#references)\n\n## Presentation\nDeXtrusion takes as input a movie of an epithelium and outputs the **spatio-temporal location of cell extrusion events** or other event as cell divisions. \nThe movie is discretized into small overlapping rolling windows which are individually [classified for event detection](#event-classification) by a trained [neural network](#deXNets-deXtrusion-neural-networks). Results are then put together in event [probability map](#event-probability-map) for the whole movie or as [spatio-temporal points](#event-spot-localization) indicating each event. \n\n<p align=\"center\"> \n    <img src=\"https://github.com/Image-Analysis-Hub/DeXtrusion/blob/main/images/SequenceExtrusion.png\" height=\"100\"/>\nExample of the detection of an extrusion event (probability map, red).\n </p>\n\n\n### Event classification\nThe movie is discretized into small windows that span all the movie in a rolling windows fashion with overlap between the different windows. \nEach window is classified by a trained neural network as containing or not a cellular event as cell extrusion. The different classes available in the main DeXtrusion network are:\n- No event\n- Cell extrusion/cell death\n- Cell division\n- SOPs\n\nIt is easy to add or remove a cellular event to this list, but necessitates to train new neural networks for this. Jupyter notebook is available in this repository to do it.\n\n### Event probability map\nEach window is associated an event probability which allow to generate an events probability map on the whole movie. This probability maps can be refined to precise spatio-temporal spots for each event.\nThe results can be visualized by overlaying the initial movie and all the probability maps saved by DeXtrusion in Fiji with the saved by DeXtrusion with the [`deXtrusion_overlayProbabilityMaps.ijm`](https://github.com/Image-Analysis-Hub/DeXtrusion/raw/main/ijmacros/deXtrusion_overlayProbabilityMaps.ijm) macro.\n\n<p align=\"center\">\n   <img src=\"https://github.com/Image-Analysis-Hub/DeXtrusion/blob/main/images/SequenceProbamaps.png\" height=\"200\"/>\n   \n   Probability maps example\n</p>\n\nExample of probability maps (green: division, red: extrusion, blue: SOP\n\n### Event spot localization\nAn event is visible in the probability map as a volume of connected pixels of high probability. To convert the probability map to a list of event, we place the event localization at the center of each of these high probability volumes.\nMoreover, to reduce false positive detections, the volumes can be thresholded to keep only big enough volume of high enough probability values. \nThe list of spots obtained in this way are saved in ROIS `.zip` file that can be open in Fiji through the `ROIManager` tool. The macro [`deXtrusion_showROIs.ijm`](#https://github.com/Image-Analysis-Hub/DeXtrusion/raw/main/ijmacros/deXtrusion_showROIs.ijm) allows to directly visualize with Fiji the results saved by DeXtrusion. \n\n\n## Installation\nDeXtrusion is distributed as a python module, compatible with `python3`. \nYou can install it in a virtual environment to be sure to have the required versions.\n**DeXtrusion** can be installed either manually through the setup file or with pip:\n\n* DeXtrusion can be directly installed via pip. In your python virtual environment, enter: `pip install dextrusion` to install it.\nYou should also download the trained neural network [DeXNet](#dexnets-dextrusion-neural-networks) that you want to use from this repository.\n\n* To install manually **DeXtrusion**, clone this github repository, and inside this repository type: `python setup.py install`. \nIf you want to install it in a virtual environment, you should have activated it before.\nIt will install all the necessary dependencies.\n\n\n### Detailled installation on Linux (Ubuntu)\nHere's a step by step command lines to run in a Terminal to install DeXtrusion on Linux from scratch. It is creating a new virtual environment on which DeXtrusion will be installed (not necessary but recommended). Tested with `python 3.8`.\n\n* Installation with `pip`\n```sh\npython3 -m venv dextrusenv               ## create a virtual environment with python 3 called dextrusenv (you can choose the name)\nsource dextrusenv/bin/activate           ## activate the virtual environment: now python commands will be runned in that environment\npip install dextrusion                  ## install DeXtrusion, download all the necessary dependencies, can take time\n```\nDeXtrusion is installed and can be runned with:\n\n```sh\npython -m dextrusion \t                  ## run DeXtrusion. Next time to run it again with the same networks, you only have to do this line\n```\n\nDeXtrusion needs neural networks to classify each sliding window. To used our trained neural networks (in the DeXNets repository), you have to download and uncompress it. From the command line:\n\n```sh\nmkdir DeXNets\t\t\t\t\t\t\t## create directory on which neural networks will be put\nmkdir DeXNets/notum_ExtSOPDiv\t\t\t## create directory for the neural networks traind with 4 events available in this repository\ncd DeXNets/notum_ExtSOPDiv               ## go inside the desired neural networks directory (here the network trained with 4 events)\nwget https://github.com/Image-Analysis-Hub/DeXtrusion/-/blob/main/DeXNets/notum_ExtSOPDiv/notumExtSOPDiv0.zip   ## download the first neural network\nwget https://github.com/Image-Analysis-Hub/DeXtrusion/-/blob/main/DeXNets/notum_ExtSOPDiv/notumExtSOPDiv1.zip   ## download the second neural network\nunzip notumExtSOPDiv0.zip                ## uncompress it. It is now ready to be used\nunzip notumExtSOPDiv1.zip\ncd ../..                                 ## go back to main DeXtrusion directory\n```\n \n* You can also clone this repository and install DeXtrusion from the source code `python setup.py install` instead of using pip installation.\n\n\n### Detailled installation on Windows\nYou need to have anaconda installed to run python and create a new virtual environment. On the command prompt, write:\n```cmd\n$ C:\\ProgramData\\Anaconda3\\Scripts\\Activate     ## activate conda (should be the path of your anaconda installation)\n$ conda create --name dextrusionenv python=3.8  ## to create virtual environment called dextrusionenv\n$ conda activate dextrusionenv                  ## activate the virtual environment that you juste created\n$ pip install dextrusion                        ## install DeXtrusion in it\n$ python -m dextrusion                          ## Run it\n```\n\n### Choose the neural network DeXNets to use\nDeXtrusion needs neural networks to classify each sliding window. To used our trained neural networks (in the [DeXNets repository](./DeXNets)), you have to download and uncompress it. \nFrom DeXtrusion user interface, to select a network to run, you have to go inside its uncompressed directory (click on `Browse` and go there). If you want to use several networks together for the detection for better results (see our paper), the networks folders should be placed within the same directory. Go inside that directy with the interface, and it will use all the networks presents in that directory.\n\n## Usage\n\nDeXtrusion can be used directly within python. \nTo run an already trained network and detect cell events, run `python3 -m dextrusion` in your virtual environment. It will open a graphical interface to perform the detection.\n\nWe also propose [Jupyter notebooks](https://github.com/Image-Analysis-Hub/DeXtrusion/raw/main/jupyter_notebooks) in this repository, to use dextrusion options. \nYou can find a notebook to perform the detection, train a new neural network, retrain a network or evaluate the performance of the network compared to a manual detection.\n\n### Trouble shooting\n\nEncountered errors/issues and solutions:\n\n#### Internal error copying input tensor\n\nIf you get this error message, finishing by `InternalError: Failed copying input tensor from ...\u00a0` it is likely to be an `Out of Memory` problem if you are trying to run DeXtrusion with too many windows running in parallel (at once). To change this, decrease the `groupsize` parameter which controls this number.\n\n\n<details>\n<summary>\nSee full error message\n</summary>\n\n```\n---------------------------------------------------------------------------\nInternalError                             Traceback (most recent call last)\nCell In[7], line 14\n     11     print( \"Detecting events on movie \"+str(image) )\n     13 ## Detect events\n---> 14 dexter.detect_events_onmovie( image, models\\=model, \n     15 cell_diameter\\=cell_diameter, extrusion_duration\\=extrusion_duration, \n     16 dxy\\=shift_xy, dz\\=shift_t, \n     17 group_size\\=groupsize )\n     19 ## Save probability maps to file, to visualize the results\n     20 if save_proba:\n\nFile ~\\\\AppData\\\\Local\\\\miniforge3\\\\envs\\\\dextrusion_env\\\\lib\\\\site-packages\\\\dextrusion\\\\DeXtrusion.py:375, in DeXtrusion.detect_events_onmovie(self, moviepath, models, cell_diameter, extrusion_duration, dxy, dz, group_size, outfolder)\n    373     os.makedirs(self.outpath)\n    374 self.outname \\= os.path.join(self.outpath, output_name)\n--> 375 self.detect_events(img, models, cell_diameter, extrusion_duration, dxy, dz, group_size\\=group_size)\n    377 if self.verbose:\n    378     print(\"---- Detection finished, took %s minutes ---\" % ((time.time() - start_time)/60))\n\nFile ~\\\\AppData\\\\Local\\\\miniforge3\\\\envs\\\\dextrusion_env\\\\lib\\\\site-packages\\\\dextrusion\\\\DeXtrusion.py:434, in DeXtrusion.detect_events(self, img, model_paths, cell_diameter, extrusion_duration, dxy, dz, group_size)\n    432         print(\"   Doing windows with shift: \"+str(self.shiftxy)+\" \"+str(self.shiftz)+\" and model \"+model_paths[cmod])\n    433         print(\"   Number of windows to categorize: \"+str(self.nw[4]))\n--> 434     do \\= list(map(functools.partial(self.do_one_group, img, pred_channels, npred), range(0,self.nw[4],self.group_size) ))\n    436 ## divide result map by the number of predictions added in each pixel\n    437 self.divide(pred_channels, npred)\n\nFile ~\\\\AppData\\\\Local\\\\miniforge3\\\\envs\\\\dextrusion_env\\\\lib\\\\site-packages\\\\dextrusion\\\\DeXtrusion.py:302, in DeXtrusion.do_one_group(self, img, pred_channels, npred, group)\n    300 img_group \\= np.array(img_group)/255 # normalize\n    301 self.model.reset(self.model_path)\n--> 302 pred \\= self.model.predict_batch(img_group)\n    304 # Fill the proba results in the correct place on the pred_channels image\n    305 for c in range(self.ncat-1):\n\nFile ~\\\\AppData\\\\Local\\\\miniforge3\\\\envs\\\\dextrusion_env\\\\lib\\\\site-packages\\\\dextrusion\\\\Network.py:182, in Network.predict_batch(self, img_batch)\n    181 def predict_batch(self, img_batch):\n--> 182     return self.model.predict(img_batch)\n\nFile ~\\\\AppData\\\\Local\\\\miniforge3\\\\envs\\\\dextrusion_env\\\\lib\\\\site-packages\\\\keras\\\\utils\\\\traceback_utils.py:67, in filter_traceback.<locals>.error_handler(*args, **kwargs)\n     65 except Exception as e:  # pylint: disable=broad-except\n     66   filtered_tb \\= _process_traceback_frames(e.__traceback__)\n---> 67   raise e.with_traceback(filtered_tb) from None\n     68 finally:\n     69   del filtered_tb\n\nFile ~\\\\AppData\\\\Local\\\\miniforge3\\\\envs\\\\dextrusion_env\\\\lib\\\\site-packages\\\\tensorflow\\\\python\\\\framework\\\\constant_op.py:102, in convert_to_eager_tensor(value, ctx, dtype)\n    100     dtype \\= dtypes.as_dtype(dtype).as_datatype_enum\n    101 ctx.ensure_initialized()\n--> 102 return ops.EagerTensor(value, ctx.device_name, dtype)\n\nInternalError: Failed copying input tensor from /job:localhost/replica:0/task:0/device:CPU:0 to /job:localhost/replica:0/task:0/device:GPU:0 in order to run _EagerConst: Dst tensor is not initialized. \n```\n\n</details>\n\n\n#### \n\n\n## Data\n\nData used for the training of our neural networks (raw movies with manual anotation of events) are freely available on Zenodo: [https://doi.org/10.5281/zenodo.7586394](https://zenodo.org/records/7586394). \n\nIn the Zenodo repository, you have movies and the corresponding manually annotated ROI files. The ROIs will have the same name as the movie, followed, by \"_cell_*event*.zip\", where `event` is the corresponding event that were annotated (death/extrusion, division, sop).\n\nThe description of all these movies (microscope used, biological marker, resolution...) are given in the [Supplemental Table S1](https://cob.silverchair-cdn.com/cob/content_public/journal/dev/150/13/10.1242_dev.201747/1/dev201747supp.pdf?Expires=1742676929&Signature=LcovagyqTBBmVv-YTgKCBOhFvT2-oJ1CFMn4GZQm4gZjjP2V5eeI9qCn~DIg6XRzLAoSd1h7q2BLcX8AelIhF3WogXQIMNRJMKBQxXzQmHSS0yDEvRu2aA9CAPRbk1L5P9k8vlPBQ389TraYMSor~2vSGf5sC4cRcZg5sKvCPLaCZpJiZYTZvnx9OYauV0cIFod1N3UZf48nJEXCeCaNx70709OwwIWVPvvjA~ZyutlET4f~ZpZq3vWDcCZsu7aYfDdTjpDAYTiyNf~qodN3N5zBKLmr~8nHY6xgUtQvpLiOyRVWjxOoMjs3M3sYWMP2h-txXug0VWw606cNJX7YAA__&Key-Pair-Id=APKAIE5G5CRDK6RD3PGA) of our publication. The number in the `Movie` column in the table corresponds to the number in the name of the movie in the Zenodo.\n\n\n## DeXNets: deXtrusion neural networks\nDeXtrusion was trained on E-cadherin tagged drosophilia notum but can be easily adapted to other markers/biological conditions. Retraining of DeXtrusion network may be necessary when images are quite different.\n\nIn the `deXNets` folder of this repository, we proposed several trained networks:\n- `notum_Ext`: trained on drosophilia notum movies with only extrusion events\n- `notum_ExtSOP`: trained on drosophilia notum movies with extrusion and SOP events\n- `notum_ExtSOPDiv`: trained on drosophilia notum movies with extrusion, division and SOP events\n- `notum_all`: trained on drosophilia notum movies with extrusion, division and SOP events, on all our annotated data (training and test). Networks to use by default.\n\nDownload them and unzip to be ready to use in DeXtrusion.\n\n### Train/retrain a new DeXNet\nIf you want to train/retrain a neural network, to add a new event to detect or to improve its performance on new datasets, Jupyter notebooks are proposed in this repository: [Jupyter notebooks](https://github.com/Image-Analysis-Hub/DeXtrusion/raw/main/jupyter_notebooks). You can just follow step by step the notebook.\n\nIf you want to change the architecture of DeXNet, you will have to change it in the `src/dextrusion/Network.py` file. The architecture is defined in the `action_model` function.\n\n\n## Fiji macros\n\nFiji macros to prepare data for DeXtrusion neural network training or to handle DeXtrusion results are available in the [`Fiji macros`](https://github.com/Image-Analysis-Hub/DeXtrusion/raw/main/ijmacros/) folder of this repository.\n\n* [deXtrusion_checkAndClearROIs.ijm](https://github.com/Image-Analysis-Hub/DeXtrusion/raw/main/ijmacros/deXtrusion_checkAndClearROIs.ijm) allows to check manually all the detected ROIs and to keep only the correct ones. \nIt shows each event (point ROI) detected by deXtrusion as a pop-up window centered temporally and spatially around the event.\nThe user is asked wether the detection is correct (if there is an event in the current window) by pressing `y` or `n`.\nIf yes, the ROI is kept, else it will be removed from the list of ROIs.\n\n\n* [deXtrusion_scoreROIs_Random.ijm](https://github.com/Image-Analysis-Hub/DeXtrusion/raw/main/ijmacros/deXtrusion_scoreROIs_Random.ijm) allows to score manually the precision of the detected events.\nThe macro will open randomly a given number of ROIs, and show a window centered temporally and spatially around the event.\nThe user is asked wether the detection is correct (if it contains the event) by pressing `y` or `n`.\nThe macro will output the count of correct and false detections and the precision. \nThe ROIs file will not be edited and the ROIs left after running this macro should not be saved as it deletes all the ROIs explored to be sure not to draw them twice.\n\n* [deXtrusion_overlayProbabilityMaps.ijm](https://github.com/Image-Analysis-Hub/DeXtrusion/raw/main/ijmacros/deXtrusion_overlayProbabilityMaps.ijm) allows to visualize the probability maps together with the original image.\nThe user is asked for the original image to visualize and will open the probability maps in the `results` folder where they should be saved by default.\nThe directory to look in can be changed in the macro. \n\n* [deXtrusion_showROIs.ijm](https://github.com/Image-Analysis-Hub/DeXtrusion/raw/main/ijmacros/deXtrusion_showROIs.ijm) displays the original movie (chosen by the user) and the ROI file found in the `results` folder. \nThe location of the ROI file can be changed in the macro by changing the `resfold` parameter and the event to show (by default extrusion) can be changed in the `type` parameter.\n\n* [deXtrusion_subsetMovieAndRois.ijm](https://github.com/Image-Analysis-Hub/DeXtrusion/raw/main/ijmacros/deXtrusion_subsetMovieAndRois.ijm) save a temporal subset of a movie, and keep only the corresponding ROIs. \n\n\n## Jupyter notebooks\nWe provide in this repository several jupyter notebooks to run, train/retrain, evaluate DeXtrusion. \n* [detectEventsOnMovie.ipynb](https://github.com/Image-Analysis-Hub/DeXtrusion/raw/main/jupyter_notebooks/detectEventsOnMovie.ipynb) allows you to run DeXtrusion with the graphical interaface to choose the parameters. \n* [deXtrusion_TrainNetwork.ipynb](https://github.com/Image-Analysis-Hub/DeXtrusion/raw/main/jupyter_notebooks/deXtrusion_TrainNetwork.ipynb) to train a new DeXNet network with your own data (or using our data publicly available, see [data section](#Data)).\n* [deXtrusion_RetrainNetwork.ipynb](https://github.com/Image-Analysis-Hub/DeXtrusion/raw/main/jupyter_notebooks/deXtrusion_RetrainNetwork.ipynb) to retrain an already trained neural network with new data.\n* [deXtrusion_CompareRois.ipynb](https://github.com/Image-Analysis-Hub/DeXtrusion/raw/main/jupyter_notebooks/deXtrusion_CompareRois.ipynb) to compare two ROIs files (manual detection vs DeXtrusion detection) and gives the score. It can also generate ROIs files of the false detection (false positives and/or false negatives).\n* [deXtrusion_testClassification_OnWindows.ipynb](https://github.com/Image-Analysis-Hub/DeXtrusion/raw/main/jupyter_notebooks/deXtrusion_testClassification_OnWindows.ipynb): run the trained neural network (DeXNet) on test data on generated windows, and print the resulting confusion matrix of the classification (DeXtrusion classification compared to the manual classification).\n\n#### Notebooks usage\n* If you have Jupyter installed on your computer, to add your virtual environment to the environment Jupyter can see:\n```\nipython kernel install --user --name=dextrusionenv\n```\nYou can refer to this [tutorial](https://www.geeksforgeeks.org/using-jupyter-notebook-in-virtual-environment/) for instructions on creating virtual environment and using it with jupyter.\n\n* You can also install Jupyter Lab or Jupyter notebook in your virtual environment if you don't have it installed in your computer:\n```sh\npip install jupyterlab\njupyter-lab\n```\nRefer to [Jupyter](https://jupyter.org/) webpage for more information.\n\n## References\nTo know more about DeXtrusion, refer to our paper: [Villars, Letort et al. *Development* 2023](https://journals.biologists.com/dev/article/150/13/dev201747/321184/DeXtrusion-automatic-recognition-of-epithelial).\n\n## License\nDeXtrusion is distributed open-source under the BSD-3 license, see the license file in this repository.\n\nWhen you use DeXtrusion source code, neural networks or data for your projects, please cite our paper. \n\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": null,
+    "home_page": null,
+    "keywords": null,
+    "license": "BSD 3-Clause License\n        \n        Copyright (c) 2022, Ga\u00eblle  LETORT and Alexis Villars\n        All rights reserved.\n        \n        Redistribution and use in source and binary forms, with or without\n        modification, are permitted provided that the following conditions are met:\n        \n        1. Redistributions of source code must retain the above copyright notice, this\n           list of conditions and the following disclaimer.\n        \n        2. Redistributions in binary form must reproduce the above copyright notice,\n           this list of conditions and the following disclaimer in the documentation\n           and/or other materials provided with the distribution.\n        \n        3. Neither the name of the copyright holder nor the names of its\n           contributors may be used to endorse or promote products derived from\n           this software without specific prior written permission.\n        \n        THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\"\n        AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\n        IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\n        DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE\n        FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\n        DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR\n        SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER\n        CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,\n        OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\n        OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n        ",
+    "license_expression": null,
+    "license_files": null,
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "dextrusion",
+    "package_url": "https://pypi.org/project/dextrusion/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/dextrusion/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/Image-Analysis-Hub/dextrusion/issues",
+      "Documentation": "https://image-analysis-hub.github.io/dextrusion/",
+      "Source Code": "https://github.com/Image-Analysis-Hub/dextrusion",
+      "User Support": "https://github.com/Image-Analysis-Hub/dextrusion/issues"
+    },
+    "provides_extra": null,
+    "release_url": "https://pypi.org/project/dextrusion/0.0.11/",
+    "requires_dist": [
+      "matplotlib",
+      "numpy<2",
+      "opencv-python",
+      "tifffile>=2022.2.2",
+      "roifile",
+      "scikit-image",
+      "scikit-learn",
+      "scipy",
+      "ipython",
+      "tensorflow>=2.13; sys_platform == \"darwin\" and platform_machine == \"arm64\"",
+      "protobuf; sys_platform == \"darwin\" and platform_machine == \"arm64\"",
+      "tensorflow<=2.11; sys_platform == \"darwin\" and platform_machine == \"x86_64\"",
+      "protobuf; sys_platform == \"darwin\" or platform_machine == \"x86_64\"",
+      "tensorflow<=2.11; sys_platform == \"linux\" or sys_platform == \"win32\"",
+      "protobuf<=3.19; sys_platform == \"linux\" or sys_platform == \"win32\""
+    ],
+    "requires_python": ">3.8",
+    "summary": "DeXtrusion: automatic detection of cell extrusion in epithelial tissu",
+    "version": "0.0.11",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 34820396,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "gletort"
+      }
+    ]
+  },
+  "releases": {
+    "0.0.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "bc7cefc71ea232ec6bde2b515f4baf34833777c44d76e3e5e8fda1de6b7b725d",
+          "md5": "34a0801b6860c995db46f6ad01a988e5",
+          "sha256": "6a460599d8383dfe6f2349c224584498ac69d3cc16611b2c90ccb6752efb76e9"
+        },
+        "downloads": -1,
+        "filename": "dextrusion-0.0.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "34a0801b6860c995db46f6ad01a988e5",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": null,
+        "size": 26798,
+        "upload_time": "2022-12-14T08:54:12",
+        "upload_time_iso_8601": "2022-12-14T08:54:12.134904Z",
+        "url": "https://files.pythonhosted.org/packages/bc/7c/efc71ea232ec6bde2b515f4baf34833777c44d76e3e5e8fda1de6b7b725d/dextrusion-0.0.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "7788a38fc05ceb66052a90de4a20a36dae19e4d22204795e469fd6d369449f84",
+          "md5": "39f26e2b8d1d4adb691aa6f4036b8d1d",
+          "sha256": "7c191c5578adb9373a4b0948bcdf58d71722a76b0a50bb06bb6dc73f28f9065a"
+        },
+        "downloads": -1,
+        "filename": "dextrusion-0.0.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "39f26e2b8d1d4adb691aa6f4036b8d1d",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": null,
+        "size": 24952,
+        "upload_time": "2022-12-14T08:54:14",
+        "upload_time_iso_8601": "2022-12-14T08:54:14.033634Z",
+        "url": "https://files.pythonhosted.org/packages/77/88/a38fc05ceb66052a90de4a20a36dae19e4d22204795e469fd6d369449f84/dextrusion-0.0.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.10": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "9f40f4da57a84ed1ea4b98c3100e8c39641cd2f7a0c49be3ad6e27261fec7706",
+          "md5": "1177a79088e38d84878b445274d93d86",
+          "sha256": "7e13c19752158070dfce453f6445d103edf667697488c699a064a811b754ae39"
+        },
+        "downloads": -1,
+        "filename": "dextrusion-0.0.10-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "1177a79088e38d84878b445274d93d86",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">3.8",
+        "size": 34885,
+        "upload_time": "2026-03-04T15:30:04",
+        "upload_time_iso_8601": "2026-03-04T15:30:04.574209Z",
+        "url": "https://files.pythonhosted.org/packages/9f/40/f4da57a84ed1ea4b98c3100e8c39641cd2f7a0c49be3ad6e27261fec7706/dextrusion-0.0.10-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "4beec5c046391b5a6f8c51516ad3e9a2e3e9d717b7f490815c9d9fe9f9d0eb20",
+          "md5": "3283ac37164e606ac86537a385ffb05d",
+          "sha256": "06ea73235e48710de4f4d05f51f680bee765ae716f7031cca9b71160084e4a28"
+        },
+        "downloads": -1,
+        "filename": "dextrusion-0.0.10.tar.gz",
+        "has_sig": false,
+        "md5_digest": "3283ac37164e606ac86537a385ffb05d",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">3.8",
+        "size": 12265484,
+        "upload_time": "2026-03-04T15:30:06",
+        "upload_time_iso_8601": "2026-03-04T15:30:06.982488Z",
+        "url": "https://files.pythonhosted.org/packages/4b/ee/c5c046391b5a6f8c51516ad3e9a2e3e9d717b7f490815c9d9fe9f9d0eb20/dextrusion-0.0.10.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.11": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "fa12d7d92e99cf331f89e27bb10dcaea8b1f0020da8c530a1323ec6d9364162b",
+          "md5": "fc69854711cd5ba582a9b62349bc753f",
+          "sha256": "d29167a05ea635f2e4d21c4f4a87abfa9bf742d3ed5a2006899e7b2f195606d5"
+        },
+        "downloads": -1,
+        "filename": "dextrusion-0.0.11-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "fc69854711cd5ba582a9b62349bc753f",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">3.8",
+        "size": 34880,
+        "upload_time": "2026-03-04T15:47:43",
+        "upload_time_iso_8601": "2026-03-04T15:47:43.615721Z",
+        "url": "https://files.pythonhosted.org/packages/fa/12/d7d92e99cf331f89e27bb10dcaea8b1f0020da8c530a1323ec6d9364162b/dextrusion-0.0.11-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "5c32346acd89eedb0d3a69e942343ef61db29588c4eee7a7ac7eb5f4f029bc57",
+          "md5": "c0f0e5a12ba91c410f71f4d79ae2fd4f",
+          "sha256": "32ebb6e41b989bf6bd3f27f71f05d0a3b24e37db9ea78df9f6700f28fd4e8917"
+        },
+        "downloads": -1,
+        "filename": "dextrusion-0.0.11.tar.gz",
+        "has_sig": false,
+        "md5_digest": "c0f0e5a12ba91c410f71f4d79ae2fd4f",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">3.8",
+        "size": 12266446,
+        "upload_time": "2026-03-04T15:47:45",
+        "upload_time_iso_8601": "2026-03-04T15:47:45.809083Z",
+        "url": "https://files.pythonhosted.org/packages/5c/32/346acd89eedb0d3a69e942343ef61db29588c4eee7a7ac7eb5f4f029bc57/dextrusion-0.0.11.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "36a6e8448a8fef510e6d735461cbf82243979a51dcadb5a4deb6f7630d7ba5d9",
+          "md5": "3f6aa1463e8ed4c345d500b5b9253ad9",
+          "sha256": "d7b613f0cf10ef1993248d3f5f43202fd5678e20abeba139be482e99581fd2e9"
+        },
+        "downloads": -1,
+        "filename": "dextrusion-0.0.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "3f6aa1463e8ed4c345d500b5b9253ad9",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": null,
+        "size": 26804,
+        "upload_time": "2022-12-14T12:30:08",
+        "upload_time_iso_8601": "2022-12-14T12:30:08.431894Z",
+        "url": "https://files.pythonhosted.org/packages/36/a6/e8448a8fef510e6d735461cbf82243979a51dcadb5a4deb6f7630d7ba5d9/dextrusion-0.0.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "50c1d69c26fbb8378396797e93b66676a7beda8aecce4055d152485b4c9de0a6",
+          "md5": "4fcb63781caedee6b00d2a58a17985af",
+          "sha256": "aa9364d4bcfd4aacadf5840b60900c1d637f81a2f37494af362fc3ce09ef9a43"
+        },
+        "downloads": -1,
+        "filename": "dextrusion-0.0.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "4fcb63781caedee6b00d2a58a17985af",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": null,
+        "size": 25842,
+        "upload_time": "2022-12-14T12:30:09",
+        "upload_time_iso_8601": "2022-12-14T12:30:09.779171Z",
+        "url": "https://files.pythonhosted.org/packages/50/c1/d69c26fbb8378396797e93b66676a7beda8aecce4055d152485b4c9de0a6/dextrusion-0.0.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.3": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "8e4f5bb9dfd4ca93f500185998031626d3468be12b83ff8acbbed141f52bd32a",
+          "md5": "f5eda0ead11266c781b4c94714de1271",
+          "sha256": "126a203fdaaf44334d6d27ab130f410be5bfc9d85d58091cf80732423adfdff3"
+        },
+        "downloads": -1,
+        "filename": "dextrusion-0.0.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "f5eda0ead11266c781b4c94714de1271",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": null,
+        "size": 31784,
+        "upload_time": "2023-02-01T13:36:16",
+        "upload_time_iso_8601": "2023-02-01T13:36:16.644536Z",
+        "url": "https://files.pythonhosted.org/packages/8e/4f/5bb9dfd4ca93f500185998031626d3468be12b83ff8acbbed141f52bd32a/dextrusion-0.0.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.4": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "687acad905b7134b44a5c00376e39f8c7a748d139fe106c95c27d793278832b0",
+          "md5": "a6ba704d732c368d8b7bf4ed0bff4ea5",
+          "sha256": "dd6927ede6fec85774b49e771fbb226cfe146f651ea115ec55e5f678b2c273c3"
+        },
+        "downloads": -1,
+        "filename": "dextrusion-0.0.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "a6ba704d732c368d8b7bf4ed0bff4ea5",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": null,
+        "size": 31770,
+        "upload_time": "2023-02-01T13:44:55",
+        "upload_time_iso_8601": "2023-02-01T13:44:55.599289Z",
+        "url": "https://files.pythonhosted.org/packages/68/7a/cad905b7134b44a5c00376e39f8c7a748d139fe106c95c27d793278832b0/dextrusion-0.0.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.5": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "6d4219be26ca39501526b51e6d9dbe190b7221b91f70faa3fb60861c045b23d2",
+          "md5": "4ffcb9c171fb7e2a37c665ab117fb1ed",
+          "sha256": "8862d863117f1b8381033ef7dfbfa548a584a6edc3fc957805d35e9bfd621a44"
+        },
+        "downloads": -1,
+        "filename": "dextrusion-0.0.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "4ffcb9c171fb7e2a37c665ab117fb1ed",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": null,
+        "size": 31409,
+        "upload_time": "2023-02-09T10:04:02",
+        "upload_time_iso_8601": "2023-02-09T10:04:02.492845Z",
+        "url": "https://files.pythonhosted.org/packages/6d/42/19be26ca39501526b51e6d9dbe190b7221b91f70faa3fb60861c045b23d2/dextrusion-0.0.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "885f5cb90b41470f131f91bd783ef29ffe36a271e8fb78d36f70bf92e92e25cc",
+          "md5": "32535105215fbc4f66cfa868186b7489",
+          "sha256": "dcf97579d2827ab9ccc087fd8d96a3852e7fcf209f6fa4bacbdf0a9e7f3df7b7"
+        },
+        "downloads": -1,
+        "filename": "dextrusion-0.0.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "32535105215fbc4f66cfa868186b7489",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": null,
+        "size": 31898,
+        "upload_time": "2023-02-09T10:04:04",
+        "upload_time_iso_8601": "2023-02-09T10:04:04.548588Z",
+        "url": "https://files.pythonhosted.org/packages/88/5f/5cb90b41470f131f91bd783ef29ffe36a271e8fb78d36f70bf92e92e25cc/dextrusion-0.0.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.6": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "84ea3300eb31be73c85de95f1b1483694e617a11d1b6c707ae1444fb81a41396",
+          "md5": "93b0be06f9eaebdb0221ea0f01631284",
+          "sha256": "7e03dbb32745a8f0cb9fc4a6716d1a726e40ed2691f9391c9e951fcdccd416ee"
+        },
+        "downloads": -1,
+        "filename": "dextrusion-0.0.6-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "93b0be06f9eaebdb0221ea0f01631284",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": null,
+        "size": 31410,
+        "upload_time": "2023-02-09T12:30:24",
+        "upload_time_iso_8601": "2023-02-09T12:30:24.683023Z",
+        "url": "https://files.pythonhosted.org/packages/84/ea/3300eb31be73c85de95f1b1483694e617a11d1b6c707ae1444fb81a41396/dextrusion-0.0.6-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "da6c2375cfab3066addc672c8132211f524ac410f88a57a8bba5623017820fd6",
+          "md5": "1b48faf64c402dcbc78ab6100d7b4a87",
+          "sha256": "3d3a3945c103b381fe3b294206114033e4ff959329b170c98bc8589e04b7db0b"
+        },
+        "downloads": -1,
+        "filename": "dextrusion-0.0.6.tar.gz",
+        "has_sig": false,
+        "md5_digest": "1b48faf64c402dcbc78ab6100d7b4a87",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": null,
+        "size": 31895,
+        "upload_time": "2023-02-09T12:30:26",
+        "upload_time_iso_8601": "2023-02-09T12:30:26.112183Z",
+        "url": "https://files.pythonhosted.org/packages/da/6c/2375cfab3066addc672c8132211f524ac410f88a57a8bba5623017820fd6/dextrusion-0.0.6.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.7": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "7d08cb56b848e9e70bc307289a3ec91a235610902883e6367473fca5179915d7",
+          "md5": "6a8ac849732125a5032d185c54e9dab6",
+          "sha256": "9e513c6f171f293aa5d15b011c051d47ab180bd20b72dbecfd148c1929f59e63"
+        },
+        "downloads": -1,
+        "filename": "dextrusion-0.0.7-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "6a8ac849732125a5032d185c54e9dab6",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": null,
+        "size": 31451,
+        "upload_time": "2023-05-03T09:24:28",
+        "upload_time_iso_8601": "2023-05-03T09:24:28.036345Z",
+        "url": "https://files.pythonhosted.org/packages/7d/08/cb56b848e9e70bc307289a3ec91a235610902883e6367473fca5179915d7/dextrusion-0.0.7-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "e5c1cea0374d1bd7dd39c7ccfa612fe346d4c7e1828c01a4b2e80fe6a3baaf6f",
+          "md5": "2cb7c24e18eef7f103536306a2a76f43",
+          "sha256": "f7844c8dc11fbd16299eca34961cf40d8cce82afe7139c1bf9cb8e29aee642a3"
+        },
+        "downloads": -1,
+        "filename": "dextrusion-0.0.7.tar.gz",
+        "has_sig": false,
+        "md5_digest": "2cb7c24e18eef7f103536306a2a76f43",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": null,
+        "size": 32227,
+        "upload_time": "2023-05-03T09:24:30",
+        "upload_time_iso_8601": "2023-05-03T09:24:30.416725Z",
+        "url": "https://files.pythonhosted.org/packages/e5/c1/cea0374d1bd7dd39c7ccfa612fe346d4c7e1828c01a4b2e80fe6a3baaf6f/dextrusion-0.0.7.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.8": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "d83aeffd493aac65020c601069ac431f4245fd16657173e3036229f297ecfc24",
+          "md5": "32f659591d1e9b989da9df2868c8b5ba",
+          "sha256": "596e6cc869635fa567a270c79e1a9ed77e1e70c079b2b0bf6df0f0a4d9bbbd94"
+        },
+        "downloads": -1,
+        "filename": "dextrusion-0.0.8-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "32f659591d1e9b989da9df2868c8b5ba",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": null,
+        "size": 31534,
+        "upload_time": "2025-02-07T13:04:53",
+        "upload_time_iso_8601": "2025-02-07T13:04:53.195734Z",
+        "url": "https://files.pythonhosted.org/packages/d8/3a/effd493aac65020c601069ac431f4245fd16657173e3036229f297ecfc24/dextrusion-0.0.8-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "0aee91e17da89cf842b2e4c30e6660cdff37c19cc6b0c711cf67fa7b66e5cd41",
+          "md5": "5f0b29a28c9eb2d1d0c838782abcfc96",
+          "sha256": "b6d8ac0d411c8b4d3cfb0fcc0493aaf748f476305cae9280ab852f7e42e8ca65"
+        },
+        "downloads": -1,
+        "filename": "dextrusion-0.0.8.tar.gz",
+        "has_sig": false,
+        "md5_digest": "5f0b29a28c9eb2d1d0c838782abcfc96",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": null,
+        "size": 32556,
+        "upload_time": "2025-02-07T13:04:55",
+        "upload_time_iso_8601": "2025-02-07T13:04:55.035103Z",
+        "url": "https://files.pythonhosted.org/packages/0a/ee/91e17da89cf842b2e4c30e6660cdff37c19cc6b0c711cf67fa7b66e5cd41/dextrusion-0.0.8.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.9": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "e42c9eb138938485f14cc85173a8364509635ea316d3810d93cf8a59cb9e1752",
+          "md5": "5c39de5898bbf5364ce4fb90250de65c",
+          "sha256": "157bb50c6fd738b59e1e9f3414f5ee72edb666d94c11bd06453c7668908e86aa"
+        },
+        "downloads": -1,
+        "filename": "dextrusion-0.0.9-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "5c39de5898bbf5364ce4fb90250de65c",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">3.8",
+        "size": 34790,
+        "upload_time": "2026-03-04T14:16:43",
+        "upload_time_iso_8601": "2026-03-04T14:16:43.770450Z",
+        "url": "https://files.pythonhosted.org/packages/e4/2c/9eb138938485f14cc85173a8364509635ea316d3810d93cf8a59cb9e1752/dextrusion-0.0.9-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "307b50b4facf09461e51647c5853b07b076f975047962dd24318cc60c0c0757f",
+          "md5": "72a1d6b2030349c53396148ac7de22fb",
+          "sha256": "5f3e5df4232c6245a7f07f7c851dec6dd845133911ebb84b2ad0d5b1df41d81a"
+        },
+        "downloads": -1,
+        "filename": "dextrusion-0.0.9.tar.gz",
+        "has_sig": false,
+        "md5_digest": "72a1d6b2030349c53396148ac7de22fb",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">3.8",
+        "size": 12265354,
+        "upload_time": "2026-03-04T14:16:46",
+        "upload_time_iso_8601": "2026-03-04T14:16:46.353982Z",
+        "url": "https://files.pythonhosted.org/packages/30/7b/50b4facf09461e51647c5853b07b076f975047962dd24318cc60c0c0757f/dextrusion-0.0.9.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "fa12d7d92e99cf331f89e27bb10dcaea8b1f0020da8c530a1323ec6d9364162b",
+        "md5": "fc69854711cd5ba582a9b62349bc753f",
+        "sha256": "d29167a05ea635f2e4d21c4f4a87abfa9bf742d3ed5a2006899e7b2f195606d5"
+      },
+      "downloads": -1,
+      "filename": "dextrusion-0.0.11-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "fc69854711cd5ba582a9b62349bc753f",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">3.8",
+      "size": 34880,
+      "upload_time": "2026-03-04T15:47:43",
+      "upload_time_iso_8601": "2026-03-04T15:47:43.615721Z",
+      "url": "https://files.pythonhosted.org/packages/fa/12/d7d92e99cf331f89e27bb10dcaea8b1f0020da8c530a1323ec6d9364162b/dextrusion-0.0.11-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "5c32346acd89eedb0d3a69e942343ef61db29588c4eee7a7ac7eb5f4f029bc57",
+        "md5": "c0f0e5a12ba91c410f71f4d79ae2fd4f",
+        "sha256": "32ebb6e41b989bf6bd3f27f71f05d0a3b24e37db9ea78df9f6700f28fd4e8917"
+      },
+      "downloads": -1,
+      "filename": "dextrusion-0.0.11.tar.gz",
+      "has_sig": false,
+      "md5_digest": "c0f0e5a12ba91c410f71f4d79ae2fd4f",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">3.8",
+      "size": 12266446,
+      "upload_time": "2026-03-04T15:47:45",
+      "upload_time_iso_8601": "2026-03-04T15:47:45.809083Z",
+      "url": "https://files.pythonhosted.org/packages/5c/32/346acd89eedb0d3a69e942343ef61db29588c4eee7a7ac7eb5f4f029bc57/dextrusion-0.0.11.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
