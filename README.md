@@ -1,7 +1,5 @@
 # npe2api
 
-[![vercel](https://img.shields.io/github/deployments/napari/npe2api/production?label=vercel&logo=vercel&style=flat-square)](https://api.napari.org)
-
 The REST API used by [napari-hub.org](https://napari-hub.org) to query plugins.
 
 The endpoint for the API is: <https://api.napari.org>
@@ -21,9 +19,8 @@ The endpoint for the API is: <https://api.napari.org>
 
 ### Prerequisites
 
-- **Python 3.12+**
 - **[Conda/Miniconda](https://docs.conda.io/en/latest/miniconda.html)** - Required for the reindex script to fetch conda package metadata
-- **[uv](https://github.com/astral-sh/uv)** (optional) - Fast Python package manager
+- **Python 3.12+**
 - **Cloudflare account** with R2 and Workers enabled
 
 ### Setup
@@ -71,15 +68,35 @@ python -m npe2api.reindex
 python -m npe2api.upload_to_r2
 ```
 
+### Deployment
+
+The API is served by `worker.py`, a FastAPI application deployed to Cloudflare Workers. The worker handles:
+- Name normalization for plugin manifest routes
+- Dynamic shields.io badge generation
+- Pass-through requests to R2 object storage for all API endpoints
+
+For production deployment, the data pipeline modules generate JSON files that are uploaded to R2, and the worker serves them via the public API.
+
 ### Local worker development
 
 ```bash
+# Install pywrangler (Python wrapper for wrangler)
+uv tool install workers-py
+
+# Or run directly with uvx
+uvx --from workers-py pywrangler --help
+
 # Generate wrangler config
 python -m npe2api.wrangler_config --prod
 
 # Run worker locally (connects to remote R2 bucket)
-npx wrangler@latest dev
+pywrangler dev --remote
+
+# Or with uvx
+uvx --from workers-py pywrangler dev --remote
 ```
+
+Note: The `--remote` flag is required to bind the remote R2 bucket during local development.
 
 ## Contributing
 

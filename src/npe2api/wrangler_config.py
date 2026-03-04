@@ -3,8 +3,14 @@
 Generate wrangler configuration files.
 
 Usage:
-    uv run -m npe2api.wrangler_config --prod
-    uv run -m npe2api.wrangler_config --preview 123
+    python -m npe2api.wrangler_config --prod
+    python -m npe2api.wrangler_config --preview 123
+
+After generating the config, deploy with:
+    pywrangler deploy
+
+Or run locally with:
+    pywrangler dev --remote
 """
 
 import argparse
@@ -43,7 +49,7 @@ def create_production_config() -> None:
             "r2_buckets": [
                 {
                     "binding": "BUCKET",
-                    "bucket_name": "npe2api",
+                    "bucket_name": "npe2api-data",
                     "remote": True,  # Enable remote binding for local dev
                 }
             ],

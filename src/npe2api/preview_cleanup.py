@@ -49,7 +49,7 @@ def delete_r2_bucket(bucket_name: str) -> None:
     )
 
     try:
-        # Delete all objects in the bucket
+        # Need to delete all objects before deleting the bucket
         print(f"Deleting objects from bucket: {bucket_name}")
         paginator = s3.get_paginator("list_objects_v2")
         object_count = 0
@@ -62,7 +62,6 @@ def delete_r2_bucket(bucket_name: str) -> None:
         if object_count > 0:
             print(f"  Deleted {object_count} objects")
 
-        # Delete the bucket
         s3.delete_bucket(Bucket=bucket_name)
         print(f"✓ Deleted R2 bucket: {bucket_name}")
 

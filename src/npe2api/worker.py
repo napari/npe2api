@@ -1,30 +1,65 @@
 """
-Cloudflare Worker for npe2api.
+Cloudflare Worker for npe2api - FastAPI server and CloudFlare Workers entrypoint.
 
-Handles:
-- Name normalization for /api/manifest/{slug} routes
+This module serves as the entrypoint for remote deployment on Cloudflare Workers.
+It implements a FastAPI application that handles API requests and serves data from
+R2 object storage.
+
+Key Features:
+- FastAPI server with Pyodide/Workers integration
+- Name normalization for /api/manifest/{slug} routes (PyPI canonical names)
 - Dynamic shields.io badge generation for /api/shields/{slug}
-- Pass-through to R2 for all other routes
+- Pass-through to R2 for all other routes (plugins, conda, pypi metadata)
+- Automatic response caching via Cloudflare Cache API
+
+Deployment:
+    This file is deployed to Cloudflare Workers using pywrangler/wrangler.
+    See wrangler_config.py for configuration generation.
+
+Local Development:
+    python -m npe2api.wrangler_config
+    pywrangler dev
+
+Endpoints:
+    /api/manifest/{plugin_name} - Plugin manifest with name normalization
+    /api/shields/{slug} - shields.io badge schema
+    /api/plugins - Plugin index
+    /api/extended_summary - Extended plugin summary
+    /api/conda - Conda package index
+    /api/pypi/{package} - PyPI metadata
+    /errors.json - Fetch errors
 """
 
 import json
+import sys
 import traceback
 
+import _index_html
+import _napari_svg
 from fastapi import FastAPI
 from fastapi import Request as FastAPIRequest
 from fastapi import Response as FastAPIResponse
-from fastapi.responses import JSONResponse
-from js import Request, Response, caches
+from fastapi.responses import HTMLResponse, JSONResponse
+from js import Request, caches
 from packaging.utils import canonicalize_name
 from pyodide.ffi import create_proxy
 from workers import WorkerEntrypoint
+
+
+def log_info(msg: str, **kwargs):
+    """Log info messages to stdout."""
+    print(json.dumps({"message": msg, **kwargs}), flush=True)
+
+
+def log_error(msg: str, **kwargs):
+    """Log error messages to stderr."""
+    print(json.dumps({"message": msg, **kwargs}), file=sys.stderr, flush=True)
 
 
 class Default(WorkerEntrypoint):
     async def fetch(self, request):
         cache_url = request.url
 
-        # Construct the cache key from the cache URL
         cache_key = Request.new(cache_url)
         cache = caches.default
 
@@ -33,20 +68,21 @@ class Default(WorkerEntrypoint):
         response = await cache.match(cache_key)
 
         if response is None:
-            print(f"Response for request url: {request.url} not present in cache. Fetching and caching request.")
+            log_info("Cache miss, fetching and caching request", url=request.url)
             # If not in cache, pass through to the FastAPI app
             import asgi
+
             response = await asgi.fetch(app, request.js_object, self.env)
 
-            # Store in cache (response should already have Cache-Control headers from FastAPI)
+            # Store in cache (expiry controlled by Cache-Control headers from FastAPI)
             self.ctx.waitUntil(create_proxy(cache.put(cache_key, response.clone())))
         else:
-            print(f"Cache hit for: {request.url}.")
+            log_info("Cache hit", url=request.url)
 
         return response
 
 
-app = FastAPI(root_path="/api")
+app = FastAPI()
 
 
 @app.exception_handler(Exception)
@@ -57,7 +93,7 @@ async def global_exception_handler(request: FastAPIRequest, exc: Exception):
         "type": type(exc).__name__,
         "traceback": traceback.format_exc(),
     }
-    print(f"ERROR: {error_detail}")
+    log_error("Unhandled exception", **error_detail)
     return JSONResponse(
         status_code=500,
         content=error_detail,
@@ -110,6 +146,7 @@ async def get_from_r2(request: FastAPIRequest, key: str) -> FastAPIResponse:
         headers={
             "Access-Control-Allow-Origin": "*",
             "Cache-Control": "public, max-age=3600",
+            "ETag": obj.httpEtag,
         },
     )
 
@@ -122,23 +159,21 @@ async def get_shields_badge(slug: str, request: FastAPIRequest):
     Returns different badge based on whether plugin exists in the index.
     Normalizes the slug to match PyPI canonical names.
     """
-    # Normalize slug using packaging library
     normalized = canonicalize_name(slug)
 
-    # Fetch plugin index from R2
     env = request.scope["env"]
-    obj = await env.BUCKET.get("api/plugins")
+    obj = await env.BUCKET.get("index.json")
 
     shield_schema = {
         "color": "#82001A",
         "label": "napari hub",
-        "logoSvg": NAPARI_LOGO_SVG,
+        "logoSvg": _napari_svg.NAPARI_LOGO_SVG,
         "message": "unavailable",
         "schemaVersion": 1,
         "style": "flat-square",
     }
 
-    if obj is not None:
+    if obj:
         content = await obj.text()
         plugins = json.loads(content)
 
@@ -147,7 +182,43 @@ async def get_shields_badge(slug: str, request: FastAPIRequest):
             # Use original slug, not normalized
             shield_schema["message"] = slug
 
-    return shield_schema
+    return JSONResponse(
+        content=shield_schema,
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Cache-Control": "public, max-age=3600",
+        },
+    )
+
+
+@app.get("/api/plugins")
+async def get_plugins(request: FastAPIRequest):
+    return await get_from_r2(request, "index.json")
+
+
+@app.get("/api/extended_summary")
+async def get_extended_summary(request: FastAPIRequest):
+    return await get_from_r2(request, "extended_summary.json")
+
+
+@app.get("/api/readers")
+async def get_readers(request: FastAPIRequest):
+    return await get_from_r2(request, "readers.json")
+
+
+@app.get("/api/conda")
+async def get_conda_index(request: FastAPIRequest):
+    return await get_from_r2(request, "conda.json")
+
+
+@app.get("/api/conda/{plugin_name:path}")
+async def get_conda_package(plugin_name: str, request: FastAPIRequest):
+    return await get_from_r2(request, f"conda/{plugin_name}")
+
+
+@app.get("/api/pypi/{plugin_name:path}")
+async def get_pypi_package(plugin_name: str, request: FastAPIRequest):
+    return await get_from_r2(request, f"pypi/{plugin_name}")
 
 
 @app.get("/api/manifest/{plugin_name:path}")
@@ -159,7 +230,7 @@ async def get_manifest(plugin_name: str, request: FastAPIRequest):
     Uses packaging.utils.canonicalize_name which matches PyPI's normalization.
     """
     normalized = canonicalize_name(plugin_name)
-    r2_key = f"api/manifest/{normalized}"
+    r2_key = f"manifest/{normalized}"
 
     return await get_from_r2(request, r2_key)
 
@@ -167,21 +238,24 @@ async def get_manifest(plugin_name: str, request: FastAPIRequest):
 @app.get("/{full_path:path}")
 async def catch_all(full_path: str, request: FastAPIRequest):
     """
-    Pass all other requests directly to R2.
+    Catch-all route for paths not handled by specific API routes.
 
     Handles:
-    - /api/plugins, /api/extended_summary, /api/readers
-    - /api/conda (main index)
-    - /api/conda/{plugin}, /api/pypi/{plugin}
-    - /errors.json
-    - /index.html, / (root)
+    - / (root) - generates dynamic index.html
+    - /errors.json, index.json, etc. - top-level files
     """
-    # Handle root path
+    # Handle root path - generate dynamic index.html
     if not full_path or full_path == "/":
-        full_path = "index.html"
+        env = request.scope.get("env")
+        if env is None:
+            raise RuntimeError("env not found in request.scope - R2 not available")
+
+        html_content = await _index_html.generate_index_html(env)
+        return HTMLResponse(
+            content=html_content,
+            headers={
+                "Cache-Control": "public, max-age=3600",
+            },
+        )
 
     return await get_from_r2(request, full_path)
-
-
-# Napari logo SVG for shields.io badges
-NAPARI_LOGO_SVG = '''<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 200 200" style="enable-background:new 0 0 200 200;" xml:space="preserve"><path fill="#FFFFFF" d="m 0,0 c -1.2030785,63.115223 0,200 0,200 z m 67.208984,28.664062 c -2.9406,0.0272 -6.187871,0.268217 -7.607422,0.642579 -8.188777,2.159531 -17.799896,10.290624 -22.201171,18.78125 -2.509121,4.840418 -5.376336,12.847947 -6.494141,18.142578 -0.520648,2.46613 -0.612413,3.487863 -0.619141,6.841797 -0.0068,3.310851 0.07299,4.271188 0.501953,5.980468 1.58463,6.314223 5.215831,11.816947 11.730469,17.775391 1.171794,1.071749 4.322714,3.785705 7.001953,6.031255 9.529013,7.9865 12.658386,11.81314 17.181641,21.01757 2.562497,5.2144 4.4461,9.92233 7.193359,17.97852 1.1095,3.2535 2.509197,6.95849 3.111328,8.23437 5.170882,10.95677 15.479549,20.74896 24.624998,23.39063 1.70416,0.49224 5.41592,1.10939 8.46289,1.4082 0.51059,0.0501 3.80043,0.0579 7.31055,0.0156 4.76993,-0.0577 7.26926,-0.19792 9.89648,-0.55274 10.67363,-1.44149 19.42475,-4.42607 26.02344,-8.87695 5.42029,-3.65604 10.94104,-8.25065 13.75,-11.44141 7.4771,-8.4933 9.66701,-17.73882 7.98828,-33.7207 -1.02128,-9.72282 -3.37226,-16.0438 -7.45117,-20.0293 -1.67479,-1.636419 -2.17992,-2.023559 -3.79101,-2.910153 -4.16987,-2.294657 -9.86466,-2.835601 -21.35157,-2.025391 -11.79611,0.832018 -18.09635,0.249147 -26.22461,-2.427734 C 104.50807,89.054266 97.149003,81.997999 94.90625,72.457031 94.655932,71.392958 94.125657,67.963798 93.728516,64.837891 91.299489,45.719717 89.49683,39.253775 85.503906,35.328125 82.103616,31.985129 77.065232,29.62118 71.710938,28.861328 c -1.083059,-0.1537 -2.737593,-0.213585 -4.501954,-0.197266 z" /></svg>'''

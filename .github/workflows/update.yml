@@ -9,6 +9,7 @@ on:
     branches:
       - main
   pull_request:
+    types: [labeled, synchronize]
     branches:
       - main
 
@@ -16,6 +17,10 @@ jobs:
   deploy:
     name: Update and Deploy to Cloudflare
     runs-on: ubuntu-latest
+    # Only run on PRs if they have the 'preview' label
+    if: |
+      github.event_name != 'pull_request' ||
+      contains(github.event.pull_request.labels.*.name, 'preview')
     permissions:
       contents: 'write'
       id-token: 'write'
@@ -24,7 +29,7 @@ jobs:
         shell: bash -el {0}
 
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@v6
 
       # Restore cached plugin data to avoid re-fetching unchanged plugins
       - name: Restore plugin data cache
@@ -49,7 +54,8 @@ jobs:
           activate-environment: ""
 
       # Install pipeline dependencies in conda environment
-      # Note: conda Python package is already available in base environment
+      # Use conda because we need it to query the anaconda API
+      # 'conda' Python package is already available in base environment
       - name: Install dependencies
         run: |
           pip install -e .[pipeline]
@@ -88,7 +94,6 @@ jobs:
             python -m npe2api.wrangler_config --prod
           fi
 
-      # upload JSON files to R2 bucket
       - name: Upload to R2
         run: |
           python -m npe2api.upload_to_r2
@@ -98,7 +103,6 @@ jobs:
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_BUCKET_NAME: ${{ steps.deploy-config.outputs.bucket_name }}
 
-      # deploy Worker to Cloudflare
       - name: Deploy Worker
         uses: cloudflare/wrangler-action@v3
         with:

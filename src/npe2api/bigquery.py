@@ -1,3 +1,29 @@
+"""
+Find all napari plugins using the BigQuery public PyPI dataset.
+
+NOTE: We currently use npe2api.find_by_classifier because it's been
+historically faster and more reliable, but the XML-RPC API it uses
+is deprecated, so that script will probably stop working eventually.
+
+This script queries the official PyPI BigQuery public dataset for all packages
+with the "Framework :: napari" classifier. This is the long-term preferred
+method over XML-RPC as it uses the authoritative source of truth for PyPI
+metadata.
+
+The script fetches package information, validates the current classifier
+status, and categorizes packages as active, withdrawn, or deleted.
+
+Requires:
+    Google Cloud credentials with access to BigQuery public datasets
+
+Outputs:
+    public/classifiers.json - Categorized plugin list with versions
+    public/pypi/{package}.json - Individual package metadata
+
+Usage:
+    python -m npe2api.bigquery
+"""
+
 import json
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path

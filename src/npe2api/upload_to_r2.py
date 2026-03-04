@@ -75,7 +75,7 @@ def upload_file(s3, bucket_name: str, file_path: Path, public_dir: Path) -> tupl
         key,
         ExtraArgs={
             "ContentType": content_type,
-            "CacheControl": "public, max-age=300",
+            "CacheControl": "public, max-age=3600",
         },
     )
     return key, True  # Uploaded
@@ -112,9 +112,9 @@ def upload_to_r2():
         print(f"Error: {public_dir} directory does not exist")
         return
 
-    # Collect all files to upload
-    files_to_process = [f for f in public_dir.rglob("*") if f.is_file()]
-    print(f"Processing {len(files_to_process)} files...")
+    # Collect all JSON files to upload
+    files_to_process = [f for f in public_dir.rglob("*.json") if f.is_file()]
+    print(f"Processing {len(files_to_process)} JSON files...")
 
     uploaded_count = 0
     skipped_count = 0
@@ -135,7 +135,8 @@ def upload_to_r2():
                 print(f"⊝ Skipped (unchanged): {key}")
                 skipped_count += 1
 
-    print(f"\n✓ Uploaded {uploaded_count} files, skipped {skipped_count} (unchanged)")
+    print("")
+    print(f"Uploaded {uploaded_count} files, skipped {skipped_count} (unchanged)")
     print(f"  Bucket: {bucket_name}")
 
 

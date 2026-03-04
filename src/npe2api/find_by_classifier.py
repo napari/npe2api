@@ -1,3 +1,21 @@
+"""
+Find all napari plugins using PyPI's XML-RPC API.
+
+This script queries PyPI for all packages with the "Framework :: napari" classifier
+using the XML-RPC browse API. It fetches package information, validates versions,
+and categorizes packages as active, withdrawn, or deleted.
+
+Note: The XML-RPC API is unsupported and may be deprecated. See bigquery.py for
+an alternative method using the official BigQuery public dataset.
+
+Outputs:
+    public/classifiers.json - Categorized plugin list with versions
+    public/pypi/{package}.json - Individual package metadata
+
+Usage:
+    python -m npe2api.find_by_classifier
+"""
+
 import json
 import sys
 import xmlrpc.client
