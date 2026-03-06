@@ -101,10 +101,15 @@ def upload_to_r2():
     # Create bucket if it doesn't exist
     try:
         s3.head_bucket(Bucket=bucket_name)
-        print(f"Using existing bucket: {bucket_name}")
-    except s3.exceptions.NoSuchBucket:
-        print(f"Creating bucket: {bucket_name}")
-        s3.create_bucket(Bucket=bucket_name)
+        print(f"Using bucket: {bucket_name}")
+    except s3.exceptions.ClientError as e:
+        error_code = e.response.get("Error", {}).get("Code")
+        if error_code == "404":
+            print(f"Bucket '{bucket_name}' not found, creating...")
+            s3.create_bucket(Bucket=bucket_name)
+            print(f"✓ Created bucket: {bucket_name}")
+        else:
+            raise
 
     # Upload all files from public/ directory
     public_dir = Path("public")

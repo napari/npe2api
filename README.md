@@ -19,7 +19,8 @@ The endpoint for the API is: <https://api.napari.org>
 
 ### Prerequisites
 
-- **[Conda/Miniconda](https://docs.conda.io/en/latest/miniconda.html)** - Required for the reindex script to fetch conda package metadata
+- **[Conda/Miniconda](https://docs.conda.io/en/latest/miniconda.html)**
+  - conda is required for the reindex script to fetch conda package metadata
 - **Python 3.12+**
 - **Cloudflare account** with R2 and Workers enabled
 
@@ -80,23 +81,21 @@ For production deployment, the data pipeline modules generate JSON files that ar
 ### Local worker development
 
 ```bash
-# Install pywrangler (Python wrapper for wrangler)
-uv tool install workers-py
-
-# Or run directly with uvx
-uvx --from workers-py pywrangler --help
+# Install pywrangler (Python wrapper for wrangler, cloudflare's worker CLI)
+pip install workers-py
 
 # Generate wrangler config
 python -m npe2api.wrangler_config --prod
 
 # Run worker locally (connects to remote R2 bucket)
-pywrangler dev --remote
+pywrangler dev
 
-# Or with uvx
-uvx --from workers-py pywrangler dev --remote
+# Generate preview wrangler config
+python -m npe2api.wrangler_config --preview \<env_name\>
+
+# Deploy *preview* version to Cloudflare Workers (connects to remote R2 bucket)
+pywrangler deploy --env \<env_name\>
 ```
-
-Note: The `--remote` flag is required to bind the remote R2 bucket during local development.
 
 ## Contributing
 

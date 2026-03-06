@@ -9,7 +9,7 @@ For local development, create a .env file with:
     R2_SECRET_ACCESS_KEY=your_secret_key
 
 Usage:
-    uv run -m npe2api.preview_cleanup 123
+    python -m npe2api.preview_cleanup pr-123
 """
 
 import argparse
@@ -77,12 +77,12 @@ def delete_worker(worker_name: str) -> None:
     Delete a Cloudflare Worker.
 
     Args:
-        worker_name: Name of the Worker to delete
+        worker_name: Name of the worker to delete (e.g., npe2api-pr-123)
     """
     try:
         print(f"Deleting worker: {worker_name}")
         subprocess.run(
-            ["npx", "wrangler@latest", "delete", worker_name, "--force"],
+            ["pywrangler", "delete", worker_name, "--force"],
             check=True,
             env={**os.environ},
         )
@@ -93,25 +93,25 @@ def delete_worker(worker_name: str) -> None:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Delete preview R2 bucket and Worker for a PR"
+        description="Delete preview R2 bucket and Worker"
     )
     parser.add_argument(
-        "pr_number",
-        type=int,
-        help="Pull request number",
+        "env_name",
+        type=str,
+        help="Environment name (e.g., pr-123)",
     )
 
     args = parser.parse_args()
 
-    bucket_name = f"npe2api-pr-{args.pr_number}"
-    worker_name = f"npe2api-pr-{args.pr_number}"
+    worker_name = f"npe2api-{args.env_name}"
+    bucket_name = f"npe2api-{args.env_name}"
 
-    print(f"🧹 Cleaning up preview deployment for PR #{args.pr_number}")
+    print(f"🧹 Cleaning up preview deployment for environment: {args.env_name}")
 
     delete_worker(worker_name)
     delete_r2_bucket(bucket_name)
 
-    print(f"\n✓ Cleanup complete for PR #{args.pr_number}")
+    print(f"\n✓ Cleanup complete for environment: {args.env_name}")
 
 
 if __name__ == "__main__":

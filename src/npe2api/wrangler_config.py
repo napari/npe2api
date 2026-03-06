@@ -27,14 +27,6 @@ BASE_CONFIG = {
         "excludes": [
             "**/*.pyc",
             "**/__pycache__",
-            "**/bigquery.py",
-            "**/fetch_manifests.py",
-            "**/find_by_classifier.py",
-            "**/preview_cleanup.py",
-            "**/reindex.py",
-            "**/upload_to_r2.py",
-            "**/wrangler_config.py",
-            "**/_network.py",
         ]
     },
 }
@@ -43,18 +35,14 @@ BASE_CONFIG = {
 def create_production_config() -> None:
     """Create production wrangler configuration."""
     config = BASE_CONFIG.copy()
-    config.update(
+    config["name"] = "npe2api"
+    config["r2_buckets"] = [
         {
-            "name": "npe2api",
-            "r2_buckets": [
-                {
-                    "binding": "BUCKET",
-                    "bucket_name": "npe2api-data",
-                    "remote": True,  # Enable remote binding for local dev
-                }
-            ],
+            "binding": "BUCKET",
+            "bucket_name": "npe2api",
+            "remote": True,  # Enable remote binding for local dev
         }
-    )
+    ]
 
     output_path = Path("wrangler.jsonc")
     with open(output_path, "w") as f:
@@ -63,39 +51,39 @@ def create_production_config() -> None:
     print(f"✅ Created {output_path}")
     print("  Worker name: npe2api")
     print("  Bucket name: npe2api")
+    print("  Deploy with: wrangler deploy")
 
 
-def create_preview_config(pr_number: int) -> None:
+def create_preview_config(env_name: str) -> None:
     """
     Create preview wrangler configuration for PR deployments.
 
+    Creates a completely separate worker for the preview environment.
+
     Args:
-        pr_number: Pull request number
+        env_name: Environment name for the preview (e.g., pr-123)
     """
-    bucket_name = f"npe2api-pr-{pr_number}"
-    worker_name = f"npe2api-pr-{pr_number}"
+    worker_name = f"npe2api-{env_name}"
+    bucket_name = f"npe2api-{env_name}"
 
     config = BASE_CONFIG.copy()
-    config.update(
+    config["name"] = worker_name
+    config["r2_buckets"] = [
         {
-            "name": worker_name,
-            "r2_buckets": [
-                {
-                    "binding": "BUCKET",
-                    "bucket_name": bucket_name,
-                    "remote": True,  # Enable remote binding for local dev
-                }
-            ],
+            "binding": "BUCKET",
+            "bucket_name": bucket_name,
+            "remote": True,
         }
-    )
+    ]
 
     output_path = Path("wrangler.jsonc")
     with open(output_path, "w") as f:
         json.dump(config, f, indent=2)
 
-    print(f"✅ Created {output_path} for PR #{pr_number}")
+    print(f"✅ Created {output_path} for preview deployment")
     print(f"  Worker name: {worker_name}")
     print(f"  Bucket name: {bucket_name}")
+    print("  Deploy with: pywrangler deploy")
 
 
 def main():
@@ -110,9 +98,8 @@ def main():
     )
     group.add_argument(
         "--preview",
-        type=int,
-        metavar="PR_NUMBER",
-        help="Generate preview config for PR number (wrangler.preview.jsonc)",
+        type=str,
+        help="Generate preview config with suffix (e.g., --preview pr-123)",
     )
 
     args = parser.parse_args()
