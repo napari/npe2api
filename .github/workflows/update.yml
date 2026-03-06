@@ -23,7 +23,7 @@ jobs:
       contains(github.event.pull_request.labels.*.name, 'preview')
     permissions:
       contents: 'write'
-      id-token: 'write'
+      deployments: 'write'
     defaults:
       run:
         shell: bash -el {0}
@@ -103,9 +103,42 @@ jobs:
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_BUCKET_NAME: ${{ steps.deploy-config.outputs.bucket_name }}
 
+      # Push public/ directory to separate data repository for history tracking
+      # Uses shallow clone to fetch only latest commit, keeping operation fast
+      - name: Push to data repository
+        if: github.event_name != 'pull_request'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          DATA_REPO="npe2api-data"
+          REMOTE_URL="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository_owner }}/${DATA_REPO}.git"
+
+          # Shallow clone existing repo (only latest commit)
+          git clone --depth 1 "$REMOTE_URL" data-repo
+          cd data-repo
+
+          # Remove old files and copy new ones
+          git rm -rf . 2>/dev/null || true
+          cp -r ../public/* .
+
+          # Commit and push changes
+          git add -A
+          if ! git diff --staged --quiet; then
+            git commit -m "Update plugin data from ${{ github.sha }}
+
+          Triggered by: ${{ github.event_name }}
+          Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            git push origin main
+            echo "Pushed changes to data repository"
+          else
+            echo "No changes to commit"
+          fi
+
       - name: Deploy Worker
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
