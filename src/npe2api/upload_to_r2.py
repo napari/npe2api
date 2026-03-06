@@ -82,7 +82,7 @@ def upload_file(s3, bucket_name: str, file_path: Path, public_dir: Path) -> tupl
 
 
 def upload_to_r2():
-    """Upload all JSON files from public/ directory to R2."""
+    """Sync all JSON files from public/ directory to R2, removing stale files."""
     account_id = os.environ["CLOUDFLARE_ACCOUNT_ID"]
     access_key_id = os.environ["R2_ACCESS_KEY_ID"]
     secret_access_key = os.environ["R2_SECRET_ACCESS_KEY"]
@@ -114,6 +114,7 @@ def upload_to_r2():
 
     # Collect all JSON files to upload
     files_to_process = [f for f in public_dir.rglob("*.json") if f.is_file()]
+    local_keys = {str(f.relative_to(public_dir)) for f in files_to_process}
     print(f"Processing {len(files_to_process)} JSON files...")
 
     uploaded_count = 0
@@ -135,8 +136,32 @@ def upload_to_r2():
                 print(f"⊝ Skipped (unchanged): {key}")
                 skipped_count += 1
 
+    # Delete files from R2 that no longer exist locally
+    print("\nChecking for stale files in R2...")
+    remote_keys = set()
+    paginator = s3.get_paginator("list_objects_v2")
+    for page in paginator.paginate(Bucket=bucket_name):
+        if "Contents" in page:
+            for obj in page["Contents"]:
+                key = obj["Key"]
+                # Only track JSON files (to avoid deleting non-managed files)
+                if key.endswith(".json"):
+                    remote_keys.add(key)
+
+    stale_keys = remote_keys - local_keys
+    deleted_count = 0
+
+    if stale_keys:
+        print(f"Found {len(stale_keys)} stale files to delete...")
+        for key in stale_keys:
+            s3.delete_object(Bucket=bucket_name, Key=key)
+            print(f"✗ Deleted: {key}")
+            deleted_count += 1
+    else:
+        print("No stale files found")
+
     print("")
-    print(f"Uploaded {uploaded_count} files, skipped {skipped_count} (unchanged)")
+    print(f"Uploaded {uploaded_count} files, skipped {skipped_count} (unchanged), deleted {deleted_count} (stale)")
     print(f"  Bucket: {bucket_name}")
 
 
