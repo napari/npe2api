@@ -86,7 +86,6 @@ jobs:
           python -m npe2api.reindex
         env:
           GH_API_TOKEN: ${{ secrets.GH_API_TOKEN }}
-          CODECOV_API_TOKEN: ${{ secrets.CODECOV_API_TOKEN }}
 
       # generate wrangler config and set bucket name for deployment
       - name: Generate deployment config
@@ -146,6 +145,10 @@ jobs:
             echo "No changes to commit"
           fi
 
+      # Wrangler action uses wrangler 3.x, workaround to use current (4.x)
+      # See https://github.com/cloudflare/wrangler-action/issues/390
+      - name: Install Wrangler v4
+        run: npm install --save-dev wrangler@4
       - name: Deploy Worker
         uses: cloudflare/wrangler-action@v3
         with:
