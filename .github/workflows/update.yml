@@ -54,15 +54,18 @@ jobs:
       #   with:
       #     credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
 
-      # reindex requires conda to be setup
+      # we use conda because we need the `conda` package to query the anaconda API in reindex.py
       - uses: conda-incubator/setup-miniconda@fc2d68f6413eb2d87b895e92f8584b5b94a10167 # v3.3.0
         with:
           auto-activate-base: true
           activate-environment: ""
 
-      # Install pipeline dependencies in conda environment
-      # Use conda because we need it to query the anaconda API
-      # 'conda' Python package is already available in base environment
+      # pywrangler requires uv
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
+      # pipeline: dependencies for finding and indexing plugins
+      # dev: workers-py, which provides pywrangler for deployment
       - name: Install dependencies
         run: |
           pip install -e .[pipeline,dev]
