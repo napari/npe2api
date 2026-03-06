@@ -22,7 +22,18 @@ def urlopen_with_retry(url: str, max_retries: int = 3, backoff: float = 1.0):
     for attempt in range(max_retries):
         try:
             return request.urlopen(url)
+        except error.HTTPError as e:
+            # Don't retry on client errors (404, 403, etc.) - they won't succeed
+            if 400 <= e.code < 500:
+                raise
+            # Retry on server errors (500+)
+            if attempt == max_retries - 1:
+                raise
+            wait_time = backoff * (2**attempt)
+            print(f"⚠ Server error fetching {url}, retrying in {wait_time}s... ({e})")
+            time.sleep(wait_time)
         except (error.URLError, TimeoutError) as e:
+            # Retry on network errors
             if attempt == max_retries - 1:
                 raise
             wait_time = backoff * (2**attempt)
