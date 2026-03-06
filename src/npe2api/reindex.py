@@ -272,3 +272,22 @@ if __name__ == "__main__":
     (PUBLIC / "index.json").write_text(
         json.dumps({x["normalized_name"]: x["version"] for x in PYPI_INDEX}, indent=2)
     )
+
+    # Clean up stale files from public/ directories
+    current_plugins = {x["normalized_name"] for x in PYPI_INDEX}
+    removed_count = 0
+
+    for subdir in ["pypi", "manifest", "conda"]:
+        dir_path = PUBLIC / subdir
+        if not dir_path.exists():
+            continue
+
+        for json_file in dir_path.glob("*.json"):
+            plugin_name = json_file.stem
+            if plugin_name not in current_plugins:
+                json_file.unlink()
+                print(f"🗑️  Removed stale file: {json_file.relative_to(PUBLIC)}")
+                removed_count += 1
+
+    if removed_count > 0:
+        print(f"\n✓ Removed {removed_count} stale file(s) from public/ directories")

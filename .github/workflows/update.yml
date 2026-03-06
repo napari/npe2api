@@ -2,6 +2,11 @@ name: Update and Deploy
 
 on:
   workflow_dispatch:
+    inputs:
+      preview_name:
+        description: 'Preview name (e.g., pr-123, test-feature)'
+        required: true
+        type: string
   schedule:
     # "every 2 hours"
     - cron: 0 */2 * * *
@@ -22,7 +27,7 @@ jobs:
       github.event_name != 'pull_request' ||
       contains(github.event.pull_request.labels.*.name, 'preview')
     environment:
-      name: ${{ github.event_name == 'pull_request' && 'Preview' || 'Production' }}
+      name: ${{ (github.event_name == 'push' || github.event_name == 'schedule') && 'Production' || 'Preview' }}
     permissions:
       contents: 'write'
       deployments: 'write'
@@ -88,9 +93,13 @@ jobs:
         id: deploy-config
         run: |
           if [ "${{ github.event_name }}" == "pull_request" ]; then
-            PR_NUM=${{ github.event.pull_request.number }}
-            echo "bucket_name=npe2api-pr-$PR_NUM" >> $GITHUB_OUTPUT
-            python -m npe2api.wrangler_config --preview pr-$PR_NUM
+            PREVIEW_NAME="pr-${{ github.event.pull_request.number }}"
+            echo "bucket_name=npe2api-$PREVIEW_NAME" >> $GITHUB_OUTPUT
+            python -m npe2api.wrangler_config --preview $PREVIEW_NAME
+          elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            PREVIEW_NAME="${{ inputs.preview_name }}"
+            echo "bucket_name=npe2api-$PREVIEW_NAME" >> $GITHUB_OUTPUT
+            python -m npe2api.wrangler_config --preview $PREVIEW_NAME
           else
             echo "bucket_name=npe2api" >> $GITHUB_OUTPUT
             python -m npe2api.wrangler_config --prod
@@ -108,13 +117,13 @@ jobs:
       # Push public/ directory to separate data repository for history tracking
       # Uses shallow clone to fetch only latest commit, keeping operation fast
       - name: Push to data repository
-        if: github.event_name != 'pull_request'
+        if: github.event_name == 'push' || github.event_name == 'schedule'
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
           DATA_REPO="npe2api-data"
-          REMOTE_URL="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository_owner }}/${DATA_REPO}.git"
+          REMOTE_URL="https://x-access-token:${{ secrets.DATA_REPO_PAT }}@github.com/${{ github.repository_owner }}/${DATA_REPO}.git"
 
           # Shallow clone existing repo (only latest commit)
           git clone --depth 1 "$REMOTE_URL" data-repo
