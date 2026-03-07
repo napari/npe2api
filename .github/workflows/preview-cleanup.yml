@@ -2,7 +2,7 @@ name: Preview Cleanup
 
 on:
   pull_request:
-    types: [closed]
+    types: [closed, unlabeled]
     branches:
       - main
 
@@ -10,17 +10,24 @@ jobs:
   cleanup:
     name: Cleanup Preview Deployment
     runs-on: ubuntu-latest
-    # Only cleanup if the PR had the 'preview' label
-    if: contains(github.event.pull_request.labels.*.name, 'preview')
+    # Cleanup when PR is closed with 'preview' label, or when 'preview' label is removed
+    if: |
+      (github.event_name == 'pull_request' && github.event.action == 'closed' && contains(github.event.pull_request.labels.*.name, 'preview')) ||
+      (github.event_name == 'pull_request' && github.event.action == 'unlabeled' && github.event.label.name == 'preview')
     permissions:
       deployments: 'write'
 
     steps:
       - uses: actions/checkout@v6
 
+      # pywrangler requires uv
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
+      # pipeline: core dependencies, dev: workers-py (provides pywrangler)
       - name: Install dependencies
         run: |
-          pip install -e .[pipeline]
+          pip install -e .[pipeline,dev]
 
       - name: Cleanup preview resources
         run: |
