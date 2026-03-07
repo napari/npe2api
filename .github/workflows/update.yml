@@ -28,7 +28,9 @@ jobs:
       contains(github.event.pull_request.labels.*.name, 'preview')
     permissions:
       contents: 'write'
-      deployments: 'write'
+    environment:
+      name: ${{ github.event_name == 'pull_request' && format('preview/pr-{0}', github.event.pull_request.number) || (github.event_name == 'workflow_dispatch' && format('preview/{0}', inputs.preview_name) || 'production') }}
+      url: ${{ steps.deploy-config.outputs.deployment_url }}
     defaults:
       run:
         shell: bash -el {0}
@@ -96,29 +98,25 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             PREVIEW_NAME="pr-${{ github.event.pull_request.number }}"
-            echo "bucket_name=npe2api-$PREVIEW_NAME" >> $GITHUB_OUTPUT
+            BUCKET_NAME="npe2api-$PREVIEW_NAME"
+            echo "bucket_name=$BUCKET_NAME" >> $GITHUB_OUTPUT
             echo "deployment_env=preview/pr-${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+            echo "deployment_url=https://$BUCKET_NAME.super-sun-f114.workers.dev" >> $GITHUB_OUTPUT
             python -m npe2api.wrangler_config --preview $PREVIEW_NAME
           elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             PREVIEW_NAME="${{ inputs.preview_name }}"
-            echo "bucket_name=npe2api-$PREVIEW_NAME" >> $GITHUB_OUTPUT
+            BUCKET_NAME="npe2api-$PREVIEW_NAME"
+            echo "bucket_name=$BUCKET_NAME" >> $GITHUB_OUTPUT
             echo "deployment_env=preview/$PREVIEW_NAME" >> $GITHUB_OUTPUT
+            echo "deployment_url=https://$BUCKET_NAME.super-sun-f114.workers.dev" >> $GITHUB_OUTPUT
             python -m npe2api.wrangler_config --preview $PREVIEW_NAME
           else
-            echo "bucket_name=npe2api" >> $GITHUB_OUTPUT
+            BUCKET_NAME="npe2api"
+            echo "bucket_name=$BUCKET_NAME" >> $GITHUB_OUTPUT
             echo "deployment_env=production" >> $GITHUB_OUTPUT
+            echo "deployment_url=https://$BUCKET_NAME.super-sun-f114.workers.dev" >> $GITHUB_OUTPUT
             python -m npe2api.wrangler_config --prod
           fi
-
-      - name: Create GitHub deployment
-        uses: chrnorm/deployment-action@v2
-        id: deployment
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          environment: ${{ steps.deploy-config.outputs.deployment_env }}
-          auto-inactive: ${{ steps.deploy-config.outputs.deployment_env == 'production' && 'true' || 'false' }}
-          log-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          transient-environment: ${{ steps.deploy-config.outputs.deployment_env != 'production' && 'true' || 'false' }}
 
       - name: Upload to R2
         run: |
@@ -163,17 +161,8 @@ jobs:
 
       # Deploy with pywrangler - vendors pyproject.toml dependencies
       - name: Deploy Worker
-        id: pywrangler-deploy
         run: |
           pywrangler deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-
-      - name: Update deployment status
-        if: always()
-        uses: chrnorm/deployment-status@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          deployment-id: ${{ steps.deployment.outputs.deployment_id }}
-          state: ${{ steps.pywrangler-deploy.outcome == 'success' && 'success' || 'failure' }}
