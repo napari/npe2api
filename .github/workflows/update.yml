@@ -58,6 +58,7 @@ jobs:
           auto-activate: true
           activate-environment: ""
           channels: conda-forge
+          conda-remove-defaults: true
 
       # pywrangler requires uv
       - name: Install uv
@@ -160,6 +161,7 @@ jobs:
 
       # Deploy with pywrangler - vendors pyproject.toml dependencies
       - name: Deploy Worker
+        id: pywrangler-deploy
         run: |
           pywrangler deploy
         env:
@@ -172,4 +174,4 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           deployment-id: ${{ steps.deployment.outputs.deployment_id }}
-          state: ${{ steps.wrangler-deploy.outcome == 'success' && 'success' || 'failure' }}
+          state: ${{ steps.pywrangler-deploy.outcome == 'success' && 'success' || 'failure' }}
