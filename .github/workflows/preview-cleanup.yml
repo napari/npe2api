@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     # Only cleanup if the PR had the 'preview' label
     if: contains(github.event.pull_request.labels.*.name, 'preview')
+    permissions:
+      deployments: 'write'
 
     steps:
       - uses: actions/checkout@v6
@@ -28,3 +30,19 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+
+      - name: Mark deployments as inactive
+        run: |
+          ENVIRONMENT="preview/pr-${{ github.event.pull_request.number }}"
+
+          # Get all deployments for this environment
+          DEPLOYMENTS=$(gh api "/repos/${{ github.repository }}/deployments?environment=$ENVIRONMENT&per_page=100" --jq '.[].id')
+
+          # Mark each deployment as inactive
+          for deployment_id in $DEPLOYMENTS; do
+            echo "Marking deployment $deployment_id as inactive"
+            gh api --method POST \
+              "/repos/${{ github.repository }}/deployments/$deployment_id/statuses" \
+              -f state='inactive' \
+              -f description='Preview environment cleaned up' || true
+          done
