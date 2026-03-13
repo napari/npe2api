@@ -1,7 +1,7 @@
 {
   "info": {
-    "author": "Ga\u00eblle Letort",
-    "author_email": "gaelle.letort@pasteur.fr",
+    "author": null,
+    "author_email": "Ga\u00eblle Letort <gaelle.letort@pasteur.fr>",
     "bugtrack_url": null,
     "classifiers": [
       "Framework :: napari",
@@ -16,7 +16,7 @@
       "Programming Language :: Python :: 3.9",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "# napari-3dtimereg\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-3dtimereg.svg?color=green)](https://gitlab.pasteur.fr/gletort/napari-3dtimereg/-/blob/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-3dtimereg.svg?color=green)](https://pypi.org/project/napari-3dtimereg)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-3dtimereg.svg?color=green)](https://python.org)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-3dtimereg)](https://napari-hub.org/plugins/napari-3dtimereg)\n\nTemporal registration of 2D/3D movies on one channel based on [itk-elastix](https://pypi.org/project/itk-elastix/), and transpose alignement to the other channels.\n\nAdaptated from [multireg](https://gitlab.pasteur.fr/gletort/multireg) for temporal movies.\nFor a tutorial on using `elastix` for registration, see [this tutorial](https://m-albert.github.io/elastix_tutorial/intro.html).\n\n\n----------------------------------\n## Installation\n\n* You can install the plugin directly in `Napari` by going to `Plugins>Install/Uninstall plugins` and search for `napari-3dtimereg`\n\n* Or you can install `napari-3dtimereg` via [pip]:\n\n    pip install napari-3dtimereg\n\n\n## Usage\n\nYou can launch `3dtimereg` in napari by going to `Plugins>Do 3D movie registration (napari-3dtimereg)`.\n\n### Choose movie and reference chanel\n\nFirst, choose select the movie that you want to register. The plugin will create a folder `aligned` in the folder of your selected movie where the results will be saved.\n\nChoose the color chanel on which to calculate the registration (`reference chanel`). Color chanels are numbered from 0 to nchanels, and you can see their respective number in the layer list on the left panel of Napari. Click on `Update` when the correct chanel is selected to go to the registration calculation step.\n\n### Calculate temporal alignement\n\nThe registration is calculated iteratively from one frame to another. Thus the first frame is not moved and all the other frames are aligned to it.\nYou can tune several parameters in this plugin:\n\n![parameters screenshot](./imgs/parameters.png \"Registration parameters\")\n\nThe other parameters are parameters to use [itk-elastix](https://elastix.lumc.nl/) to calculate the registration.\n* `show log`: to see the log of Elastix calculation\n* `do rigid`: performs a rigid (affine) transformation step, that allowed to correct for translations/rotations.\n* `do bspline`: performs a b-spline based transformation step, that allowed for local deformations in the image.\n* `show advanced parameters`: to control the parameters used in the rigid and/or bspline transformations. These parameters control the size of the local registrations calculated, the resolutions at which the transformations are calculated, and can thus greatly impact the results.\n* `final order`: is the final order of the B-Splines used for the registration. \n* `resolution`: is the number of consecutives resolutions at which the registration will be made. First the registration is made at the lowest level of resolution, correcting global deformations/motions, then at each step, the registration is done on higher resolution, allowing to correct for more local deformations.\n* `final spacing`: is the physical spacing of the smallest resolution.\n* `iterations`: are the maximum number of iterations allowed to minimize the distance between the two images for each resolution and type of registration.\n\nIf both rigid and bspline transformations, the program first applies the rigid transformation to allow for a global registration of the images. Then it will performs the second step of b-spline transformation that can includes local deformations.\n\nFor each frame, after calculating the registration on the reference chanel, the plugin will apply the calculated transformation to all the other color chanels of the initial movie. All results are saved as separated images in the `aligned` folder during the computation.\n\n### Create the final aligned movie\n\nWhen all frames have been processed, each color chanel and each frame have been saved in the `aligned` folder as separated images. This is usefull to calculate the registration on large movies without having to keep all the intermediates and calculated images in memory. You can directly use these separated images, or reconstruct a single composite movie of the result.\n\nIf you click on `Concatenate aligned images` on the plugin interface, the plugin will create a single composite movie from the aligned images, save it and delete the separated images in the `aligned` folder. \n\n## License\n\nDistributed under the terms of the [BSD-3] license, \"napari-3dtimereg\" is free and open source software\n\n\n[napari]: https://github.com/napari/napari\n[@napari]: https://github.com/napari\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description": "# napari-3dtimereg\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-3dtimereg.svg?color=green)](https://gitlab.pasteur.fr/gletort/napari-3dtimereg/-/blob/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-3dtimereg.svg?color=green)](https://pypi.org/project/napari-3dtimereg)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-3dtimereg.svg?color=green)](https://python.org)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-3dtimereg)](https://napari-hub.org/plugins/napari-3dtimereg)\n\nTemporal registration of 2D/3D movies on one channel based on [itk-elastix](https://pypi.org/project/itk-elastix/), and transpose alignement to the other channels.\n\nAdaptated from [multireg](https://gitlab.pasteur.fr/gletort/multireg) for temporal movies.\nFor a tutorial on using `elastix` for registration, see [this tutorial](https://m-albert.github.io/elastix_tutorial/intro.html).\n\n* [Installation](#installation)\n    * [System requirement](#system-requirement)\n    * [Installation steps](#installation-steps)\n* [Usage](#usage)\n* [Demo](#demotest)\n* [License](#license)\n\n----------------------------------\n# Installation\n\n\n## System requirement\n\n`napari-3dtimereg` is a Napari plugin therefore can be installed on all operating systems. \nIt requires a python environement compatible with `Napari` and `elastix` version.\n\n### Tested system\nIt has been tested on python 3.9, napari XX and elastix XX.\n\n## Installation steps\n\nIn a python environment that contains Napari:\n\n* You can install the plugin directly in `Napari` by going to `Plugins>Install/Uninstall plugins` and search for `napari-3dtimereg`\n\n* Or you can install `napari-3dtimereg` via [pip]:\n\n    pip install napari-3dtimereg\n\n\nIf you don't have Napari installed yet, see [here](https://napari.org/stable/tutorials/fundamentals/quick_start.html#napari-quick-start) for installation instructions.\n\n\n# Usage\n\nYou can launch `3dtimereg` in napari by going to `Plugins>Do 3D movie registration (napari-3dtimereg)`.\n\n### Choose movie and reference chanel\n\nFirst, choose select the movie that you want to register. The plugin will create a folder `aligned` in the folder of your selected movie where the results will be saved.\n\nChoose the color chanel on which to calculate the registration (`reference chanel`). Color chanels are numbered from 0 to nchanels, and you can see their respective number in the layer list on the left panel of Napari. Click on `Update` when the correct chanel is selected to go to the registration calculation step.\n\n### Calculate temporal alignement\n\nThe registration is calculated iteratively from one frame to another. Thus the first frame is not moved and all the other frames are aligned to it.\nYou can tune several parameters in this plugin:\n\n![parameters screenshot](./imgs/parameters.png \"Registration parameters\")\n\nThe other parameters are parameters to use [itk-elastix](https://elastix.lumc.nl/) to calculate the registration.\n* `show log`: to see the log of Elastix calculation\n* `do rigid`: performs a rigid (affine) transformation step, that allowed to correct for translations/rotations.\n* `do bspline`: performs a b-spline based transformation step, that allowed for local deformations in the image.\n* `show advanced parameters`: to control the parameters used in the rigid and/or bspline transformations. These parameters control the size of the local registrations calculated, the resolutions at which the transformations are calculated, and can thus greatly impact the results.\n* `final order`: is the final order of the B-Splines used for the registration. \n* `resolution`: is the number of consecutives resolutions at which the registration will be made. First the registration is made at the lowest level of resolution, correcting global deformations/motions, then at each step, the registration is done on higher resolution, allowing to correct for more local deformations.\n* `final spacing`: is the physical spacing of the smallest resolution.\n* `iterations`: are the maximum number of iterations allowed to minimize the distance between the two images for each resolution and type of registration.\n\nIf both rigid and bspline transformations, the program first applies the rigid transformation to allow for a global registration of the images. Then it will performs the second step of b-spline transformation that can includes local deformations.\n\nFor each frame, after calculating the registration on the reference chanel, the plugin will apply the calculated transformation to all the other color chanels of the initial movie. All results are saved as separated images in the `aligned` folder during the computation.\n\n### Create the final aligned movie\n\nWhen all frames have been processed, each color chanel and each frame have been saved in the `aligned` folder as separated images. This is usefull to calculate the registration on large movies without having to keep all the intermediates and calculated images in memory. You can directly use these separated images, or reconstruct a single composite movie of the result.\n\nIf you click on `Concatenate aligned images` on the plugin interface, the plugin will create a single composite movie from the aligned images, save it and delete the separated images in the `aligned` folder. \n\n\n# Demo/Test\n\nTo test this plugin, you can use our [demo dataset](https://zenodo.org/records/15028169) proposed in a Zenodo repository or directly on your own dataset.\nIf you use the data from the Zenodo repository, the file to use to test this plugin is the movie `Registration_WTn1_Crop_V1.tif` which has been cropped from our dataset to reduce the size.\n\n## Steps\nThe input of the process should be a `.tiff` 3D and temporal stack with one or more channels. \nIf you want to use fix points registration option, you should have a file that contains the position of each tracked point at each time.\nSee in our demo dataset for the format of this file.\nIt can be for example generated from a [TrackMate](https://imagej.net/plugins/trackmate/) file with the macro [getTimePoints.py](./src/napari_3dtimereg/getTimePoints.py) proposed in this repository. \nRun it in Fiji by going to `Plugins>Macro>Edit`, openning the [getTimePoints.py](./src/napari_3dtimereg/getTimePoints.py) macro and then click `Run`.\nIt will generate a file `reference_points.csv` that you should put in the same folder as your movie to register (or select this file in the plugin interface in the `refpoints file` parameter).\n\nActivate your python virtual environement in which napari and the plugin are installed.\nFor example, if the name of the environment is `timereg-env`, type: `conda activate timereg-env`.\n\nWhen it's activated, type `napari` to start Napari. \nGo to `Plugins>napari-3dtimereg` to start it.\n\nLoad the movie to register. The plugin will ask you to choose the channel on which to calculate the registration, so choose a channel that should be immobile during the movie (for example, the channel containing the fibers which should be stable over time).\nSet the `reference channel` to the corresponding channel number (that you can see in the bottom left part of the viewer, with the layers name `Movie_C_*`). In our example dataset, choose `0` as the reference channel (the red channel that contains the fibers).\n\n![example screenshot](./imgs/load.png)\n\nClick `Update` to get to the step to choose the [registration parameters](#calculate-temporal-alignement).\n\n### Parameters\n\nIn [Sarde et al., 2025](https://www.biorxiv.org/content/10.1101/2025.03.13.643016v1), we used the following parameter values to register our intravital movies:\n* `use reference points: True`\n* `rigid resolution: 4`\n* `spline resolution: 2`\n* `iterations: 1000`\n* `rigid final spacing: 50`\n* `spline final spacing: 200`\n* `final order: 1`\n\nWhen the parameters have been selected, the registration will be calculated. \nThis step can take a lot of time depending on your movie size. \n\n\n## Output\nAt the end of the process, you will get a folder named `aligned` in which the registered movie will be saved.\n\n\n# License\n\nDistributed under the terms of the [BSD-3] license, \"napari-3dtimereg\" is free and open source software.\n\nIf you use it, please cite our paper [Sarde et al., 2025](https://www.biorxiv.org/content/10.1101/2025.03.13.643016v1). \n\n\n[napari]: https://github.com/napari/napari\n[@napari]: https://github.com/napari\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -26,7 +26,7 @@
       "last_week": -1
     },
     "dynamic": null,
-    "home_page": "https://gitlab.pasteur.fr/gletort/napari-3dtimereg",
+    "home_page": null,
     "keywords": null,
     "license": "BSD-3-Clause",
     "license_expression": null,
@@ -44,14 +44,14 @@
       "Source Code": "https://gitlab.pasteur.fr/gletort/napari-3dtimereg"
     },
     "provides_extra": null,
-    "release_url": "https://pypi.org/project/napari-3dtimereg/0.0.11/",
+    "release_url": "https://pypi.org/project/napari-3dtimereg/0.0.12/",
     "requires_dist": [
       "numpy",
       "napari",
       "magicgui",
       "qtpy",
       "tifffile",
-      "imaris_ims_file_reader",
+      "imaris-ims-file-reader",
       "czifile",
       "itk==5.3.0",
       "itk-registration",
@@ -60,11 +60,11 @@
     ],
     "requires_python": ">=3.8",
     "summary": "Registration of 3D movies applied to all channels",
-    "version": "0.0.11",
+    "version": "0.0.12",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 26845014,
+  "last_serial": 35095641,
   "ownership": {
     "organization": null,
     "roles": [
@@ -159,6 +159,29 @@
         "upload_time": "2025-01-08T10:39:52",
         "upload_time_iso_8601": "2025-01-08T10:39:52.846315Z",
         "url": "https://files.pythonhosted.org/packages/2c/d8/f33e0518c1a8245fdcba7ec04aeaafa8975593940321809fa5d36dfe27d7/napari_3dtimereg-0.0.11.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.12": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "0759f286ba5651c941f3d00a6b68e03ad0ca7a7ac4a6868e800dd1037a492352",
+          "md5": "da947664c64c7de6e200c043837564a7",
+          "sha256": "fcd386d6f74a0605bad8d24c52606fe1405979aff2dbaa30fc4dad4993df86ea"
+        },
+        "downloads": -1,
+        "filename": "napari_3dtimereg-0.0.12-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "da947664c64c7de6e200c043837564a7",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 17019,
+        "upload_time": "2026-03-13T08:56:40",
+        "upload_time_iso_8601": "2026-03-13T08:56:40.082491Z",
+        "url": "https://files.pythonhosted.org/packages/07/59/f286ba5651c941f3d00a6b68e03ad0ca7a7ac4a6868e800dd1037a492352/napari_3dtimereg-0.0.12-py3-none-any.whl",
         "yanked": false,
         "yanked_reason": null
       }
@@ -476,42 +499,21 @@
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "53f12fac6ef4a588e1559621e1c991c283fbef6c09ba4140e49aed469dd74651",
-        "md5": "d939a1f81eb1b60b7ce7bd7a67dd7f23",
-        "sha256": "1f4837b65fbe8cc23d552be06b3952bd37bc5db7290691ef780afe351f393f7e"
+        "blake2b_256": "0759f286ba5651c941f3d00a6b68e03ad0ca7a7ac4a6868e800dd1037a492352",
+        "md5": "da947664c64c7de6e200c043837564a7",
+        "sha256": "fcd386d6f74a0605bad8d24c52606fe1405979aff2dbaa30fc4dad4993df86ea"
       },
       "downloads": -1,
-      "filename": "napari_3dtimereg-0.0.11-py3-none-any.whl",
+      "filename": "napari_3dtimereg-0.0.12-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "d939a1f81eb1b60b7ce7bd7a67dd7f23",
+      "md5_digest": "da947664c64c7de6e200c043837564a7",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.8",
-      "size": 14531,
-      "upload_time": "2025-01-08T10:39:49",
-      "upload_time_iso_8601": "2025-01-08T10:39:49.394417Z",
-      "url": "https://files.pythonhosted.org/packages/53/f1/2fac6ef4a588e1559621e1c991c283fbef6c09ba4140e49aed469dd74651/napari_3dtimereg-0.0.11-py3-none-any.whl",
-      "yanked": false,
-      "yanked_reason": null
-    },
-    {
-      "comment_text": "",
-      "digests": {
-        "blake2b_256": "2cd8f33e0518c1a8245fdcba7ec04aeaafa8975593940321809fa5d36dfe27d7",
-        "md5": "6cbe97b2a75e2c9611bbbd1491cd8d3d",
-        "sha256": "e99804a89da1d7b2ebd57700f5ca6860bf2e6521e127e7a1ef23ec4c4b06bca3"
-      },
-      "downloads": -1,
-      "filename": "napari_3dtimereg-0.0.11.tar.gz",
-      "has_sig": false,
-      "md5_digest": "6cbe97b2a75e2c9611bbbd1491cd8d3d",
-      "packagetype": "sdist",
-      "python_version": "source",
-      "requires_python": ">=3.8",
-      "size": 16343,
-      "upload_time": "2025-01-08T10:39:52",
-      "upload_time_iso_8601": "2025-01-08T10:39:52.846315Z",
-      "url": "https://files.pythonhosted.org/packages/2c/d8/f33e0518c1a8245fdcba7ec04aeaafa8975593940321809fa5d36dfe27d7/napari_3dtimereg-0.0.11.tar.gz",
+      "size": 17019,
+      "upload_time": "2026-03-13T08:56:40",
+      "upload_time_iso_8601": "2026-03-13T08:56:40.082491Z",
+      "url": "https://files.pythonhosted.org/packages/07/59/f286ba5651c941f3d00a6b68e03ad0ca7a7ac4a6868e800dd1037a492352/napari_3dtimereg-0.0.12-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     }
