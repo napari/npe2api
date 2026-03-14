@@ -1,0 +1,151 @@
+{
+  "info": {
+    "author": null,
+    "author_email": "Daniel Haase <git@dhaase.de>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Framework :: napari",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3"
+    ],
+    "description": "# Napari Plugin `napari-npifile`\n\nAllows reading and writing of `.npi` files.\n\n`.npi` files are essentially NumPy arrays packaged together with JSON metadata that\nstores **napari viewer and layer configuration**, such as axis names or colormaps.\n\nThe goal is to keep the simplicity of `.npy` files while preserving useful visualization\nsettings when opening arrays in napari.\n\n## Quick Example\n\n    import napari_npifile\n    import numpy as np\n    \n    data = np.random.random(size=(10, 20, 30, 40))\n  \n    # save it without napari metadata\n    np.save(\"quick_example.npy\", data)\n\n    # save it with napari metadata\n    napari_npifile.write_npi(\n        \"quick_example.npi\",\n        data=data,\n        layer_attributes={\n            \"name\": \"foo\",\n            \"colormap\": \"magma\",\n            \"contrast_limits\": (-0.25, 1.25),\n        },\n        viewer_settings={\n            \"axis_labels\": [\"T\", \"Z\", \"Y\", \"X\"],\n            \"scale_bar_properties\": {\"visible\": True, \"unit\": \"px\", \"font_size\": 40.0},\n        },\n    )\n\n    # and drag and drop it into napari\n    #    |\n    #    |\n    #    v\n\n![quick_example.gif](quick_example.gif)\n\n## Motivation\n\nWhen working on image analysis tasks in Python it is common to save temporary NumPy\narrays such as:\n\n* image stacks\n* neural network tensors\n* intermediate processing results\n* ...\n\nto `.npy` files, which can easily be opened in [napari](https://napari.org/) via\ndrag-and-drop.\n\nHowever, `.npy` files contain no visualization metadata. Each time a file is opened,\ndisplay settings (colormap, contrast limits, etc.) must be configured manually.\n\n`.npi` files solve this by storing the arrays together with napari viewer metadata.\n\n## Installation\n\n    pip install --upgrade napari-npifile\n\n**Note**: napari is **not** included as a dependency, to allow writing `.npi` files\neven if napari is not installed (e.g., on headless servers).\n\nTo view `.npi` files in napari, you must install napari separately:\n\n    pip install napari\n\nSee the\n[napari installation instructions](https://napari.org/stable/tutorials/fundamentals/installation.html)\nfor details.\n\n## Usage\n\n### Reading `.npi` files in napari\n\nOnce `napari-npifile` is installed, `.npi` files can be opened in napari like any other\nsupported format:\n\n1. via drag-and-drop,\n2. via the `File -> Open` menu,\n3. via the napari console using `viewer.open(\"myfile.npi\", plugin=\"napari-npifile\")`, or\n4. programmatically using:\n    ```\n    import napari\n\n    viewer = napari.Viewer()\n    viewer.open(\"myfile.npi\", plugin=\"napari-npifile\")\n\n    napari.run()\n    ```\n\nWhen loaded, each layer in the `.npi` file becomes a separate napari layer. Layer\nsettings (colormap, contrast limits, gamma, name, etc.) and viewer settings (axis\nlabels, camera settings, scale bar settings, etc.) are applied automatically.\n\n### Writing `.npi` files from Python (no napari required)\n\n`napari-npifile` provides a main writer class `NpiWriter_v1` for full control, as well\nas the convenience wrappers `write_npi`, `write_multilayer_npi` into a `.npi` file.\n\n#### When to use what:\n\nThe convenience wrapper functions (`write_npi`, `write_multilayer_npi`) are useful for\ncases where all the data to be stored is available upfront. Use `write_npi` for writing\na single layer and `write_multilayer_npi` for multiple layers.\n\nThe class `NpiWriter_v1` allows to **incrementally** write layers into a single `.npi`\nfile over time, making it ideal for loops.\n\n#### Convenience wrapper `write_npi` (single-layer):\n\n    import napari_npifile\n    import numpy as np\n    \n    data = np.random.random((10, 20, 30))\n    \n    napari_npifile.write_npi(\n        \"single.npi\",\n        data=data,\n        layer_attributes={\"name\": \"layer0\", \"colormap\": \"magma\"},\n        viewer_settings={\"axis_labels\": [\"Z\", \"Y\", \"X\"]},\n    )\n\n#### Convenience wrapper `write_multilayer_npi` (multi-layer):\n\n    import napari_npifile\n    import numpy as np\n    \n    data_seq = [\n        np.random.random((10, 20, 30)),\n        np.random.random((10, 20, 30)),\n    ]\n    layer_attributes_seq = [\n        {\"name\": \"first\", \"colormap\": \"gray\"},\n        {\"name\": \"second\", \"colormap\": \"green\"},\n    ]\n    \n    napari_npifile.write_multilayer_npi(\n        \"multi.npi\",\n        data_seq=data_seq,\n        layer_attributes_seq=layer_attributes_seq,\n        viewer_settings={\"axis_labels\": [\"Z\", \"Y\", \"X\"]},\n    )\n\n#### Full general example using `NpiWriter_v1`:\n\n    import napari_npifile\n    import numpy as np\n    \n    # prepare writer\n    writer = napari_npifile.NpiWriter_v1(\n        out_path=\"out.npi\",\n        exist_ok=True,\n    )\n    \n    # viewer settings are saved once and are used for all layers\n    writer.write_viewer_settings(\n        {\n            \"axis_labels\": [\"T\", \"K\", \"Z\", \"Y\", \"X\"],\n            \"grid_properties\": {\"enabled\": True, \"shape\": (1, -1), \"stride\": 1, \"spacing\": 0.1},\n            \"scale_bar_properties\": {\"visible\": True, \"unit\": \"px\", \"gridded\": True},\n        }\n    )\n    \n    # layers are written one at a time, each with individual attributes\n    data1 = np.random.random(size=(3, 10, 20, 30, 40)) \n    writer.write_layer(data=data1, attributes={\"colormap\": \"cyan\", \"name\": \"foo\"})\n    \n    data2 = np.random.random(size=(1, 10, 20, 30, 40))\n    writer.write_layer(data=data2, attributes={\"colormap\": \"green\", \"name\": \"bar\"})\n\n## File Format\n\n### Overview\n\n`.npi` files are ZIP archives containing raw NumPy array data (stored\nas `.npy` files) together with napari viewer and layer metadata stored as JSON files.\n\n### Versions\n\nEvery `.npi` file contains a root `metadata.json` with a mandatory `\"npi_format\"`\nfield. This format versioning ensures backward compatibility: the reader uses it to\nselect the appropriate parser for each format.\n\nIn addition, the class `NpiWriter_v1` will remain indefinitely to ensure backward\ncompatibility. If a new `.npi` format version is introduced, a new writer class will be\nadded alongside it, leaving existing code using `NpiWriter_v1` fully functional.\n\nVersion history:\n\n| Format Version | `napari-npifile` version | Comment                                                                                                                                               |\n|----------------|--------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|\n| `v1`           | `0.1.0+`                 | Initial version, current format. Supports single- and multi-layer `.npi` files with full napari image layer metadata and a subset of viewer settings. |\n\n### Current Version Details (`v1`)\n\n#### Archive Layout\n\n    example.npi                  # this is just a ZIP archive\n    \u251c\u2500\u2500 metadata.json            # contains {\"npi_format\": \"v1\"}\n    \u251c\u2500\u2500 viewer_settings.json     # dictionary with global viewer settings - see below\n    \u2514\u2500\u2500 layers\n        \u251c\u2500\u2500 00000000             # each layer is stored under a sequential numeric key\n        \u2502   \u251c\u2500\u2500 data.npy         # NumPy array as saved via np.save\n        \u2502   \u2514\u2500\u2500 attributes.json  # layer attributes (as in napari.layers.Image)\n        \u2514\u2500\u2500 00000001\n            \u251c\u2500\u2500 data.npy\n            \u2514\u2500\u2500 attributes.json\n\n#### Metadata\n\nAll metadata files are JSON files which contain a dictionary.\n\n##### File `metadata.json`\n\nOnly contains `{\"npi_format\": \"v1\"}`.\nIt is used by the reader to select the correct parser for the file.\n\n##### File `viewer_settings.json`\n\nStores global napari viewer settings.\nAll fields are **optional**; if missing, the reader does not change the current napari\nconfiguration.\n\n| Field                     | Type        | Notes                                                                                                                                                                                                              |\n|---------------------------|-------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|\n| `clear_existing_layers`   | `bool`      | If `True`, removes all existing layers before adding new ones                                                                                                                                                      |\n| `hide_existing_layers`    | `bool`      | If `True`, hides all existing layers before adding new ones                                                                                                                                                        |\n| `title`                   | `str`       | Napari window title                                                                                                                                                                                                |\n| `ndisplay`                | `int`       | `2` or `3` (for 2D or 3D mode)                                                                                                                                                                                     |\n| `axis_labels`             | `list[str]` | One label per axis (e.g., `[\"T\", \"Z\", \"Y\", \"X\"]`)                                                                                                                                                                  |\n| `dims_set_point`          | `dict`      | Optional subfields as in [napari's set_point](https://napari.org/stable/api/napari.components.Dims.html#napari.components.Dims.set_point), i.e. `axis: int or Sequence[int]` and `value: float or Sequence[float]` |\n| `camera_properties`       | `dict`      | Optional subfields as in [napari's Camera](https://napari.org/stable/api/napari.components.Camera.html) (e.g., `{\"center\": (0.0, 10.0, 20.0)}`)                                                                    |\n| `grid_properties`         | `dict`      | Optional subfields as in [napari's GridCanvas](https://github.com/napari/napari/blob/main/src/napari/components/grid.py) (`enabled: bool`, `shape: tuple[int, int]`, `stride: int`, `spacing: float`)              |\n| `scale_bar_properties`    | `dict`      | Optional subfields as in [napari's ScaleBarOverlay](https://github.com/napari/napari/blob/main/src/napari/components/overlays/scale_bar.py) (e.g., `visible: bool`, `unit: str`, `gridded: bool`)                  |\n| `text_overlay_properties` | `dict`      | Optional subfields as in [napari's TextOverlay](https://github.com/napari/napari/blob/main/src/napari/components/overlays/text.py) (e.g., `visible: bool`, `text: str`, `gridded: bool`, `font_size: float`)       |\n\n##### File(s) `layers/*/attributes.json`\n\nLayer-specific settings for each layer. All fields are **optional**; if missing, the\nreader uses napari defaults.\n\n[Any keyword argument accepted by napari\u2019s Image layer](https://napari.org/stable/api/napari.layers.Image.html#napari-layers-image)\n(except `data`), e.g.:\n\n* `name: str`\n* `colormap: str` (any napari colormap)\n* `contrast_limits: tuple[float, float]`\n* `gamma: float`\n* `blending: str (\"translucent\", \"additive\", \"opaque\", ...)`\n* ...\n\n## Design Principles and Limitations\n\nKey principles for the `.npi` format and `napari-npifile` are:\n\n* **Simplicity and accessibility**: `.npi` files are standard ZIP archives containing\n  NumPy arrays and JSON metadata. Thus, the files can easily be inspected, read, and\n  created even without this library.\n* **Minimal dependencies**: Only NumPy and napari (for viewing) are required.\n* **Tight napari integration**: `.npi` stores viewer and layer settings exclusively for\n  napari, and thus allows fine-grained control over how arrays are displayed.\n* **Backward compatibility**: Every `.npi` includes a format version, ensuring future\n  readers can correctly handle older files.\n* **Headless-friendly writing**: `.npi` files can be created without napari installed,\n  which is useful for server-side or automated workflows.\n\nThese design choices naturally impose some limitations:\n\n* **No access optimization**: `.npi` uses plain `np.save`/`np.load` from ZIP\n  archives and thus can't compete with optimized formats for large arrays.\n* **No compression**: `.npi` stores raw arrays; large datasets may consume significant\n  disk space.\n* **Viewer-centric metadata**: Metadata is tailored specifically to napari; other\n  viewers or tools require extra work to interpret it.\n\nIn short, `.npi` prioritizes simplicity and tight napari integration over maximal\nperformance. Users needing advanced storage features or highly\nefficient random access may prefer formats such as [Zarr](https://zarr.dev/) or\n[HDF5](https://en.wikipedia.org/wiki/Hierarchical_Data_Format), while\n[OME-TIFF](https://ome-model.readthedocs.io/en/stable/) provides more generic\nmetadata handling.\n\n## Known Issues\n\n* Setting the viewer slice position (`viewer.dims.set_point`) and camera properties does\n  not work when there are no pre-existing layers or when `clear_existing_layers` is\n  `True`.\n\n## Todo / Ideas\n\n* Add support to write `.npi` files directly from napari.\n* Add CLI to convert existing `.npy` files to `.npi` files (and back).\n\n## Related Discussions / Projects\n\n* [napari GitHub issue: Changing viewer dimension when adding a new layer #6127](https://github.com/napari/napari/issues/6127)\n* [image.sc forum: Saving volumetric data with voxel size, colormap, annotations](https://forum.image.sc/t/saving-volumetric-data-with-voxel-size-colormap-annotations/85537/24)\n\n## License\n\n`napari-npifile` is released under the MIT License. See `LICENSE.txt` for full details.\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": null,
+    "license_expression": "MIT",
+    "license_files": [
+      "LICENSE.txt"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-npifile",
+    "package_url": "https://pypi.org/project/napari-npifile/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-npifile/",
+    "project_urls": {
+      "Repository": "https://codeberg.org/dhaase-de/napari-npifile"
+    },
+    "provides_extra": null,
+    "release_url": "https://pypi.org/project/napari-npifile/0.1.0/",
+    "requires_dist": [
+      "numpy>=1.13.3"
+    ],
+    "requires_python": ">=3.10",
+    "summary": null,
+    "version": "0.1.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 35121156,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "dhaase-de"
+      }
+    ]
+  },
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "2e8245924d1c625c24658a470bf11faec5144d0bdcf9b524f61c1b98ff8bf7d3",
+          "md5": "fcf462d58979cc72edc381b74a0fcc5c",
+          "sha256": "a9452229eef2b137faf94968983933879311c79b9e1a29c6eee0772ff7447aff"
+        },
+        "downloads": -1,
+        "filename": "napari_npifile-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "fcf462d58979cc72edc381b74a0fcc5c",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 12214,
+        "upload_time": "2026-03-14T04:16:41",
+        "upload_time_iso_8601": "2026-03-14T04:16:41.653532Z",
+        "url": "https://files.pythonhosted.org/packages/2e/82/45924d1c625c24658a470bf11faec5144d0bdcf9b524f61c1b98ff8bf7d3/napari_npifile-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "24d1f03a4993891667f2002c625457d6652ad53736d618ef4338382c3055e1f8",
+          "md5": "1d9942824c9916075f11f9acd7104466",
+          "sha256": "379d5130239807151694fe72530025291a8eb35c34e3b83583c2e0a124d986b4"
+        },
+        "downloads": -1,
+        "filename": "napari_npifile-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "1d9942824c9916075f11f9acd7104466",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 17470,
+        "upload_time": "2026-03-14T04:16:42",
+        "upload_time_iso_8601": "2026-03-14T04:16:42.899446Z",
+        "url": "https://files.pythonhosted.org/packages/24/d1/f03a4993891667f2002c625457d6652ad53736d618ef4338382c3055e1f8/napari_npifile-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "2e8245924d1c625c24658a470bf11faec5144d0bdcf9b524f61c1b98ff8bf7d3",
+        "md5": "fcf462d58979cc72edc381b74a0fcc5c",
+        "sha256": "a9452229eef2b137faf94968983933879311c79b9e1a29c6eee0772ff7447aff"
+      },
+      "downloads": -1,
+      "filename": "napari_npifile-0.1.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "fcf462d58979cc72edc381b74a0fcc5c",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.10",
+      "size": 12214,
+      "upload_time": "2026-03-14T04:16:41",
+      "upload_time_iso_8601": "2026-03-14T04:16:41.653532Z",
+      "url": "https://files.pythonhosted.org/packages/2e/82/45924d1c625c24658a470bf11faec5144d0bdcf9b524f61c1b98ff8bf7d3/napari_npifile-0.1.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "24d1f03a4993891667f2002c625457d6652ad53736d618ef4338382c3055e1f8",
+        "md5": "1d9942824c9916075f11f9acd7104466",
+        "sha256": "379d5130239807151694fe72530025291a8eb35c34e3b83583c2e0a124d986b4"
+      },
+      "downloads": -1,
+      "filename": "napari_npifile-0.1.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "1d9942824c9916075f11f9acd7104466",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.10",
+      "size": 17470,
+      "upload_time": "2026-03-14T04:16:42",
+      "upload_time_iso_8601": "2026-03-14T04:16:42.899446Z",
+      "url": "https://files.pythonhosted.org/packages/24/d1/f03a4993891667f2002c625457d6652ad53736d618ef4338382c3055e1f8/napari_npifile-0.1.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
