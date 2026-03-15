@@ -1,0 +1,434 @@
+{
+  "info": {
+    "author": "Napari User",
+    "author_email": "wulinteo.usa2@gmail.com",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: MIT License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-myelin-quantifier\n\n[![License MIT](https://img.shields.io/pypi/l/napari-myelin-quantifier.svg?color=green)](https://github.com/wulinteousa2-hash/napari-myelin-quantifier/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-myelin-quantifier.svg?color=green)](https://pypi.org/project/napari-myelin-quantifier)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-myelin-quantifier.svg?color=green)](https://python.org)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-myelin-quantifier)](https://napari-hub.org/plugins/napari-myelin-quantifier)\n\n---\n\n## Overview\n\n`napari-myelin-quantifier` is a napari plugin for quantitative analysis of 2D cross-sectional myelinated axons from binary segmentation masks.\n\nThe plugin identifies individual myelin rings, assigns a unique `ring_id` to each structure, and exports morphometric measurements for downstream analysis.\n\nIt enables reproducible extraction of:\n\n- Axon diameter\n- Fiber diameter\n- Myelin thickness\n- g-ratio\n\n---\n\n## Installation\n\nInstall via pip:\n\n```bash\npip install napari-myelin-quantifier\n```\nIf napari is not installed:\n```bash\npip install \"napari-myelin-quantifier[all]\"\n```\n\nDevelopment version:\n```bash\npip install git+https://github.com/wulinteousa2-hash/napari-myelin-quantifier.git\n```\n\n## Input Requirements\n\nThe plugin requires a binary mask layer:\n\n- Myelin = foreground (1 / True)\n- Background = 0 / False\n- Recommended: clean segmentation without holes or broken rings\n\nExample Binary Mask\n\n![Binary Mask](https://github.com/wulinteousa2-hash/napari-myelin-quantifier/blob/main/docs/images/1_mask.PNG)\n\n*Image courtesy of Bo Hu Lab, Houston Methodist Research Institute.*\n\n## Ring Detection and Labeling\n\nEach connected myelin ring is:\n\n- Assigned a unique `ring_id`\n\n- Spatially localized using centroid coordinates\n\n- Evaluated for ring topology using Euler characteristic\n\nExample Labeled Output\n\n![MultiROI](https://github.com/wulinteousa2-hash/napari-myelin-quantifier/blob/main/docs/images/2_multiROI_connected_components.PNG)\n\n![MultiROI_ring_ID](https://github.com/wulinteousa2-hash/napari-myelin-quantifier/blob/main/docs/images/3_result_labels.PNG)\n\n## Topological Validation (Euler Characteristic)\n\nThe Euler number ensures valid ring topology:\n\n- Euler = 0 \u2192 valid ring (one hole)\n\n- Euler \u2260 0 \u2192 solid object or fragmented structure\n\nThis prevents non-myelinated artifacts from being included in analysis.\n\nTopology Illustration\n\n![Euler = 0 and  \u2260 0 ](https://github.com/wulinteousa2-hash/napari-myelin-quantifier/blob/main/docs/images/4_2D_euler_number_0.PNG)\n\n## Quantitative Output (CSV)\n\nFor each ring, the plugin exports:\n\n`ring_id`\n\n`centroid_x, centroid_y`\n\n`bbox_x0, bbox_y0, bbox_x1, bbox_y1`\n\n`ring_area_px`\n\n`lumen_area_px`\n\n`filled_area_px`\n\n`euler`\n\n`touches_border`\n\nExample:\n\n```python\nring_id,centroid_x,centroid_y,bbox_x0,bbox_y0,bbox_x1,bbox_y1,ring_area_px,lumen_area_px,filled_area_px,euler,touches_border\n1,873.8658,34.4421,857,18,890,52,380,556,936,0,False\n```\n\n## Derived Morphometric Parameters\n\nAssuming approximately circular cross-sections:\n\n### Axon diameter:\n```Code\nd_axon = 2 \u00d7 sqrt(lumen_area / \u03c0)\n```\n### Fiber diameter:\n```Code\nd_fiber = 2 \u00d7 sqrt(filled_area / \u03c0)\n```\n### Myelin thickness:\n```Code\nt = (d_fiber \u2212 d_axon) / 2\n```\n### g-ratio:\n```Code\ng = d_axon / d_fiber\n```\nNote: These are geometric approximations. For highly irregular axons, area-based statistics may be preferable.\n\n## Typical Workflow\n\n1. Load binary mask into napari.\n\n2. Open:\n- Plugins \u2192 Myelin Quantifier\n\n3. Adjust filtering parameters:\n\n- Minimum ring area\n\n- Minimum lumen area\n\n- Exclude border objects (recommended)\n\n4. Run quantification.\n\n5. Export CSV.\n\n6. Perform statistical analysis in Python, R, or Excel.\n\nInterface\n\n![Interface ](https://github.com/wulinteousa2-hash/napari-myelin-quantifier/blob/main/docs/images/interface.PNG)\n\n## Acknowledgements\n\nExample microscopy data used in documentation were generated by the **Bo Hu Lab**, Houston Methodist Research Institute.\n\nImaging hardware and infrastructure support were provided by the **Electron Microscopy Core**, directed by **Istv\u00e1n Katona**, Houston Methodist Research Institute.\n\n## Contributing\n\nContributions are welcome. Please ensure tests pass before submitting pull requests.\n\nLicense\n\nMIT License.\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": "\n        The MIT License (MIT)\n        \n        Copyright (c) 2026 Napari User\n        \n        Permission is hereby granted, free of charge, to any person obtaining a copy\n        of this software and associated documentation files (the \"Software\"), to deal\n        in the Software without restriction, including without limitation the rights\n        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n        copies of the Software, and to permit persons to whom the Software is\n        furnished to do so, subject to the following conditions:\n        \n        The above copyright notice and this permission notice shall be included in\n        all copies or substantial portions of the Software.\n        \n        THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\n        THE SOFTWARE.\n        ",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-myelin-quantifier",
+    "package_url": "https://pypi.org/project/napari-myelin-quantifier/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-myelin-quantifier/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/wulinteousa2-hash/napari-myelin-quantifier/issues",
+      "Documentation": "https://github.com/wulinteousa2-hash/napari-myelin-quantifier#README.md",
+      "Source Code": "https://github.com/wulinteousa2-hash/napari-myelin-quantifier",
+      "User Support": "https://github.com/wulinteousa2-hash/napari-myelin-quantifier/issues"
+    },
+    "provides_extra": [
+      "all"
+    ],
+    "release_url": "https://pypi.org/project/napari-myelin-quantifier/1.0.1/",
+    "requires_dist": [
+      "numpy",
+      "magicgui",
+      "qtpy",
+      "scikit-image",
+      "napari[all]; extra == \"all\""
+    ],
+    "requires_python": ">=3.10",
+    "summary": "Myelinated Axon Quantification with Label Tracking",
+    "version": "1.0.1",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 34480318,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "viralvector"
+      }
+    ]
+  },
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "a7ae7a441c847f53052e2f7645ec9c245899d0bb0ed1e1e5c34fe5004bbaa719",
+          "md5": "4079fafc0be885146281746626a8835d",
+          "sha256": "290fed983d9521f04ed7fdfd7270b3f8591759827d6a19cc502d93c8e7c688cb"
+        },
+        "downloads": -1,
+        "filename": "napari_myelin_quantifier-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "4079fafc0be885146281746626a8835d",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 12911,
+        "upload_time": "2026-02-06T01:24:33",
+        "upload_time_iso_8601": "2026-02-06T01:24:33.301477Z",
+        "url": "https://files.pythonhosted.org/packages/a7/ae/7a441c847f53052e2f7645ec9c245899d0bb0ed1e1e5c34fe5004bbaa719/napari_myelin_quantifier-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "14ac62c7eefd9229e703e5a7379bd07af9063b5657a2d97f2239e68c6fdaa552",
+          "md5": "d5e4b39520c4ecc7291b6b39395d8b60",
+          "sha256": "4bd3f8d7a5852093415fbb421958ef8f9084ba439da5b5e0412323e06765eacf"
+        },
+        "downloads": -1,
+        "filename": "napari_myelin_quantifier-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d5e4b39520c4ecc7291b6b39395d8b60",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 20391,
+        "upload_time": "2026-02-06T01:24:34",
+        "upload_time_iso_8601": "2026-02-06T01:24:34.802748Z",
+        "url": "https://files.pythonhosted.org/packages/14/ac/62c7eefd9229e703e5a7379bd07af9063b5657a2d97f2239e68c6fdaa552/napari_myelin_quantifier-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "e128c0e37b45931929faf08c9f25bcc0aebcfa7b329de9f9eb4968c6775c0dbd",
+          "md5": "7ae5fa4e64fb70bb7f5e96aa7ddc8de0",
+          "sha256": "7b1b53c3f97db9832d3f33478e79f322a57ea293ad05b6a491cc2b57c393748c"
+        },
+        "downloads": -1,
+        "filename": "napari_myelin_quantifier-0.2.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "7ae5fa4e64fb70bb7f5e96aa7ddc8de0",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 13232,
+        "upload_time": "2026-02-06T04:32:19",
+        "upload_time_iso_8601": "2026-02-06T04:32:19.925909Z",
+        "url": "https://files.pythonhosted.org/packages/e1/28/c0e37b45931929faf08c9f25bcc0aebcfa7b329de9f9eb4968c6775c0dbd/napari_myelin_quantifier-0.2.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "eb0336663aa2db00d6bffe8a7dacfc65a47ee597f872872f39f0a8efd414b0c5",
+          "md5": "ee7dc34e1b1dd227090a599cb56aeea2",
+          "sha256": "ead26c95cb10483504159026c358ed2a2678447177196eb5a3b4e460095d7fc6"
+        },
+        "downloads": -1,
+        "filename": "napari_myelin_quantifier-0.2.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "ee7dc34e1b1dd227090a599cb56aeea2",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 21483,
+        "upload_time": "2026-02-06T04:32:20",
+        "upload_time_iso_8601": "2026-02-06T04:32:20.838749Z",
+        "url": "https://files.pythonhosted.org/packages/eb/03/36663aa2db00d6bffe8a7dacfc65a47ee597f872872f39f0a8efd414b0c5/napari_myelin_quantifier-0.2.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "6b40c228da97a3a77956914fe4123ec1dfb36b53f12a9804df5868f531d9e854",
+          "md5": "e1890f6b541ef54d7c25e0a904281605",
+          "sha256": "8d3641b039bdc7d7bde36dba831e713393b230806b8628ff5490f7193317cc89"
+        },
+        "downloads": -1,
+        "filename": "napari_myelin_quantifier-0.2.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "e1890f6b541ef54d7c25e0a904281605",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 13249,
+        "upload_time": "2026-02-06T04:42:31",
+        "upload_time_iso_8601": "2026-02-06T04:42:31.438905Z",
+        "url": "https://files.pythonhosted.org/packages/6b/40/c228da97a3a77956914fe4123ec1dfb36b53f12a9804df5868f531d9e854/napari_myelin_quantifier-0.2.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "3d22d08192ffa6d242a3158179f0b981a2bb146c4d1971deabf6fdc603ce75b6",
+          "md5": "cd072b68b5faff2fd4d5ab372428ee0c",
+          "sha256": "2b0e5fb23fbc22c12a640f356325ceba8562d90aefdfb15c0607b2fdc61dd2ce"
+        },
+        "downloads": -1,
+        "filename": "napari_myelin_quantifier-0.2.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "cd072b68b5faff2fd4d5ab372428ee0c",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 21500,
+        "upload_time": "2026-02-06T04:42:32",
+        "upload_time_iso_8601": "2026-02-06T04:42:32.326981Z",
+        "url": "https://files.pythonhosted.org/packages/3d/22/d08192ffa6d242a3158179f0b981a2bb146c4d1971deabf6fdc603ce75b6/napari_myelin_quantifier-0.2.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "d17e53aa7a32ce7dd70a8cd1b72e33b16ea8c2dfa14c14280d1e56c05654757b",
+          "md5": "8b0942e00e6defe96fda5faf35cb4f1d",
+          "sha256": "1e3d30213580d6f4afae986cee0d1ba365bc93c0248ff3d24279d3a98ec20119"
+        },
+        "downloads": -1,
+        "filename": "napari_myelin_quantifier-0.3.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "8b0942e00e6defe96fda5faf35cb4f1d",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 13963,
+        "upload_time": "2026-02-12T21:21:45",
+        "upload_time_iso_8601": "2026-02-12T21:21:45.866716Z",
+        "url": "https://files.pythonhosted.org/packages/d1/7e/53aa7a32ce7dd70a8cd1b72e33b16ea8c2dfa14c14280d1e56c05654757b/napari_myelin_quantifier-0.3.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "d9355027da615f3945b0b27744db23362519686121d184a4932f75def6bbdc96",
+          "md5": "dd0543fcc93e1940120ec7eaefa6277c",
+          "sha256": "285c021f2f9fbb7a39150188e6d9d82161425523555d0809c350f854fd12d8ed"
+        },
+        "downloads": -1,
+        "filename": "napari_myelin_quantifier-0.3.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "dd0543fcc93e1940120ec7eaefa6277c",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 22149,
+        "upload_time": "2026-02-12T21:21:47",
+        "upload_time_iso_8601": "2026-02-12T21:21:47.189139Z",
+        "url": "https://files.pythonhosted.org/packages/d9/35/5027da615f3945b0b27744db23362519686121d184a4932f75def6bbdc96/napari_myelin_quantifier-0.3.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "119eac70eba249d79ca643093901521fb18aa2815392cdde705233cb40a04389",
+          "md5": "dbfde50063fb98704fd6fa5bb7d6ba4c",
+          "sha256": "c782570ec14c162efaad0e92aaff808c924acd3a62de5158634c46a144e0626a"
+        },
+        "downloads": -1,
+        "filename": "napari_myelin_quantifier-0.3.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "dbfde50063fb98704fd6fa5bb7d6ba4c",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 14481,
+        "upload_time": "2026-02-20T03:41:39",
+        "upload_time_iso_8601": "2026-02-20T03:41:39.904873Z",
+        "url": "https://files.pythonhosted.org/packages/11/9e/ac70eba249d79ca643093901521fb18aa2815392cdde705233cb40a04389/napari_myelin_quantifier-0.3.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "e7036d380c64c7f15cbafdcd9a61a475c56c41f7bf73a0f5b35e6146f95fcd5a",
+          "md5": "58dad7bf905c7a36ad36cb5b39b85e96",
+          "sha256": "b8f22f988416998f4789bb47c7164e1d70b70233ce730611101b2942c142e36b"
+        },
+        "downloads": -1,
+        "filename": "napari_myelin_quantifier-0.3.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "58dad7bf905c7a36ad36cb5b39b85e96",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 965103,
+        "upload_time": "2026-02-20T03:41:41",
+        "upload_time_iso_8601": "2026-02-20T03:41:41.428894Z",
+        "url": "https://files.pythonhosted.org/packages/e7/03/6d380c64c7f15cbafdcd9a61a475c56c41f7bf73a0f5b35e6146f95fcd5a/napari_myelin_quantifier-0.3.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "1641df27f3d3b19f73b09033a5dec10a26dbf1d4c8daaaec65a36dcb5697372e",
+          "md5": "67cfe27cc154e520a5047bc363c98c07",
+          "sha256": "2df89d681b4f28fc01ff2c0b828a3ca886895050f9b229facf566163a57c5a39"
+        },
+        "downloads": -1,
+        "filename": "napari_myelin_quantifier-1.0.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "67cfe27cc154e520a5047bc363c98c07",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 13951,
+        "upload_time": "2026-02-20T16:51:43",
+        "upload_time_iso_8601": "2026-02-20T16:51:43.949244Z",
+        "url": "https://files.pythonhosted.org/packages/16/41/df27f3d3b19f73b09033a5dec10a26dbf1d4c8daaaec65a36dcb5697372e/napari_myelin_quantifier-1.0.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "d63d340e9d0f71502626c96bb793c4b491385fa1adbc2a2301c0dc282edb920d",
+          "md5": "f4fc0f2b4d8306df0bd5e84be6a278f7",
+          "sha256": "62099308b59fa8f06b8616fb54d537549580d4e7f1d8f44fbaa2159483622cd5"
+        },
+        "downloads": -1,
+        "filename": "napari_myelin_quantifier-1.0.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "f4fc0f2b4d8306df0bd5e84be6a278f7",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 964293,
+        "upload_time": "2026-02-20T16:51:45",
+        "upload_time_iso_8601": "2026-02-20T16:51:45.953876Z",
+        "url": "https://files.pythonhosted.org/packages/d6/3d/340e9d0f71502626c96bb793c4b491385fa1adbc2a2301c0dc282edb920d/napari_myelin_quantifier-1.0.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "3fa234ce1cc7f539cb28fd06b83d2cacbadbe5ed26f28c0a42692d87c0a53282",
+          "md5": "eefcf61b766203a7b63ea5b24dce48b2",
+          "sha256": "93ac1ab3771166acacd8c9634d95e21cc4e126d13b286a32ef9eeb2ed52d4d4b"
+        },
+        "downloads": -1,
+        "filename": "napari_myelin_quantifier-1.0.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "eefcf61b766203a7b63ea5b24dce48b2",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 14115,
+        "upload_time": "2026-02-20T18:26:57",
+        "upload_time_iso_8601": "2026-02-20T18:26:57.001654Z",
+        "url": "https://files.pythonhosted.org/packages/3f/a2/34ce1cc7f539cb28fd06b83d2cacbadbe5ed26f28c0a42692d87c0a53282/napari_myelin_quantifier-1.0.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "9680c5ecc76824dc92f940241d22690d653dd45e6a965f3521d5c04193464f7a",
+          "md5": "735cb2e14c78e86359387a0fccbd05f6",
+          "sha256": "169b25c1bf4a4e28992529bcf730644f067cdc984d027cba51c1ba69138dd90b"
+        },
+        "downloads": -1,
+        "filename": "napari_myelin_quantifier-1.0.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "735cb2e14c78e86359387a0fccbd05f6",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 964644,
+        "upload_time": "2026-02-20T18:26:59",
+        "upload_time_iso_8601": "2026-02-20T18:26:59.152093Z",
+        "url": "https://files.pythonhosted.org/packages/96/80/c5ecc76824dc92f940241d22690d653dd45e6a965f3521d5c04193464f7a/napari_myelin_quantifier-1.0.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "3fa234ce1cc7f539cb28fd06b83d2cacbadbe5ed26f28c0a42692d87c0a53282",
+        "md5": "eefcf61b766203a7b63ea5b24dce48b2",
+        "sha256": "93ac1ab3771166acacd8c9634d95e21cc4e126d13b286a32ef9eeb2ed52d4d4b"
+      },
+      "downloads": -1,
+      "filename": "napari_myelin_quantifier-1.0.1-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "eefcf61b766203a7b63ea5b24dce48b2",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.10",
+      "size": 14115,
+      "upload_time": "2026-02-20T18:26:57",
+      "upload_time_iso_8601": "2026-02-20T18:26:57.001654Z",
+      "url": "https://files.pythonhosted.org/packages/3f/a2/34ce1cc7f539cb28fd06b83d2cacbadbe5ed26f28c0a42692d87c0a53282/napari_myelin_quantifier-1.0.1-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "9680c5ecc76824dc92f940241d22690d653dd45e6a965f3521d5c04193464f7a",
+        "md5": "735cb2e14c78e86359387a0fccbd05f6",
+        "sha256": "169b25c1bf4a4e28992529bcf730644f067cdc984d027cba51c1ba69138dd90b"
+      },
+      "downloads": -1,
+      "filename": "napari_myelin_quantifier-1.0.1.tar.gz",
+      "has_sig": false,
+      "md5_digest": "735cb2e14c78e86359387a0fccbd05f6",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.10",
+      "size": 964644,
+      "upload_time": "2026-02-20T18:26:59",
+      "upload_time_iso_8601": "2026-02-20T18:26:59.152093Z",
+      "url": "https://files.pythonhosted.org/packages/96/80/c5ecc76824dc92f940241d22690d653dd45e6a965f3521d5c04193464f7a/napari_myelin_quantifier-1.0.1.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

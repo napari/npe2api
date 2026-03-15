@@ -1,0 +1,119 @@
+{
+  "name": "napari-orthogonal-views",
+  "display_name": "Orthogonal Views",
+  "visibility": "public",
+  "icon": "",
+  "categories": [],
+  "schema_version": "0.2.1",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-orthogonal-views.toggle",
+        "title": "Toggle Orthogonal Views",
+        "python_name": "napari_orthogonal_views.ortho_view_manager:toggle_orthogonal_views",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-orthogonal-views.show",
+        "title": "Show Orthogonal Views",
+        "python_name": "napari_orthogonal_views.ortho_view_manager:show_orthogonal_views",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-orthogonal-views.hide",
+        "title": "Hide Orthogonal Views",
+        "python_name": "napari_orthogonal_views.ortho_view_manager:hide_orthogonal_views",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-orthogonal-views.delete_cleanup",
+        "title": "Remove Orthogonal Views",
+        "python_name": "napari_orthogonal_views.ortho_view_manager:delete_and_cleanup",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": null,
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "napari-orthogonal-views",
+    "version": "0.1.0",
+    "dynamic": [
+      "license-file"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "A napari plugin for dynamically displaying orthogonal views and syncing events between the different viewers.",
+    "description": "# napari-orthogonal-views\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-orthogonal-views.svg?color=green)](https://github.com/AnniekStok/napari-orthogonal-views/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-orthogonal-views.svg?color=green)](https://pypi.org/project/napari-orthogonal-views)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-orthogonal-views.svg?color=green)](https://python.org)\n[![tests](https://github.com/AnniekStok/napari-orthogonal-views/workflows/tests/badge.svg)](https://github.com/AnniekStok/napari-orthogonal-views/actions)\n[![codecov](https://codecov.io/gh/AnniekStok/napari-orthogonal-views/branch/main/graph/badge.svg)](https://codecov.io/gh/AnniekStok/napari-orthogonal-views)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-orthogonal-views)](https://napari-hub.org/plugins/napari-orthogonal-views)\n[![npe2](https://img.shields.io/badge/plugin-npe2-blue?link=https://napari.org/stable/plugins/index.html)](https://napari.org/stable/plugins/index.html)\n[![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-purple.json)](https://github.com/copier-org/copier)\n\nA napari plugin for dynamically displaying orthogonal views and syncing events between the different viewers.\n\n----------------------------------\n\nThis [napari] plugin was generated with [copier] using the [napari-plugin-template].\n\n![orthoviews](https://github.com/user-attachments/assets/9d1ea326-866d-4af7-9ea6-8e56046cf6f2)\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/napari-plugin-template#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/stable/plugins/index.html\n-->\n\nThis plugin is based on this [example](https://napari.org/dev/gallery/multiple_viewer_widget.html), with extra display and synchronization functionalities. The crosshair overlay is based on [this](https://github.com/napari/napari/pull/8017) and [this](https://github.com/napari/napari/blob/9d0c449553eaf1acc3be1bf9bc0c8b3eec05afc6/examples/dev/overlays.py) example.\n\n## Installation\n\nYou can install the latest development version of `napari-orthogonal-views` via [pip]:\n\n```\npip install git+https://github.com/AnniekStok/napari-orthogonal-views.git\n```\n## Usage\nThis plugin is not discoverable as a widget, but commands are available in Views>Commands Palette (CMD+SHIFT+P):\n  - Show Orthogonal Views\n  - Hide Orthogonal Views\n  - Toggle Orthogonal Views\n  - Remove Orthogonal Views\n\nOnce shown, it can also be popped up or collapsed using the checkbox in the bottom right corner 'Show orthogonal views'. \nAlternatively, you can show the orthogonal views via the console:\n\n```\nfrom napari_orthogonal_views.ortho_view_manager import show_orthogonal_views\nshow_orthogonal_views(viewer)\n```\n\nAnd access the OrthoViewManager via _get_manager:\n\n```\nfrom napari_orthogonal_views.ortho_view_manager import _get_manager\nm = _get_manager(viewer)\nm.is_shown()\nOut[6]: True\n```\n\nThe size of the orthogonal view windows can be adjusted by clicking and dragging the small dot in between the views, optionally one or two views can be hidden entirely. The checkboxes in the bottom right corner can be used to show the crosshair overlay or for more control over camera zoom and axis center syncing.\nPressing `T` on the keyboard will center all views to the current mouse location. \n\nBy default, all events (including label editing such as painting) are synced across all views. The different views share the same underlying data array and undo/redo history. \n\n## Syncing properties\nBy default, all layer properties should be synced between the layer on the main viewer and the orthoviews. However, it is possible to have more finegrained control over the synced properties via the `set_sync_filters` function, as long as it is specified *before* the orthogonal views are activated. \n\nFor example, to disable syncing of all properties on Tracks layers and specifically the contour property on Labels layers: \n\n```\nfrom napari_orthogonal_views.ortho_view_manager import _get_manager\nfrom napari.layers import Tracks, Labels\nm = _get_manager(viewer)\nsync_filters = {\n    Tracks: {\n        \"forward_exclude\": \"*\",  # disable all forward sync\n        \"reverse_exclude\": \"*\",  # disable all reverse sync\n    },\n    Labels: {\n        \"forward_exclude\": \"contour\" # exclude contour from forward syncing\n    },\n}\nm.set_sync_filters(sync_filters)\n\n```\nThen add 3D data (e.g. File > Open Sample > napari builtins > Balls (3D)). Activate the labels layer and change the contour value. You should see that the contour property is not synced from main viewer to orthoviews now. \n\n## Known issues and ongoing work\n- Deprecation warnings on `Window._qt_window`, `LayerList._get_step_size`, `LayerList._get_extent_world` (suppressed for now).\n- After removing the OrthoViewManager with `delete_and_cleanup` (Remove Orthogonal Views command), the canvas may become temporarily unresponsive. Clicking outside of Napari and then back on the Napari window usually fixes this.\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-orthogonal-views\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue](https://github.com/AnniekStok/napari-orthogonal-views/issues/) along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[copier]: https://copier.readthedocs.io/en/stable/\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[napari-plugin-template]: https://github.com/napari/napari-plugin-template\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": null,
+    "download_url": null,
+    "author": "Anniek Stokkermans",
+    "author_email": "anniek.stokkermans@gmail.com",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "Copyright (c) 2025, Anniek Stokkermans\nAll rights reserved.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n\n* Redistributions of source code must retain the above copyright notice, this\n  list of conditions and the following disclaimer.\n\n* Redistributions in binary form must reproduce the above copyright notice,\n  this list of conditions and the following disclaimer in the documentation\n  and/or other materials provided with the distribution.\n\n* Neither the name of copyright holder nor the names of its\n  contributors may be used to endorse or promote products derived from\n  this software without specific prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\"\nAND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\nIMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\nDISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE\nFOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\nDAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR\nSERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER\nCAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,\nOR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\nOF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n",
+    "classifier": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "requires_dist": [
+      "napari<1,>=0.5",
+      "numpy",
+      "qtpy",
+      "napari[all]; extra == \"all\"",
+      "tox; extra == \"testing\"",
+      "pytest; extra == \"testing\"",
+      "pytest-cov; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "napari[qt]; extra == \"testing\""
+    ],
+    "requires_python": ">=3.10",
+    "requires_external": null,
+    "project_url": [
+      "Homepage, https://github.com/AnniekStok/napari-orthogonal-views",
+      "Issues, https://github.com/AnniekStok/napari-orthogonal-views/issues"
+    ],
+    "provides_extra": [
+      "all",
+      "testing"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}

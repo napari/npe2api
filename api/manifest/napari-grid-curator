@@ -1,0 +1,131 @@
+{
+  "name": "napari-grid-curator",
+  "display_name": "Grid Curator",
+  "visibility": "public",
+  "icon": "",
+  "categories": [
+    "Annotation",
+    "Segmentation",
+    "Utilities",
+    "Visualization"
+  ],
+  "schema_version": "0.2.1",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-grid-curator.get_reader",
+        "title": "Open dataset with Grid Curator",
+        "python_name": "napari_grid_curator._reader:napari_get_reader",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-grid-curator.make_grid_curator_widget",
+        "title": "Grid Curator",
+        "python_name": "napari_grid_curator._widget:ExclusionWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": [
+      {
+        "command": "napari-grid-curator.get_reader",
+        "filename_patterns": [
+          "*.pkl"
+        ],
+        "accepts_directories": false
+      }
+    ],
+    "writers": null,
+    "widgets": [
+      {
+        "command": "napari-grid-curator.make_grid_curator_widget",
+        "display_name": "Grid Curator",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "napari-grid-curator",
+    "version": "0.1.0",
+    "dynamic": [
+      "license-file"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "Interactive batch annotation tool for microscopy datasets with tiled grid visualization",
+    "description": "# napari-grid-curator\n\n[![License MIT](https://img.shields.io/pypi/l/napari-grid-curator.svg?color=green)](https://github.com/jojofranz/napari-grid-curator/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-grid-curator.svg?color=green)](https://pypi.org/project/napari-grid-curator)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-grid-curator.svg?color=green)](https://python.org)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-grid-curator)](https://napari-hub.org/plugins/napari-grid-curator)\n\nInteractive batch annotation tool for microscopy datasets with tiled grid visualization.\n\n----------------------------------\n\n## Overview\n\n**napari-grid-curator** is a [napari] plugin for efficient manual curation of large microscopy datasets. The key feature is a **tiled grid layout** that displays many segmented objects simultaneously, allowing rapid quality control and annotation.\n\n### Key Features\n\n- **Tiled Grid Layout**: View 100+ cells at once in an organized montage\n- **Batch Processing**: Efficiently navigate through thousands of segmented objects\n- **2D & 3D Support**: Works with both 2D image stacks and 3D volumetric data with scrollable Z-stacks\n- **Dual View Modes**:\n  - **Mosaic Mode**: See all cells in batch simultaneously\n  - **Slide Mode**: Navigate cell-by-cell with arrow keys\n- **Interactive Annotation**:\n  - **Alt + Click**: Exclude/include individual cells\n  - **Shift + Click**: Mark cells as positive (thresholding)\n  - **Quick Filters**: DAPI intensity and nearest-neighbor distance sliders\n- **Flexible Data Loading**: \n  - Legacy mode (all data in single `.pkl`)\n  - Lazy mode (split per-scene `.pkl` files)\n  - Minimal mode (on-the-fly cropping from original `.lif`/`.tif` files)\n- **Multi-channel Thresholding**: Set per-channel thresholds with interactive histograms\n- **Smart Caching**: Efficient caching for large 3D wholebrain datasets\n\n## Installation\n\nInstall directly from PyPI:\n\n```bash\npip install napari-grid-curator\n```\n\nOr install latest development version:\n\n```bash\npip install git+https://github.com/jojofranz/napari-grid-curator.git\n```\n\n## Usage\n\n### From napari GUI\n\n1. Open napari\n2. Go to **Plugins > Grid Curator**\n3. Load your dataset (`.pkl` file)\n4. Use mouse interactions to annotate:\n   - **Alt + Click**: Toggle cell inclusion/exclusion\n   - **Shift + Click**: Mark cell as positive\n5. Set thresholds per channel using histogram widget\n6. Export annotated dataset when done\n\n### Supported Dataset Formats\n\nThe plugin works with three dataset modes:\n\n1. **Legacy Mode**: All images stored in single `.pkl` file  \n2. **Lazy Mode**: Images split across per-scene `.pkl` files  \n3. **Minimal Mode**: References to original `.lif` or `.tif` files with on-the-fly cropping\n\nSee [DATASET_FORMATS.md](DATASET_FORMATS.md) for detailed format specifications.\n\n### Key Bindings\n\n- **Alt + Click**: Toggle cell exclusion (include/exclude)\n- **Shift + Click**: Toggle positive marker (for thresholding)\n- **Arrow Keys**: Navigate between cells in slide mode (Left/Right)\n- **Mouse Wheel**: Scroll through Z-slices (3D mode)\n\n## Use Cases\n\nThis plugin was originally developed for retinal ganglion cell (RGC) analysis but is applicable to:\n\n- Quality control of automated segmentations\n- Manual classification of cell types\n- Thresholding based on marker expression\n- Excluding edge artifacts or missegmented objects\n- Any workflow requiring rapid inspection of many segmented objects\n\n## Development\n\nThis plugin was generated using the [napari-plugin-template] and follows napari plugin best practices.\n\n### Dataset Preparation\n\nYour dataset should include:\n- Images (2D or 3D, multi-channel)\n- Segmentation labels\n- Metadata table with regionprops (e.g., from `skimage.measure.regionprops_table`)\n\nThe plugin uses bounding boxes to crop regions around each segmented object for efficient visualization.\n\n## Contributing\n\nContributions are welcome! Please open an issue or pull request on [GitHub](https://github.com/jojofranz/napari-grid-curator).\n\n## License\n\nDistributed under the terms of the [MIT] license. \"napari-grid-curator\" is free and open source software.\n\n## Issues\n\nIf you encounter any problems, please [file an issue](https://github.com/jojofranz/napari-grid-curator/issues) with:\n- Dataset format and size\n- Full error traceback\n- napari and plugin versions (`napari --info`)\n\n## Acknowledgements\n\nThis plugin was developed for wholebrain RGC analysis and uses (amongst others):\n- [napari] for visualization\n- [magicgui] for GUI widgets\n- [napari-clusters-plotter] for histogram visualization\n\nDevelopment of this plugin was funded by [NL-BioImaging AM](https://www.nwo.nl/projecten/184036012) and is happening in at the [MCL](https://www.maastrichtuniversity.nl/research/microscopy-core-lab).\n\n[napari]: https://github.com/napari/napari\n[copier]: https://copier.readthedocs.io/en/stable/\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[napari-plugin-template]: https://github.com/napari/napari-plugin-template\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n[magicgui]: https://github.com/pyapp-kit/magicgui\n[napari-clusters-plotter]: https://github.com/BiAPoL/napari-clusters-plotter\n[MIT]: http://opensource.org/licenses/MIT\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": null,
+    "download_url": null,
+    "author": "Johannes Franz",
+    "author_email": "Johannes Franz <johannes.franz@maastrichtuniversity.nl>",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "The MIT License (MIT)\n\nCopyright (c) 2025 Johannes Franz\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in\nall copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\nTHE SOFTWARE.\n",
+    "classifier": [
+      "Development Status :: 3 - Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "License :: OSI Approved :: MIT License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.9",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "requires_dist": [
+      "numpy",
+      "magicgui",
+      "qtpy",
+      "QtAwesome",
+      "napari",
+      "napari-clusters-plotter==0.8.1",
+      "xlsxwriter",
+      "zarr",
+      "microfilm",
+      "aicsimageio",
+      "readlif>=0.6.4",
+      "connected-components-3d",
+      "fastremap",
+      "tox; extra == \"testing\"",
+      "pytest; extra == \"testing\"",
+      "pytest-cov; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "napari; extra == \"testing\"",
+      "pyqt5; extra == \"testing\""
+    ],
+    "requires_python": ">=3.9",
+    "requires_external": null,
+    "project_url": [
+      "Homepage, https://github.com/jojofranz/napari-grid-curator",
+      "Bug Tracker, https://github.com/jojofranz/napari-grid-curator/issues",
+      "Documentation, https://github.com/jojofranz/napari-grid-curator#readme",
+      "Source Code, https://github.com/jojofranz/napari-grid-curator"
+    ],
+    "provides_extra": [
+      "testing"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}
