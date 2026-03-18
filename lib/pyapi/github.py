@@ -129,7 +129,7 @@ def _activity(owner: str, name: str) -> GithubActivity:
     )
 
 
-def codecov(name: PluginName) -> CoverageInfo | None:
+def codecov(name: PluginName, default_branch: str | None = None) -> CoverageInfo | None:
     """Return coverage using codecov api."""
     if not (result := org_repo(name)):
         return None
@@ -139,6 +139,11 @@ def codecov(name: PluginName) -> CoverageInfo | None:
         headers["Authorization"] = CODECOV_API_TOKEN
 
     url = "https://api.codecov.io/api/v2/gh/{}/repos/{}/commits/".format(*result)
+    # only get commit coverage info for the default branch
+    # if we couldn't find a default branch, we don't assume
+    if not default_branch:
+        return None
+    url += f"?branch={default_branch}"
     data = requests.get(url, headers=headers).json()
     commit: dict = next(iter(data.get("results", [])), {})
     if not commit or not (totals := commit.get("totals")):
@@ -217,7 +222,8 @@ def repo_summary(name: PluginName) -> RepoSummary:
     if not (result := org_repo(name)):
         raise ValueError(f"No github repo found for {name!r}")
     url = "https://github.com/{}/{}".format(*result)
-    return RepoSummary(url=url, activity=activity(name), coverage=codecov(name))
+    act = activity(name)
+    return RepoSummary(url=url, activity=act, coverage=codecov(name, act["default_branch"]))
 
 
 def _try_fetch_and_store_github_info(name: PluginName):
