@@ -105,7 +105,7 @@ def _activity(owner: str, name: str) -> GithubActivity:
     gql_client = Client(transport=transport, fetch_schema_from_transport=False)
 
     variables = {"owner": owner, "name": name}
-    data = gql_client.execute(query_activity, variables)["repository"]
+    data = gql_client.execute(query_activity, variable_values=variables)["repository"]
     last_commit_node = data["defaultBranchRef"]["target"]["history"]["nodes"][0]
     user = last_commit_node["author"].get("user") or {}
     date = last_commit_node["committedDate"]
@@ -168,7 +168,7 @@ def org_repo(name: PluginName) -> tuple[str, str] | None:
         [info.get("home_page"), info.get("package_url"), info.get("project_url")],
         (info.get("project_urls") or {}).values(),
     ):
-        if match := GITHUB_RE.match(link):
+        if link is not None and (match := GITHUB_RE.match(link)):
             org, repo = match.groups()
             if repo.endswith(".git"):
                 repo = repo[:-4]
