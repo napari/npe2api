@@ -223,7 +223,9 @@ def repo_summary(name: PluginName) -> RepoSummary:
         raise ValueError(f"No github repo found for {name!r}")
     url = "https://github.com/{}/{}".format(*result)
     act = activity(name)
-    return RepoSummary(url=url, activity=act, coverage=codecov(name, act["default_branch"]))
+    return RepoSummary(
+        url=url, activity=act, coverage=codecov(name, act["default_branch"])
+    )
 
 
 def _try_fetch_and_store_github_info(name: PluginName):
