@@ -138,18 +138,16 @@ def codecov(name: PluginName) -> CoverageInfo | None:
     if CODECOV_API_TOKEN := os.environ.get("CODECOV_API_TOKEN"):
         headers["Authorization"] = CODECOV_API_TOKEN
 
-    url = "https://codecov.io/api/gh/{}/{}".format(*result)
+    url = "https://api.codecov.io/api/v2/gh/{}/repos/{}/commits/".format(*result)
     data = requests.get(url, headers=headers).json()
-    commit: dict = data.get("commit")
-    if not commit:
-        commit = next((c for c in data.get("commits", []) if c.get("merged")), {})
+    commit: dict = next(iter(data.get("results", [])), {})
     if not commit or not (totals := commit.get("totals")):
         return None
 
     return CoverageInfo(
-        hits=totals["h"],
-        lines=totals["n"],
-        ratio=float(totals["c"]),
+        hits=totals["hits"],
+        lines=totals["lines"],
+        ratio=float(totals["coverage"]),
         commit=commit["commitid"],
         date=commit["timestamp"],
         branch=commit["branch"],
