@@ -1,0 +1,250 @@
+{
+  "info": {
+    "author": null,
+    "author_email": "Wulin Teo <wulinteo.usa2@gmail.com>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Framework :: napari",
+      "License :: OSI Approved :: MIT License",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11"
+    ],
+    "description": "# napari-nd2-spectral-ome-zarr\n\nThis napari plugin supports spectral fluorescence imaging workflows for\nsolvatochromic dye analysis (e.g., Nile Red) across the visible emission\nrange (~400\u2013740 nm). It provides ND2-to-OME-Zarr conversion, ROI-based\nspectral extraction, emission-ratio analysis, and aggregation from ROI\nto image-level and animal-level datasets.\n\n## Supported microscopy systems\n\nTested with spectral ND2 datasets generated from:\n\n- Nikon A1 spectral detector systems\n- Nikon AX spectral detector systems\n\n## Plugin Overview\n\nThe plugin is organized as 3 subplugins:\n\n1. `ND2 Spectral Export`\n- convert single files or batches from ND2 to OME-Zarr\n- load single or batch OME-Zarr datasets\n- validate image structure and dimensions such as axes order, shape, and wavelength metadata\n\n2. `Spectral Viewer`\n- visualize spectral images as truecolor using visible-wavelength hue mapping\n- provide a single-channel grayscale image for morphology review and machine-learning workflows\n- read spectral intensity versus wavelength in normalized or absolute modes\n- support ROI generation and ROI-based spectral extraction\n\n3. `Spectral Analysis`\n- collect stored ROI datasets for downstream analysis\n- compute emission-ratio metrics using a user-defined split wavelength\n- support Student's t-test and one-way or two-way ANOVA\n- support blind-group analysis using PCA, feature comparison, user-selected clustering, and p-value statistics\n\nFeatures:\n\n- Read `.nd2` files into napari\n- Read `.zarr` and `.ome.zarr` through the plugin loader widget\n- Build an estimated truecolor RGB view for spectral ranges spanning roughly 400 nm to 740 nm\n- Export the loaded ND2 spectral cube to OME-Zarr with multiscales and wavelength metadata\n- Plot ROI spectra from spectral OME-Zarr layers\n- Keep per-image ROI spectral datasets in memory during the napari session\n- Export stored ROI datasets and analysis tables to CSV\n- Run split-wavelength Nile Red ratio analysis, aggregation, and group comparison in a dedicated analysis panel\n\nThe plugin is designed around 2D spectral images and keeps `T`, `C`, `Z`, `Y`, `X` axis semantics explicit during export.\n\n## Installation\n\nInstall the plugin in a Python environment that can run napari:\n\n```bash\npip install -e .\n```\n\nThen start napari and open the plugin widgets from the Plugins menu.\n\n## Intended users\n\nThis plugin is designed for researchers working with spectral fluorescence\nmicroscopy datasets, especially solvatochromic probes such as Nile Red\nfor myelin physicochemical analysis. It supports workflows involving:\n\n- Nikon spectral ND2 datasets\n- OME-Zarr spectral cubes\n- ROI-based emission ratio measurements\n- blinded experimental grouping (PCA)\n- multi-image aggregation across animals\n\n## Dock Widgets\n\nThe plugin now exposes 3 napari dock widgets:\n\n- `ND2 Spectral Export`\n- `Spectral Viewer`\n- `Spectral Analysis`\n\nAll 3 widgets are configured to float by default instead of staying docked in the main napari window.\n\n## ND2 Spectral Export Workflow\n\n`ND2 Spectral Export` now handles:\n\n- single ND2 preview\n- batch ND2 to OME-Zarr export\n- single OME-Zarr loading\n- batch OME-Zarr loading from a parent folder\n\n### Single Zarr loading\n\nThe widget supports drag-and-drop or browsing for one `.zarr` folder.\n\nBefore opening, it shows:\n\n- dataset name\n- axes\n- full-resolution shape\n- preview shape\n- whether the dataset is spectral\n- wavelength count and wavelength range\n\nThe user can choose which views to open:\n\n- `Visible sum`\n- `Truecolor`\n- `Raw spectral`\n\nIt also supports `Use preview pyramid level` for the display layers.\n\n### Batch Zarr loading\n\nThe widget also supports scanning one parent folder recursively for `.zarr` datasets, including nested subfolders.\n\nThe batch table shows:\n\n- `open`\n- `name`\n- `relative_path`\n- `axes`\n- `shape`\n- `preview_shape`\n- `wavelengths`\n- `spectral`\n\n`relative_path` is shown as the parent folder only, for example `./659/`, instead of including the `.zarr` folder name.\n\nThe user can:\n\n- browse to a root folder\n- scan recursively for `.zarr` datasets\n- select all or clear all\n- open only the checked datasets\n\nThe chosen `Visible sum`, `Truecolor`, `Raw spectral`, and preview options are applied to all selected Zarr datasets in the batch open action.\n\n### Reader popup note\n\nIf a user opens `.zarr` files through napari's generic file-open dialog, napari may still show a `Choose reader` popup when multiple readers claim `.zarr`.\n\nThis plugin cannot reliably suppress that global napari chooser by itself.\n\nThe intended workaround is:\n\n- use the plugin's own Zarr loader in `ND2 Spectral Export`\n- open Zarr datasets from there instead of through napari's general file-open menu\n\n### Visible sum definition\n\n`Visible sum` is currently computed as the raw per-pixel mean intensity across spectral bins:\n\n- sum all channel intensities at a pixel\n- divide by the number of spectral bins\n- do not normalize\n\nSo if a pixel has 24 spectral bins, the displayed gray value is:\n\n`(bin_1 + bin_2 + ... + bin_24) / 24`\n\n## Spectral Viewer Workflow\n\n`Spectral Viewer` is where ROIs are drawn and spectral datasets are captured.\n\n### Important ROI logic\n\nROI layers are now handled per image, not globally.\n\n- Each active spectral image gets its own Shapes layer named like `image_name ROI`\n- ROI labels are displayed through a separate companion label layer\n- ROI numbering resets per image, so image 1 can have `ROI 1..N` and image 2 can also have `ROI 1..N`\n- ROIs from image 1 are not reused automatically for image 2\n\n### Recommended step-by-step use\n\n1. Select a spectral image layer.\n2. Click `Prepare ROI Layer`.\n3. Draw ROIs for that image only.\n4. Click `Plot ROI Spectrum`.\n5. The plugin stores that image's ROI spectra in memory as a dataset.\n6. Move to the next image.\n7. Click `Prepare ROI Layer` again for that image.\n8. Draw a fresh set of ROIs starting from `ROI 1`.\n\nIf you want to redraw for the current image, click `Clear Active ROI`. That clears only the active image's ROI shapes and restarts numbering from `ROI 1`.\n\n### Stored ROI datasets\n\nWhen `Plot ROI Spectrum` is used, the selected ROI spectra are stored in memory for the current napari session.\n\n- Stored datasets remain available even if the image layer is later closed\n- Stored datasets can be exported from `Spectral Viewer`\n- Stored datasets are consumed by the `Spectral Analysis` panel\n- Stored datasets do not persist across a full napari restart unless they are exported\n\n## Spectral Analysis Workflow\n\n`Spectral Analysis` is intended for multi-image and multi-animal experiments.\n\n### Metadata editing\n\nThe `Stored ROI Datasets` table lets you annotate each captured dataset with:\n\n- `animal_id`\n- `group_label`\n- `genotype`\n- `sex`\n- `age`\n- `region`\n- `batch`\n- `blind_id`\n\nThis supports experiments such as:\n\n- 10 images total\n- multiple experimental groups such as WT vs mutant, control vs treatment, or blinded cohorts\n- multiple myelin ROIs per image\n- aggregation from ROI level to image level to animal level\n\n### Dataset selection and removal\n\nAnalysis no longer uses every stored dataset automatically.\n\n- Use the `use_for_analysis` checkbox column to choose which dataset IDs are included\n- Click `Compute Spectral Analysis` to analyze only the checked datasets\n- Click `Remove Selected Datasets` to delete all checked datasets from memory\n- Click `Remove Current Row` to delete the currently selected dataset\n\nUnchecked datasets stay in memory but are ignored by the analysis.\n\n### Available analysis outputs\n\nThe panel computes:\n\n- ROI-level ratio table\n- image-level summary table\n- animal-level summary table\n\nEach table can be exported to CSV.\n\n### Ratio and statistics\n\nThe analysis panel supports:\n\n- user-defined split wavelength\n- ratio modes such as above/below split intensity ratio\n- optional normalization before ratio calculation\n- two-group comparison such as WT vs mutant or control vs treatment\n- one-way ANOVA by selected factor\n- blind PCA and clustering for unlabeled datasets\n\n### Recommended experiment flow\n\n1. Open spectral images in napari.\n2. For image 1, prepare the ROI layer and draw multiple myelin ROIs.\n3. Plot the ROI spectrum to store that image's ROI dataset.\n4. Repeat for image 2, image 3, and so on.\n5. Open `Spectral Analysis`.\n6. Enter metadata for each stored dataset.\n7. Check only the dataset IDs you want to compare.\n8. Set the wavelength split point.\n9. Compute the analysis.\n10. Export ROI, image, or animal summary CSV files as needed.\n\n## Reproducibility note\n\nThe spectral analysis tools implemented in this plugin reproduce the\nmethodology described in Teo et al. (PNAS 2021) and Teo et al. (2024).\nThe plugin itself is a new napari-based implementation designed to make\nthese workflows accessible within OME-Zarr-compatible environments.\n\n## Known Limitations\n\n- If `.zarr` files are opened through napari's generic file-open dialog, napari may still show a `Choose reader` popup when multiple readers claim `.zarr`. Use the plugin's own Zarr loader to avoid that workflow.\n- ROI datasets are stored in memory for the current napari session and should be exported if they need to survive a full application restart.\n- napari `Shapes` rendering can be sensitive in some environments. The plugin uses separate ROI label layers to reduce instability, but behavior can still depend on upstream napari and vispy rendering.\n\n\n## Citation\n\nThis plugin implements spectral analysis workflows derived from the\nNile Red myelin spectroscopy methodology described in:\n\nTeo et al., PNAS 2021\nhttps://doi.org/10.1073/pnas.2016897118\n\nTeo et al., 2024\nhttps://pmc.ncbi.nlm.nih.gov/articles/PMC11657930/\n\nIf you use this plugin in research, please cite these papers.\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": "napari, spectral imaging, nd2, ome-zarr, myelin, nile red, fluorescence spectroscopy",
+    "license": "MIT",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-nd2-spectral-ome-zarr",
+    "package_url": "https://pypi.org/project/napari-nd2-spectral-ome-zarr/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-nd2-spectral-ome-zarr/",
+    "project_urls": {
+      "Homepage": "https://github.com/wulinteousa2-hash/napari-nd2-spectral-ome-zarr",
+      "Repository": "https://github.com/wulinteousa2-hash/napari-nd2-spectral-ome-zarr"
+    },
+    "provides_extra": null,
+    "release_url": "https://pypi.org/project/napari-nd2-spectral-ome-zarr/1.1.1/",
+    "requires_dist": [
+      "numpy",
+      "nd2>=0.10",
+      "dask[array]",
+      "zarr<3",
+      "numcodecs",
+      "ome-zarr",
+      "scikit-image",
+      "qtpy",
+      "matplotlib"
+    ],
+    "requires_python": ">=3.10",
+    "summary": "A napari plugin for Nikon ND2 spectral imaging workflows, including ND2-to-OME-Zarr conversion, OME-Zarr reading, spectral visualization, and ROI-based analysis across 400-740 nm.",
+    "version": "1.1.1",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 35376627,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "viralvector"
+      }
+    ]
+  },
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "15c2d22ebd411d3eea66cfa5e8296c7abd48d5d0bfb57a329f8fbcc0064188ee",
+          "md5": "902842d9dcf3bc842eba15e0d9a29260",
+          "sha256": "2678465b6dc2b63f9b25e403df94d1af3a5bf2d95788e62605e7a0492e77f5fc"
+        },
+        "downloads": -1,
+        "filename": "napari_nd2_spectral_ome_zarr-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "902842d9dcf3bc842eba15e0d9a29260",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 38309,
+        "upload_time": "2026-03-22T20:36:37",
+        "upload_time_iso_8601": "2026-03-22T20:36:37.949835Z",
+        "url": "https://files.pythonhosted.org/packages/15/c2/d22ebd411d3eea66cfa5e8296c7abd48d5d0bfb57a329f8fbcc0064188ee/napari_nd2_spectral_ome_zarr-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "ebc2ec1640995e7a175fec4a0a904de57774c148d7c942c27683af234e2b9b1b",
+          "md5": "74b94fcb645123e891127d8867d42b8a",
+          "sha256": "d9e1fa6520036baf3e2c00cdf2f9e63a347df4e08e83aa6823e8ef73288352a6"
+        },
+        "downloads": -1,
+        "filename": "napari_nd2_spectral_ome_zarr-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "74b94fcb645123e891127d8867d42b8a",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 37439,
+        "upload_time": "2026-03-22T20:36:39",
+        "upload_time_iso_8601": "2026-03-22T20:36:39.260783Z",
+        "url": "https://files.pythonhosted.org/packages/eb/c2/ec1640995e7a175fec4a0a904de57774c148d7c942c27683af234e2b9b1b/napari_nd2_spectral_ome_zarr-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.1.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "ea21cbaa6178a68776852cf6b272b6a08646c558325b8993d7cfe9fa87b11a17",
+          "md5": "4fa5e5bb6dab271d88e2c406ada2b55f",
+          "sha256": "0e58faf7664cb430286be4cee002e2e2e0980eb25f38481ac59b927b03e5b19f"
+        },
+        "downloads": -1,
+        "filename": "napari_nd2_spectral_ome_zarr-1.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "4fa5e5bb6dab271d88e2c406ada2b55f",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 38422,
+        "upload_time": "2026-03-22T21:36:59",
+        "upload_time_iso_8601": "2026-03-22T21:36:59.589112Z",
+        "url": "https://files.pythonhosted.org/packages/ea/21/cbaa6178a68776852cf6b272b6a08646c558325b8993d7cfe9fa87b11a17/napari_nd2_spectral_ome_zarr-1.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "982a99b9104cc9492f35a56aae72107689d66fc7d7eb5e41023b672a64e429bd",
+          "md5": "d9fe5b5250342a939b0f53b6d78cb0f6",
+          "sha256": "5a6c328a777d898a9654256c70392f768622b6f63a062809bf7a8fcbe729d249"
+        },
+        "downloads": -1,
+        "filename": "napari_nd2_spectral_ome_zarr-1.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d9fe5b5250342a939b0f53b6d78cb0f6",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 37653,
+        "upload_time": "2026-03-22T21:37:00",
+        "upload_time_iso_8601": "2026-03-22T21:37:00.956311Z",
+        "url": "https://files.pythonhosted.org/packages/98/2a/99b9104cc9492f35a56aae72107689d66fc7d7eb5e41023b672a64e429bd/napari_nd2_spectral_ome_zarr-1.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.1.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "032385d637e4817d39291fad4df00e62b9eeb753422408558101d6803fd63d7b",
+          "md5": "62dacd8336c88c7ea392f3f134e2e3fb",
+          "sha256": "1e15807b394bee745d314a207f5a8be9cd401be29272d57dc4ab242e62c8f94a"
+        },
+        "downloads": -1,
+        "filename": "napari_nd2_spectral_ome_zarr-1.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "62dacd8336c88c7ea392f3f134e2e3fb",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 39496,
+        "upload_time": "2026-03-22T22:07:33",
+        "upload_time_iso_8601": "2026-03-22T22:07:33.984526Z",
+        "url": "https://files.pythonhosted.org/packages/03/23/85d637e4817d39291fad4df00e62b9eeb753422408558101d6803fd63d7b/napari_nd2_spectral_ome_zarr-1.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "3926e8e7a2f1fc0c9226e479bc82e7f3110da4730338b9b3543f02e4ac36283d",
+          "md5": "9296ce0dca76d1f398c2cee7915efeff",
+          "sha256": "308cef9a69ed20f340bae4373be2e2c34932542c0a0cc29f43e73151a588ac4b"
+        },
+        "downloads": -1,
+        "filename": "napari_nd2_spectral_ome_zarr-1.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "9296ce0dca76d1f398c2cee7915efeff",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 39346,
+        "upload_time": "2026-03-22T22:07:35",
+        "upload_time_iso_8601": "2026-03-22T22:07:35.210084Z",
+        "url": "https://files.pythonhosted.org/packages/39/26/e8e7a2f1fc0c9226e479bc82e7f3110da4730338b9b3543f02e4ac36283d/napari_nd2_spectral_ome_zarr-1.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "032385d637e4817d39291fad4df00e62b9eeb753422408558101d6803fd63d7b",
+        "md5": "62dacd8336c88c7ea392f3f134e2e3fb",
+        "sha256": "1e15807b394bee745d314a207f5a8be9cd401be29272d57dc4ab242e62c8f94a"
+      },
+      "downloads": -1,
+      "filename": "napari_nd2_spectral_ome_zarr-1.1.1-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "62dacd8336c88c7ea392f3f134e2e3fb",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.10",
+      "size": 39496,
+      "upload_time": "2026-03-22T22:07:33",
+      "upload_time_iso_8601": "2026-03-22T22:07:33.984526Z",
+      "url": "https://files.pythonhosted.org/packages/03/23/85d637e4817d39291fad4df00e62b9eeb753422408558101d6803fd63d7b/napari_nd2_spectral_ome_zarr-1.1.1-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "3926e8e7a2f1fc0c9226e479bc82e7f3110da4730338b9b3543f02e4ac36283d",
+        "md5": "9296ce0dca76d1f398c2cee7915efeff",
+        "sha256": "308cef9a69ed20f340bae4373be2e2c34932542c0a0cc29f43e73151a588ac4b"
+      },
+      "downloads": -1,
+      "filename": "napari_nd2_spectral_ome_zarr-1.1.1.tar.gz",
+      "has_sig": false,
+      "md5_digest": "9296ce0dca76d1f398c2cee7915efeff",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.10",
+      "size": 39346,
+      "upload_time": "2026-03-22T22:07:35",
+      "upload_time_iso_8601": "2026-03-22T22:07:35.210084Z",
+      "url": "https://files.pythonhosted.org/packages/39/26/e8e7a2f1fc0c9226e479bc82e7f3110da4730338b9b3543f02e4ac36283d/napari_nd2_spectral_ome_zarr-1.1.1.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

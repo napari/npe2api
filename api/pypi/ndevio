@@ -1,0 +1,750 @@
+{
+  "info": {
+    "author": "Tim Monko",
+    "author_email": "timmonko@gmail.com",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# ndevio\n\n[![License BSD-3](https://img.shields.io/pypi/l/ndevio.svg?color=green)](https://github.com/ndev-kit/ndevio/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/ndevio.svg?color=green)](https://pypi.org/project/ndevio)\n[![Python Version](https://img.shields.io/pypi/pyversions/ndevio.svg?color=green)](https://python.org)\n[![tests](https://github.com/ndev-kit/ndevio/workflows/tests/badge.svg)](https://github.com/ndev-kit/ndevio/actions)\n[![codecov](https://codecov.io/gh/ndev-kit/ndevio/branch/main/graph/badge.svg)](https://codecov.io/gh/ndev-kit/ndevio)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/ndevio)](https://napari-hub.org/plugins/ndevio)\n[![npe2](https://img.shields.io/badge/plugin-npe2-blue?link=https://napari.org/stable/plugins/index.html)](https://napari.org/stable/plugins/index.html)\n[![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-purple.json)](https://github.com/copier-org/copier)\n\n**A generalized image format reader for napari built on top of [bioio]**\n\n`ndevio` provides flexible, metadata-aware image I/O for images in napari.\nOriginally developed as part of napari-ndev (as a spiritual successor to [napari-aicsimageio]), `ndevio` has since been separated into its own plugin as part of the [ndev-kit] and is intended to be a feature-rich, metadata-aware image reader for a variety of formats in napari, with a focus on microscopy images.\n\n----------------------------------\n\n## Features\n\n- **Extensive format support** via [bioio] and its plugin system \u2014 read OME-TIFF, OME-Zarr, common image and movie formats, proprietary formats (CZI, LIF, ND2), and many more (with bioformats)!\n- **Multi-scene handling** \u2014 interactive widget for selecting between scenes/positions in multi-scene files\n- **Thorough metadata extraction** \u2014 extract and apply scale, units, axis labels, metadata (inc. OME) to napari layers\n- **Remote file support** \u2014 compatible Bioio readers,such as [bioio-ome-zarr], can read from remote filesystems (HTTP, S3, etc.) with dask-backed loading\n- **Native multiscale support** \u2014 automatically read and display multiscale images when supported by the reader. For best experience, turn on the asynchronous rendering experimental setting in napari.\n- **Configurable behavior** via [ndev-settings] \u2014 customize reader priority, multi-scene handling, and more\n- **Smart plugin installation** \u2014 automatic suggestions to install missing bioio reader plugins\n- **Programmatic API** \u2014 `nImage` class for napari-ready metadata extraction\n- **Batch utilities** \u2014 legacy widget for batch concatenation (with [nbatch]) and metadata management, with features being superseded by [napari-metadata]\n- **Sample data** \u2014 demonstrates ndevio metadata handling and capabilities\n\n![napari viewer showing scene selection widget and napari-metadata widget displaying the metadata provided by ndevio a .czi file](https://github.com/ndev-kit/ndevio/blob/main/resources/ndevio-scene-and-metadata.png?raw=true)\n\n## Installation\n\nYou can install `ndevio` from [PyPI] or via the napari plugin manager:\n\n```bash\npip install ndevio\n```\n\nIf you would like to try out ndevio, you can run napari in a temporary environment with [uv]:\n\n```bash\nuvx --with ndevio -p 3.13 \"napari[all]\"\n```\n\nTo contibute to ndevio or experiment with the latest features, see [Contributing.md](CONTRIBUTING.md) for development setup instructions. Conda-forge availability is coming soon!\n\n### Additional Image Format Support\n\n**ndevio** uses [bioio](https://github.com/bioio-devs/bioio) for flexible image reading. Basic formats (TIFF, OME-TIFF, OME-Zarr, PNG, etc.) are supported out of the box via:\n\n- `bioio-ome-tiff` - OME-TIFF files\n- `bioio-ome-zarr` - OME-Zarr files\n- `bioio-tifffile` - General TIFF files\n- `bioio-imageio` - PNG, JPEG, and other common formats\n\nIf your image format is not supported by the default readers, then you will get a warning and (by default in napari) a widget to install the suggested reader.\nIf you know of your additional proprietary formats, install the appropriate bioio reader.\nSee the [bioio documentation](https://bioio-devs.github.io/bioio/) for the full list of available readers.\n**Note**: The use of `bioio-bioformats` requires an automatic, initial download of required Java files, this takes some time. Most native format readers do a better job reading metadata compared to `bioio-bioformats`.\n\nPlease [file an issue] if you encounter problems with image reading!\n\n## Usage\n\n### In napari\n\nSimply drag and drop image files into napari. `ndevio` handles the rest! To learn more about the decisions that ndevio (and its settings) makes when loading images, see [How ndevio Handles Images](#how-ndevio-handles-images) below.\n\n#### Multi-scene Images\n\nWhen opening multi-scene files (e.g., multi-position acquisitions, mosaics), a **Scene Widget** appears in the viewer, allowing you to select which scene to display. Configure default behavior via the Settings widget.\n\n#### Bioio Reader Plugin Installation Widget\n\nIf you open a file that requires a bioio reader not currently installed, ndevio will display a **BioIO Plugin Installation widget** in napari suggesting the appropriate plugin to install.\n\n![bioio plugin installation suggestion widget](https://github.com/ndev-kit/ndevio/blob/main/resources/bioio-plugin-install-widget.png?raw=true)\n\nThis widget taps into the `napari-plugin-manager` to install the bioio reader plugin from PyPI via a GUI. You may invoke this widget manually at any time via `Plugins > ndevio > Install BioIO Reader Plugins` to install any additional bioio reader plugin *and* update any currently installed plugins.\n\n#### Settings Widget\n\nAccess **ndevio settings** via `Plugins > ndev-settings > Settings` to customize:\n\n- **Preferred reader**: Override bioio's default plugin selection priority (useful for formats with multiple compatible readers)\n- **Multi-scene handling**: Choose whether to show the scene widget, view all scenes as a stack, or view only the first scene\n- **Plugin suggestions**: Enable/disable automatic plugin installation prompts for unsupported formats\n\n![ndevio settings via the ndev-settings widget in napari](https://github.com/ndev-kit/ndevio/blob/main/resources/ndev-settings.png?raw=true)\n\nThese settings are managed by [ndev-settings] and persist across napari sessions.\n\n#### Utilities Widget\n\nAccess via `Plugins > ndevio > Utilities` for:\n\n- **Batch concatenation** of images\n- **Metadata management**\n- **Export** as OME-TIFF or figure (PNG)\n\n**Note**: Elements of this widget are being superseded by [napari-metadata] for more comprehensive metadata handling.\n**Note 2:** This widget was built during napari-ndev mono-repo development and does not fully reflect the design goals of ndevio. It will remain functional, but expect future versions to look different.\n\n### Programmatic Usage with `nImage`\n\nThe `nImage` class extends [bioio]'s `BioImage` with napari-specific functionality:\n\n```python\nfrom ndevio import nImage\nfrom napari import Viewer\n\n# Load image with automatic metadata extraction\nimg = nImage(\"path/to/image.czi\")\n\n# Because nImage subclasses BioImage, all BioImage methods are available\nprint(img.dims)               # e.g., <Dimensions [T: 15, C: 4, Z: 1, Y: 256, X: 256]>\n\n# Access napari-ready properties, note that channel and singleton dimensions are dropped\nprint(img.reference_xarray)   # e.g., xarray.DataArray with dims (T, Y, X) and shape (15, 256, 256)\nprint(img.layer_data[0])      # e.g. the highest resolution array; a list is returned for multiscale image support\nprint(img.layer_scale)        # e.g., (1.0, 0.2, 0.2) - time interval + physical scale per dimension, napari ready\nprint(img.layer_axis_labels)  # e.g., ('T', 'Y', 'X')\nprint(img.layer_units)        # e.g., ('s', '\u00b5m', '\u00b5m')\nprint(img.layer_metadata)     # e.g., a dictionary containing the 1) full BioImage object, 2) raw_image metadata and 3) OME metadata (if parsed) - accessible via `viewer.layers[n].metadata`\n\n# A convenience method to get napari LayerDataTuples with nImage metadata for napari\nviewer = Viewer()\nfor ldt in img.get_layer_data_tuples():\n    viewer.add_layer(ldt)\n```\n\n### Sample Data\n\nndevio includes sample datasets accessible via `File > Open Sample > ndevio`.\nThese samples use the `nImage` API to demonstrate the metadata handling.\n\n![4 Channel 2D neural cells with segmentation labels](https://github.com/ndev-kit/ndevio/blob/main/resources/neuron-sampledata.png?raw=true)\n\n- 2D neural cells in a dish imaged with 4 channels, with corresponding segmentation labels\n- 2D brain slice with 3 different transcription factor antibody stains\n- A single 2D+Time sample from a scratched retinal epithelial cell culture, including auto-detected labels in the same file.\n- the napari-ndev logo as a .png\n\n## How ndevio Handles Images\n\n### Metadata\n\nImage metadata is extracted from bioio and converted to napari layer metadata based on the current napari convention to squeeze out singleton dimensions (i.e. drop dimensions of size 1):\n\n- **Full metadata** available at `viewer.layers[n].metadata`\n- **Time and physical scale** automatically applied to layers from OME metadata or file headers\n- **Dimension labels** (T, C, Z, Y, X) preserved in `axis_labels`\n- **Physical units** (\u00b5m, nm, etc.) stored in layer metadata\n\n### Memory Management\n\nImages are loaded **in-memory** or **lazily** (via dask) automatically based on:\n\n- File size < 4 GB **AND**\n- File size < 30% of available RAM\n- Remote files (e.g., S3, HTTP) and multiscale are always loaded lazily\n\n### Multi-channel Images\n\nMulti-channel images are **always split** into individual layers (one per channel), using channel names from metadata when available. Images are added with colorblind-friendly colormaps.\n\n### Mosaic/Tiled Images\n\nImages with tiles (e.g., stitched acquisitions) are **automatically stitched together** if the reader supports this behavior.\n\n### RGB Images\n\nRGB(A) images are currently added to the viewer as a single RGB(A) layer, according to napari conventions.\nRGB(A) images are identified by containing the Samples ('S') dimension by bioio, which nominally exists for images with the last (`-1`) dimension being of size 3 or 4.\n\n### Detection of Labels/Segmentation Layers\n\nIf an image contains a channel name or file name suggestive of a labels layer, ndevio will add that channel as a labels layer in napari. Mixed image and label files are possible by having information in the channel names (e.g., `[\"DAPI\", \"DAPI-labels\"]`).\n\n### Customization\n\nIf you need different behavior for any of these automated handling rules, please [file an issue] \u2014 we may be able to add settings to configure them!\n\n## Coming Soon\n\n**Writers for OME-TIFF and OME-Zarr** with round-trip napari metadata support!\n\n## Contributing\n\nContributions are very welcome! Please see [Contributing.md](CONTRIBUTING.md) for development setup and guidelines.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"ndevio\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[file an issue]: https://github.com/ndev-kit/ndevio/issues\n[napari]: https://github.com/napari/napari\n[copier]: https://copier.readthedocs.io/en/stable/\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[napari-plugin-template]: https://github.com/napari/napari-plugin-template\n[PyPI]: https://pypi.org/project/ndevio/\n[tox]: https://tox.readthedocs.io/en/latest/\n[bioio]: https://github.com/bioio-devs/bioio\n[napari-aicsimageio]: https://github.com/AllenCellModeling/napari-aicsimageio\n[ndev-settings]: https://github.com/ndev-kit/ndev-settings\n[napari-metadata]: https://github.com/napari/napari-metadata\n[nbatch]: https://github.com/ndev-kit/nbatch\n[uv]: https://docs.astral.sh/uv/\n[ndev-kit]: https://github.com/ndev-kit\n[bioio-ome-zarr]: https://github.com/bioio-devs/bioio-ome-zarr\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": null,
+    "home_page": null,
+    "keywords": null,
+    "license": null,
+    "license_expression": "BSD-3-Clause",
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "ndevio",
+    "package_url": "https://pypi.org/project/ndevio/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/ndevio/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/ndev-kit/ndevio/issues",
+      "Documentation": "https://github.com/ndev-kit/ndevio#README.md",
+      "Source Code": "https://github.com/ndev-kit/ndevio",
+      "User Support": "https://github.com/ndev-kit/ndevio/issues"
+    },
+    "provides_extra": [
+      "all"
+    ],
+    "release_url": "https://pypi.org/project/ndevio/0.9.0/",
+    "requires_dist": [
+      "bioio-base",
+      "bioio-imageio",
+      "bioio-ome-tiff>=1.2.0",
+      "bioio-ome-zarr>=3",
+      "bioio-tifffile",
+      "bioio>=3.2.0",
+      "magic-class",
+      "magicgui",
+      "napari",
+      "napari-plugin-manager>=0.1.7",
+      "natsort",
+      "nbatch>=0.0.4",
+      "ndev-settings>=0.4.1",
+      "pooch",
+      "xarray",
+      "zarr>=3.1.3",
+      "napari[all]; extra == \"all\""
+    ],
+    "requires_python": ">=3.11",
+    "summary": "Read, write, and manage images in napari",
+    "version": "0.9.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 34484650,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "timmonko"
+      }
+    ]
+  },
+  "releases": {
+    "0.2.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "1c0dbc42adbdab2113254409f5b0b691f71d61e8767fc960d15fb7696c1b5c26",
+          "md5": "8407f457d6a0d4487f7727db020055ea",
+          "sha256": "f80a1330d74f360b7dbfa31dcd291a6cb2f55d70698afab46cc8d20085eb1585"
+        },
+        "downloads": -1,
+        "filename": "ndevio-0.2.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "8407f457d6a0d4487f7727db020055ea",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 23145,
+        "upload_time": "2025-10-14T03:58:29",
+        "upload_time_iso_8601": "2025-10-14T03:58:29.644969Z",
+        "url": "https://files.pythonhosted.org/packages/1c/0d/bc42adbdab2113254409f5b0b691f71d61e8767fc960d15fb7696c1b5c26/ndevio-0.2.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "f3ed30b9abf4a696ca1fe5404e49d97ddaaaac90ab764e9471f09d18f499b29d",
+          "md5": "df49b3b3b58cd74983d490b7e537713c",
+          "sha256": "cbab6a61b13ac17b84fa0d00be9b6480639729fd7982b0c7cf2da39bbeb6b7e3"
+        },
+        "downloads": -1,
+        "filename": "ndevio-0.2.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "df49b3b3b58cd74983d490b7e537713c",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 3625737,
+        "upload_time": "2025-10-14T03:58:32",
+        "upload_time_iso_8601": "2025-10-14T03:58:32.184346Z",
+        "url": "https://files.pythonhosted.org/packages/f3/ed/30b9abf4a696ca1fe5404e49d97ddaaaac90ab764e9471f09d18f499b29d/ndevio-0.2.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.0rc3": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "4e9e9decfc118e7e8c566f9b97b91b3e445a0e28acf5e0cb4af167c45bfcf187",
+          "md5": "3ffbc36f78e3ea3489a1eae43925e99c",
+          "sha256": "c1d3eb3f22417885ca0d3ccc80e12017b585c153888a98269eb9ed10ac1bde88"
+        },
+        "downloads": -1,
+        "filename": "ndevio-0.2.0rc3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "3ffbc36f78e3ea3489a1eae43925e99c",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 23180,
+        "upload_time": "2025-10-14T03:25:25",
+        "upload_time_iso_8601": "2025-10-14T03:25:25.599127Z",
+        "url": "https://files.pythonhosted.org/packages/4e/9e/9decfc118e7e8c566f9b97b91b3e445a0e28acf5e0cb4af167c45bfcf187/ndevio-0.2.0rc3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "694d0e1bf4abae25f1c6cb1d5f51bd5023a7713f807eaa0af099b9d169d59327",
+          "md5": "a70b9fd1b7a14b716d880763032f9c0e",
+          "sha256": "61ea651a9adfe585edda9f46e0cc925b87e799b42aa7e1fc51e104a3957079a2"
+        },
+        "downloads": -1,
+        "filename": "ndevio-0.2.0rc3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "a70b9fd1b7a14b716d880763032f9c0e",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 3625757,
+        "upload_time": "2025-10-14T03:25:27",
+        "upload_time_iso_8601": "2025-10-14T03:25:27.133251Z",
+        "url": "https://files.pythonhosted.org/packages/69/4d/0e1bf4abae25f1c6cb1d5f51bd5023a7713f807eaa0af099b9d169d59327/ndevio-0.2.0rc3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.0rc4": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "f421ad13db9adeda418901bd24cf6ba27aa248ec0bc5d470ebac103ed93d2305",
+          "md5": "c8f2fb7863ba5669562747f73342ea66",
+          "sha256": "2a9a09d009dd136d256aef6b24b7443771f5cf2eb2ea36f4f9b98736cf505392"
+        },
+        "downloads": -1,
+        "filename": "ndevio-0.2.0rc4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "c8f2fb7863ba5669562747f73342ea66",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 23181,
+        "upload_time": "2025-10-14T03:44:29",
+        "upload_time_iso_8601": "2025-10-14T03:44:29.118270Z",
+        "url": "https://files.pythonhosted.org/packages/f4/21/ad13db9adeda418901bd24cf6ba27aa248ec0bc5d470ebac103ed93d2305/ndevio-0.2.0rc4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "e2a903c45882a5274d1a3c6039e3cf6dd59cba68dd7781ee2af9be081728b7a6",
+          "md5": "d2f53b4d25bf2132d7287620c328693f",
+          "sha256": "f9b62129ee8f83df9bdc7a3b631e6f80986ce7c743baaed709e17d0aea753b04"
+        },
+        "downloads": -1,
+        "filename": "ndevio-0.2.0rc4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d2f53b4d25bf2132d7287620c328693f",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 3625763,
+        "upload_time": "2025-10-14T03:44:31",
+        "upload_time_iso_8601": "2025-10-14T03:44:31.033452Z",
+        "url": "https://files.pythonhosted.org/packages/e2/a9/03c45882a5274d1a3c6039e3cf6dd59cba68dd7781ee2af9be081728b7a6/ndevio-0.2.0rc4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "8eb8ce0059a43ff3299cadb735e18b719de4060942cbe108b5545758409b36c9",
+          "md5": "3f4220bca667dc3491ec0f96ff2c3bdf",
+          "sha256": "ec4d9c6cc37412368dd2f32144c23fb9f96748fa9ed797d6d49d37c4fa9ab6c9"
+        },
+        "downloads": -1,
+        "filename": "ndevio-0.3.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "3f4220bca667dc3491ec0f96ff2c3bdf",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 23732,
+        "upload_time": "2025-11-25T21:41:44",
+        "upload_time_iso_8601": "2025-11-25T21:41:44.505127Z",
+        "url": "https://files.pythonhosted.org/packages/8e/b8/ce0059a43ff3299cadb735e18b719de4060942cbe108b5545758409b36c9/ndevio-0.3.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "d43d62ab99d5dd97e6a72f645cbd7f01da76e1baada115c74be86760137389b6",
+          "md5": "2e0e2c283e4081f12ca93dbb27f53bbf",
+          "sha256": "71b8472ff9971ded5700a1508656d595169c3dee325d896a255735166f3f46e9"
+        },
+        "downloads": -1,
+        "filename": "ndevio-0.3.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "2e0e2c283e4081f12ca93dbb27f53bbf",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 3626091,
+        "upload_time": "2025-11-25T21:41:46",
+        "upload_time_iso_8601": "2025-11-25T21:41:46.528173Z",
+        "url": "https://files.pythonhosted.org/packages/d4/3d/62ab99d5dd97e6a72f645cbd7f01da76e1baada115c74be86760137389b6/ndevio-0.3.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "61948e0a81676f9aa268c5581ad989142aa6adc9b3495f42412077e50fe3ef88",
+          "md5": "4cde33658aaa212451dd6efcde201cb4",
+          "sha256": "9e77d36ebdd1daac50f31524d93964f795f4ac63d7915d9beb0fb019d8e4ef66"
+        },
+        "downloads": -1,
+        "filename": "ndevio-0.3.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "4cde33658aaa212451dd6efcde201cb4",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 23796,
+        "upload_time": "2025-11-26T00:46:06",
+        "upload_time_iso_8601": "2025-11-26T00:46:06.056145Z",
+        "url": "https://files.pythonhosted.org/packages/61/94/8e0a81676f9aa268c5581ad989142aa6adc9b3495f42412077e50fe3ef88/ndevio-0.3.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "9cbf5404be506f786d1044810b6c994a1a089f968dc773877d7deb1f88f1b67e",
+          "md5": "6c1fcc338d698ead5c401fec20e2010d",
+          "sha256": "1492984828e2f450eae60a1892bb78eb49c95cabcd715ebcc6e297b38e8ef210"
+        },
+        "downloads": -1,
+        "filename": "ndevio-0.3.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "6c1fcc338d698ead5c401fec20e2010d",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 3626121,
+        "upload_time": "2025-11-26T00:46:07",
+        "upload_time_iso_8601": "2025-11-26T00:46:07.672130Z",
+        "url": "https://files.pythonhosted.org/packages/9c/bf/5404be506f786d1044810b6c994a1a089f968dc773877d7deb1f88f1b67e/ndevio-0.3.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.2": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "085cf74c8e5fb3b5c1253be3e45ca233143d860da1452526bcdbf707cc670ff8",
+          "md5": "840da99404c74c5fd9fd0084b1897a57",
+          "sha256": "87a17a586935267fff5666719bc60696ef2f6177064c03d1dbebfde7bd56aa15"
+        },
+        "downloads": -1,
+        "filename": "ndevio-0.3.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "840da99404c74c5fd9fd0084b1897a57",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 23796,
+        "upload_time": "2025-11-26T04:44:53",
+        "upload_time_iso_8601": "2025-11-26T04:44:53.442807Z",
+        "url": "https://files.pythonhosted.org/packages/08/5c/f74c8e5fb3b5c1253be3e45ca233143d860da1452526bcdbf707cc670ff8/ndevio-0.3.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "ac54eef9665ceabcd8ed62bb22c779d8b76d03528722b279c124de8024c91349",
+          "md5": "b1ec36fc2bf8398f37a8e346c08d4737",
+          "sha256": "38c75162459f49bf2586676f740de40c206a5baf3a80a4db4cc03b1d9af5d574"
+        },
+        "downloads": -1,
+        "filename": "ndevio-0.3.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "b1ec36fc2bf8398f37a8e346c08d4737",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 3626139,
+        "upload_time": "2025-11-26T04:44:54",
+        "upload_time_iso_8601": "2025-11-26T04:44:54.954499Z",
+        "url": "https://files.pythonhosted.org/packages/ac/54/eef9665ceabcd8ed62bb22c779d8b76d03528722b279c124de8024c91349/ndevio-0.3.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.3": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "f0511a714452e32fc4bc9444638dceefff031f37e5984f6886282d4f076e7ae6",
+          "md5": "0893596b2b11264163a0a6368254c32b",
+          "sha256": "2b0fdf57f3ca2ee8697f3457babe6c5a8d9f95b2d45b06c7e9816cb85c02faa5"
+        },
+        "downloads": -1,
+        "filename": "ndevio-0.3.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "0893596b2b11264163a0a6368254c32b",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 23809,
+        "upload_time": "2025-11-26T05:10:40",
+        "upload_time_iso_8601": "2025-11-26T05:10:40.275554Z",
+        "url": "https://files.pythonhosted.org/packages/f0/51/1a714452e32fc4bc9444638dceefff031f37e5984f6886282d4f076e7ae6/ndevio-0.3.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "b98ca836ea16bb2c64a54a4d58b7bae7d3f9ca06b02f405a88f276d1d4fed790",
+          "md5": "ccff89cce1714189e2091486cf89276a",
+          "sha256": "529fe13f302a1e6e5cf5a37606525f4d4a17c0d72383c3124ade0ca1b19e306f"
+        },
+        "downloads": -1,
+        "filename": "ndevio-0.3.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "ccff89cce1714189e2091486cf89276a",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 3626176,
+        "upload_time": "2025-11-26T05:10:41",
+        "upload_time_iso_8601": "2025-11-26T05:10:41.537348Z",
+        "url": "https://files.pythonhosted.org/packages/b9/8c/a836ea16bb2c64a54a4d58b7bae7d3f9ca06b02f405a88f276d1d4fed790/ndevio-0.3.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.4.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "1fb8f95927a53858e5fa8c2f01590ef17323f4dfb9128ba554b437b5f2eac605",
+          "md5": "4d15b3a8c124c365119d7c4298e00991",
+          "sha256": "37199925674dd963f61b1660f9341611f9dfefecf7eef012990d8a35befc5a40"
+        },
+        "downloads": -1,
+        "filename": "ndevio-0.4.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "4d15b3a8c124c365119d7c4298e00991",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 24043,
+        "upload_time": "2025-11-27T05:40:22",
+        "upload_time_iso_8601": "2025-11-27T05:40:22.463597Z",
+        "url": "https://files.pythonhosted.org/packages/1f/b8/f95927a53858e5fa8c2f01590ef17323f4dfb9128ba554b437b5f2eac605/ndevio-0.4.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "8f8f3c720f83e3099b87c818992528b8de9b3e275910b75366bd82eed764f382",
+          "md5": "c052f23901dd86298b9fc2b9f7f59e98",
+          "sha256": "6a658972f3feb68d191bedc18e4ce277d5a3e5b5ad6b2d9a77a1ea68d9cbb1b8"
+        },
+        "downloads": -1,
+        "filename": "ndevio-0.4.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "c052f23901dd86298b9fc2b9f7f59e98",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 3709981,
+        "upload_time": "2025-11-27T05:40:24",
+        "upload_time_iso_8601": "2025-11-27T05:40:24.176461Z",
+        "url": "https://files.pythonhosted.org/packages/8f/8f/3c720f83e3099b87c818992528b8de9b3e275910b75366bd82eed764f382/ndevio-0.4.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.5.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "c686ef0394607d392eedf0074b9f2f52e2159685f80402a022d61feacde5ad77",
+          "md5": "dc808f3f1656c1dbf01fc65e4b2a0bd3",
+          "sha256": "bdcff3a728d12c1fb6710fa8dfce309c675973d296d32e6da1e645dde182f8f9"
+        },
+        "downloads": -1,
+        "filename": "ndevio-0.5.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "dc808f3f1656c1dbf01fc65e4b2a0bd3",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 34757,
+        "upload_time": "2025-12-03T19:01:01",
+        "upload_time_iso_8601": "2025-12-03T19:01:01.899901Z",
+        "url": "https://files.pythonhosted.org/packages/c6/86/ef0394607d392eedf0074b9f2f52e2159685f80402a022d61feacde5ad77/ndevio-0.5.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "f79126c77dfcf6076f6371af11acfcf0ec61cedaaba3f0c5daa198c88ea7df8a",
+          "md5": "bbd0f0c90c0095d640fa904d4b9124ff",
+          "sha256": "de02676f73b008a8cde366e91f87ba2d33443309a2f6e8d171ce9836d69b6fe6"
+        },
+        "downloads": -1,
+        "filename": "ndevio-0.5.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "bbd0f0c90c0095d640fa904d4b9124ff",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 4113836,
+        "upload_time": "2025-12-03T19:01:03",
+        "upload_time_iso_8601": "2025-12-03T19:01:03.614175Z",
+        "url": "https://files.pythonhosted.org/packages/f7/91/26c77dfcf6076f6371af11acfcf0ec61cedaaba3f0c5daa198c88ea7df8a/ndevio-0.5.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.5.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "3bf0ff3b1e6907eeed93672482125edfd151826ec708ee727dfd8630c9f999c5",
+          "md5": "b4cffd60a81cf22b77865615613c74e5",
+          "sha256": "ccd2159f2e2da0e962caf47dcaae74572658b8fa408548d23e37f11ea99d2504"
+        },
+        "downloads": -1,
+        "filename": "ndevio-0.5.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "b4cffd60a81cf22b77865615613c74e5",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 34994,
+        "upload_time": "2025-12-05T05:43:33",
+        "upload_time_iso_8601": "2025-12-05T05:43:33.388507Z",
+        "url": "https://files.pythonhosted.org/packages/3b/f0/ff3b1e6907eeed93672482125edfd151826ec708ee727dfd8630c9f999c5/ndevio-0.5.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "d7d3dda1ba8b57d862edb6d538f468cf357cf04d24890e5484ffa1c93f18df6a",
+          "md5": "3f43ce667a961bb0091a2dc6db8d3bba",
+          "sha256": "3435a56700834c69d1ec96b6f54a7a3b4b49f0ecd58da34fe8ea95272333d2d3"
+        },
+        "downloads": -1,
+        "filename": "ndevio-0.5.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "3f43ce667a961bb0091a2dc6db8d3bba",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 4114265,
+        "upload_time": "2025-12-05T05:43:35",
+        "upload_time_iso_8601": "2025-12-05T05:43:35.274304Z",
+        "url": "https://files.pythonhosted.org/packages/d7/d3/dda1ba8b57d862edb6d538f468cf357cf04d24890e5484ffa1c93f18df6a/ndevio-0.5.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.6.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "0a3aa70f6a2a5f629fbc14a7455fc09d5b2ed9d61d502baf9c1d08d61799cbcd",
+          "md5": "0ff446bbbc33f9b446f9798b40881eed",
+          "sha256": "ed26cbab5b55a3776e6c8119071f79229eaf641e1622a707efbc413c79c25ed5"
+        },
+        "downloads": -1,
+        "filename": "ndevio-0.6.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "0ff446bbbc33f9b446f9798b40881eed",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 187003,
+        "upload_time": "2025-12-07T06:29:37",
+        "upload_time_iso_8601": "2025-12-07T06:29:37.724069Z",
+        "url": "https://files.pythonhosted.org/packages/0a/3a/a70f6a2a5f629fbc14a7455fc09d5b2ed9d61d502baf9c1d08d61799cbcd/ndevio-0.6.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "fdd18ce54b22063bc027d1fbb0e8150640ccf8f5dda5574e03e3e8b088bcf682",
+          "md5": "8d22263bd7b7b6321a0585da8e3dd3ef",
+          "sha256": "4b45189cc15965c2b8ef268f6b71ac8d02938bfd8208ba09621e358f9864c0cb"
+        },
+        "downloads": -1,
+        "filename": "ndevio-0.6.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "8d22263bd7b7b6321a0585da8e3dd3ef",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 4268750,
+        "upload_time": "2025-12-07T06:29:39",
+        "upload_time_iso_8601": "2025-12-07T06:29:39.878077Z",
+        "url": "https://files.pythonhosted.org/packages/fd/d1/8ce54b22063bc027d1fbb0e8150640ccf8f5dda5574e03e3e8b088bcf682/ndevio-0.6.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.7.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "d3f61a01637e003179ff1c8d05eb9e52f51e0360bb428a930963d608e3d06f04",
+          "md5": "393f8d9a545c9c4520ace6d56dba7b87",
+          "sha256": "5820f0ad16ed5e3f1d6d0fc1f68db623fd75f72efde0e16dc44f6edfcb097169"
+        },
+        "downloads": -1,
+        "filename": "ndevio-0.7.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "393f8d9a545c9c4520ace6d56dba7b87",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 186723,
+        "upload_time": "2025-12-26T17:02:37",
+        "upload_time_iso_8601": "2025-12-26T17:02:37.664963Z",
+        "url": "https://files.pythonhosted.org/packages/d3/f6/1a01637e003179ff1c8d05eb9e52f51e0360bb428a930963d608e3d06f04/ndevio-0.7.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "dc7a636044007ac6ae37ac190e62ea8f0ba694badf2c2eabaeed98f5d9436a49",
+          "md5": "25ebd6efa806cd601121f963b01fad75",
+          "sha256": "af5c5227dd41a84fce7122110b274b6e56efbc55f88580450537f1522c284ef0"
+        },
+        "downloads": -1,
+        "filename": "ndevio-0.7.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "25ebd6efa806cd601121f963b01fad75",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 4268611,
+        "upload_time": "2025-12-26T17:02:39",
+        "upload_time_iso_8601": "2025-12-26T17:02:39.558232Z",
+        "url": "https://files.pythonhosted.org/packages/dc/7a/636044007ac6ae37ac190e62ea8f0ba694badf2c2eabaeed98f5d9436a49/ndevio-0.7.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.8.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "d8ba244ed31a0f590c1d3f3eb5f2dd6063c2a155b7d2b85527945a4db8f29df1",
+          "md5": "5b07fc080d2261a479b64889139a3f62",
+          "sha256": "21e19a07eec269a08a921c68e95fa1209bcba29a69b59194dfa937faca0dd742"
+        },
+        "downloads": -1,
+        "filename": "ndevio-0.8.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "5b07fc080d2261a479b64889139a3f62",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 188725,
+        "upload_time": "2026-02-03T16:52:03",
+        "upload_time_iso_8601": "2026-02-03T16:52:03.757048Z",
+        "url": "https://files.pythonhosted.org/packages/d8/ba/244ed31a0f590c1d3f3eb5f2dd6063c2a155b7d2b85527945a4db8f29df1/ndevio-0.8.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "472a5f26a3213cf10a0cb63b52f08a75c8004f35df6036c76810ab3f39677a58",
+          "md5": "d592921650175b38cc949d34a1ae84b1",
+          "sha256": "0ad7fa75d6bd2e58ad45178906a40a58b0b205cc2f06b2bbdb20400bed39878b"
+        },
+        "downloads": -1,
+        "filename": "ndevio-0.8.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d592921650175b38cc949d34a1ae84b1",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 4265169,
+        "upload_time": "2026-02-03T16:52:05",
+        "upload_time_iso_8601": "2026-02-03T16:52:05.646104Z",
+        "url": "https://files.pythonhosted.org/packages/47/2a/5f26a3213cf10a0cb63b52f08a75c8004f35df6036c76810ab3f39677a58/ndevio-0.8.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.9.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "723d49dcd249e0b998663f277caef0fb62107558b7ffdb5d5923433caac2a46b",
+          "md5": "371205771efe6cfe85560a571d794373",
+          "sha256": "d8e2c1d7db303ed3fad72ec63558f96b18357b5e907dd76d55f94ea139eb08f0"
+        },
+        "downloads": -1,
+        "filename": "ndevio-0.9.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "371205771efe6cfe85560a571d794373",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 194848,
+        "upload_time": "2026-02-20T21:35:26",
+        "upload_time_iso_8601": "2026-02-20T21:35:26.359342Z",
+        "url": "https://files.pythonhosted.org/packages/72/3d/49dcd249e0b998663f277caef0fb62107558b7ffdb5d5923433caac2a46b/ndevio-0.9.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "657740c08c3bf59fce9b84d9711eb6ba2fa630aaa52ab75fa7252550ff53a60b",
+          "md5": "e3398be66e66abec763d009847f65b3e",
+          "sha256": "e4f87611417cbdcf833cf3cb12a17b99fb2e6a54caf1a4c698aa1d16f6950653"
+        },
+        "downloads": -1,
+        "filename": "ndevio-0.9.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e3398be66e66abec763d009847f65b3e",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 8394855,
+        "upload_time": "2026-02-20T21:35:28",
+        "upload_time_iso_8601": "2026-02-20T21:35:28.108535Z",
+        "url": "https://files.pythonhosted.org/packages/65/77/40c08c3bf59fce9b84d9711eb6ba2fa630aaa52ab75fa7252550ff53a60b/ndevio-0.9.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "723d49dcd249e0b998663f277caef0fb62107558b7ffdb5d5923433caac2a46b",
+        "md5": "371205771efe6cfe85560a571d794373",
+        "sha256": "d8e2c1d7db303ed3fad72ec63558f96b18357b5e907dd76d55f94ea139eb08f0"
+      },
+      "downloads": -1,
+      "filename": "ndevio-0.9.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "371205771efe6cfe85560a571d794373",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.11",
+      "size": 194848,
+      "upload_time": "2026-02-20T21:35:26",
+      "upload_time_iso_8601": "2026-02-20T21:35:26.359342Z",
+      "url": "https://files.pythonhosted.org/packages/72/3d/49dcd249e0b998663f277caef0fb62107558b7ffdb5d5923433caac2a46b/ndevio-0.9.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "657740c08c3bf59fce9b84d9711eb6ba2fa630aaa52ab75fa7252550ff53a60b",
+        "md5": "e3398be66e66abec763d009847f65b3e",
+        "sha256": "e4f87611417cbdcf833cf3cb12a17b99fb2e6a54caf1a4c698aa1d16f6950653"
+      },
+      "downloads": -1,
+      "filename": "ndevio-0.9.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "e3398be66e66abec763d009847f65b3e",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.11",
+      "size": 8394855,
+      "upload_time": "2026-02-20T21:35:28",
+      "upload_time_iso_8601": "2026-02-20T21:35:28.108535Z",
+      "url": "https://files.pythonhosted.org/packages/65/77/40c08c3bf59fce9b84d9711eb6ba2fa630aaa52ab75fa7252550ff53a60b/ndevio-0.9.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
