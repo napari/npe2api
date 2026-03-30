@@ -1,0 +1,435 @@
+{
+  "info": {
+    "author": "Bastien Chesaux Dapia",
+    "author_email": "bastien.chesauxdapia@epfl.ch",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-tissue-cuboid-analysis\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-tissue-cuboid-analysis.svg?color=green)](https://github.com/EPFL-Center-for-Imaging/napari-tissue-cuboid-analysis/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-tissue-cuboid-analysis.svg?color=green)](https://pypi.org/project/napari-tissue-cuboid-analysis)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-tissue-cuboid-analysis.svg?color=green)](https://python.org)\n[![tests](https://github.com/EPFL-Center-for-Imaging/napari-tissue-cuboid-analysis/workflows/tests/badge.svg)](https://github.com/EPFL-Center-for-Imaging/napari-tissue-cuboid-analysis/actions)\n[![codecov](https://codecov.io/gh/EPFL-Center-for-Imaging/napari-tissue-cuboid-analysis/branch/main/graph/badge.svg)](https://codecov.io/gh/EPFL-Center-for-Imaging/napari-tissue-cuboid-analysis)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-tissue-cuboid-analysis)](https://napari-hub.org/plugins/napari-tissue-cuboid-analysis)\n[![npe2](https://img.shields.io/badge/plugin-npe2-blue?link=https://napari.org/stable/plugins/index.html)](https://napari.org/stable/plugins/index.html)\n[![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-purple.json)](https://github.com/copier-org/copier)\n\nanalysis of the shape of tissue explants in CT images\n\n----------------------------------\n\nThis [napari] plugin was generated with [copier] using the [napari-plugin-template].\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/napari-plugin-template#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/stable/plugins/index.html\n-->\n\n## Installation\n\nYou can install `napari-tissue-cuboid-analysis` via [pip]:\n\n    pip install napari-tissue-cuboid-analysis\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-tissue-cuboid-analysis\" is free and open source software\n\n## Usage\nOpen the plugin automatically when launching [napari]:\n\n    napari --with napari-tissue-cuboid-analysis\n\n### 1: Median binning\nReduces the size of the image by applying an isotropic median kernel. This step is not mandatory and only helps accelerating the rest of the pipeline and removing some noise in the image.\n\n- **Input type:**     Graylevel image\n- **Bin kernel**      Size of the median kernel\n\n### 2: Pipette extraction\nExtracts a binary mask of the pipette that will be used to discard useless areas in further steps. Computed using 6 manually annotated points on the boundary of the pipette. You can do this by creating a point layer to napari and using the dedicated tool to add points. The three first points must be on the first slice, and the three last points on the last slice.\n\n- **Input type:**     Graylevel image\n- **Points**          Points layer for the manual method\n\n### 3: Thresholding\nGMM based thresholding to separate tissue from the background. The algorithm can either chose a global threshold for the whole image or compute a continuous map of local thresholds. The local method is significantly slower but helps with small reconstruction artifacts in the images. It works by fitting GMMs on a grid of windows to produce a sparse grid of thresholds. The threshold map is then computed by linear interpolation of the sparse grid.\n\n- **Input type:**    Graylevel image\n- **Mask:**          Pipette mask computed in **2: Pipette extraction**\n- **Spacing:**       Spacing of the GMM windows (local only)\n- **Win. size**:     Size of the GMM windows, as a fraction of the spacing - local thresholding only.\\\n                     Window size of 0.5 results in non-overlapping but contiguous windows.\\\n                     Higher values result in overlapping windows.\\\n                     The window size must be bigger than the largest cuboid to avoid windows only containing tissue.\n- **Min. std**       Criteria to discard windows that do not contain tissues in the threshold map - local thresholding only.\\\n                     Expressed as a fraction of the standard deviation of the whole image.\\\n                     Increase if empty areas are noisy in the binary result of the thresholding\n- **Plot thresh.**   Wether to plot the threshold map the the centers of the all the valid local windows along with the resulting binary image.\\\n                     Useful to finetune parameters.\n\n**Advice:** Always try global thresholding first. It is quicker and more stable. Only use local thresholding if some regional features in the image are not captured by the global threshold and result in noise in the binary image.\n\n### 4: Morphology\nMorphological binary opening and closing with a spherical structuring element on binary images, or on each individual label separately in a labelled image (see **5: Labelling**).\n\n- **Input types:**   Binary or labels\n- **Diameter:**      Diameter of the structuring element. Should be odd for consistency\n- **Single:**        Wether to apply to a single label or to all - label morphology only\n\n**Advice:** Only apply strictly necessary operations on the binary image for the smooth operation of **5: Labelling**. Then refine the quality of the segmentation and fill tissue porosity by applying those operation to the labels individually.\n\n### 5: Labelling\nObject labelling using the watershed algorithm. The results of watershed is usually either under-segmentated or over-segmentated. Over-segmentation is automatically fixed by merging labels based on their surface of contact and their characteristic length.\n\n- **Input type:** Binary\n- **Watershed lvl.:** Threshold to merge shallow basins in the watershed algorithm. Decreasing this parameter increases the number of labels generated before the over-segmentation correction. Should be chosen so that the result of the watershed algorithm does not feature any under-segmentation.\n- **Merge thresh.:** Over-segmentation coefficient necessary to merge two regions. Decreasing results in more merging.\n- **Plot interm.:** Wether to plot the intermediary images of the automatic over-segmentation fix. Iteration zero is the original output of the watershed algorithm. Useful to finetune parameters.\n\n**Advice:** Prefer the *Merge thresh.* param. for refining your results and only change *watershed lvl.* if there is under-segmentation in the result or if you need to drastically reduce the number of labels.\n\n#### Optional manual operations:\n- **Input type:** Labels\n- **Merge:** Merge a set of target labels selected using their integer id\n- **Split:** Split a set of target labels selected using their integer id. The watershed process is re-applied to those specific region. The *watershed lvl.* must be reduced in order to split the target label(s) into more regions.\n\n\n### 6: Mesh and metrics generation\nSaves a mesh for each cuboid at the specified location in `.stl` format, as well as the metrics computed for all the cuboids in both `.parquet` and `.csv` formats. A PyVista viewer is made available to scroll through meshes along with their metrics.\n\n- **Input type:** Labels\n- **Directory:** Path to the output directory to store meshes and metrics. Relative to where napari was lauched from, or absolute.\n- **Voxel size:** Size of the voxels in microns to normalize the volumes. Don't forget that binning modifies the resolution in the image.\n- **Smoothing iterations:** Number of taubin smoothing iterations applied to the meshes. Tread carefully, has a significant impact on compactness and convexity. Other metrics are mostly undisturbed.\n- **Single label:** Wether to only construct the mesh and metrics for a single mesh. If true, the mesh is displayed in napari and the metrics printed in the terminal (no saving).\n\n\n\n## Shape metrics\n- **Convexity**:\n  Ratio between the volume of an explant and the volume of its convex hull.\n\n  $$\n  \\frac{V}{V_{\\text{convexhull}}}\n  $$\n\n- **Compactness**:\n  Dimensionless and normalized quantity that relates the volume of an object to its surface area. The maximum value corresponds to a perfect sphere. A decreasing value indicates elongation or increased surface irregularity.\n\n  $$\n  \\frac{1}{36\\pi}\\frac{V^2}{A^3}\n  $$\n\n- **Elongation**:\n  Ratio between the smallest and largest eigenvalues of the inertia tensor. These eigenvalues describe how mass is distributed along the principal axes, so the metric reflects the overall elongation of the object. Values close to 1 indicate isotropic shapes, while lower values suggest elongated geometries.\n\n  $$\n  \\frac{\\lambda_{\\text{min}}}{\\lambda_{\\text{max}}}\n  $$\n\n- **Cube similarity**:\n  Intersection over Union (IoU) between the explant and an ideal cube of equal volume. The cube is oriented such that its faces are aligned with the explant\u2019s principal inertia axes. This metric quantifies how closely the shape of the explant resembles a cube.\n\n  $$\n  \\frac{V_{\\text{intersect}}}{V_{\\text{union}}}\n  $$\n\n\n## PyVista viewer\nAllows you to browse through the cuboids. Each page displays four cuboids, you can scroll through pages using the &larr; and &rarr; keys. Metrics for each cuboid are displayed in the top left corner. You can display the *similar cubes* (same volume and similar orientation) using the `c` key.\n\n### Usage:\n[Download the script](https://github.com/EPFL-Center-for-Imaging/napari-tissue-cuboid-analysis/tree/main/examples) from the package examples and run:\n\n    python pyvista_cuboid_viewer.py path_to_cuboids_data\n\n\n\n\n\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[copier]: https://copier.readthedocs.io/en/stable/\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[napari-plugin-template]: https://github.com/napari/napari-plugin-template\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": "Copyright (c) 2025, Bastien Chesaux Dapia\n        All rights reserved.\n        \n        Redistribution and use in source and binary forms, with or without\n        modification, are permitted provided that the following conditions are met:\n        \n        * Redistributions of source code must retain the above copyright notice, this\n          list of conditions and the following disclaimer.\n        \n        * Redistributions in binary form must reproduce the above copyright notice,\n          this list of conditions and the following disclaimer in the documentation\n          and/or other materials provided with the distribution.\n        \n        * Neither the name of copyright holder nor the names of its\n          contributors may be used to endorse or promote products derived from\n          this software without specific prior written permission.\n        \n        THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\"\n        AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\n        IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\n        DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE\n        FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\n        DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR\n        SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER\n        CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,\n        OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\n        OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n        ",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-tissue-cuboid-analysis",
+    "package_url": "https://pypi.org/project/napari-tissue-cuboid-analysis/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-tissue-cuboid-analysis/",
+    "project_urls": null,
+    "provides_extra": [
+      "testing"
+    ],
+    "release_url": "https://pypi.org/project/napari-tissue-cuboid-analysis/0.0.8/",
+    "requires_dist": [
+      "numpy",
+      "magicgui",
+      "qtpy",
+      "scikit-image",
+      "scikit-learn",
+      "matplotlib",
+      "pandas",
+      "seaborn",
+      "pyvista",
+      "tifffile",
+      "scipy",
+      "trimesh",
+      "spam",
+      "tqdm",
+      "tox; extra == \"testing\"",
+      "pytest; extra == \"testing\"",
+      "pytest-cov; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "napari; extra == \"testing\"",
+      "pyqt5; extra == \"testing\""
+    ],
+    "requires_python": ">=3.10",
+    "summary": "analysis of the shape of tissue explants in CT images",
+    "version": "0.0.8",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 29577162,
+  "releases": {
+    "0.0.2": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "33498a85e0306283903fbb14e23f50cad79064c642d01a03fd6110a4c35339dd",
+          "md5": "6ee0266dc5a14a97a82f40d5e4fac5ef",
+          "sha256": "896d9893dad62a519e7e345ca88a3429594dcfbff0c8d1a41e66db486f588aa3"
+        },
+        "downloads": -1,
+        "filename": "napari_tissue_cuboid_analysis-0.0.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "6ee0266dc5a14a97a82f40d5e4fac5ef",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 20857,
+        "upload_time": "2025-06-11T15:34:26",
+        "upload_time_iso_8601": "2025-06-11T15:34:26.491026Z",
+        "url": "https://files.pythonhosted.org/packages/33/49/8a85e0306283903fbb14e23f50cad79064c642d01a03fd6110a4c35339dd/napari_tissue_cuboid_analysis-0.0.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "4fa4c5b518da1cf9bb25e362d734863c328980c933b1e621719085eaf02927cb",
+          "md5": "720f2c44882f811bc90ab13e0a9fb9e9",
+          "sha256": "6a915f077fa103c43fe0f9668d2d636f3b5b1beea91fbf22689dee665d7c3a4e"
+        },
+        "downloads": -1,
+        "filename": "napari_tissue_cuboid_analysis-0.0.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "720f2c44882f811bc90ab13e0a9fb9e9",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 29896,
+        "upload_time": "2025-06-11T15:34:27",
+        "upload_time_iso_8601": "2025-06-11T15:34:27.605748Z",
+        "url": "https://files.pythonhosted.org/packages/4f/a4/c5b518da1cf9bb25e362d734863c328980c933b1e621719085eaf02927cb/napari_tissue_cuboid_analysis-0.0.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.3": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "bda3134f9c6975e4ab985e8150524bc3f39770f7e1d7ebe2107da50978ff55dc",
+          "md5": "a86a4b322a26f4c74e288d2677b494e5",
+          "sha256": "eea053bc8205e06fe7415ccd4417afdd6411fdad27b7ab82d0189bc99438521d"
+        },
+        "downloads": -1,
+        "filename": "napari_tissue_cuboid_analysis-0.0.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "a86a4b322a26f4c74e288d2677b494e5",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 20918,
+        "upload_time": "2025-06-11T15:46:32",
+        "upload_time_iso_8601": "2025-06-11T15:46:32.840311Z",
+        "url": "https://files.pythonhosted.org/packages/bd/a3/134f9c6975e4ab985e8150524bc3f39770f7e1d7ebe2107da50978ff55dc/napari_tissue_cuboid_analysis-0.0.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "024dffde0f204bee990f4f6f48367a26a6a561bbd6061bef1aad613a507a1635",
+          "md5": "872c3ccab984f2a6f14e4317d365daed",
+          "sha256": "2331e8a3612b96573f28289972950d988a8412e936dc10f32057b584e29eebf8"
+        },
+        "downloads": -1,
+        "filename": "napari_tissue_cuboid_analysis-0.0.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "872c3ccab984f2a6f14e4317d365daed",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 30042,
+        "upload_time": "2025-06-11T15:46:34",
+        "upload_time_iso_8601": "2025-06-11T15:46:34.244200Z",
+        "url": "https://files.pythonhosted.org/packages/02/4d/ffde0f204bee990f4f6f48367a26a6a561bbd6061bef1aad613a507a1635/napari_tissue_cuboid_analysis-0.0.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.4": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "30bb9f818035ab7aca230c0085ad80209f2b10994f9ab9f1dab22ba79b0e2572",
+          "md5": "f1020b79e5512878dec450910ff967b8",
+          "sha256": "aadabb200c729d3cf95c3c330c381b7118a371b2904b847e2a9d85e5a6d3b090"
+        },
+        "downloads": -1,
+        "filename": "napari_tissue_cuboid_analysis-0.0.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "f1020b79e5512878dec450910ff967b8",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 22411,
+        "upload_time": "2025-06-11T16:49:56",
+        "upload_time_iso_8601": "2025-06-11T16:49:56.813899Z",
+        "url": "https://files.pythonhosted.org/packages/30/bb/9f818035ab7aca230c0085ad80209f2b10994f9ab9f1dab22ba79b0e2572/napari_tissue_cuboid_analysis-0.0.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "2febe5dc4a132b0b3ebe12924fd40a7aa73bd16420bdaabd88649333b23d20ba",
+          "md5": "4b311db5ef9362cec8097d40ea0077dd",
+          "sha256": "85977bc8767ee4d9214e458213fa55036c306c450a3bffa3b0943bb95ff31bf7"
+        },
+        "downloads": -1,
+        "filename": "napari_tissue_cuboid_analysis-0.0.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "4b311db5ef9362cec8097d40ea0077dd",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 33018,
+        "upload_time": "2025-06-11T16:49:57",
+        "upload_time_iso_8601": "2025-06-11T16:49:57.894687Z",
+        "url": "https://files.pythonhosted.org/packages/2f/eb/e5dc4a132b0b3ebe12924fd40a7aa73bd16420bdaabd88649333b23d20ba/napari_tissue_cuboid_analysis-0.0.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.5": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "ea58852bcdc1b9fac4b9a8188ce585912011e7ca293e11ccab01046d66e065c8",
+          "md5": "36394895e166103b77c89eecf4b9a16c",
+          "sha256": "cb8dcc34d5ab2ae50e0551993bd4e15dda2dc73a49955344d229589144e7eab1"
+        },
+        "downloads": -1,
+        "filename": "napari_tissue_cuboid_analysis-0.0.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "36394895e166103b77c89eecf4b9a16c",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 22600,
+        "upload_time": "2025-06-11T17:01:33",
+        "upload_time_iso_8601": "2025-06-11T17:01:33.182210Z",
+        "url": "https://files.pythonhosted.org/packages/ea/58/852bcdc1b9fac4b9a8188ce585912011e7ca293e11ccab01046d66e065c8/napari_tissue_cuboid_analysis-0.0.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "27441364ef8d1f80a669640739f2cf5911ba747e448992eaae2483e7482b0fd5",
+          "md5": "a1195aca7fdc5dca825c0a789e6855c2",
+          "sha256": "d7f620d5dd1170ec5f72c478cd34f3a2b1ba1b615e52f61b8fe0fb35493c001e"
+        },
+        "downloads": -1,
+        "filename": "napari_tissue_cuboid_analysis-0.0.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "a1195aca7fdc5dca825c0a789e6855c2",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 33335,
+        "upload_time": "2025-06-11T17:01:34",
+        "upload_time_iso_8601": "2025-06-11T17:01:34.120384Z",
+        "url": "https://files.pythonhosted.org/packages/27/44/1364ef8d1f80a669640739f2cf5911ba747e448992eaae2483e7482b0fd5/napari_tissue_cuboid_analysis-0.0.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.6": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "9e4998647725d1ab94fdc16580a1d84145c56889822f06993d276c430d1fe78e",
+          "md5": "2715981a8935f78b907af525359901e7",
+          "sha256": "02ffe62b7477f4535ce9e0e3a1f040eabbc70461e1027b478015c89d528aaae2"
+        },
+        "downloads": -1,
+        "filename": "napari_tissue_cuboid_analysis-0.0.6-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "2715981a8935f78b907af525359901e7",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 22612,
+        "upload_time": "2025-06-11T17:05:19",
+        "upload_time_iso_8601": "2025-06-11T17:05:19.273924Z",
+        "url": "https://files.pythonhosted.org/packages/9e/49/98647725d1ab94fdc16580a1d84145c56889822f06993d276c430d1fe78e/napari_tissue_cuboid_analysis-0.0.6-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "51f2d0eff993b502db1545e0f82b81f747438bb8c7bf9d7dce9bec78a8837677",
+          "md5": "b2356b6767261312c3678a4a8afe476f",
+          "sha256": "f4eb652f0d22adc376607482ec8f61d1016979da393134a4ba29aa5c31f3721e"
+        },
+        "downloads": -1,
+        "filename": "napari_tissue_cuboid_analysis-0.0.6.tar.gz",
+        "has_sig": false,
+        "md5_digest": "b2356b6767261312c3678a4a8afe476f",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 33352,
+        "upload_time": "2025-06-11T17:05:20",
+        "upload_time_iso_8601": "2025-06-11T17:05:20.140464Z",
+        "url": "https://files.pythonhosted.org/packages/51/f2/d0eff993b502db1545e0f82b81f747438bb8c7bf9d7dce9bec78a8837677/napari_tissue_cuboid_analysis-0.0.6.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.7": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "73774550ac2d84ffbc2b0e37026d2972ef7081556b4cdac479dde8650d6589b5",
+          "md5": "3f9c6a53a8f6739a5a19bef91b7cdde7",
+          "sha256": "b5ce09e62799b81675e42f9f44640b8e8b7105a41ba6b666e4380cfe684f4220"
+        },
+        "downloads": -1,
+        "filename": "napari_tissue_cuboid_analysis-0.0.7-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "3f9c6a53a8f6739a5a19bef91b7cdde7",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 22601,
+        "upload_time": "2025-06-11T17:08:57",
+        "upload_time_iso_8601": "2025-06-11T17:08:57.922273Z",
+        "url": "https://files.pythonhosted.org/packages/73/77/4550ac2d84ffbc2b0e37026d2972ef7081556b4cdac479dde8650d6589b5/napari_tissue_cuboid_analysis-0.0.7-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "bef6e22cd4538e1217ff91b386605dab7b4815c3e7b64eba26a19239c9d45736",
+          "md5": "cb87c3cbc1740f9db7277ff7227c52e9",
+          "sha256": "76898d69698d88a2f02a949531b5d768605e3b711e2053835f85454ce43a3962"
+        },
+        "downloads": -1,
+        "filename": "napari_tissue_cuboid_analysis-0.0.7.tar.gz",
+        "has_sig": false,
+        "md5_digest": "cb87c3cbc1740f9db7277ff7227c52e9",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 33359,
+        "upload_time": "2025-06-11T17:08:58",
+        "upload_time_iso_8601": "2025-06-11T17:08:58.884451Z",
+        "url": "https://files.pythonhosted.org/packages/be/f6/e22cd4538e1217ff91b386605dab7b4815c3e7b64eba26a19239c9d45736/napari_tissue_cuboid_analysis-0.0.7.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.8": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "492d4134908b002131c65464947bcb8848a7b4edc646004c56b42052d6447714",
+          "md5": "cd742e483a768752464d9184ad634385",
+          "sha256": "7f49abc1e97e9344de1d0575a3c02c24be1b62e3a109f628e732b9b26c2de0ab"
+        },
+        "downloads": -1,
+        "filename": "napari_tissue_cuboid_analysis-0.0.8-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "cd742e483a768752464d9184ad634385",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 22615,
+        "upload_time": "2025-06-11T17:10:49",
+        "upload_time_iso_8601": "2025-06-11T17:10:49.089046Z",
+        "url": "https://files.pythonhosted.org/packages/49/2d/4134908b002131c65464947bcb8848a7b4edc646004c56b42052d6447714/napari_tissue_cuboid_analysis-0.0.8-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "ada5fc37826a9048fe4394b04abf5f9a6b76541889e73428fbda2294eebc5ff2",
+          "md5": "ad2e9c6f7eaa6a243412687fe3d13f94",
+          "sha256": "423b56468f34002700a51157ea02ee39ef75e5848a44ea1ca71d251411daee9c"
+        },
+        "downloads": -1,
+        "filename": "napari_tissue_cuboid_analysis-0.0.8.tar.gz",
+        "has_sig": false,
+        "md5_digest": "ad2e9c6f7eaa6a243412687fe3d13f94",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 33362,
+        "upload_time": "2025-06-11T17:10:49",
+        "upload_time_iso_8601": "2025-06-11T17:10:49.959497Z",
+        "url": "https://files.pythonhosted.org/packages/ad/a5/fc37826a9048fe4394b04abf5f9a6b76541889e73428fbda2294eebc5ff2/napari_tissue_cuboid_analysis-0.0.8.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "492d4134908b002131c65464947bcb8848a7b4edc646004c56b42052d6447714",
+        "md5": "cd742e483a768752464d9184ad634385",
+        "sha256": "7f49abc1e97e9344de1d0575a3c02c24be1b62e3a109f628e732b9b26c2de0ab"
+      },
+      "downloads": -1,
+      "filename": "napari_tissue_cuboid_analysis-0.0.8-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "cd742e483a768752464d9184ad634385",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.10",
+      "size": 22615,
+      "upload_time": "2025-06-11T17:10:49",
+      "upload_time_iso_8601": "2025-06-11T17:10:49.089046Z",
+      "url": "https://files.pythonhosted.org/packages/49/2d/4134908b002131c65464947bcb8848a7b4edc646004c56b42052d6447714/napari_tissue_cuboid_analysis-0.0.8-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "ada5fc37826a9048fe4394b04abf5f9a6b76541889e73428fbda2294eebc5ff2",
+        "md5": "ad2e9c6f7eaa6a243412687fe3d13f94",
+        "sha256": "423b56468f34002700a51157ea02ee39ef75e5848a44ea1ca71d251411daee9c"
+      },
+      "downloads": -1,
+      "filename": "napari_tissue_cuboid_analysis-0.0.8.tar.gz",
+      "has_sig": false,
+      "md5_digest": "ad2e9c6f7eaa6a243412687fe3d13f94",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.10",
+      "size": 33362,
+      "upload_time": "2025-06-11T17:10:49",
+      "upload_time_iso_8601": "2025-06-11T17:10:49.959497Z",
+      "url": "https://files.pythonhosted.org/packages/ad/a5/fc37826a9048fe4394b04abf5f9a6b76541889e73428fbda2294eebc5ff2/napari_tissue_cuboid_analysis-0.0.8.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

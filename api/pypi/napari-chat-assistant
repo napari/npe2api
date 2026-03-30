@@ -1,0 +1,609 @@
+{
+  "info": {
+    "author": "Wulin Teo",
+    "author_email": null,
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 3 - Alpha",
+      "Framework :: napari",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-chat-assistant\n\n[![License MIT](https://img.shields.io/pypi/l/napari-chat-assistant.svg?color=green)](https://github.com/wulinteousa2-hash/napari-chat-assistant/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-chat-assistant.svg?color=green)](https://pypi.org/project/napari-chat-assistant)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-chat-assistant.svg?color=green)](https://python.org)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-chat-assistant)](https://napari-hub.org/plugins/napari-chat-assistant)\n\n---\n\nLocal Ollama-powered assistant for napari image-analysis workflows.\n\n`napari-chat-assistant` adds a dock widget inside napari that understands the active viewer session, runs built-in image-analysis actions, and generates executable napari Python code when a request goes beyond the current toolset.\n\nIt is designed for local interactive work, repeatable workflows, and gradual automation rather than cloud chat or fully opaque \u201cone-click AI\u201d.\n\nThe current direction is a deterministic, layer-aware assistant: the plugin profiles loaded napari layers first, then uses that structured context to guide tool choice and generated code.\n\n## Overview\n\nCurrent capabilities include:\n- connect to a local Ollama server\n- discover and unload local models from the plugin UI\n- inspect layers and selected-layer properties\n- profile layers with a deterministic Phase 1 dataset profiler\n- apply built-in image tools from chat\n- automate batch actions across multiple layers\n- generate napari Python code when no built-in tool fits\n- copy or run generated code from the assistant UI\n- save, pin, and reuse prompts through a local Prompt Library\n- delete selected built-in, recent, or saved prompts from the Prompt Library\n- clear unpinned recent and built-in prompts while keeping saved and pinned items\n- keep bounded session memory from approved prior turns\n- reject the last assistant outcome from session memory with a thumbs-down control\n- optionally open ND2 conversion, spectral viewer, and spectral analysis widgets from `napari-nd2-spectral-ome-zarr`\n\nThe current default model is:\n- `nemotron-cascade-2:30b`\n\n## Why This Plugin\n\nMost chat interfaces are detached from the actual napari session. This plugin keeps the assistant inside the viewer and grounds its responses in:\n- loaded layers\n- the selected layer\n- shape and dtype\n- semantic layer profiling\n- labels statistics\n- local tool execution\n- local Python code generation\n- bounded session memory\n\n### Local-first by design\n\nThe assistant runs on local open-weight models through Ollama:\n\n- no API key required\n- no internet dependency\n- no cloud services\n- no data leaves your workstation\n\nThis makes it suitable for research workflows where the user wants interactive help, repeatable prompts, and local control over data and models.\n\n## Current Features\n\n### Session-aware tools\n\nThe assistant currently supports built-in tools for:\n- listing all layers\n- inspecting the selected layer\n- inspecting a specific named layer\n- CLAHE contrast enhancement for grayscale 2D and 3D images\n- batch CLAHE across multiple image layers\n- threshold preview\n- threshold apply\n- batch threshold preview and apply\n- mask measurement\n- batch mask measurement\n- mask morphology operations\n\nLayer inspection is now backed by a deterministic profile object that includes:\n- `semantic_type`\n- `confidence`\n- `axes_detected`\n- `source_kind`\n- metadata flags such as multiscale, lazy/chunked, channel metadata, and wavelength metadata\n- recommended and discouraged operation classes\n- evidence buckets for debugging and future adapter work\n\nSupported mask operations:\n- `dilate`\n- `erode`\n- `open`\n- `close`\n- `fill_holes`\n- `remove_small`\n- `keep_largest`\n\n### Code generation workflows\n\nWhen a request is not covered by a built-in tool, the assistant can return napari Python code instead of guessing.\n\nGenerated code can be:\n- copied to the clipboard\n- executed from the plugin after user review\n\nThis is useful when you want a reusable script, need to adjust code manually, or prefer explicit code over hidden automation.\n\n### Optional ND2 and spectral integration\n\nIf `napari-nd2-spectral-ome-zarr` is installed, the assistant can open:\n- the ND2-to-OME-Zarr export widget\n- the Spectral Viewer widget\n- the Spectral Analysis widget\n\nThis lets chat act as an entry point for Nikon ND2 conversion and spectral workflows without rebuilding those UIs inside this plugin.\n\nInstall links:\n- GitHub: `https://github.com/wulinteousa2-hash/napari-nd2-spectral-ome-zarr`\n- napari Hub: `https://napari-hub.org/plugins/napari-nd2-spectral-ome-zarr.html`\n\n### Selective Session Memory\n\nThe assistant now includes bounded session memory with three states:\n- `provisional`\n- `approved`\n- `rejected`\n\nBehavior:\n- new assistant outcomes start as provisional\n- successful follow-up actions can promote them to approved\n- only approved items are sent back to the model as `session_memory`\n- current viewer context and current layer profiles always override memory\n- `Thumbs Down Last Answer` rejects the most recent memory candidate for the current session\n\nThis is intentionally not full transcript memory. The model is still grounded primarily in the current napari viewer state.\n\n### Prompt Library\n\nThe assistant includes a persistent Prompt Library for repeatable workflows:\n- built-in starter prompts\n- recent prompts captured automatically\n- saved prompts for reusable tasks\n- pinned prompts for high-frequency workflows\n\nInteraction:\n- single click loads a prompt into the editor\n- double click sends it directly\n- multi-select supports Shift/Ctrl selection for batch actions\n- `Delete Selected` can remove saved prompts, recent prompts, or hide built-in prompts\n- `Clear Non-Saved` removes unpinned recent and built-in prompts while keeping saved and pinned items\n\nLogic:\n- `saved` means a user-managed prompt you want to keep as your own reusable entry\n- `pinned` means keep this prompt surfaced at the top of the library\n- a prompt can be pinned without being saved\n- built-in prompts are shipped examples; deleting them hides them from the current local library view\n\nThis is designed for users who want repeatable automation without committing everything to full scripting.\n\n## Requirements\n- Python 3.9+\n- napari\n- Ollama installed locally\n- a local Ollama model such as `nemotron-cascade-2:30b`\n\nTested during development on an NVIDIA DGX Spark workstation.\n\nThe plugin does not bundle the Ollama server or model weights.\n\n## Installation\n\n### 1. Install Ollama\n\nInstall Ollama on the same machine that runs napari, then start the local server:\n\n```bash\nollama serve\n```\n\nPull a model before using the plugin:\n\n```bash\nollama pull nemotron-cascade-2:30b\n```\n\nOptional alternatives:\n\n```bash\nollama pull qwen3-coder-next:latest\nollama pull qwen3.5\nollama pull qwen2.5:7b\n```\n\n### 2. Install the plugin\n\nClone the repository and install it in editable mode:\n\n```bash\ngit clone https://github.com/wulinteousa2-hash/napari-chat-assistant.git\ncd napari-chat-assistant\npip install -e .\n```\n\n## Release\n\nThis package is published to PyPI so napari Hub can discover it.\nFor maintainer release instructions and PyPI publishing setup, see [RELEASING.md](RELEASING.md)\n## Usage\n\n1. Start napari.\n2. Open `Plugins -> Chat Assistant`.\n3. Leave `Base URL` as `http://127.0.0.1:11434` unless your Ollama server is elsewhere.\n4. Choose a model from the `Model` dropdown or type a model tag manually.\n5. Click `Test Connection`.\n6. Start chatting, or use the Prompt Library for repeatable tasks.\n\nThe assistant works best when prompts describe a concrete action.\n\nExamples:\n\nLayer inspection:\n- `list all layers in the current viewer`\n- `inspect the selected layer properties`\n- `inspect layer LV-nerve and report its shape and dtype`\n\nEM contrast enhancement:\n- `apply CLAHE to the selected EM image`\n- `apply CLAHE to the selected image with kernel_size 32, clip_limit 0.01, nbins 256`\n- `apply CLAHE to all open EM images with kernel_size 64, clip_limit 0.02, nbins 512`\n\nThresholding and masks:\n- `preview a threshold mask for the selected image layer`\n- `apply a threshold optimized for dim objects on the selected image`\n- `measure connected components in the current mask layer`\n\nCode generation:\n- `write napari code to duplicate the selected layer`\n- `generate QtConsole code to print the selected layer shape`\n- `create a synthetic noisy image in the current viewer and generate napari code for it`\n- `create a docked histogram widget for the selected image and report mean, noise SD, and simple SNR`\n\nProfile-aware prompts:\n- `show every loaded layer with semantic type, confidence, axes, shape, and dtype`\n- `inspect the selected layer and explain what kind of dataset it is and why`\n- `tell me which operation classes are recommended or discouraged for the selected layer`\n- `decide if CLAHE is appropriate for the selected layer before using it`\n\nDemo and education prompts:\n- `create a synthetic noisy image in the current viewer for teaching image noise`\n- `generate a docked histogram and simple SNR widget for the selected image`\n- `create two synthetic images with low noise and high noise and compare their histograms`\n- `simulate low-SNR and high-SNR examples for teaching imaging quality`\n- `generate napari code that shows how noise level changes histogram width and simple SNR`\n- `create a demo image with bright spots on dark background and vary the noise step by step`\n\n## UI Overview\n\n### Model Connection\n\n- local Ollama base URL\n- model picker with discovered local models\n- test connection\n- use selected model\n- `Ollama Setup` help with install, `ollama serve`, and model pull examples\n- unload model\n\n### Prompt Library\n\n- built-in prompts\n- recent prompts\n- saved prompts\n- pinned prompts\n- `saved` keeps your own reusable copy\n- `pinned` keeps a prompt at the top regardless of whether it is built-in, recent, or saved\n- single click to load\n- double click to send\n- Shift/Ctrl multi-select for batch actions\n- `Delete Selected` works on built-in, recent, and saved prompts\n- `Clear Non-Saved` keeps saved and pinned items and clears unpinned recent and built-in items\n- `A-` and `A+` adjust prompt-library font size in small steps\n\n### Chat\n\n- multi-line prompt box\n- Enter to send\n- Shift/Ctrl/Alt+Enter for newline\n- transcript showing user messages, assistant replies, tool results, and generated code\n\n### Code Actions\n\n- `Reject`\n- `Run Code`\n- `Copy Code`\n- `Help`\n\n### Current Context\n\n- current layer summary from the active napari viewer\n- shortened layer names and a compact per-layer summary to avoid over-stretching the left column\n\n### Action Log\n\n- local status updates\n- model connection messages\n- tool execution messages\n- code execution and copy actions\n- color-highlighted path entries for assistant log, crash log, telemetry log, prompt library, and session memory\n- `Performance Summary`, `Telemetry Log`, and `Reset Log`\n\n## How It Works\n\nThe assistant is designed to operate within constrained napari workflows rather than as a general-purpose chatbot.\n\nThe current strategy is:\n1. collect structured napari viewer context\n2. build deterministic per-layer profile objects from the current viewer state\n3. add bounded approved session memory when available\n4. send that context and the user request to a local Ollama model\n5. the model returns a structured JSON response that specifies either:\n   - a normal reply\n   - a built-in tool call\n   - generated Python code\n6. run the selected tool or expose the generated code through the UI\n7. update session memory from explicit user feedback or successful follow-up behavior\n\nThis keeps the assistant more grounded than a plain chat interface and makes common operations more reliable.\n\n## Recommended Models\n\nGood starting choices:\n- `nemotron-cascade-2:30b`\n- `qwen3-coder-next:latest`\n- `qwen3.5`\n- `qwen2.5:7b`\n\nSelection guidance:\n- `nemotron-cascade-2:30b` is the current default and a strong general model for this workflow.\n- `qwen3-coder-next:latest` is a better candidate for Python and napari code generation, but it is significantly heavier.\n- `qwen3.5` remains a useful alternative general model.\n- `qwen2.5:7b` is lighter and may fit smaller-memory systems more easily.\n\nMemory note:\n- Larger tags require more RAM or VRAM.\n- On the DGX Spark setup used during development, `qwen3-coder-next:latest` may need around 100 GB of available memory to run comfortably.\n\n## Current Limitations\n\n- the dataset profiler is still Phase 1 and currently strongest on already-loaded napari layers rather than file-format-specific readers\n- TIFF vs OME-Zarr adapter behavior is not implemented yet\n- ND2 and Zeiss adapters are not implemented yet\n- session memory is selective and bounded; it is not full conversation memory\n- model output can still be inconsistent, especially for generated code\n- not all requests map cleanly to built-in tools yet\n- generated code can still fail if the model invents incorrect napari APIs\n- no multi-step task planning yet (complex workflows may require several prompts)\n- no image attachment or multimodal input pipeline yet\n- performance optimization for very large 2D/3D datasets is still in progress\n- hard native crashes in Qt/C-extension code may not be captured cleanly by the plugin crash log even when normal plugin errors are logged\n\nMost reliable current workflow:\n- use built-in tools for common layer inspection and mask/image actions\n- trust current viewer context and current layer profiles over any remembered prior turn\n- use the Prompt Library for repeated tasks\n- use generated code when you want explicit review and control\n\nFor demo and education workflows:\n- ask for code that uses the current napari `viewer`\n- avoid prompts that create a second `napari.Viewer()` or call `napari.run()`\n- prefer docked widgets over unmanaged popup windows for histogram or SNR teaching tools\n\n## Troubleshooting\n\n### Ollama not running\n\nIf `Test Connection` fails after restarting your computer, Ollama is usually not running yet.\n\nStart it in a terminal:\n\n```bash\nollama serve\n```\n\nThen return to the plugin and click `Test Connection` again.\n\n### Pulling a model\n\nModel downloads are intentionally handled outside the plugin.\n\nTo try a different model:\n- browse tags at `https://ollama.com/search`\n- type the tag into the plugin `Model` field if needed\n- pull it in a terminal, for example:\n\n```bash\nollama pull nemotron-cascade-2:30b\n```\n\nThen use `Test Connection` to refresh the plugin state.\n\n### Logs and crash logs\n\nThe plugin writes two local log files:\n- `~/.napari-chat-assistant/assistant.log`\n- `~/.napari-chat-assistant/crash.log`\n\nUse these together with the terminal traceback when diagnosing crashes or unclear UI failures.\n\n### Local model telemetry\n\nThe plugin also writes lightweight local telemetry to:\n- `~/.napari-chat-assistant/model_telemetry.jsonl`\n\nThis records real usage events such as:\n- request start and completion\n- selected model and prompt hash\n- total latency\n- response type (`reply`, `tool`, `code`, or `error`)\n- reject feedback from `\ud83d\udc4e Reject`\n- approved code execution success or failure\n\nThe goal is passive model tracking during actual work rather than separate benchmarking runs.\n\nFor advanced users, the Action Log includes:\n- `Performance Summary` to generate a quick in-app summary of recent model speed and behavior\n- `Telemetry Log` to inspect the latest raw JSONL records together with the summary\n- `Reset Log` to clear the local telemetry file and start fresh from the next request\n\nThis keeps the append-only log intact while making it easier to review without leaving napari.\n\nGenerated code is also preflight-validated before execution for common dtype mistakes, unsupported napari imports, and unavailable `viewer.*` APIs. When validation blocks execution, the code remains visible and copyable for review or regeneration.\n\n## Development\n\nEditable install:\n\n```bash\npip install -e .\n```\n\nBuild a release artifact:\n\n```bash\npython -m build\n```\n\n## License\n\nMIT. \n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": null,
+    "license_expression": "MIT",
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-chat-assistant",
+    "package_url": "https://pypi.org/project/napari-chat-assistant/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-chat-assistant/",
+    "project_urls": {
+      "Homepage": "https://github.com/wulinteousa2-hash/napari-chat-assistant",
+      "Issues": "https://github.com/wulinteousa2-hash/napari-chat-assistant/issues",
+      "Repository": "https://github.com/wulinteousa2-hash/napari-chat-assistant"
+    },
+    "provides_extra": [
+      "test"
+    ],
+    "release_url": "https://pypi.org/project/napari-chat-assistant/1.2.6/",
+    "requires_dist": [
+      "napari",
+      "numpy",
+      "qtpy",
+      "scipy",
+      "scikit-image",
+      "pytest; extra == \"test\"",
+      "pytest-cov; extra == \"test\""
+    ],
+    "requires_python": ">=3.9",
+    "summary": "Local chat assistant scaffold for napari image-analysis workflows",
+    "version": "1.2.6",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 35608290,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "viralvector"
+      }
+    ]
+  },
+  "releases": {
+    "0.0.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "ee9eacd52e49728a47e7502a3b3ca70f5d8931c15d1a7ae38c03ab342d686fb2",
+          "md5": "2f3a5aea6551827790ba56564fc868b1",
+          "sha256": "132fe30b1994f30e39840622a5ca7a3638615e30dacc788c809e91499d12a9f5"
+        },
+        "downloads": -1,
+        "filename": "napari_chat_assistant-0.0.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "2f3a5aea6551827790ba56564fc868b1",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 21684,
+        "upload_time": "2026-03-25T02:42:10",
+        "upload_time_iso_8601": "2026-03-25T02:42:10.594725Z",
+        "url": "https://files.pythonhosted.org/packages/ee/9e/acd52e49728a47e7502a3b3ca70f5d8931c15d1a7ae38c03ab342d686fb2/napari_chat_assistant-0.0.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "09fd228b2ce259b96fbd7709fd9e6d318e2f48d06e33b0dc51277b560cf1a9c9",
+          "md5": "77a5ce39be2792fff185a414ae3eae5c",
+          "sha256": "46344c5fe8f9f06204d584f3349da977bf6d4c09cd9adb9b6f1499d06104081e"
+        },
+        "downloads": -1,
+        "filename": "napari_chat_assistant-0.0.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "77a5ce39be2792fff185a414ae3eae5c",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 21350,
+        "upload_time": "2026-03-25T02:42:11",
+        "upload_time_iso_8601": "2026-03-25T02:42:11.929881Z",
+        "url": "https://files.pythonhosted.org/packages/09/fd/228b2ce259b96fbd7709fd9e6d318e2f48d06e33b0dc51277b560cf1a9c9/napari_chat_assistant-0.0.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "e1f6955ec9897009f5d133cc8feaea73656f022caf186a55c85b6e04c3ce1485",
+          "md5": "01343d08280910a96564ef0898167286",
+          "sha256": "b94921a7ae7dca15e0853d57e6742d5a44aada6eca51b4bb8f538471129fc0cc"
+        },
+        "downloads": -1,
+        "filename": "napari_chat_assistant-1.0.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "01343d08280910a96564ef0898167286",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 26327,
+        "upload_time": "2026-03-25T19:20:52",
+        "upload_time_iso_8601": "2026-03-25T19:20:52.744662Z",
+        "url": "https://files.pythonhosted.org/packages/e1/f6/955ec9897009f5d133cc8feaea73656f022caf186a55c85b6e04c3ce1485/napari_chat_assistant-1.0.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "6dfa6dacc5efaa3478b1474729530b30ea57aa4a2c88d5ce445d5efa65d125ad",
+          "md5": "aa397a4b5a162c8865358ab7490e4222",
+          "sha256": "e56e128367387f4052b5847ad689dd398a391c8b582b65dc6177986bd67958c6"
+        },
+        "downloads": -1,
+        "filename": "napari_chat_assistant-1.0.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "aa397a4b5a162c8865358ab7490e4222",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 25903,
+        "upload_time": "2026-03-25T19:20:53",
+        "upload_time_iso_8601": "2026-03-25T19:20:53.664980Z",
+        "url": "https://files.pythonhosted.org/packages/6d/fa/6dacc5efaa3478b1474729530b30ea57aa4a2c88d5ce445d5efa65d125ad/napari_chat_assistant-1.0.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "a3740120fb99d0d9d6c2a74e0b0a1cebde319f9731fcd9341ae4bf9024d067d9",
+          "md5": "e828be55b5fd65c932d2f30d8050a7df",
+          "sha256": "0ff6eb7dc007221c5336b9db18c48431930409a99ed8f3a91d129d115d787470"
+        },
+        "downloads": -1,
+        "filename": "napari_chat_assistant-1.0.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "e828be55b5fd65c932d2f30d8050a7df",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 26346,
+        "upload_time": "2026-03-25T23:09:27",
+        "upload_time_iso_8601": "2026-03-25T23:09:27.525809Z",
+        "url": "https://files.pythonhosted.org/packages/a3/74/0120fb99d0d9d6c2a74e0b0a1cebde319f9731fcd9341ae4bf9024d067d9/napari_chat_assistant-1.0.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "42ef536dab1dd633fafb96b528fd416bb43ce7284cd498e4ddd25d27527835c9",
+          "md5": "1fbf02f5a89a9712d8a83eea2adb3a13",
+          "sha256": "bac5e8500586b6b370a20054a02f7632c14025b34dc952c829f1d3236d1e5187"
+        },
+        "downloads": -1,
+        "filename": "napari_chat_assistant-1.0.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "1fbf02f5a89a9712d8a83eea2adb3a13",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 25889,
+        "upload_time": "2026-03-25T23:09:28",
+        "upload_time_iso_8601": "2026-03-25T23:09:28.424879Z",
+        "url": "https://files.pythonhosted.org/packages/42/ef/536dab1dd633fafb96b528fd416bb43ce7284cd498e4ddd25d27527835c9/napari_chat_assistant-1.0.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.1.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "dbbecb362b8091a88ce262981ab9f556df89ee4b93160a885e83eff9aac87a16",
+          "md5": "6417e72828238372cc79230e00718046",
+          "sha256": "170d15c224491805fa69bb8dbbd768beaaef5bb8770e6b70a0925d0112efcd74"
+        },
+        "downloads": -1,
+        "filename": "napari_chat_assistant-1.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "6417e72828238372cc79230e00718046",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 28266,
+        "upload_time": "2026-03-26T20:23:23",
+        "upload_time_iso_8601": "2026-03-26T20:23:23.891332Z",
+        "url": "https://files.pythonhosted.org/packages/db/be/cb362b8091a88ce262981ab9f556df89ee4b93160a885e83eff9aac87a16/napari_chat_assistant-1.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "dc1c8def1eb3c9d2153fea07732b445891c9d8fa37e8cf608c18e7d87e125e3e",
+          "md5": "de4d4f41bb5c1922ea109efd00c6d7f9",
+          "sha256": "1af7c5e71033320c8bbd25ae4a389684248c3c135bdd3a7c659145634d89b57c"
+        },
+        "downloads": -1,
+        "filename": "napari_chat_assistant-1.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "de4d4f41bb5c1922ea109efd00c6d7f9",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 29259,
+        "upload_time": "2026-03-26T20:23:24",
+        "upload_time_iso_8601": "2026-03-26T20:23:24.875225Z",
+        "url": "https://files.pythonhosted.org/packages/dc/1c/8def1eb3c9d2153fea07732b445891c9d8fa37e8cf608c18e7d87e125e3e/napari_chat_assistant-1.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.2.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "f629de0d74b08e58764480ccf496a2538b18792928dfbcc90419b25d468b0e1a",
+          "md5": "e9aebdddb1028fbd28badd0a96d5a0e1",
+          "sha256": "2f5e1b000dda7971f3dc16edb406942f444ea347f62bd28916633a63907d8ea2"
+        },
+        "downloads": -1,
+        "filename": "napari_chat_assistant-1.2.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "e9aebdddb1028fbd28badd0a96d5a0e1",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 41395,
+        "upload_time": "2026-03-27T02:54:42",
+        "upload_time_iso_8601": "2026-03-27T02:54:42.740412Z",
+        "url": "https://files.pythonhosted.org/packages/f6/29/de0d74b08e58764480ccf496a2538b18792928dfbcc90419b25d468b0e1a/napari_chat_assistant-1.2.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "ef414b8b3545b19e930939eed924787b06669701cbf08e8b1af1e788acb621be",
+          "md5": "6d8530b6c88335338881473ee070babb",
+          "sha256": "cdb7cabe462de5e66cd71c775df1322416a267decef49dced6974c06712c9526"
+        },
+        "downloads": -1,
+        "filename": "napari_chat_assistant-1.2.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "6d8530b6c88335338881473ee070babb",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 44455,
+        "upload_time": "2026-03-27T02:54:43",
+        "upload_time_iso_8601": "2026-03-27T02:54:43.651194Z",
+        "url": "https://files.pythonhosted.org/packages/ef/41/4b8b3545b19e930939eed924787b06669701cbf08e8b1af1e788acb621be/napari_chat_assistant-1.2.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.2.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "4bbb37313df8b0f390a04b527a1431d191cf12412b23dfedb072bc98fda479af",
+          "md5": "1b804a57579a67c7d41afac4ef2255fc",
+          "sha256": "de79b82d5875c7422243c4988217cd17d7c84e064a47202f01f2ae095ac33e33"
+        },
+        "downloads": -1,
+        "filename": "napari_chat_assistant-1.2.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "1b804a57579a67c7d41afac4ef2255fc",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 41907,
+        "upload_time": "2026-03-27T15:46:11",
+        "upload_time_iso_8601": "2026-03-27T15:46:11.977804Z",
+        "url": "https://files.pythonhosted.org/packages/4b/bb/37313df8b0f390a04b527a1431d191cf12412b23dfedb072bc98fda479af/napari_chat_assistant-1.2.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "d2facb140ebd4a92382a4a6259afdeeb1cbade9fd709e318b464bfad508ead1a",
+          "md5": "dc31c28740e8ffa64ee4c3b5ad19525d",
+          "sha256": "72b39596e602bd5d4ba3aeed901d3eb4bc5a356d9acdd80727585b7392a3c82d"
+        },
+        "downloads": -1,
+        "filename": "napari_chat_assistant-1.2.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "dc31c28740e8ffa64ee4c3b5ad19525d",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 45633,
+        "upload_time": "2026-03-27T15:46:13",
+        "upload_time_iso_8601": "2026-03-27T15:46:13.308244Z",
+        "url": "https://files.pythonhosted.org/packages/d2/fa/cb140ebd4a92382a4a6259afdeeb1cbade9fd709e318b464bfad508ead1a/napari_chat_assistant-1.2.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.2.2": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "2d76ffe4a9b186d49847c5329a0929eaefc0959c27360327d1a3d3a965ab8cbe",
+          "md5": "3683b3cbfa0d3c9873d3637e498a7a72",
+          "sha256": "4d31e55c9322969e366be03099a111e3adae05c5341c96b29caf3efa05c75f9d"
+        },
+        "downloads": -1,
+        "filename": "napari_chat_assistant-1.2.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "3683b3cbfa0d3c9873d3637e498a7a72",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 41942,
+        "upload_time": "2026-03-27T19:50:00",
+        "upload_time_iso_8601": "2026-03-27T19:50:00.554233Z",
+        "url": "https://files.pythonhosted.org/packages/2d/76/ffe4a9b186d49847c5329a0929eaefc0959c27360327d1a3d3a965ab8cbe/napari_chat_assistant-1.2.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "b69e62c1e81f839e6554b57eaffd66f003305953ed96e1284cf9dfebf075e5fd",
+          "md5": "b9f59946d053daa363ebd3e092a59562",
+          "sha256": "4da77865fd8d3bc5b294fe1933a89d0955b39b0b256476515926de26a8a32901"
+        },
+        "downloads": -1,
+        "filename": "napari_chat_assistant-1.2.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "b9f59946d053daa363ebd3e092a59562",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 45637,
+        "upload_time": "2026-03-27T19:50:01",
+        "upload_time_iso_8601": "2026-03-27T19:50:01.794497Z",
+        "url": "https://files.pythonhosted.org/packages/b6/9e/62c1e81f839e6554b57eaffd66f003305953ed96e1284cf9dfebf075e5fd/napari_chat_assistant-1.2.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.2.3": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "6c36af306351cb5346fb3944c003c14ff4c95b4a95c95024583ad0db50501515",
+          "md5": "7598558937f0ef27da3afa2d6ee54565",
+          "sha256": "c52d038128eaf6dcf99f9d4011cd28f32f1c2bee2b8e191b3894fd24f38dd4ba"
+        },
+        "downloads": -1,
+        "filename": "napari_chat_assistant-1.2.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "7598558937f0ef27da3afa2d6ee54565",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 44377,
+        "upload_time": "2026-03-29T15:04:12",
+        "upload_time_iso_8601": "2026-03-29T15:04:12.508482Z",
+        "url": "https://files.pythonhosted.org/packages/6c/36/af306351cb5346fb3944c003c14ff4c95b4a95c95024583ad0db50501515/napari_chat_assistant-1.2.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "2e14227d4e93be13d8b8d2b19b72326bbdbd0878173e1cb4f4110705ef642b3e",
+          "md5": "a1d1b468c0913a7eafd84ed934730282",
+          "sha256": "4c6683375ab03de5760e0bcf64057d8a7d800071d24fc27bfdd3484a925804d8"
+        },
+        "downloads": -1,
+        "filename": "napari_chat_assistant-1.2.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "a1d1b468c0913a7eafd84ed934730282",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 48516,
+        "upload_time": "2026-03-29T15:04:13",
+        "upload_time_iso_8601": "2026-03-29T15:04:13.886050Z",
+        "url": "https://files.pythonhosted.org/packages/2e/14/227d4e93be13d8b8d2b19b72326bbdbd0878173e1cb4f4110705ef642b3e/napari_chat_assistant-1.2.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.2.4": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "917043d32558592ad7912dbbc0ea4589711f95b4eb6d8de0d9636121a125e0aa",
+          "md5": "4d810c703888d9001bfaf815b965a5b2",
+          "sha256": "a4dd4c6d619302d8bd4cc0506d3bc0570ae17e55696db197304215c119d52d89"
+        },
+        "downloads": -1,
+        "filename": "napari_chat_assistant-1.2.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "4d810c703888d9001bfaf815b965a5b2",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 47520,
+        "upload_time": "2026-03-29T17:42:51",
+        "upload_time_iso_8601": "2026-03-29T17:42:51.034498Z",
+        "url": "https://files.pythonhosted.org/packages/91/70/43d32558592ad7912dbbc0ea4589711f95b4eb6d8de0d9636121a125e0aa/napari_chat_assistant-1.2.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "af46c2ca3637d9c5cd6b7c159ba9fb2185e43e8852190e8b5883207efa9051c0",
+          "md5": "febb23a98227f0550225ccda5399863d",
+          "sha256": "0efe2bd5471be8998551c277ecbf5c8b35d5790c0eb89cab85decd583e42bf39"
+        },
+        "downloads": -1,
+        "filename": "napari_chat_assistant-1.2.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "febb23a98227f0550225ccda5399863d",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 52307,
+        "upload_time": "2026-03-29T17:42:52",
+        "upload_time_iso_8601": "2026-03-29T17:42:52.272738Z",
+        "url": "https://files.pythonhosted.org/packages/af/46/c2ca3637d9c5cd6b7c159ba9fb2185e43e8852190e8b5883207efa9051c0/napari_chat_assistant-1.2.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.2.5": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "86ac971b6ecaa0d2ba2545a9ac1e3d864270a3eb2069aace8003187a68391e8e",
+          "md5": "6544a5ebac5149b9c7c627dd614721f4",
+          "sha256": "7ff6341b43ce07de8baa6d26b2dfe9f90e14358bd40a82d97e8448532ff717b6"
+        },
+        "downloads": -1,
+        "filename": "napari_chat_assistant-1.2.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "6544a5ebac5149b9c7c627dd614721f4",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 48413,
+        "upload_time": "2026-03-29T19:28:22",
+        "upload_time_iso_8601": "2026-03-29T19:28:22.138798Z",
+        "url": "https://files.pythonhosted.org/packages/86/ac/971b6ecaa0d2ba2545a9ac1e3d864270a3eb2069aace8003187a68391e8e/napari_chat_assistant-1.2.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "036b0fc067135a2586edff4bfd4097b7f5dcbeb5d07baceddecbeabb296b2c48",
+          "md5": "37302ad8441f18560f9591e3e7e8e645",
+          "sha256": "1162e301c17d6ad61ae9b5e0d3d989612250c5f73618a12194637792334d5e3e"
+        },
+        "downloads": -1,
+        "filename": "napari_chat_assistant-1.2.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "37302ad8441f18560f9591e3e7e8e645",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 53353,
+        "upload_time": "2026-03-29T19:28:23",
+        "upload_time_iso_8601": "2026-03-29T19:28:23.416411Z",
+        "url": "https://files.pythonhosted.org/packages/03/6b/0fc067135a2586edff4bfd4097b7f5dcbeb5d07baceddecbeabb296b2c48/napari_chat_assistant-1.2.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.2.6": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "f3aed07cf9daa221d3e6eec19b4b701d3d9a0999f65c2668f1e6892d7733373d",
+          "md5": "053492ec218ebd6e23eb8255b008cca9",
+          "sha256": "99c5b7134406ee0874d745d7ab270f2c34252bad63aae116bfb7704991146194"
+        },
+        "downloads": -1,
+        "filename": "napari_chat_assistant-1.2.6-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "053492ec218ebd6e23eb8255b008cca9",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 52976,
+        "upload_time": "2026-03-30T06:18:22",
+        "upload_time_iso_8601": "2026-03-30T06:18:22.556546Z",
+        "url": "https://files.pythonhosted.org/packages/f3/ae/d07cf9daa221d3e6eec19b4b701d3d9a0999f65c2668f1e6892d7733373d/napari_chat_assistant-1.2.6-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "429a41d8f3d9fef1edb4423d9c7a606f2471d23c2e7ad25bc85d079de5fc47d2",
+          "md5": "1f466b71b2bfe070cc6303b50b372a9a",
+          "sha256": "fddce1df8f37a0f93db770d48b12bee79973e26c7f203ad551a85bc05a650add"
+        },
+        "downloads": -1,
+        "filename": "napari_chat_assistant-1.2.6.tar.gz",
+        "has_sig": false,
+        "md5_digest": "1f466b71b2bfe070cc6303b50b372a9a",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 58906,
+        "upload_time": "2026-03-30T06:18:23",
+        "upload_time_iso_8601": "2026-03-30T06:18:23.540154Z",
+        "url": "https://files.pythonhosted.org/packages/42/9a/41d8f3d9fef1edb4423d9c7a606f2471d23c2e7ad25bc85d079de5fc47d2/napari_chat_assistant-1.2.6.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "f3aed07cf9daa221d3e6eec19b4b701d3d9a0999f65c2668f1e6892d7733373d",
+        "md5": "053492ec218ebd6e23eb8255b008cca9",
+        "sha256": "99c5b7134406ee0874d745d7ab270f2c34252bad63aae116bfb7704991146194"
+      },
+      "downloads": -1,
+      "filename": "napari_chat_assistant-1.2.6-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "053492ec218ebd6e23eb8255b008cca9",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.9",
+      "size": 52976,
+      "upload_time": "2026-03-30T06:18:22",
+      "upload_time_iso_8601": "2026-03-30T06:18:22.556546Z",
+      "url": "https://files.pythonhosted.org/packages/f3/ae/d07cf9daa221d3e6eec19b4b701d3d9a0999f65c2668f1e6892d7733373d/napari_chat_assistant-1.2.6-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "429a41d8f3d9fef1edb4423d9c7a606f2471d23c2e7ad25bc85d079de5fc47d2",
+        "md5": "1f466b71b2bfe070cc6303b50b372a9a",
+        "sha256": "fddce1df8f37a0f93db770d48b12bee79973e26c7f203ad551a85bc05a650add"
+      },
+      "downloads": -1,
+      "filename": "napari_chat_assistant-1.2.6.tar.gz",
+      "has_sig": false,
+      "md5_digest": "1f466b71b2bfe070cc6303b50b372a9a",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.9",
+      "size": 58906,
+      "upload_time": "2026-03-30T06:18:23",
+      "upload_time_iso_8601": "2026-03-30T06:18:23.540154Z",
+      "url": "https://files.pythonhosted.org/packages/42/9a/41d8f3d9fef1edb4423d9c7a606f2471d23c2e7ad25bc85d079de5fc47d2/napari_chat_assistant-1.2.6.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
