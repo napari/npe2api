@@ -1,10 +1,10 @@
 {
   "info": {
-    "author": "Joel Luethi and Max Hess",
-    "author_email": "joel.luethi@uzh.ch",
+    "author": null,
+    "author_email": "Joel Luethi and Max Hess <joel.luethi@uzh.ch>",
     "bugtrack_url": null,
     "classifiers": [
-      "Development Status :: 3 - Alpha",
+      "Development Status :: 4 - Beta",
       "Framework :: napari",
       "Intended Audience :: Developers",
       "License :: OSI Approved :: BSD License",
@@ -12,10 +12,11 @@
       "Programming Language :: Python",
       "Programming Language :: Python :: 3",
       "Programming Language :: Python :: 3.10",
-      "Programming Language :: Python :: 3.9",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
       "Topic :: Software Development :: Testing"
     ],
-    "description": "# napari-feature-classifier\n\n[![License](https://img.shields.io/pypi/l/napari-feature-classifier.svg?color=green)](https://github.com/fractal-napari-plugins-collection/napari-feature-classifier/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-feature-classifier.svg?color=green)](https://pypi.org/project/napari-feature-classifier)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-feature-classifier.svg?color=green)](https://python.org)\n[![tests](https://github.com/fractal-napari-plugins-collection/napari-feature-classifier/workflows/tests/badge.svg)](https://github.com/fractal-napari-plugins-collection/napari-feature-classifier/actions)\n[![codecov](https://codecov.io/gh/fractal-napari-plugins-collection/napari-feature-classifier/branch/main/graph/badge.svg)](https://codecov.io/gh/fractal-napari-plugins-collection/napari-feature-classifier)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-feature-classifier)](https://napari-hub.org/plugins/napari-feature-classifier)\n\nAn interactive classifier plugin that allows the user to assign objects in a label image to multiple classes and train a classifier to learn those classes based on a feature dataframe.\n\n## Usage\n<p align=\"center\"><img src=\"https://github.com/fractal-napari-plugins-collection/napari-feature-classifier/assets/18033446/1ebf0890-1a7b-4e4b-a21c-88ca8f1dd800\" /></p>\n\nTo use the napari-feature-classifier, you need to have a label image and corresponding measurements: as a csv file, loaded to layer.features or in an [OME-Zarr Anndata table loaded with another plugin](https://github.com/fractal-napari-plugins-collection/napari-ome-zarr-navigator). Your feature measurements need to contain a `label` column that matches the label objects in the label image.\nThese interactive classification workflows are well suited to visually define cell types, find mitotic cells in images, do quality control by automatically detecting missegmented cells and other tasks where a user can easily assign objects to groups.\n\n#### Prepare the label layer:\n- Load your label layer into napari and add the features measurements to layer.features of the corresponding label layer. You can have multiple label layers with their features open at the same time\n    - To load features from a CSV file: `Plugins -> napari-feature-classifier -> CSV Feature Loader`, then load the features for the correct label image.\n    - To load features from an OME-Zarr file: Get both the label layer into memory as a normal label layer (not a pyramidal label layer, currently untested) and the corresponding features. If your OME-Zarr file is created by [Fractal](https://fractal-analytics-platform.github.io/), you can use [this ROI loader plugin](https://github.com/jluethi/napari-ome-zarr-roi-loader).\n    - To load features from anywhere else, load them manually to your label_layer.features\n- Your feature table should have 2 columns used for indexing (but stored as normal columns in layer.features):\n    - The `label` column to match the object in the label image\n    - The `roi_id` column to identify the image you're currently classifying (used when a classifier is trained on multiple label images)\n\n\n#### Initialize a classifier:\n- Start the classifier in napari by going to `Plugins -> napari-feature-classifier -> Initialize a Classifier`  \n- Select the features you want to use for the classifier (you need to do the feature selection before initializing. The feature selection can't be changed after initialization anymore). Hold the command key to select multiple features. Feature options are always shown for the features available in the last selected label layer, based on layer.features available features.\n- (Optional) Give your classes recognizable names (e.g. Mitotic & Interphase, Cell Type a, b and c etc.)\n<img width=\"1606\" alt=\"Screenshot 2023-05-09 at 11 46 35\" src=\"https://github.com/fractal-napari-plugins-collection/napari-feature-classifier/assets/18033446/452c0d6a-98a3-4e2d-9233-33bfd5bcad19\">\n\n\n\n\n#### Classify objects:\n<img width=\"1802\" alt=\"Classifier_annotation\" src=\"https://github.com/fractal-napari-plugins-collection/napari-feature-classifier/assets/18033446/556739b8-972b-4570-9da4-637738fc6a75\">\n\n- Make sure you have the label layer selected on which you want to classify\n- Select the current class with the radio buttons or by pressing 0, 1, 2, etc.\n- Click on label objects in the viewer to assign them to the currently selected class\n- Once you have trained enough examples, click \"Run Classifier\" to run the classifier and have it make a prediction for all objects. Aim for at least a dozen annotations per class, as the classifier divides your annotations 80/20 in training and test sets. \n- Once you get predictions, correct mistakes the classifier made and retrain it to improve its performance.\n- You can save the classifier under a different name or in a different location. Define the new output location and then click `Save Classifier` (you need to click the Save Classifier button. Just defining the new output path does not save it yet. But every run of the classifier triggers an autosave)\n<img width=\"1802\" alt=\"Classifier_prediction\" src=\"https://github.com/fractal-napari-plugins-collection/napari-feature-classifier/assets/18033446/69cff600-4585-4a66-9274-d2e7caeb335f\">\n\n\n\n#### Apply the classifier to additional images:\n- You can apply a classifier trained on one image to additional label images. Use `Plugins -> napari-feature-classifier -> Load Classifier`  \n- Select the classifier (.clf file with the name you gave above) while already having the label images ready (see `Prepare the label layer` above).\n- Click Load Classifier, proceed as above.\n<img width=\"1606\" alt=\"Screenshot 2023-05-09 at 12 01 00\" src=\"https://github.com/fractal-napari-plugins-collection/napari-feature-classifier/assets/18033446/e1143f9f-9729-4f8e-979c-2ab195e0aaca\">\n\n\n\n#### Export classifier results\n- To export the training data and the results of the classifier, define an Export Name (full path to an output file or just a filename ending in .csv) where the results of the classifier shall be saved. It defaults to the layer name for the selected layer in the last directory you chose (or the current working directory if none was chosen so far)\n- Click `Export Classifier Result` (Just selecting a filename is not enough, you need to click the export button). This will export the predictions for the currently selected layer.\n- The results of the classifier are save in a csv file. The label is an integer of the label object within that image. The prediction column contains predictions of the classifier for all objects (except those that contained NaNs in their feature data) and the annotation column contains the annotations you made (NaN for unclassified objects, -1 for objects you deselected, 1 - 9 for the classes)\n<img width=\"1802\" alt=\"Classifier_prediction\" src=\"https://github.com/fractal-napari-plugins-collection/napari-feature-classifier/assets/18033446/e8f6f7b7-d88b-44f8-b43e-8a2fa81e18d4\">\n\n\n#### Batch mode result export\n(To be updated: Create a new notebook to run batch processing, this is for the older version of the classifier)\nThere is a simple workflow for the classifier in the examples folder:\n- Install jupyter-lab (`pip install jupyterlab`)\n- Open the notebook in jupyter lab (Type `jupyter-lab` in the terminal when you are in the examples folder)\n- Follow the instructions to generate an example dataframe and an example label image\n- Use the classifier in napari with this simplified data\n\n\n#### Initializing the Annotator\nYou can use the annotation functionality also independently from the classifier\nStart the annotator widget by going to `Plugins -> napari-feature-classifier -> Annotator`\nSelect names for your classes. You can name up to 9 classes. Only classes that you give a name will be created upon initialization.\nThen click `Initialize`.\n\n<img width=\"1411\" alt=\"Screenshot 2023-02-16 at 14 49 38\" src=\"https://user-images.githubusercontent.com/18033446/219384524-9873bd66-270b-4cdd-b913-60d390f6c77a.png\">\n\nA annotator widget opens. Use the Radio-Buttons to select what class you're annotating (or keybindings for 1-9 for classes, 0 for deselect).\nThe annotator will always work on the currently selected label layer. While the annotator is open, you can't edit the labels. Restart napari to allow editing of labels again.\n\n<img width=\"1411\" alt=\"Screenshot 2023-02-16 at 14 50 00\" src=\"https://user-images.githubusercontent.com/18033446/219384925-b20e4c1a-2eca-4070-8269-902493c5d5ef.png\">\n\nThe annotations are saved in the `layer.features` table of the corresponding label layer as an `annotations` column.\n<img width=\"1411\" alt=\"Screenshot 2023-02-16 at 15 01 01\" src=\"https://user-images.githubusercontent.com/18033446/219385788-f61bd0a5-fbb6-42d7-81e5-f77ee4d1b4ff.png\">\n\n\n## Installation\n\nThis plugin is written for the new napari npe2 plugin engine. Thus, it requires napari >= 0.4.13.\nActivate your environment where you have napari installed (or install napari using `pip install \"napari[all]\"`), then install the classifier plugin:\n\n    pip install napari-feature-classifier\n\nThe layer.features dataframes have some issues in napari 0.4.17 (see [here](https://github.com/napari/napari/issues/5617)). They seem to be working again in the nighlty builds. To set up a nightly builds napari env, do the following:\n\n```\nconda create -n classifier-dev-napari-main -c \"napari/label/nightly\" -c conda-forge napari python=3.10 -y\n```\n    \n## Similar napari plugins\nIf you're looking for other classification approaches, [apoc](https://github.com/haesleinhuepf/apoc) by [Robert Haase](https://github.com/haesleinhuepf) has a pixel classifier in napari and an object classification workflow:  \n[napari-accelerated-pixel-and-object-classification (APOC)](https://github.com/haesleinhuepf/napari-accelerated-pixel-and-object-classification)  \nAlternatively, Cl\u00e9ment Cazorla has built [napari-svetlana, a deep learning based classifier](https://www.napari-hub.org/plugins/napari-svetlana)\n\n## Release process\n1. Update the version number in src/napari-feature-classifier/__init__.py\n2. Update the version in setup.cfg\n3. Add a Github release with a new version tag (matching the version set above)\n4. Once tests pass, this should automatically be deployed to pypi\n5. Wait for conda automation to make a PR for an updated conda release (see https://github.com/conda-forge/napari-feature-classifier-feedstock). This can take 1-2 days. Make sure that PR gets merged.\n\n\n## Contributing\n\nContributions are very welcome.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-feature-classifier\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n## Contributors\n[Joel L\u00fcthi](https://github.com/jluethi) & [Max Hess](https://github.com/MaksHess)\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description": "# napari-feature-classifier\n\n[![License](https://img.shields.io/pypi/l/napari-feature-classifier.svg?color=green)](https://github.com/fractal-napari-plugins-collection/napari-feature-classifier/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-feature-classifier.svg?color=green)](https://pypi.org/project/napari-feature-classifier)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-feature-classifier.svg?color=green)](https://python.org)\n[![tests](https://github.com/fractal-napari-plugins-collection/napari-feature-classifier/workflows/tests/badge.svg)](https://github.com/fractal-napari-plugins-collection/napari-feature-classifier/actions)\n[![codecov](https://codecov.io/gh/fractal-napari-plugins-collection/napari-feature-classifier/branch/main/graph/badge.svg)](https://codecov.io/gh/fractal-napari-plugins-collection/napari-feature-classifier)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-feature-classifier)](https://napari-hub.org/plugins/napari-feature-classifier)\n\nAn interactive classifier plugin for napari that lets you annotate objects in a label image and train a random forest classifier to generalize those annotations across all objects \u2014 without leaving the viewer.\n\n![napari-feature-classifier](https://github.com/user-attachments/assets/e1a3156a-bc78-442e-9294-f81aba503ee4)\n\n## When to use this\n\nThis plugin is designed for tasks where visual inspection defines the ground truth:\n- Classifying cell types (e.g. mitotic vs. interphase cells)\n- Quality control (flagging mis-segmented objects)\n- Any labeling task where you can recognize the classes by eye but want to scale it to thousands of objects automatically\n\nYou need: a **label image** and a **feature table** \u2014 measurements per object (area, intensity, shape descriptors, etc.) stored in `layer.features`. The classifier learns from your manual annotations and applies those patterns to every object.\n\n## Usage\n\n### 1. Prepare your label layer\n\nLoad your label image into napari and attach feature measurements to `layer.features` of that layer. You can have multiple label layers open at once \u2014 the classifier handles them all.\n\nYour feature table must have:\n- A `label` column matching the integer labels in the image\n- A `roi_id` column identifying which image each row belongs to (used when training on multiple images)\n\n**Ways to load features:**\n- From an OME-Zarr file: use [napari-ome-zarr-navigator](https://github.com/fractal-napari-plugins-collection/napari-ome-zarr-navigator), which handles correct loading of both the label image and the feature table and populates the `roi_id` column automatically.\n- From a CSV file: `Plugins \u2192 napari-feature-classifier \u2192 CSV Feature Loader`, then select the label layer and point to the CSV.\n- Programmatically: `label_layer.features = your_dataframe`\n\n### 2. Initialize a classifier\n\nGo to `Plugins \u2192 napari-feature-classifier \u2192 Initialize a Classifier`.\n\n<img width=\"1694\" height=\"1088\" alt=\"classifier_init\" src=\"https://github.com/user-attachments/assets/05a2495a-b7fd-40be-bd9c-607177c0aa68\" />\n\n\n- Select the features to use for training. Hold Cmd/Ctrl to select multiple. The feature list reflects the currently selected label layer.\n- Name your classes (e.g. \"Mitotic\", \"Interphase\"). Classes without a name won't be created.\n- Click **Initialize**.\n\n> Feature selection is fixed after initialization. If you want different features, start a new classifier.\n\n### 3. Annotate and train\n\n<img width=\"1694\" height=\"1088\" alt=\"classifier_annotation\" src=\"https://github.com/user-attachments/assets/25a9c90a-0d58-4fc2-92df-9006cdae00aa\" />\n\n\n- Select your label layer in the napari layer list.\n- Pick a class using the panel buttons or keyboard shortcuts (keys **1\u20139** for classes, **0** to deselect).\n- Click on label objects in the viewer to annotate them.\n- The live count display shows how many objects you've annotated per class across all open images.\n- Once you have at least a handful of examples per class (aim for 10+), click **Run Classifier**.\n\nThe classifier splits your annotations 80/20 into training and test sets, trains a random forest, and applies it to all objects. Predictions appear as a color-coded **Predictions** layer.\n\n<img width=\"1694\" height=\"1088\" alt=\"classifier-predict\" src=\"https://github.com/user-attachments/assets/273d696f-669f-4d01-88e4-e74e204a066d\" />\n\nCorrect mistakes the classifier made and click Run Classifier again to improve it. Iterative annotation is the intended workflow.\n\n### 4. Save and reload\n\nAfter each run, the classifier auto-saves to a `.clf` file named after the label layer (in the current working directory). To save to a different location: expand **\u25b6 Saving & Export** and click **Save Classifier As\u2026**.\n\nTo resume work or apply a trained classifier to new images:\n`Plugins \u2192 napari-feature-classifier \u2192 Load Classifier`\n\nSelect the `.clf` file, make sure your label layers with features are already open, and click **Load Classifier**. \n\n### 5. Export results\n\nExpand **\u25b6 Saving & Export** and click **Export Results As\u2026** to save predictions for the currently selected layer as a CSV file.\n\nThe exported CSV contains:\n- `label` \u2014 integer object ID\n- `prediction` \u2014 classifier prediction (1\u2013N for each class; NaN for objects with missing features)\n- `annotations` \u2014 your manual annotations (NaN = not annotated, \u22121 = explicitly deselected, 1\u2013N = class)\n- One column per annotation class name\n\n<img width=\"317\" height=\"137\" alt=\"classifier-save\" src=\"https://github.com/user-attachments/assets/62236f0d-7cc5-4760-8158-efe65e52109a\" />\n\n\n### 6. Standalone annotator\n\nYou can use the annotation tool independently from the classifier:\n`Plugins \u2192 napari-feature-classifier \u2192 Annotator`\n\nName up to 9 classes, click **Initialize**, then annotate as above. Annotations are stored in `layer.features[\"annotations\"]` and can be saved to CSV via **\u25b6 Save Annotations**.\n\n<img width=\"322\" height=\"239\" alt=\"annotator\" src=\"https://github.com/user-attachments/assets/05c3bebc-3d9c-4a78-bfde-b821e8f565cc\" />\n\n### Batch / scripted use\n\nClassifiers can be applied programmatically without the napari UI. See [examples/simple_classifier_example.ipynb](examples/simple_classifier_example.ipynb) for a worked example.\n\n## Installation\n\nRequires Python \u2265 3.10 and napari \u2265 0.6.0.\n\nWe recommend installing into a dedicated environment to avoid dependency conflicts:\n\n```bash\n# With conda\nconda create -n napari-feature-classifier -c conda-forge napari python=3.12 -y\nconda activate napari-feature-classifier\npip install napari-feature-classifier\n```\n\nOr with [pixi](https://pixi.sh):\n\n```bash\npixi init my-project\npixi add napari napari-feature-classifier\npixi run napari\n```\n\nOr into an existing environment:\n\n```bash\npip install napari-feature-classifier\n```\n\n## Similar napari plugins\n\n- [napari-convpaint](https://github.com/guiwitz/napari-convpaint) \u2014 deep feature-based pixel and object classifier by Guillaume Witz\n- [napari-accelerated-pixel-and-object-classification (APOC)](https://github.com/haesleinhuepf/napari-accelerated-pixel-and-object-classification) \u2014 pixel and object classifier by Robert Haase\n- [napari-svetlana](https://www.napari-hub.org/plugins/napari-svetlana) \u2014 deep learning based classifier by Cl\u00e9ment Cazorla\n\n## Release process\n\n1. Tag a release on GitHub with the new version number (e.g. `v0.3.2`). The version is set automatically from the git tag via `hatch-vcs`.\n2. Once CI tests pass, the package is automatically deployed to PyPI.\n3. A conda-forge PR will be opened automatically within 1\u20132 days \u2014 review and merge it at [napari-feature-classifier-feedstock](https://github.com/conda-forge/napari-feature-classifier-feedstock).\n\n## Contributing\n\nContributions are very welcome. Please open an issue to discuss significant changes before starting work.\n\n## License\n\nDistributed under the terms of the [BSD-3-Clause](LICENSE) license.\n\n## Issues\n\nIf you encounter any problems, please [file an issue](https://github.com/fractal-napari-plugins-collection/napari-feature-classifier/issues) along with a detailed description.\n\n## Contributors\n\n[Joel L\u00fcthi](https://github.com/jluethi) & [Max Hess](https://github.com/MaksHess)\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -24,10 +25,8 @@
       "last_month": -1,
       "last_week": -1
     },
-    "dynamic": [
-      "License-File"
-    ],
-    "home_page": "https://github.com/fractal-napari-plugins-collection/napari-feature-classifier",
+    "dynamic": null,
+    "home_page": null,
     "keywords": null,
     "license": "BSD-3-Clause",
     "license_expression": null,
@@ -43,30 +42,35 @@
     "project_urls": {
       "Bug Tracker": "https://github.com/fractal-napari-plugins-collection/napari-feature-classifier/issues",
       "Documentation": "https://github.com/fractal-napari-plugins-collection/napari-feature-classifier#napari-feature-classifier",
-      "Homepage": "https://github.com/fractal-napari-plugins-collection/napari-feature-classifier",
       "Source Code": "https://github.com/fractal-napari-plugins-collection/napari-feature-classifier",
       "User Support": "https://github.com/fractal-napari-plugins-collection/napari-feature-classifier/issues"
     },
-    "provides_extra": null,
-    "release_url": "https://pypi.org/project/napari-feature-classifier/0.3.2/",
-    "requires_dist": [
-      "numpy",
-      "napari",
-      "matplotlib",
-      "magicgui",
-      "pandas>=2.2.0",
-      "scikit-learn>=1.2.2",
-      "pandera",
-      "xxhash",
-      "hypothesis"
+    "provides_extra": [
+      "testing"
     ],
-    "requires_python": ">=3.9",
+    "release_url": "https://pypi.org/project/napari-feature-classifier/0.4.1/",
+    "requires_dist": [
+      "magicgui",
+      "matplotlib",
+      "napari>=0.6.0",
+      "numpy",
+      "pandas<3.0.0,>=2.2.0",
+      "pandera",
+      "scikit-learn>=1.2.2",
+      "xxhash",
+      "hypothesis; extra == \"testing\"",
+      "pytest; extra == \"testing\"",
+      "pytest-cov; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "qtpy; extra == \"testing\""
+    ],
+    "requires_python": ">=3.10",
     "summary": "An interactive classifier plugin to use with label images and feature measurements",
-    "version": "0.3.2",
+    "version": "0.4.1",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 29842880,
+  "last_serial": 35792001,
   "ownership": {
     "organization": null,
     "roles": [
@@ -560,48 +564,136 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.4.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "5b8c927236e2284d2a1f262879ee12ac8a0b6c46a836a590d3268acc0ebdc86e",
+          "md5": "37e9946d5d7cdf96517aabff0ab498bb",
+          "sha256": "44cb6e9c0f98f3b7f15c568a0c5827c95db6b2058b770ad2299084f02a23c7c4"
+        },
+        "downloads": -1,
+        "filename": "napari_feature_classifier-0.4.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "37e9946d5d7cdf96517aabff0ab498bb",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 49622,
+        "upload_time": "2026-04-04T19:25:26",
+        "upload_time_iso_8601": "2026-04-04T19:25:26.886755Z",
+        "url": "https://files.pythonhosted.org/packages/5b/8c/927236e2284d2a1f262879ee12ac8a0b6c46a836a590d3268acc0ebdc86e/napari_feature_classifier-0.4.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "cf153fead79c5515ef1a30f9b844720537a28f80873d3592b9425adb0694f53a",
+          "md5": "587b78941edcdc9248da519084bf5c68",
+          "sha256": "13d64f656cee08b8cd38055e31f4f162d7f7fecde7ff6ef222cdf8549cec0c4b"
+        },
+        "downloads": -1,
+        "filename": "napari_feature_classifier-0.4.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "587b78941edcdc9248da519084bf5c68",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 233904,
+        "upload_time": "2026-04-04T19:25:28",
+        "upload_time_iso_8601": "2026-04-04T19:25:28.047395Z",
+        "url": "https://files.pythonhosted.org/packages/cf/15/3fead79c5515ef1a30f9b844720537a28f80873d3592b9425adb0694f53a/napari_feature_classifier-0.4.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.4.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "93d5532aa956f9116db4eb7095d2638921a0abb6808d6436d3cf024124a1b082",
+          "md5": "faa8fc6e39bf830db5f4231cd421f847",
+          "sha256": "facaa8c77a8587476fd0ba55a323e9225f46fa17e31aa8753dd77107c5deb6b3"
+        },
+        "downloads": -1,
+        "filename": "napari_feature_classifier-0.4.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "faa8fc6e39bf830db5f4231cd421f847",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 49631,
+        "upload_time": "2026-04-04T19:40:44",
+        "upload_time_iso_8601": "2026-04-04T19:40:44.324754Z",
+        "url": "https://files.pythonhosted.org/packages/93/d5/532aa956f9116db4eb7095d2638921a0abb6808d6436d3cf024124a1b082/napari_feature_classifier-0.4.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "b869281653740c52958df724addf417ee85c935bad03b9e2311f20c915c891be",
+          "md5": "0dd42cef62f991c772481f9f40e045f1",
+          "sha256": "58264b4cb1999ff5a60fb074749c7883163271d6b32dcb9eaecc385219e367b7"
+        },
+        "downloads": -1,
+        "filename": "napari_feature_classifier-0.4.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "0dd42cef62f991c772481f9f40e045f1",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 237051,
+        "upload_time": "2026-04-04T19:40:45",
+        "upload_time_iso_8601": "2026-04-04T19:40:45.376296Z",
+        "url": "https://files.pythonhosted.org/packages/b8/69/281653740c52958df724addf417ee85c935bad03b9e2311f20c915c891be/napari_feature_classifier-0.4.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": null,
       "digests": {
-        "blake2b_256": "eb9b1f85893128ab43b06caa5ee43e01d864002862e4a6c0cce210e55b4f6f24",
-        "md5": "4070ef940035f8a0dc802af2ba2ee8a2",
-        "sha256": "2f58de81f4a59214fc88e3385702e498ba5ca2d58d34e750d101fa0f9c53462e"
+        "blake2b_256": "93d5532aa956f9116db4eb7095d2638921a0abb6808d6436d3cf024124a1b082",
+        "md5": "faa8fc6e39bf830db5f4231cd421f847",
+        "sha256": "facaa8c77a8587476fd0ba55a323e9225f46fa17e31aa8753dd77107c5deb6b3"
       },
       "downloads": -1,
-      "filename": "napari_feature_classifier-0.3.2-py3-none-any.whl",
+      "filename": "napari_feature_classifier-0.4.1-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "4070ef940035f8a0dc802af2ba2ee8a2",
+      "md5_digest": "faa8fc6e39bf830db5f4231cd421f847",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
-      "requires_python": ">=3.9",
-      "size": 32267,
-      "upload_time": "2025-06-27T07:53:52",
-      "upload_time_iso_8601": "2025-06-27T07:53:52.981619Z",
-      "url": "https://files.pythonhosted.org/packages/eb/9b/1f85893128ab43b06caa5ee43e01d864002862e4a6c0cce210e55b4f6f24/napari_feature_classifier-0.3.2-py3-none-any.whl",
+      "requires_python": ">=3.10",
+      "size": 49631,
+      "upload_time": "2026-04-04T19:40:44",
+      "upload_time_iso_8601": "2026-04-04T19:40:44.324754Z",
+      "url": "https://files.pythonhosted.org/packages/93/d5/532aa956f9116db4eb7095d2638921a0abb6808d6436d3cf024124a1b082/napari_feature_classifier-0.4.1-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": null,
       "digests": {
-        "blake2b_256": "fe594e38f0eb8f5a6fdef834c6e5355fe5f3073d2fcadb617b2cf345e2cba46c",
-        "md5": "9d5aa8f0572399d72c8b51762225b52d",
-        "sha256": "c0fc795ab3d614cb172dcb0230d8931f4e8db29d3824a32412b32be31afb41d2"
+        "blake2b_256": "b869281653740c52958df724addf417ee85c935bad03b9e2311f20c915c891be",
+        "md5": "0dd42cef62f991c772481f9f40e045f1",
+        "sha256": "58264b4cb1999ff5a60fb074749c7883163271d6b32dcb9eaecc385219e367b7"
       },
       "downloads": -1,
-      "filename": "napari_feature_classifier-0.3.2.tar.gz",
+      "filename": "napari_feature_classifier-0.4.1.tar.gz",
       "has_sig": false,
-      "md5_digest": "9d5aa8f0572399d72c8b51762225b52d",
+      "md5_digest": "0dd42cef62f991c772481f9f40e045f1",
       "packagetype": "sdist",
       "python_version": "source",
-      "requires_python": ">=3.9",
-      "size": 30958,
-      "upload_time": "2025-06-27T07:53:54",
-      "upload_time_iso_8601": "2025-06-27T07:53:54.102498Z",
-      "url": "https://files.pythonhosted.org/packages/fe/59/4e38f0eb8f5a6fdef834c6e5355fe5f3073d2fcadb617b2cf345e2cba46c/napari_feature_classifier-0.3.2.tar.gz",
+      "requires_python": ">=3.10",
+      "size": 237051,
+      "upload_time": "2026-04-04T19:40:45",
+      "upload_time_iso_8601": "2026-04-04T19:40:45.376296Z",
+      "url": "https://files.pythonhosted.org/packages/b8/69/281653740c52958df724addf417ee85c935bad03b9e2311f20c915c891be/napari_feature_classifier-0.4.1.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
