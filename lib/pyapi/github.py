@@ -105,7 +105,7 @@ def _activity(owner: str, name: str) -> GithubActivity:
     gql_client = Client(transport=transport, fetch_schema_from_transport=False)
 
     variables = {"owner": owner, "name": name}
-    data = gql_client.execute(query_activity, variables)["repository"]
+    data = gql_client.execute(query_activity, variable_values=variables)["repository"]
     last_commit_node = data["defaultBranchRef"]["target"]["history"]["nodes"][0]
     user = last_commit_node["author"].get("user") or {}
     date = last_commit_node["committedDate"]
@@ -129,7 +129,7 @@ def _activity(owner: str, name: str) -> GithubActivity:
     )
 
 
-def codecov(name: PluginName) -> CoverageInfo | None:
+def codecov(name: PluginName, default_branch: str | None = None) -> CoverageInfo | None:
     """Return coverage using codecov api."""
     if not (result := org_repo(name)):
         return None
@@ -138,18 +138,21 @@ def codecov(name: PluginName) -> CoverageInfo | None:
     if CODECOV_API_TOKEN := os.environ.get("CODECOV_API_TOKEN"):
         headers["Authorization"] = CODECOV_API_TOKEN
 
-    url = "https://codecov.io/api/gh/{}/{}".format(*result)
+    url = "https://api.codecov.io/api/v2/gh/{}/repos/{}/commits/".format(*result)
+    # only get commit coverage info for the default branch
+    # if we couldn't find a default branch, we don't assume
+    if not default_branch:
+        return None
+    url += f"?branch={default_branch}"
     data = requests.get(url, headers=headers).json()
-    commit: dict = data.get("commit")
-    if not commit:
-        commit = next((c for c in data.get("commits", []) if c.get("merged")), {})
+    commit: dict = next(iter(data.get("results", [])), {})
     if not commit or not (totals := commit.get("totals")):
         return None
 
     return CoverageInfo(
-        hits=totals["h"],
-        lines=totals["n"],
-        ratio=float(totals["c"]),
+        hits=totals["hits"],
+        lines=totals["lines"],
+        ratio=float(totals["coverage"]),
         commit=commit["commitid"],
         date=commit["timestamp"],
         branch=commit["branch"],
@@ -168,7 +171,7 @@ def org_repo(name: PluginName) -> tuple[str, str] | None:
         [info.get("home_page"), info.get("package_url"), info.get("project_url")],
         (info.get("project_urls") or {}).values(),
     ):
-        if match := GITHUB_RE.match(link):
+        if link is not None and (match := GITHUB_RE.match(link)):
             org, repo = match.groups()
             if repo.endswith(".git"):
                 repo = repo[:-4]
@@ -219,7 +222,10 @@ def repo_summary(name: PluginName) -> RepoSummary:
     if not (result := org_repo(name)):
         raise ValueError(f"No github repo found for {name!r}")
     url = "https://github.com/{}/{}".format(*result)
-    return RepoSummary(url=url, activity=activity(name), coverage=codecov(name))
+    act = activity(name)
+    return RepoSummary(
+        url=url, activity=act, coverage=codecov(name, act["default_branch"])
+    )
 
 
 def _try_fetch_and_store_github_info(name: PluginName):
