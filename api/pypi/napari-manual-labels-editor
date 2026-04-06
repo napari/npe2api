@@ -1,0 +1,341 @@
+{
+  "info": {
+    "author": "Yaohua Li",
+    "author_email": "liyaohua12345@foxmail.com",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-manual-labels-editor\n\nManual fine-tuning toolkit for **napari Labels** (integer label masks).\nDesigned for \u201cafter segmentation\u201d workflows where you need to **inspect, fix, and export** large label images safely (e.g., TIFF/LZW/BigTIFF).\n\nTutorial video: https://www.youtube.com/watch?v=cQf_7ExGQHk&t=15s\n\n## What it does\n\nThis plugin operates on a **napari Labels layer** (background must be `0`) and provides a small, fast panel to:\n\n- **Pick Active Layer**: choose the current active Image/Labels layer; if it\u2019s an Image, it can be converted to Labels (integer).\n- **Compute Stats (safe)**: compute `maxID` and `cells` without heavy `np.unique` (safer for large arrays).\n- **New ID (max+1)**: set selected label to `maxID + 1` so you can paint a new object.\n- **Delete selected ID**: delete the currently selected label ID (set its pixels to `0`).\n- **Compact IDs Order (1..N)**: relabel present IDs to consecutive `1..N` (useful before export).\n- **Merge (Shift-click)**: when merge is enabled, **Shift-click A**, then **Shift-click B** to merge **B \u2192 A** (into A).\n- **Fill closed shape**: draw a closed outline, then fill the enclosed region for the selected label.\n- **Filter small labels (to new layer)**: remove tiny fragments by area threshold while keeping the original layer unchanged.\n- **Undo / Redo**: revert recent edits made through the plugin\u2019s actions (pixel edits only).\n- **Blink**: quick visibility toggling for spot-checking edits.\n- **Jump to label (J)**: jump to a specific label ID via a dialog (sets `selected_label`).\n\nExport:\n\n- **Save labels to TIFF** (LZW + BigTIFF enabled).\n  Use **Browse\u2026** to pick an output path, then click **Save**.\n\n## Compatibility\n\n- Python: 3.10\u20133.13 (tested on 3.11)\n- napari: 0.6.x\n- Layer type: **Labels** (integer), background `0`\n\n## Installation\n\n### From PyPI (recommended)\n\n```bash\npip install napari-manual-labels-editor\n```\n\nIf you don\u2019t have napari yet:\n\n```bash\npip install \"napari[all]\" napari-manual-labels-editor\n```\n\n### From GitHub (latest main)\n\n```bash\npip install -U \"git+https://github.com/yaohualee1215-bit/napari-manual-labels-editor.git\"\n```\n\n## Usage (inside napari)\n\n1. Launch napari and load your **Labels** layer (and optional background image).\n2. Open the plugin panel:\n\n   **Plugins \u2192 Manual Labels Editor \u2192 Manual Labels Editor**\n\n3. Click **Pick Active Layer (Image or Labels)**\n   Make sure the layer you want is the **active** layer in the layer list first.\n4. (Optional but recommended) Click **Compute Stats (safe)**\n   The status area will show `selected`, `cells`, `maxID`, and `merge` state.\n\n### Hotkeys\n\n- `N` \u2014 **New ID (max+1)**\n- `F` \u2014 **Fill closed shape**\n- `Shift+F` \u2014 **Fill closed shape + Next ID**\n- `J` \u2014 **Jump to label ID** (dialog)\n\nNotes:\n- Hotkeys are captured by the napari viewer. If a key seems unresponsive, click once on the canvas to give the viewer focus.\n- napari also has its own built-in tools/hotkeys (e.g., paint/fill modes); you can keep using those alongside this plugin.\n\n### UI behavior (narrow dock)\n\n- The dock panel can be resized narrower without hiding critical controls.\n- **Browse\u2026** and **Save** are protected from being shrunk to zero width.\n\n### Undo / Redo behavior\n\n- Undo/Redo reverts recent pixel edits made via the plugin\u2019s actions (e.g., fill closed, delete, merge, relabel/filter).\n- Changing the selected label / \u201cNew ID\u201d alone does not change pixels, so it is not treated as an edit step to undo.\n- Standard behavior: if you Undo and then make a new edit, the Redo history is cleared.\n\n### Export\n\n1. Click **Browse\u2026** to choose an output file path (TIFF).\n2. Click **Save**.\n\nNotes:\n- TIFF writer uses `compression=\"lzw\"` and `bigtiff=True`.\n\n## Notes\n\n### Large LZW TIFF support\n\nIf LZW read/write fails or is slow, install `imagecodecs`:\n\n```bash\nconda install -c conda-forge imagecodecs\n```\n\n## License\n\nBSD-3-Clause\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": "\n        Copyright (c) 2026, Yaohua Li\n        All rights reserved.\n        \n        Redistribution and use in source and binary forms, with or without\n        modification, are permitted provided that the following conditions are met:\n        \n        * Redistributions of source code must retain the above copyright notice, this\n          list of conditions and the following disclaimer.\n        \n        * Redistributions in binary form must reproduce the above copyright notice,\n          this list of conditions and the following disclaimer in the documentation\n          and/or other materials provided with the distribution.\n        \n        * Neither the name of copyright holder nor the names of its\n          contributors may be used to endorse or promote products derived from\n          this software without specific prior written permission.\n        \n        THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\"\n        AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\n        IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\n        DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE\n        FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\n        DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR\n        SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER\n        CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,\n        OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\n        OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n        ",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-manual-labels-editor",
+    "package_url": "https://pypi.org/project/napari-manual-labels-editor/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-manual-labels-editor/",
+    "project_urls": null,
+    "provides_extra": [
+      "all"
+    ],
+    "release_url": "https://pypi.org/project/napari-manual-labels-editor/0.1.4/",
+    "requires_dist": [
+      "numpy",
+      "magicgui",
+      "qtpy",
+      "scikit-image",
+      "napari[all]; extra == \"all\""
+    ],
+    "requires_python": ">=3.10",
+    "summary": "Manual fine-tuning toolkit for napari Labels: compute stats, assign new IDs, delete/merge labels, relabel to 1..N, and save LZW BigTIFF safely.",
+    "version": "0.1.4",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 34699520,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "yaohuali1215"
+      }
+    ]
+  },
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "e55227abaac41c8be39e6d1b8ae5216c7d2d883c8f545ee0130e6324a322780e",
+          "md5": "54f03223ffd174637d85ee746ac101bb",
+          "sha256": "bf9583b80af7b99abd26eaa77e196c49083dfe9ef2b6df38b45129f14cc6d0d5"
+        },
+        "downloads": -1,
+        "filename": "napari_manual_labels_editor-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "54f03223ffd174637d85ee746ac101bb",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 13612,
+        "upload_time": "2026-02-22T05:33:43",
+        "upload_time_iso_8601": "2026-02-22T05:33:43.754867Z",
+        "url": "https://files.pythonhosted.org/packages/e5/52/27abaac41c8be39e6d1b8ae5216c7d2d883c8f545ee0130e6324a322780e/napari_manual_labels_editor-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "bd8ab63e1605adca40184676cd58b7ab8c21c29bdb05892a191a6d3c6f7bb43f",
+          "md5": "97bd47e89cb5621ea0862634f26d5425",
+          "sha256": "01b3c4fa88893c5fed1e6ea4b877ca16aecff531867f08236f97507e869174d2"
+        },
+        "downloads": -1,
+        "filename": "napari_manual_labels_editor-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "97bd47e89cb5621ea0862634f26d5425",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 21557,
+        "upload_time": "2026-02-22T05:33:45",
+        "upload_time_iso_8601": "2026-02-22T05:33:45.259027Z",
+        "url": "https://files.pythonhosted.org/packages/bd/8a/b63e1605adca40184676cd58b7ab8c21c29bdb05892a191a6d3c6f7bb43f/napari_manual_labels_editor-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "579babcf44560a483f97cb8e38f70f897a5c02db7df20504b4a14dae95a99ae6",
+          "md5": "79f6a5ce77c0766e4a4908af5f6d835f",
+          "sha256": "4e8f510c03cfaef2254a4837542cce94db16755136e0166d4f2bad9a9f60d8b8"
+        },
+        "downloads": -1,
+        "filename": "napari_manual_labels_editor-0.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "79f6a5ce77c0766e4a4908af5f6d835f",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 17345,
+        "upload_time": "2026-02-24T05:37:34",
+        "upload_time_iso_8601": "2026-02-24T05:37:34.147849Z",
+        "url": "https://files.pythonhosted.org/packages/57/9b/abcf44560a483f97cb8e38f70f897a5c02db7df20504b4a14dae95a99ae6/napari_manual_labels_editor-0.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "d28fa017c7fd45733825834e42e82cd876b4495674e791f1721e23a331d42e23",
+          "md5": "e7e45c64f9ad75e3b8d6e08923247e74",
+          "sha256": "25c6e7e2f70556426d4c76f1935f7857b3d0837e55325e532c15e5494e8cf5cb"
+        },
+        "downloads": -1,
+        "filename": "napari_manual_labels_editor-0.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e7e45c64f9ad75e3b8d6e08923247e74",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 25817,
+        "upload_time": "2026-02-24T05:37:35",
+        "upload_time_iso_8601": "2026-02-24T05:37:35.325308Z",
+        "url": "https://files.pythonhosted.org/packages/d2/8f/a017c7fd45733825834e42e82cd876b4495674e791f1721e23a331d42e23/napari_manual_labels_editor-0.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.2": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "98674df706b1a53774f71c14e23434208e6bbd2b4f6f9646bbe26452f43dba0d",
+          "md5": "5d7344b289667995203a964ef5343d44",
+          "sha256": "1c1c524f8bb675402faa85e6d86cb87ad8cd7fd9e207ad6ccf8ec48e6e5f55dd"
+        },
+        "downloads": -1,
+        "filename": "napari_manual_labels_editor-0.1.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "5d7344b289667995203a964ef5343d44",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 17464,
+        "upload_time": "2026-02-24T05:52:04",
+        "upload_time_iso_8601": "2026-02-24T05:52:04.006138Z",
+        "url": "https://files.pythonhosted.org/packages/98/67/4df706b1a53774f71c14e23434208e6bbd2b4f6f9646bbe26452f43dba0d/napari_manual_labels_editor-0.1.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "89e8d6462e32ad98f1e717cfe3ede92a48f563f6e9eec22b8d5a8c6dd60a293d",
+          "md5": "d79a2f24f738ba3b5e1561fee0d69817",
+          "sha256": "68e5f0975b43dba152ae4e798fae89ce776440bf20893fcc1e7e27c08fce721c"
+        },
+        "downloads": -1,
+        "filename": "napari_manual_labels_editor-0.1.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d79a2f24f738ba3b5e1561fee0d69817",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 25982,
+        "upload_time": "2026-02-24T05:52:04",
+        "upload_time_iso_8601": "2026-02-24T05:52:04.880870Z",
+        "url": "https://files.pythonhosted.org/packages/89/e8/d6462e32ad98f1e717cfe3ede92a48f563f6e9eec22b8d5a8c6dd60a293d/napari_manual_labels_editor-0.1.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.3": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "6788dd9e34ccc4a6509a6e29f1d2c46a5eebc2a1228abfbdfa5309b65532efcb",
+          "md5": "dca12395daff7dce662b0042809fc3f1",
+          "sha256": "c4e8f6e008700901b0f8231bfe95a4909f8e5a2b461ed41f89928586449dbec4"
+        },
+        "downloads": -1,
+        "filename": "napari_manual_labels_editor-0.1.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "dca12395daff7dce662b0042809fc3f1",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 17631,
+        "upload_time": "2026-02-27T06:41:48",
+        "upload_time_iso_8601": "2026-02-27T06:41:48.815756Z",
+        "url": "https://files.pythonhosted.org/packages/67/88/dd9e34ccc4a6509a6e29f1d2c46a5eebc2a1228abfbdfa5309b65532efcb/napari_manual_labels_editor-0.1.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "1a4d0fade1809cac5c0fc379b54c4c8b26ce57470c96c8ea1296540c7b747373",
+          "md5": "ff27998b7567c1b6b439ee461986edea",
+          "sha256": "8dc3dfcb128f40cba717beba991679eeb184ef1d05b663ef18f46a09af53e436"
+        },
+        "downloads": -1,
+        "filename": "napari_manual_labels_editor-0.1.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "ff27998b7567c1b6b439ee461986edea",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 26205,
+        "upload_time": "2026-02-27T06:41:49",
+        "upload_time_iso_8601": "2026-02-27T06:41:49.753078Z",
+        "url": "https://files.pythonhosted.org/packages/1a/4d/0fade1809cac5c0fc379b54c4c8b26ce57470c96c8ea1296540c7b747373/napari_manual_labels_editor-0.1.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.4": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "00b504888977cf8f95467eeab27f7f6b6d69a80b73b911199bf25ab10ffe47dc",
+          "md5": "17c18ddc89b9df6fcba19ee5ee9754ef",
+          "sha256": "5d17f74ef1b377d07663586d042341ea89bf838703051d7483665ed1956c37f4"
+        },
+        "downloads": -1,
+        "filename": "napari_manual_labels_editor-0.1.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "17c18ddc89b9df6fcba19ee5ee9754ef",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 20302,
+        "upload_time": "2026-02-28T17:43:14",
+        "upload_time_iso_8601": "2026-02-28T17:43:14.467289Z",
+        "url": "https://files.pythonhosted.org/packages/00/b5/04888977cf8f95467eeab27f7f6b6d69a80b73b911199bf25ab10ffe47dc/napari_manual_labels_editor-0.1.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "af3c37531f116defddbdcf0f81c9865e4cb965f23e8e2988f152d0f87e4177e7",
+          "md5": "9016f992a5638a6c24f0c80fae8b80e3",
+          "sha256": "907d87af733e4c29ec873da7d8330d84798116daa180ddae7964a7fb0c1ce1da"
+        },
+        "downloads": -1,
+        "filename": "napari_manual_labels_editor-0.1.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "9016f992a5638a6c24f0c80fae8b80e3",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 28911,
+        "upload_time": "2026-02-28T17:43:15",
+        "upload_time_iso_8601": "2026-02-28T17:43:15.723979Z",
+        "url": "https://files.pythonhosted.org/packages/af/3c/37531f116defddbdcf0f81c9865e4cb965f23e8e2988f152d0f87e4177e7/napari_manual_labels_editor-0.1.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "00b504888977cf8f95467eeab27f7f6b6d69a80b73b911199bf25ab10ffe47dc",
+        "md5": "17c18ddc89b9df6fcba19ee5ee9754ef",
+        "sha256": "5d17f74ef1b377d07663586d042341ea89bf838703051d7483665ed1956c37f4"
+      },
+      "downloads": -1,
+      "filename": "napari_manual_labels_editor-0.1.4-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "17c18ddc89b9df6fcba19ee5ee9754ef",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.10",
+      "size": 20302,
+      "upload_time": "2026-02-28T17:43:14",
+      "upload_time_iso_8601": "2026-02-28T17:43:14.467289Z",
+      "url": "https://files.pythonhosted.org/packages/00/b5/04888977cf8f95467eeab27f7f6b6d69a80b73b911199bf25ab10ffe47dc/napari_manual_labels_editor-0.1.4-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "af3c37531f116defddbdcf0f81c9865e4cb965f23e8e2988f152d0f87e4177e7",
+        "md5": "9016f992a5638a6c24f0c80fae8b80e3",
+        "sha256": "907d87af733e4c29ec873da7d8330d84798116daa180ddae7964a7fb0c1ce1da"
+      },
+      "downloads": -1,
+      "filename": "napari_manual_labels_editor-0.1.4.tar.gz",
+      "has_sig": false,
+      "md5_digest": "9016f992a5638a6c24f0c80fae8b80e3",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.10",
+      "size": 28911,
+      "upload_time": "2026-02-28T17:43:15",
+      "upload_time_iso_8601": "2026-02-28T17:43:15.723979Z",
+      "url": "https://files.pythonhosted.org/packages/af/3c/37531f116defddbdcf0f81c9865e4cb965f23e8e2988f152d0f87e4177e7/napari_manual_labels_editor-0.1.4.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

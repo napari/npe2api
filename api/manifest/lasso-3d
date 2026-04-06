@@ -1,0 +1,106 @@
+{
+  "name": "lasso-3d",
+  "display_name": "Lasso",
+  "visibility": "public",
+  "icon": "",
+  "categories": [
+    "Annotation",
+    "Segmentation",
+    "Acquisition"
+  ],
+  "schema_version": "0.2.1",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "lasso-3d.make_qwidget",
+        "title": "Open Lasso Widget",
+        "python_name": "lasso_3d:Lasso3D",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "lasso-3d.make_qwidget",
+        "display_name": "Lasso Widget",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.2",
+    "name": "lasso-3d",
+    "version": "0.0.1",
+    "dynamic": null,
+    "platform": null,
+    "supported_platform": null,
+    "summary": "3D lasso tool to select large 3D areas",
+    "description": "# lasso-3d\n\n[![License BSD-3](https://img.shields.io/pypi/l/lasso-3d.svg?color=green)](https://github.com/LorenzLamm/lasso-3d/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/lasso-3d.svg?color=green)](https://pypi.org/project/lasso-3d)\n[![Python Version](https://img.shields.io/pypi/pyversions/lasso-3d.svg?color=green)](https://python.org)\n[![tests](https://github.com/LorenzLamm/lasso-3d/workflows/tests/badge.svg)](https://github.com/LorenzLamm/lasso-3d/actions)\n[![codecov](https://codecov.io/gh/LorenzLamm/lasso-3d/branch/main/graph/badge.svg)](https://codecov.io/gh/LorenzLamm/lasso-3d)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/lasso-3d)](https://napari-hub.org/plugins/lasso-3d)\n\n3D lasso tool to select large 3D areas\n\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n\n\n## Lasso tool\n\nThis repository allows to draw 3D lassos, generate masks from these, and then mask out the image.\nFor instructions on how to use the plugin, please refer to the [Usage instructions](./docs/Usage.md).\n\n<div style=\"text-align: center;\">\n<img src=\"https://github.com/user-attachments/assets/88851e09-6f10-4219-9b45-6f608c3e10b6\" alt=\"lasso_gif\" width=\"75%\" />\n</div>\n\nHow it works: A polygon is drawn and a mask is generated via:\n### Mask via rotation\nSteps:\n1. Rotate and project polygon to 2D and create a pixel mask\n2. Create a 3D mask by stacking the pixel mask along z\n3. Rotate 3D mask s.t. it is aligned with the original polygon\n\nThis performed more efficiently than the other methods:\n\n### Mask via projection\nSteps:\n1. Project all points onto the hyperplane defined by the polygon\n2. Rotate all points and the polygon s.t. they are in a horizontal plane and remove z component\n3. Create a binary pixel mask of the polygon\n4. Check which point projections are within the polygon mask\n5. reshape mask to original tomogram size\n\n### Mask via mesh voxelization\nSteps:\n1. Move polygon along its normal in both directions until end of tomogram shape --> front & back polygons\n2. Define a surface by combining front & back polygons into a triangular mesh\n3. Voxelize the surface, giving the outline of the cone\n4. Fill holes to receive a filled cone\n\n### Mask via attaching slices\nSteps:\n1. Rotate and project polygon to 2D and generate a pixel mask (2D)\n2. Get indices of pixel mask and rotate them back to 3D space\n3. Do that for many pixel mask, varying the z-component --> will be moved into tomogram along the polygon normal\n4. Binary closing to get rid of holes from integer conversion\n\n## Installation\n\npip install .\n<!-- You can install `lasso-3d` via [pip]:\n\n    pip install lasso-3d\n\n\n\nTo install latest development version :\n\n    pip install git+https://github.com/LorenzLamm/lasso-3d.git -->\n\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"lasso-3d\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[file an issue]: https://github.com/LorenzLamm/lasso-3d/issues\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": null,
+    "download_url": null,
+    "author": "Lorenz Lamm",
+    "author_email": "lorenz.lamm@gmail.com",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "Copyright (c) 2024, Lorenz Lamm\nAll rights reserved.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n\n* Redistributions of source code must retain the above copyright notice, this\n  list of conditions and the following disclaimer.\n\n* Redistributions in binary form must reproduce the above copyright notice,\n  this list of conditions and the following disclaimer in the documentation\n  and/or other materials provided with the distribution.\n\n* Neither the name of copyright holder nor the names of its\n  contributors may be used to endorse or promote products derived from\n  this software without specific prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\"\nAND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\nIMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\nDISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE\nFOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\nDAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR\nSERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER\nCAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,\nOR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\nOF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n",
+    "classifier": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.9",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "requires_dist": [
+      "magicgui",
+      "membrain-seg",
+      "napari-mrcfile-reader",
+      "numpy",
+      "pyqt5",
+      "qtpy",
+      "scipy",
+      "scikit-image",
+      "tox; extra == \"testing\"",
+      "pytest; extra == \"testing\"",
+      "pytest-cov; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "napari; extra == \"testing\"",
+      "pyqt5; extra == \"testing\""
+    ],
+    "requires_python": ">=3.9",
+    "requires_external": null,
+    "project_url": [
+      "Bug Tracker, https://github.com/LorenzLamm/lasso-3d/issues",
+      "Documentation, https://github.com/LorenzLamm/lasso-3d#README.md",
+      "Source Code, https://github.com/LorenzLamm/lasso-3d",
+      "User Support, https://github.com/LorenzLamm/lasso-3d/issues"
+    ],
+    "provides_extra": [
+      "testing"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}
