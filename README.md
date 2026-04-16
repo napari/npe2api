@@ -20,3 +20,7 @@ The endpoint for the API is: <https://api.napari.org>
 ## Contributing
 
 If you are interested in contributing to this repo, see the [CONTRIBUTING.md](./CONTRIBUTING.md) page.
+
+## Code of conduct
+
+`npe2api` is maintained by the [napari](https://napari.org/) community. The `napari` community has a [Code of Conduct](https://napari.org/dev/community/code_of_conduct.html) that should be honored by everyone who participates in the `napari` community.

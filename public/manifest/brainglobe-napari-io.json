@@ -73,18 +73,27 @@
         "enablement": null
       },
       {
-        "id": "brainglobe-napari-io.cellfinder_read_xml",
+        "id": "brainglobe-napari-io.cellfinder_read_points",
         "title": "Cellfinder Read XML",
-        "python_name": "brainglobe_napari_io.cellfinder.reader_xml:cellfinder_read_xml",
+        "python_name": "brainglobe_napari_io.cellfinder.reader_points:cellfinder_read_points",
         "short_title": null,
         "category": null,
         "icon": null,
         "enablement": null
       },
       {
-        "id": "brainglobe-napari-io.cellfinder_write_multiple_xml",
-        "title": "Write Points",
-        "python_name": "brainglobe_napari_io.cellfinder.writer_xml:write_multiple_points_to_xml",
+        "id": "brainglobe-napari-io.cellfinder_read_yml",
+        "title": "Cellfinder Read YAML",
+        "python_name": "brainglobe_napari_io.cellfinder.reader_yml:cellfinder_read_yml",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "brainglobe-napari-io.cellfinder_write_multiple_points",
+        "title": "Write Points to XML/YAML",
+        "python_name": "brainglobe_napari_io.cellfinder.writer_points:write_multiple_points",
         "short_title": null,
         "category": null,
         "icon": null,
@@ -121,21 +130,25 @@
         "accepts_directories": true
       },
       {
-        "command": "brainglobe-napari-io.cellfinder_read_xml",
+        "command": "brainglobe-napari-io.cellfinder_read_points",
         "filename_patterns": [
-          "*.xml"
+          "*.xml",
+          "*.yml",
+          "*.yaml"
         ],
         "accepts_directories": false
       }
     ],
     "writers": [
       {
-        "command": "brainglobe-napari-io.cellfinder_write_multiple_xml",
+        "command": "brainglobe-napari-io.cellfinder_write_multiple_points",
         "layer_types": [
           "points+"
         ],
         "filename_extensions": [
-          ".xml"
+          ".xml",
+          ".yml",
+          ".yaml"
         ],
         "display_name": "multiple_points"
       }
@@ -185,14 +198,14 @@
   "package_metadata": {
     "metadata_version": "2.4",
     "name": "brainglobe-napari-io",
-    "version": "0.4.0",
+    "version": "0.5.0",
     "dynamic": [
       "license-file"
     ],
     "platform": null,
     "supported_platform": null,
     "summary": "Read and write files from the BrainGlobe computational neuroanatomy suite into napari",
-    "description": "# napari-brainglobe-io\n\n[![License](https://img.shields.io/pypi/l/brainglobe-napari-io.svg?color=green)](https://github.com/brainglobe/brainglobe-napari-io/blob/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/brainglobe-napari-io.svg?color=green)](https://pypi.org/project/brainglobe-napari-io)\n[![Python Version](https://img.shields.io/pypi/pyversions/brainglobe-napari-io.svg?color=green)](https://python.org)\n[![tests](https://github.com/brainglobe/brainglobe-napari-io/workflows/tests/badge.svg)](https://github.com/brainglobe/brainglobe-napari-io/actions)\n[![codecov](https://codecov.io/gh/brainglobe/brainglobe-napari-io/branch/main/graph/badge.svg)](https://codecov.io/gh/brainglobe/brainglobe-napari-io)\n\nVisualise cellfinder and brainreg results with napari\n\n\n----------------------------------\n\n\n## Installation\nThis package is likely already installed\n(e.g. with cellfinder, brainreg or another napari plugin), but if you want to\ninstall it again, either use the napari plugin install GUI or you can\ninstall `brainglobe-napari-io` via [pip]:\n\n    pip install brainglobe-napari-io\n\n## Usage\n* Open napari (however you normally do it, but typically just type `napari` into your terminal, or click on your desktop icon)\n\n### brainreg\n#### Sample space\nDrag your [brainreg](https://github.com/brainglobe/brainreg) output directory (the one with the log file) onto the napari window.\n\nVarious images should then open, including:\n* `Registered image` - the image used for registration, downsampled to atlas resolution\n* `atlas_name` - e.g. `allen_mouse_25um` the atlas labels, warped to your sample brain\n* `Boundaries` - the boundaries of the atlas regions\n\nIf you downsampled additional channels, these will also be loaded.\n\nMost of these images will not be visible by default. Click the little eye icon to toggle visibility.\n\n_N.B. If you use a high resolution atlas (such as `allen_mouse_10um`), then the files can take a little while to load._\n\n![sample_space](https://raw.githubusercontent.com/brainglobe/brainglobe-napari-io/master/resources/sample_space.gif)\n\n\n#### Atlas space\n`napari-brainreg` also comes with an additional plugin, for visualising your data\nin atlas space.\n\nThis is typically only used in other software, but you can enable it yourself:\n* Open napari\n* Navigate to `Plugins` -> `Plugin Call Order`\n* In the `Plugin Sorter` window, select `napari_get_reader` from the `select hook...` dropdown box\n* Drag `brainreg_read_dir_atlas_space` (the atlas space viewer plugin) above `brainreg_read_dir` (the normal plugin) to ensure that the atlas space plugin is used preferentially.\n\n\n### cellfinder\n#### Load cellfinder XML file\n* Load your raw data (drag and drop the data directories into napari, one at a time)\n* Drag and drop your cellfinder XML file (e.g. `cell_classification.xml`) into napari.\n\n#### Load cellfinder directory\n* Load your raw data (drag and drop the data directories into napari, one at a time)\n* Drag and drop your cellfinder output directory into napari.\n\nThe plugin will then load your detected cells (in yellow) and the rejected cell\ncandidates (in blue). If you carried out registration, then these results will be\noverlaid (similarly to the loading brainreg data, but transformed to the\ncoordinate space of your raw data).\n\n![load_data](https://raw.githubusercontent.com/brainglobe/brainglobe-napari-io/master/resources/load_data.gif)\n**Loading raw data**\n\n![load_data](https://raw.githubusercontent.com/brainglobe/brainglobe-napari-io/master/resources/load_results.gif)\n**Loading cellfinder results**\n\n## Seeking help or contributing\nWe are always happy to help users of our tools, and welcome any contributions. If you would like to get in contact with us for any reason, please see the [contact page of our website](https://brainglobe.info/contact.html).\n",
+    "description": "# napari-brainglobe-io\n\n[![License](https://img.shields.io/pypi/l/brainglobe-napari-io.svg?color=green)](https://github.com/brainglobe/brainglobe-napari-io/blob/main/LICENSE)\n[![Python Version](https://img.shields.io/pypi/pyversions/brainglobe-napari-io.svg?color=green)](https://python.org)\n[![PyPI](https://img.shields.io/pypi/v/brainglobe-napari-io.svg?color=green)](https://pypi.org/project/brainglobe-napari-io)\n[![Anaconda version](https://anaconda.org/conda-forge/brainglobe-napari-io/badges/version.svg)](https://anaconda.org/conda-forge/brainglobe-napari-io)\n[![Napari hub](https://img.shields.io/endpoint?url=https://npe2api-git-add-shields-napari.vercel.app/api/shields/brainglobe-napari-io)](https://napari-hub.org/plugins/brainglobe-napari-io.html)\n[![PyPI Downloads](https://pepy.tech/badge/brainglobe-napari-io)](https://pepy.tech/project/brainglobe-napari-io)\n[![tests](https://github.com/brainglobe/brainglobe-napari-io/workflows/tests/badge.svg)](https://github.com/brainglobe/brainglobe-napari-io/actions)\n[![codecov](https://codecov.io/gh/brainglobe/brainglobe-napari-io/branch/main/graph/badge.svg)](https://codecov.io/gh/brainglobe/brainglobe-napari-io)\n[![image.sc forum](https://img.shields.io/badge/dynamic/json.svg?label=forum&url=https%3A%2F%2Fforum.image.sc%2Ftags%2Fbrainglobe.json&query=%24.topic_list.tags.0.topic_count&colorB=brightgreen&suffix=%20topics&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAYAAAAfSC3RAAABPklEQVR42m3SyyqFURTA8Y2BER0TDyExZ+aSPIKUlPIITFzKeQWXwhBlQrmFgUzMMFLKZeguBu5y+//17dP3nc5vuPdee6299gohUYYaDGOyyACq4JmQVoFujOMR77hNfOAGM+hBOQqB9TjHD36xhAa04RCuuXeKOvwHVWIKL9jCK2bRiV284QgL8MwEjAneeo9VNOEaBhzALGtoRy02cIcWhE34jj5YxgW+E5Z4iTPkMYpPLCNY3hdOYEfNbKYdmNngZ1jyEzw7h7AIb3fRTQ95OAZ6yQpGYHMMtOTgouktYwxuXsHgWLLl+4x++Kx1FJrjLTagA77bTPvYgw1rRqY56e+w7GNYsqX6JfPwi7aR+Y5SA+BXtKIRfkfJAYgj14tpOF6+I46c4/cAM3UhM3JxyKsxiOIhH0IO6SH/A1Kb1WBeUjbkAAAAAElFTkSuQmCC)](https://forum.image.sc/tag/brainglobe)\n[![Bluesky](https://img.shields.io/badge/Bluesky-0285FF?logo=bluesky&logoColor=fff)](https://bsky.app/profile/brainglobe.info)\n[![Mastodon](https://img.shields.io/badge/Mastodon-6364FF?logo=mastodon&logoColor=fff)](https://mastodon.online/@brainglobe)\n\nVisualise cellfinder and brainreg results with napari\n\n\n----------------------------------\n\n\n## Installation\nThis package is likely already installed\n(e.g. with cellfinder, brainreg or another napari plugin), but if you want to\ninstall it again, either use the napari plugin install GUI or you can\ninstall `brainglobe-napari-io` via [pip]:\n\n    pip install brainglobe-napari-io\n\n## Usage\n* Open napari (however you normally do it, but typically just type `napari` into your terminal, or click on your desktop icon)\n\n### brainreg\n#### Sample space\nDrag your [brainreg](https://github.com/brainglobe/brainreg) output directory (the one with the log file) onto the napari window.\n\nVarious images should then open, including:\n* `Registered image` - the image used for registration, downsampled to atlas resolution\n* `atlas_name` - e.g. `allen_mouse_25um` the atlas labels, warped to your sample brain\n* `Boundaries` - the boundaries of the atlas regions\n\nIf you downsampled additional channels, these will also be loaded.\n\nMost of these images will not be visible by default. Click the little eye icon to toggle visibility.\n\n_N.B. If you use a high resolution atlas (such as `allen_mouse_10um`), then the files can take a little while to load._\n\n![sample_space](https://raw.githubusercontent.com/brainglobe/brainglobe-napari-io/master/resources/sample_space.gif)\n\n\n#### Atlas space\n`napari-brainreg` also comes with an additional plugin, for visualising your data\nin atlas space.\n\nThis is typically only used in other software, but you can enable it yourself:\n* Open napari\n* Navigate to `Plugins` -> `Plugin Call Order`\n* In the `Plugin Sorter` window, select `napari_get_reader` from the `select hook...` dropdown box\n* Drag `brainreg_read_dir_atlas_space` (the atlas space viewer plugin) above `brainreg_read_dir` (the normal plugin) to ensure that the atlas space plugin is used preferentially.\n\n\n### cellfinder\n#### Load cellfinder XML/YAML file\n* Load your raw data (drag and drop the data directories into napari, one at a time)\n* Drag and drop your cellfinder XML/YAML file (e.g. `cell_classification.xml`) into napari.\n\n#### Load cellfinder directory\n* Load your raw data (drag and drop the data directories into napari, one at a time)\n* Drag and drop your cellfinder output directory into napari.\n\nThe plugin will then load your detected cells (in yellow) and the rejected cell\ncandidates (in blue). If you carried out registration, then these results will be\noverlaid (similarly to the loading brainreg data, but transformed to the\ncoordinate space of your raw data).\n\n![load_data](https://raw.githubusercontent.com/brainglobe/brainglobe-napari-io/master/resources/load_data.gif)\n**Loading raw data**\n\n![load_data](https://raw.githubusercontent.com/brainglobe/brainglobe-napari-io/master/resources/load_results.gif)\n**Loading cellfinder results**\n\n## Seeking help or contributing\nWe are always happy to help users of our tools, and welcome any contributions. If you would like to get in contact with us for any reason, please see the [contact page of our website](https://brainglobe.info/contact.html).\n",
     "description_content_type": "text/markdown",
     "keywords": null,
     "home_page": null,
@@ -217,11 +230,10 @@
     "requires_dist": [
       "brainglobe-atlasapi>=2.0.1",
       "brainglobe-space>=1.0.0",
-      "brainglobe-utils>=0.4.2",
+      "brainglobe-utils>=0.9.0",
       "napari>=0.6.1",
       "tifffile>=2020.8.13",
       "numpy",
-      "pandas",
       "pytest; extra == \"dev\"",
       "pytest-cov; extra == \"dev\"",
       "pytest-mock; extra == \"dev\"",
