@@ -1,0 +1,83 @@
+{
+  "name": "napari-sam3-assistant",
+  "display_name": "SAM3 Assistant",
+  "visibility": "public",
+  "icon": "",
+  "categories": [
+    "Utilities"
+  ],
+  "schema_version": "0.2.1",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-sam3-assistant.make_widget",
+        "title": "SAM3 Assistant",
+        "python_name": "napari_sam3_assistant.widgets.main_widget:MainWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "napari-sam3-assistant.make_widget",
+        "display_name": "SAM3 Assistant",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "napari-sam3-assistant",
+    "version": "1.0.2",
+    "dynamic": [
+      "license-file"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "A napari plugin for interactive SAM3 segmentation with text, points, boxes, exemplar prompts, point-based refinement, and 3D/video-like propagation.",
+    "description": "# napari-sam3-assistant\n\n`napari-sam3-assistant` is a napari plugin for interactive SAM3 segmentation with text, points, boxes, exemplar prompts, point-based refinement, and 3D/video-like propagation.\n\nThe plugin focuses on task-based segmentation workflows:\n\n- 2D segmentation with text, box, point, and mask-style prompts\n- 3D stack / video-like propagation from prompts on a selected slice or frame\n- exemplar segmentation from Shapes ROI boxes\n- text-based concept segmentation\n- refinement with positive and negative point prompts\n\nSAM 3 is not bundled with this plugin. Install the SAM 3 backend and download the SAM 3 model files separately from Meta's Hugging Face repository.\n\n## Status\n\nThis project is under active development. The current widget supports local SAM 3 model loading, napari prompt collection, background execution, and writing results back to napari layers.\n\n## Requirements\n\n- Python `>=3.12`\n- napari `>=0.5`\n- SAM 3 Python package importable as `sam3`\n- PyTorch and torchvision installed for your platform\n- A local SAM 3 checkpoint directory containing:\n  - `config.json`\n  - `processor_config.json`\n  - one weight file such as `sam3.pt` or `model.safetensors`\nGPU use requires a PyTorch / torchvision / SAM 3 stack that is compatible with your GPU architecture. If CUDA kernels are not available for the device, select **CPU** in the widget.\n\n## Setup\n\nSetup has three parts:\n\n1. Install the SAM 3 backend.\n2. Download the SAM 3 model files from Hugging Face and configure the model path.\n3. Install this napari plugin.\n\n### 1. Install SAM 3\n\nCreate and activate an environment:\n\n```bash\nconda create -n napari-sam3 python=3.12\nconda activate napari-sam3\n```\n\nInstall PyTorch and torchvision for your platform. Use the official PyTorch selector for the current command:\n\n```bash\npip install torch torchvision\n```\n\nInstall SAM 3:\n\n```bash\ngit clone https://github.com/facebookresearch/sam3.git\ncd sam3\npip install -e .\n```\n\n### 2. Download SAM 3 Weights\n\nThis plugin does not ship with SAM 3 weights or model configuration files. Download them from the official Hugging Face repository:\n\n```text\nhttps://huggingface.co/facebook/sam3\n```\n\nThe repository is gated.\n\n1. Sign in to your Hugging Face account.\n2. Open the facebook/sam3 model page.\n3. Request or accept access to the repository.\n4. Once access is approved, open the Files and versions tab.\n5. Download the required model and configuration files directly from the website.\n\nA reference screenshot of the file list is shown below:\n\n![SAM 3 model files screenshot](docs/sam3_model_files.png)\n\n\nExpected model directory:\n\n```text\n~/models/sam3/\n  config.json\n  processor_config.json\n  sam3.pt\n```\n\n`model.safetensors` is also supported as a weight file. Depending on the Hugging Face layout, the directory may also contain tokenizer files such as `tokenizer.json`, `vocab.json`, and `merges.txt`.\n\nKeep all downloaded model files together in one directory. In the plugin widget, click `Browse`, select that directory, then click `Validate`.\n\nFor this project, a local folder such as the following is acceptable:\n\n```text\n~/Projects/napari/sam3/model\n```\nNote that the upstream SAM 3 source repository does not ship with a model/ folder by default. In this project, sam3/model is a user-created local directory used to store downloaded SAM 3 weights and configuration files.\n\nIf you created sam3/model yourself and placed the downloaded Hugging Face files there, that is a valid setup. The important requirement is simply that all required SAM 3 files stay together in one readable directory and that you select that directory in the widget.\n\nThe selected model directory is remembered by the widget.\n\n### 3. Install napari-sam3-assistant\n\nInstall this plugin:\n\n```bash\ngit clone https://github.com/wulinteousa2-hash/napari-sam3-assistant\ncd napari-sam3-assistant\npip install -e .\n```\n\nStart napari:\n\n```bash\nnapari\n```\n\nOpen the widget from:\n\n```text\nPlugins > SAM3 Assistant\n```\n\n## Basic Workflow\n\n1. Open an image in napari.\n2. Open `Plugins > SAM3 Assistant`.\n3. Select the image in `Napari Layers > Image`.\n4. Select a task.\n5. Create a prompt layer if the task needs one.\n6. Click `Run Preview`.\n7. Inspect `SAM3 preview labels`, `SAM3 preview masks`, or `SAM3 preview boxes`.\n8. Click `Save Result as Labels` to keep the result.\n\nUse `Clear Preview` to remove generated preview layers without deleting prompts or saved labels.\n\n## Tasks\n\n### Text Segmentation\n\nUse text to segment all matching instances of a concept.\n\nWorkflow:\n\n1. Set `Task` to `Text segmentation`.\n2. Leave `Prompt tool` as `Text only`.\n3. Enter a short phrase, for example:\n\n```text\ncell\nnucleus\nmyelin\nmyelin sheath\n```\n\n4. Click `Run Preview`.\n\nNo prompt layer is needed for text segmentation. `Create Prompt Layer` is not required.\n\nText prompts usually work better as short noun phrases than instructions. Prefer `myelin sheath` over `segment all the myelin rings`.\n\nIf the result says `objects=0`, SAM 3 ran but did not return masks above threshold.\n\n### 2D Segmentation With Boxes\n\nUse boxes to identify the target object or concept.\n\nWorkflow:\n\n1. Set `Task` to `2D segmentation`.\n2. Set `Prompt tool` to `Box`.\n3. Click `Create Prompt Layer`.\n4. Draw one or more rectangles in the `SAM3 boxes` Shapes layer.\n5. Click `Run Preview`.\n\nThe output appears in preview layers.\n\n### Exemplar Segmentation\n\nUse example ROIs to segment similar objects.\n\nWorkflow:\n\n1. Set `Task` to `Exemplar segmentation`.\n2. Set `Prompt tool` to `Box`.\n3. Click `Create Prompt Layer`.\n4. Draw boxes around one or more example objects.\n5. Click `Run Preview`.\n\nThe local SAM 3 image API exposes visual exemplars through geometric box prompts. The plugin stores ROI metadata, but inference currently passes exemplar ROIs as SAM 3 visual box prompts.\n\n### Refinement With Positive and Negative Points\n\nUse points to correct a result.\n\nWorkflow:\n\n1. Set `Task` to `Refinement`.\n2. Set `Prompt tool` to `Points (+/-)`.\n3. Click `Create Prompt Layer`.\n4. Choose `Positive` and add points on regions to include.\n5. Choose `Negative` and add points on regions to exclude.\n6. Click `Run Preview`.\n\nThis is useful after a text, box, or exemplar preview is close but not correct.\n\n### Labels Mask Prompt\n\nUse a napari Labels layer as a mask-style prompt.\n\nWorkflow:\n\n1. Set a task that supports mask prompts.\n2. Set `Prompt tool` to `Labels mask`.\n3. Click `Create Prompt Layer`.\n4. Paint non-zero pixels in `SAM3 mask prompt`.\n5. Click `Run Preview`.\n\n### 3D Stack / Video Propagation\n\nTreat a stack as video-like data and propagate a prompt through frames or slices.\n\nWorkflow:\n\n1. Open a stack in napari.\n2. Set `Task` to `3D/video propagation`.\n3. Select the target frame or slice in napari.\n4. Create a prompt layer and add prompts on that frame.\n5. Choose propagation direction:\n   - `both`\n   - `forward`\n   - `backward`\n6. Click `Run Preview` or `Propagate Stack/Video`.\n\nPreview output is written to:\n\n```text\nSAM3 propagated preview labels\n```\n\nSaved output is written to:\n\n```text\nSAM3 saved propagated labels\n```\n\nThe current SAM 3 video predictor backend is CUDA-only. CPU mode is supported for 2D/image workflows, not 3D/video propagation.\n\n## Channel Axis\n\n`Channel axis` tells the plugin which data axis is color/channel.\n\nDefault:\n\n```text\n-1\n```\n\nUse `-1` for grayscale images and normal RGB/RGBA images. The plugin auto-detects trailing RGB/RGBA axes of size `3` or `4`.\n\nExamples:\n\n```text\n(H, W)          -> -1\n(H, W, 3)      -> -1\n(H, W, 4)      -> -1\n(Z, H, W)      -> -1\n(C, H, W)      -> 0\n(Z, C, H, W)   -> 1\n(T, C, H, W)   -> 1\n(Z, H, W, C)   -> 3\n```\n\nLeave it at `-1` unless your image has an explicit multi-channel microscopy dimension.\n\n## Output Layers\n\nPreview layers:\n\n```text\nSAM3 preview labels\nSAM3 preview masks\nSAM3 preview boxes\nSAM3 propagated preview labels\n```\n\nSaved layers:\n\n```text\nSAM3 saved labels\nSAM3 saved propagated labels\n```\n\nButtons:\n\n- `Validate`: check the selected SAM 3 model directory.\n- `Load Image Model`: load the 2D/image model.\n- `Load 3D/Video Model`: load the video propagation model.\n- `Run Preview`: run the selected task.\n- `Clear Preview`: remove generated preview layers only.\n- `Save Result as Labels`: copy preview labels into saved labels.\n- `Cancel`: stop a running worker.\n- `Unload`: unload the SAM3 model from memory.\n\n## ARM64, CUDA, and DGX Spark\n\nFor ARM64 systems such as NVIDIA DGX Spark / GB10:\n\n- Use Python 3.12 or newer.\n- Keep the NVIDIA driver and CUDA stack current.\n- Install a PyTorch/torchvision build that supports your GPU architecture.\n- Use `CPU` mode for reliable 2D execution if CUDA kernels are unavailable.\n- Use explicit `CUDA` only when testing a compatible GPU build.\n\nCheck PyTorch GPU support:\n\n```bash\npython - <<'PY'\nimport torch\nprint(\"torch:\", torch.__version__)\nprint(\"torch cuda runtime:\", torch.version.cuda)\nprint(\"cuda available:\", torch.cuda.is_available())\nif torch.cuda.is_available():\n    print(\"device:\", torch.cuda.get_device_name(0))\n    print(\"capability:\", torch.cuda.get_device_capability(0))\n    print(\"arch list:\", torch.cuda.get_arch_list())\nPY\n```\n\nGB10 reports compute capability `12.1` (`sm_121`). If your PyTorch build does not include compatible kernels, you may see:\n\n```text\nCUDA error: no kernel image is available for execution on the device\nnvrtc: error: invalid value for --gpu-architecture\n```\n\nThe plugin does not compile PyTorch, torchvision, or SAM 3 CUDA extensions.\n\n## Troubleshooting\n\n### No mask appears and status says `objects=0`\n\nSAM 3 returned no detections above threshold. Try:\n\n- a shorter text prompt\n- a more common concept phrase\n- box or exemplar prompts\n- CPU mode if the CUDA path is unstable\n\n### CUDA kernel image error\n\nError:\n\n```text\nCUDA error: no kernel image is available for execution on the device\n```\n\nThe GPU is visible, but at least one required CUDA kernel was not built for the device architecture. Use `CPU`, or install compatible PyTorch/torchvision/SAM 3 builds.\n\n### Invalid GPU architecture\n\nError:\n\n```text\nnvrtc: error: invalid value for --gpu-architecture\n```\n\nThe installed PyTorch CUDA runtime cannot compile for the detected GPU. Use `CPU` or install a build that supports the GPU.\n\n### BFloat16 conversion errors\n\nThe plugin converts SAM3 `bfloat16` outputs to `float32` before writing NumPy-backed napari layers. If you still see dtype errors, restart napari after changing device mode and run again.\n\n### Text prompt creates no layer\n\nThat is expected. Text segmentation does not need a prompt layer. Enter text and click `Run Preview`.\n\n## Development\n\nInstall in editable mode:\n\n```bash\npip install -e .\n```\n\nRun tests:\n\n```bash\nPYTHONPATH=src pytest -q\n```\n\nThe test suite covers coordinate mapping, prompt collection, adapter utility behavior, and static widget UI checks. It does not download SAM 3 weights.\n\n## References\n\n- SAM 3 repository: https://github.com/facebookresearch/sam3\n- SAM 3 model files: https://huggingface.co/facebook/sam3\n- PyTorch installation selector: https://pytorch.org/get-started/locally/\n\n## License\n\nMIT. See the project license file.\n",
+    "description_content_type": "text/markdown",
+    "keywords": "napari,SAM3,segmentation,tracking,microscopy,image analysis",
+    "home_page": null,
+    "download_url": null,
+    "author": "Wulin Teo",
+    "author_email": null,
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "MIT",
+    "classifier": [
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "License :: OSI Approved :: MIT License",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.12",
+      "Topic :: Scientific/Engineering :: Image Processing",
+      "Topic :: Scientific/Engineering :: Artificial Intelligence"
+    ],
+    "requires_dist": [
+      "napari>=0.5.0",
+      "qtpy",
+      "numpy",
+      "pillow"
+    ],
+    "requires_python": ">=3.12",
+    "requires_external": null,
+    "project_url": null,
+    "provides_extra": null,
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}
