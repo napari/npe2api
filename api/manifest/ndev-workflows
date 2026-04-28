@@ -1,0 +1,99 @@
+{
+  "name": "ndev-workflows",
+  "display_name": "ndev Workflows",
+  "visibility": "public",
+  "icon": "",
+  "categories": [
+    "Utilities"
+  ],
+  "schema_version": "0.2.1",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "ndev-workflows.workflow_container",
+        "title": "Workflow Container",
+        "python_name": "ndev_workflows.widgets._workflow_container:WorkflowContainer",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "ndev-workflows.workflow_container",
+        "display_name": "Workflow Container",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "ndev-workflows",
+    "version": "0.0.1",
+    "dynamic": [
+      "license-file"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "reproducible processing workflows with napari",
+    "description": "# ndev-workflows\n\n[![License BSD-3](https://img.shields.io/pypi/l/ndev-workflows.svg?color=green)](https://github.com/ndev-kit/ndev-workflows/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/ndev-workflows.svg?color=green)](https://pypi.org/project/ndev-workflows)\n[![Python Version](https://img.shields.io/pypi/pyversions/ndev-workflows.svg?color=green)](https://python.org)\n[![tests](https://github.com/ndev-kit/ndev-workflows/workflows/tests/badge.svg)](https://github.com/ndev-kit/ndev-workflows/actions)\n[![codecov](https://codecov.io/gh/ndev-kit/ndev-workflows/branch/main/graph/badge.svg)](https://codecov.io/gh/ndev-kit/ndev-workflows)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/ndev-workflows)](https://napari-hub.org/plugins/ndev-workflows)\n[![npe2](https://img.shields.io/badge/plugin-npe2-blue?link=https://napari.org/stable/plugins/index.html)](https://napari.org/stable/plugins/index.html)\n[![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-purple.json)](https://github.com/copier-org/copier)\n\n**Reproducible processing workflows with napari**\n\nA re-implementation of [napari-workflows](https://github.com/haesleinhuepf/napari-workflows) with backwards compatibility.\n\n---\n\nThis [napari] plugin was generated with [copier] using the [napari-plugin-template] (2.0.1).\n\n## What is ndev-workflows?\n\n`ndev-workflows` is the workflow backend for napari image processing pipelines. It's a **drop-in replacement** for [napari-workflows](https://github.com/haesleinhuepf/napari-workflows) by Robert Haase, with these key improvements:\n\n- **Safe YAML loading** \u2014 Uses `yaml.safe_load()` (no arbitrary code execution)\n- **Backwards compatible** \u2014 Automatically loads and migrates legacy napari-workflows files, and detects missing dependencies\n- **Same API** \u2014 Most code works without changes\n- **Future-ready** \u2014 Designed for upcoming npe2 workflow contributions (WIP), without relying on npe1, napari-time-slicer, and napari-tools-menu for interactivity\n\n---\n\n## Installation\n\n```bash\npip install ndev-workflows\n```\n\nIf napari is not already installed, you can install `ndev-workflows` with napari and Qt via:\n\n```bash\npip install \"ndev-workflows[all]\"\n```\n\n---\n\n## Quick Start\n\n```python\nfrom ndev_workflows import Workflow, save_workflow, load_workflow\nfrom skimage.filters import gaussian\n\n# Create workflow\nworkflow = Workflow()\nworkflow.set(\"blurred\", gaussian, \"input_image\", sigma=2.0)\nworkflow.set(\"input_image\", my_image)\n\n# Execute\nresult = workflow.get(\"blurred\")\n\n# Save\nsave_workflow(\"pipeline.yaml\", workflow, name=\"My Pipeline\")\n\n# Load and reuse\nloaded = load_workflow(\"pipeline.yaml\")\nloaded.set(\"input_image\", new_image)\nresult = loaded.get(\"blurred\")\n```\n\n---\n\n## YAML Format\n\nSaved workflows use a safe, human-readable format:\n\n```yaml\nname: Nucleus Segmentation\ndescription: Gaussian blur and thresholding\nmodified: '2025-12-22'\n\ninputs:\n  - raw_image\n\noutputs:\n  - labels\n\ntasks:\n  blurred:\n    function: skimage.filters.gaussian\n    params:\n      arg0: raw_image\n      sigma: 2.0\n\n  labels:\n    function: skimage.measure.label\n    params:\n      arg0: blurred\n```\n\n**Key features:**\n\n- No `!python/object` tags (safe to share)\n- Functions imported by module path\n- Params use `arg0`, `arg1`, etc. for positional args and keyword names for kwargs\n\n**Legacy format**: Old napari-workflows YAML files are automatically detected and migrated when loaded.\n\n---\n\n## Important Notes\n\n### Function Dependencies\n\n\u26a0\ufe0f Workflows **don't bundle functions** \u2014 they only store module paths. Recipients need the same packages installed.\n\nIf loading fails with `WorkflowNotRunnableError`, install the missing package:\n\n```bash\npip install scikit-image  # for skimage functions\npip install napari-segment-blobs-and-things-with-membranes  # for that plugin\n```\n\n### Lazy Loading\n\nInspect workflows without importing functions:\n\n```python\nworkflow = load_workflow(\"untrusted.yaml\", lazy=True)\nprint(workflow.tasks)  # Safe - doesn't execute\n```\n\n---\n\n## Integration\n\n### Front-end plugins for interactive workflow building:\n\n- [napari-assistant](https://github.com/haesleinhuepf/napari-assistant)\n- [napari-workflow-optimizer](https://github.com/haesleinhuepf/napari-workflow-optimizer)\n- [napari-workflow-inspector](https://github.com/haesleinhuepf/napari-workflow-inspector)\n\n### Works with processing plugins:\n\n- [napari-segment-blobs-and-things-with-membranes](https://www.napari-hub.org/plugins/napari-segment-blobs-and-things-with-membranes)\n- [pyclesperanto](https://github.com/clesperanto/napari_pyclesperanto_assistant)\n- And more!\n\n---\n\n## Contributing\n\n```bash\ngit clone https://github.com/ndev-kit/ndev-workflows.git\ncd ndev-workflows\nuv venv\n.venv\\Scripts\\activate\nuv pip install -e . --group dev\npytest\n```\n\n---\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"ndev-workflows\" is free and open source software\nFork of [napari-workflows](https://github.com/haesleinhuepf/napari-workflows) by Robert Haase.\n\n---\n\n## Issues\n\n[File an issue](https://github.com/ndev-kit/ndev-workflows/issues) with your environment details, YAML file (if applicable), and error messages.\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": null,
+    "download_url": null,
+    "author": "Tim Monko",
+    "author_email": "timmonko@gmail.com",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": null,
+    "classifier": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "requires_dist": [
+      "napari",
+      "nbatch>=0.0.4",
+      "ndevio>=0.6.0",
+      "magicgui",
+      "magic-class",
+      "numpy",
+      "dask",
+      "pyyaml",
+      "napari[all]; extra == \"all\""
+    ],
+    "requires_python": ">=3.11",
+    "requires_external": null,
+    "project_url": [
+      "Bug Tracker, https://github.com/ndev-kit/ndev-workflows/issues",
+      "Documentation, https://github.com/ndev-kit/ndev-workflows#README.md",
+      "Source Code, https://github.com/ndev-kit/ndev-workflows",
+      "User Support, https://github.com/ndev-kit/ndev-workflows/issues"
+    ],
+    "provides_extra": [
+      "all"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}
