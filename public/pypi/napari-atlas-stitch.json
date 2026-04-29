@@ -15,7 +15,7 @@
       "Programming Language :: Python :: 3.9",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "# napari-atlas-stitch\n\nStandalone napari widget for stitching atlas tile exports from ZEISS Volutome and JEOL EM workflows.\n\nVersion: `1.0.0`\n\n`napari-atlas-stitch` parses atlas metadata, checks tile availability, previews nominal/refined/manual tile layouts in napari, estimates refined tile positions from overlaps, supports donor-based seam repair, and exports stitched atlas mosaics as OME-Zarr.\n\n## Development Status\n\nThis plugin is under active development. The core workflow has been split into a standalone napari package, but many functions still need broader testing on real ZEISS Volutome and JEOL EM datasets. Treat alignment refinement, seam repair, and export settings as experimental until validated on your acquisition workflow.\n\n## Supported Sources\n\n- ZEISS Volutome atlas XML sources\n- JEOL EM VE-MIF atlas sources\n- 2D tile image files referenced by those atlas sources\n- Saved `.json` atlas project files produced by this widget\n\n## Install\n\nFrom a local checkout:\n\n```bash\npython -m pip install -e .\n```\n\nFor development and tests:\n\n```bash\npython -m pip install -e \".[test]\"\n```\n\n## Open In Napari\n\nStart napari and open:\n\n```text\nPlugins > Atlas Stitch > Atlas Stitch\n```\n\n## Main Workflow\n\n1. Select an atlas XML or VE-MIF source.\n2. Optionally choose a tile-root override if image paths moved after acquisition.\n3. Load the atlas project and inspect missing or resolved tiles.\n4. Preview the nominal placement.\n5. Estimate refined alignment from overlaps when the atlas has usable neighboring tiles.\n6. Save manual tile positions or repair seams when needed.\n7. Export the selected placement as OME-Zarr.\n\n## Outputs\n\n- Stitched OME-Zarr mosaics\n- Optional multiscale pyramids\n- Saved atlas project JSON files\n- Repaired tile outputs and repair metadata when seam repair is used\n\n## Changelog\n\nSee [CHANGELOG.md](CHANGELOG.md) for release notes and feature details.\n\n## Relationship To napari-chat-assistant\n\nThis repository was split out from `napari-chat-assistant` so Atlas Stitch can be installed, released, and pushed independently. The chat assistant can still launch Atlas Stitch from its Advanced menu, and will prefer this standalone plugin when it is installed in the same environment.\n\n## Tests\n\n```bash\npython -m pytest\n```\n\nOME-Zarr export uses `ome-zarr>=0.11` with `zarr>=3`. If tests fail while importing `ome_zarr`, reinstall the package in a clean or updated environment so pip can resolve those versions together.\n",
+    "description": "# napari-atlas-stitch\n\nStandalone napari widget for stitching atlas tile exports from ZEISS Volutome and JEOL EM workflows.\n\nVersion: `1.2.0`\n\n`napari-atlas-stitch` parses atlas metadata, checks tile availability, previews nominal, refined, and manual tile layouts in napari, estimates refined tile positions from overlapping neighboring tiles, supports optional donor-based seam repair, and exports stitched atlas mosaics as OME-Zarr.\n\n## Development Status\n\nThis plugin is under active development. Alignment refinement, seam repair, and export settings should be treated as experimental until validated on your own ZEISS Volutome or JEOL EM acquisition workflow.\n\n## Alignment Refinement\n\nVersion `1.2.0` adds additional overlap-registration options and safety controls for EM tile mosaics.\n\nAtlas Stitch estimates translations between neighboring overlapping tiles, then solves a global layout from the accepted pairwise constraints. This helps prevent one local adjustment from disrupting the whole mosaic.\n\nAvailable registration modes:\n\n- **Light translation registration** \u2014 fast phase-correlation-based translation estimation.\n- **Robust translation registration** \u2014 tests multiple overlap-strip widths and selects the most reliable translation estimate.\n- **Robust translation with residual-based outlier rejection** \u2014 removes pairwise constraints that disagree with the solved global layout.\n- **Feature-based registration** \u2014 uses local image features from overlapping regions when intensity correlation is unreliable.\n- **ECC intensity-based registration** \u2014 uses enhanced correlation coefficient optimization for translation alignment.\n- **Center-out seeded registration** \u2014 starts near the center of the tile grid and expands outward using clockwise or counterclockwise neighbor priority. This is useful when weak outer-tile matches distort the global layout.\n\nAdditional safeguards:\n\n- **Maximum correction** \u2014 rejects translation corrections larger than the configured pixel limit.\n- **Minimum confidence** \u2014 rejects weak pairwise registrations before global optimization.\n\nRecommended EM starting settings:\n\n```text\nRegistration mode: Robust translation with residual-based outlier rejection\nTile overlap: 10\u201320%\nMaximum correction: 50 px\nMinimum confidence: 0.20\n```\n\nVersion: `1.1.0`\n\nnapari-atlas-stitch parses atlas metadata, checks tile availability, previews nominal/refined/manual tile layouts in napari, estimates refined tile positions from overlapping neighboring tiles, supports optional donor-based seam repair, and exports stitched atlas mosaics as OME-Zarr.\n\n\nVersion: `1.0.1`\n\n`napari-atlas-stitch` parses atlas metadata, checks tile availability, previews nominal/refined/manual tile layouts in napari, estimates refined tile positions from overlaps, supports donor-based seam repair, and exports stitched atlas mosaics as OME-Zarr.\n\n## Development Status\n\nThis plugin is under active development. The core workflow has been split into a standalone napari package, but many functions still need broader testing on real ZEISS Volutome and JEOL EM datasets. Treat alignment refinement, seam repair, and export settings as experimental until validated on your acquisition workflow.\n\n## Supported Sources\n\n- ZEISS Volutome atlas XML sources\n- JEOL EM VE-MIF atlas sources\n- 2D tile image files referenced by those atlas sources\n- Saved `.json` atlas project files produced by this widget\n\n## Install\n\nFrom a local checkout:\n\n```bash\ngit clone https://github.com/wulinteousa2-hash/napari-atlas-stitch\ncd napari-atlas-stitch\npython -m pip install -e .\n```\n\nFor development and tests:\n\n```bash\npython -m pip install -e \".[test]\"\n```\n\n## Open In Napari\n\nStart napari and open:\n\n```text\nPlugins > Atlas Stitch > Atlas Stitch\n```\n\n## Main Workflow\n\n1. Select an atlas XML or VE-MIF source.\n2. Optionally choose a tile-root override if image paths moved after acquisition.\n3. Load the atlas project and inspect missing or resolved tiles.\n4. Preview the nominal placement.\n5. Estimate refined alignment from overlaps when the atlas has usable neighboring tiles.\n6. Save manual tile positions or repair seams when needed.\n7. Export the selected placement as OME-Zarr.\n\n## Outputs\n\n- Stitched OME-Zarr mosaics\n- Optional multiscale pyramids\n- Saved atlas project JSON files\n- Repaired tile outputs and repair metadata when seam repair is used\n\n## Changelog\n\nSee [CHANGELOG.md](CHANGELOG.md) for release notes and feature details.\n\n\n## Tests\n\n```bash\npython -m pytest\n```\n\nOME-Zarr export uses `ome-zarr>=0.11` with `zarr>=3`. If tests fail while importing `ome_zarr`, reinstall the package in a clean or updated environment so pip can resolve those versions together.\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -24,12 +24,16 @@
       "last_month": -1,
       "last_week": -1
     },
-    "dynamic": null,
+    "dynamic": [
+      "License-File"
+    ],
     "home_page": null,
     "keywords": null,
     "license": null,
     "license_expression": "MIT",
-    "license_files": null,
+    "license_files": [
+      "LICENSE"
+    ],
     "maintainer": null,
     "maintainer_email": null,
     "name": "napari-atlas-stitch",
@@ -44,7 +48,7 @@
     "provides_extra": [
       "test"
     ],
-    "release_url": "https://pypi.org/project/napari-atlas-stitch/1.0.0/",
+    "release_url": "https://pypi.org/project/napari-atlas-stitch/1.2.0/",
     "requires_dist": [
       "napari",
       "numpy",
@@ -58,11 +62,11 @@
     ],
     "requires_python": ">=3.9",
     "summary": "Atlas stitching widget for ZEISS Volutome and JEOL EM atlas tile workflows in napari",
-    "version": "1.0.0",
+    "version": "1.2.0",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 36542616,
+  "last_serial": 36576201,
   "ownership": {
     "organization": null,
     "roles": [
@@ -116,48 +120,92 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "1.2.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "4d33435c7be3a9acc7056fdf3a6f25b54823c6a590fe119834dde2b8b1ed6e4c",
+          "md5": "e0f4df80f74eef01066bad818dd7e3e1",
+          "sha256": "66a44d8771e239bb00aee108ef824b563766e2bd10a9a9fb44bde57838c8693e"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_stitch-1.2.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "e0f4df80f74eef01066bad818dd7e3e1",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 60907,
+        "upload_time": "2026-04-29T12:50:57",
+        "upload_time_iso_8601": "2026-04-29T12:50:57.858585Z",
+        "url": "https://files.pythonhosted.org/packages/4d/33/435c7be3a9acc7056fdf3a6f25b54823c6a590fe119834dde2b8b1ed6e4c/napari_atlas_stitch-1.2.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "83ceb12d40c27ace06b8156d4e9da89107a8c4b86dd53e3ee8ae20d0608386b8",
+          "md5": "1b814a3212ad4078e8cf972137c3c660",
+          "sha256": "5deee8a3ac6fe9a9b59f55f6c486ea2ae44c1fb794c99f2ed6ffdcc152b6173d"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_stitch-1.2.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "1b814a3212ad4078e8cf972137c3c660",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 64467,
+        "upload_time": "2026-04-29T12:50:58",
+        "upload_time_iso_8601": "2026-04-29T12:50:58.913115Z",
+        "url": "https://files.pythonhosted.org/packages/83/ce/b12d40c27ace06b8156d4e9da89107a8c4b86dd53e3ee8ae20d0608386b8/napari_atlas_stitch-1.2.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": null,
       "digests": {
-        "blake2b_256": "0341f6a68ebf1e67a7b33d8b675b9b20cb3847a267629330030ab05b326e03dc",
-        "md5": "7672b48bee7a1bffe355d633471c82cf",
-        "sha256": "4ee98b39e87a7bd8aad7555118c7f3872b189c87d1bd8b09b9fc15709b804b46"
+        "blake2b_256": "4d33435c7be3a9acc7056fdf3a6f25b54823c6a590fe119834dde2b8b1ed6e4c",
+        "md5": "e0f4df80f74eef01066bad818dd7e3e1",
+        "sha256": "66a44d8771e239bb00aee108ef824b563766e2bd10a9a9fb44bde57838c8693e"
       },
       "downloads": -1,
-      "filename": "napari_atlas_stitch-1.0.0-py3-none-any.whl",
+      "filename": "napari_atlas_stitch-1.2.0-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "7672b48bee7a1bffe355d633471c82cf",
+      "md5_digest": "e0f4df80f74eef01066bad818dd7e3e1",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.9",
-      "size": 52648,
-      "upload_time": "2026-04-28T13:30:14",
-      "upload_time_iso_8601": "2026-04-28T13:30:14.347794Z",
-      "url": "https://files.pythonhosted.org/packages/03/41/f6a68ebf1e67a7b33d8b675b9b20cb3847a267629330030ab05b326e03dc/napari_atlas_stitch-1.0.0-py3-none-any.whl",
+      "size": 60907,
+      "upload_time": "2026-04-29T12:50:57",
+      "upload_time_iso_8601": "2026-04-29T12:50:57.858585Z",
+      "url": "https://files.pythonhosted.org/packages/4d/33/435c7be3a9acc7056fdf3a6f25b54823c6a590fe119834dde2b8b1ed6e4c/napari_atlas_stitch-1.2.0-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": null,
       "digests": {
-        "blake2b_256": "4ab524434484d8996d71511d542c3b9c0c3a7402c75c8556a968d2629804f5f1",
-        "md5": "24fc2ac57224599ae515cd20db3784fc",
-        "sha256": "b9cc4bb74e51232e91fa8fdc359bdd3e11d39f84848ea22d45f4b5ff187cf05e"
+        "blake2b_256": "83ceb12d40c27ace06b8156d4e9da89107a8c4b86dd53e3ee8ae20d0608386b8",
+        "md5": "1b814a3212ad4078e8cf972137c3c660",
+        "sha256": "5deee8a3ac6fe9a9b59f55f6c486ea2ae44c1fb794c99f2ed6ffdcc152b6173d"
       },
       "downloads": -1,
-      "filename": "napari_atlas_stitch-1.0.0.tar.gz",
+      "filename": "napari_atlas_stitch-1.2.0.tar.gz",
       "has_sig": false,
-      "md5_digest": "24fc2ac57224599ae515cd20db3784fc",
+      "md5_digest": "1b814a3212ad4078e8cf972137c3c660",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.9",
-      "size": 55396,
-      "upload_time": "2026-04-28T13:30:15",
-      "upload_time_iso_8601": "2026-04-28T13:30:15.628245Z",
-      "url": "https://files.pythonhosted.org/packages/4a/b5/24434484d8996d71511d542c3b9c0c3a7402c75c8556a968d2629804f5f1/napari_atlas_stitch-1.0.0.tar.gz",
+      "size": 64467,
+      "upload_time": "2026-04-29T12:50:58",
+      "upload_time_iso_8601": "2026-04-29T12:50:58.913115Z",
+      "url": "https://files.pythonhosted.org/packages/83/ce/b12d40c27ace06b8156d4e9da89107a8c4b86dd53e3ee8ae20d0608386b8/napari_atlas_stitch-1.2.0.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
