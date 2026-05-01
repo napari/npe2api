@@ -14,7 +14,7 @@
       "Programming Language :: Python :: 3.12",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "# napari-cotrack\n\nA napari plugin for **anchor-based keypoint tracking through CoTracker3**.\nLabel a few frames in napari; CoTracker3 propagates those keypoints across\nthe rest of the video; iterate by fixing wrong predictions and re-running.\n\n## Install\n\n```bash\nuv sync\nuv run napari-cotrack\n```\n\nOr, install once and call from anywhere:\n\n```bash\nuv tool install git+https://github.com/RaulSimpetru/napari-cotrack\nnapari-cotrack\n```\n\n`napari-cotrack` opens napari with the plugin's dock widget already on the\nright. The first launch is slow because uv pulls torch.\n\n### Optional: install ffmpeg for the fast extract-all path\n\nStage 4's \"Extract all frames\" can either dump every frame in a single\nffmpeg pass (~10\u201350\u00d7 faster on H.264 sources) or fall back to a per-frame\nimageio loop if ffmpeg isn't on `PATH`.\n\n| OS | Install ffmpeg |\n|---|---|\n| macOS | `brew install ffmpeg` |\n| Ubuntu / Debian | `sudo apt install ffmpeg` |\n| Windows | `winget install ffmpeg` (or download from gyan.dev) |\n\n## Tested platforms\n\n- **macOS arm64 (Apple Silicon)** \u2014 primary development target, end-to-end\n  tested on a real 1500-frame project.\n- **Linux x86_64** and **Windows x86_64** \u2014 code is portable (PyQt6 +\n  pathlib + ffmpeg subprocess + napari thread_worker), all deps publish\n  wheels for these platforms, but I haven't run the GUI on them.\n  Open an issue if anything breaks \u2014 should be a small fix.\n\n## The five-stage loop\n\nThe dock widget mirrors the loop:\n\n1. **Extract anchor frames** \u2014 every Nth frame, or top K most diverse via\n   k-means on RGB histograms.\n2. **Label keypoints** \u2014 load anchors into the viewer and click them in.\n   One Points layer named `labels`, colour driven by a `bodypart` property.\n   Click moves an existing point at the same `(frame, bodypart)` instead\n   of duplicating, then auto-advances to the next bodypart.\n3. **Track with CoTracker3** \u2014 propagates labels (anchors + every\n   `corrections/round_*` folder) across the whole video. Runs in a napari\n   `thread_worker`, log streams into the dock pane.\n4. **Review and fix** \u2014 extract every video frame as PNG (ffmpeg fast path\n   if available), load them into napari, fix wrong predictions, **Promote**\n   to write only the changed rows into a new `corrections/round_NNN/`. Or\n   detect scene-confusion jumps and extract a representative frame per bad\n   range.\n5. **Render and inspect** \u2014 Hampel + 1\u20ac filter, then the cv2 overlay\n   renderer with bodypart trails. `Play with ffplay` on the result.\n\nRe-running stage 3 after a correction round folds those new labels in\nautomatically.\n\n## On-disk format\n\nA project is a directory ending in `.naparitracker/`:\n\n```\n<name>.naparitracker/\n  project.toml          # video path, bodyparts, per-stage knobs\n  anchors/\n    img0023.png ...\n    labels.csv          # long-form: frame,bodypart,x,y,vis\n  corrections/\n    round_001/labels.csv\n    round_002/labels.csv\n  tracks.csv            # dense: every (frame, bodypart)\n  tracks_filtered.csv\n  overlay.mp4\n  review/\n    img0000.png ...\n    labels.csv          # prefilled from tracks.csv\n    baseline.csv        # snapshot for diff-promote\n```\n\n`project.toml` is hand-editable TOML. Every stage's knobs version with the\nproject, so `git diff` on `project.toml` shows what changed.\n\n## Headless CLIs\n\nEvery stage is also a module CLI for batch / scripted use:\n\n```bash\nuv run python -m napari_cotrack.pipeline.extract anchors \\\n    --video VIDEO --output PROJECT/anchors \\\n    --bodyparts thumb,index,middle,ring,wrist \\\n    --mode diverse --n 30\n\nuv run python -m napari_cotrack.pipeline.track    --project PROJECT\nuv run python -m napari_cotrack.pipeline.filter   --project PROJECT\nuv run python -m napari_cotrack.pipeline.render   --project PROJECT\nuv run python -m napari_cotrack.pipeline.review extract-all --project PROJECT --force\nuv run python -m napari_cotrack.pipeline.review promote     --project PROJECT\nuv run python -m napari_cotrack.pipeline.review jumps       --project PROJECT [--extract-corrections]\n```\n\nAll accept `--verbose` for per-chunk / per-bodypart detail.\n\n## Tests\n\n```bash\nuv run python -m pytest tests/\n```\n\nCovers extract uniform/diverse, label-CSV union semantics, sparse-frame\nmapping, CSV round-trip. Stage 3 (track) needs a real GPU + checkpoint;\nsmoke against the synthetic fixture in `tests/_make_fixture.py`.\n\n## Keyboard\n\nWhile editing in napari:\n- **N** / **Shift+N** \u2014 next / previous bodypart (avoids napari's\n  default Tab/Up/Down)\n- **Ctrl+S** / **Cmd+S** \u2014 save labels.csv\n- **Right** / **Left** \u2014 next / prev frame (napari default)\n- **Delete** \u2014 remove selected points (napari default)\n\nSave also fires automatically when you close napari, as a safety net.\n",
+    "description": "# napari-cotrack\n\nA napari plugin for **anchor-based keypoint tracking through CoTracker3**.\nLabel a few frames in napari; CoTracker3 propagates those keypoints across\nthe rest of the video; iterate by fixing wrong predictions and re-running.\n\n## Install\n\nThe recommended path on every platform is the one-shot bootstrap script. It\ninstalls [`uv`](https://docs.astral.sh/uv/) if you don't already have it, then\n`uv tool install napari-cotrack` \u2014 putting `napari-cotrack` on your PATH and\nfetching the ~1.5 GB of Python deps (torch, napari, cv2, \u2026) on first run.\n\n**macOS / Linux:**\n```bash\ncurl -LsSf https://raw.githubusercontent.com/RaulSimpetru/napari-cotrack/main/scripts/install.sh | bash\n```\n\n**Windows (PowerShell):**\n```powershell\nirm https://raw.githubusercontent.com/RaulSimpetru/napari-cotrack/main/scripts/install.ps1 | iex\n```\n\nThen run `napari-cotrack`. To upgrade later: `uv tool upgrade napari-cotrack`.\n\n### Already have uv?\n```bash\nuv tool install napari-cotrack\nnapari-cotrack\n```\n\n### Working in a clone of the repo?\n```bash\nuv sync\nuv run napari-cotrack\n```\n\n### Optional: install ffmpeg for the fast extract-all path\n\nStage 4's \"Extract all frames\" runs in a single ffmpeg pass (~10\u201350\u00d7 faster on\nH.264 sources) when ffmpeg is on `PATH`, otherwise falls back to a per-frame\nimageio loop.\n\n| OS | Install ffmpeg |\n|---|---|\n| macOS | `brew install ffmpeg` |\n| Ubuntu / Debian | `sudo apt install ffmpeg` |\n| Windows | `winget install ffmpeg` (or download from gyan.dev) |\n\n## Tested platforms\n\n- **macOS arm64 (Apple Silicon)** \u2014 primary development target, end-to-end\n  tested on a real 1500-frame project.\n- **Linux x86_64** and **Windows x86_64** \u2014 code is portable (PyQt6 +\n  pathlib + ffmpeg subprocess + napari thread_worker), all deps publish\n  wheels for these platforms, but I haven't run the GUI on them.\n  Open an issue if anything breaks \u2014 should be a small fix.\n\n## The five-stage loop\n\nThe dock widget mirrors the loop:\n\n1. **Extract anchor frames** \u2014 every Nth frame, or top K most diverse via\n   k-means on RGB histograms.\n2. **Label keypoints** \u2014 load anchors into the viewer and click them in.\n   One Points layer named `labels`, colour driven by a `bodypart` property.\n   Click moves an existing point at the same `(frame, bodypart)` instead\n   of duplicating, then auto-advances to the next bodypart.\n3. **Track with CoTracker3** \u2014 propagates labels (anchors + every\n   `corrections/round_*` folder) across the whole video. Runs in a napari\n   `thread_worker`, log streams into the dock pane.\n4. **Review and fix** \u2014 extract every video frame as PNG (ffmpeg fast path\n   if available), load them into napari, fix wrong predictions, **Promote**\n   to write only the changed rows into a new `corrections/round_NNN/`. Or\n   detect scene-confusion jumps and extract a representative frame per bad\n   range.\n5. **Render and inspect** \u2014 Hampel + 1\u20ac filter, then the cv2 overlay\n   renderer with bodypart trails. `Play with ffplay` on the result.\n\nRe-running stage 3 after a correction round folds those new labels in\nautomatically.\n\n## On-disk format\n\nA project is a directory ending in `.naparitracker/`:\n\n```\n<name>.naparitracker/\n  project.toml          # video path, bodyparts, per-stage knobs\n  anchors/\n    img0023.png ...\n    labels.csv          # long-form: frame,bodypart,x,y,vis\n  corrections/\n    round_001/labels.csv\n    round_002/labels.csv\n  tracks.csv            # dense: every (frame, bodypart)\n  tracks_filtered.csv\n  overlay.mp4\n  review/\n    img0000.png ...\n    labels.csv          # prefilled from tracks.csv\n    baseline.csv        # snapshot for diff-promote\n```\n\n`project.toml` is hand-editable TOML. Every stage's knobs version with the\nproject, so `git diff` on `project.toml` shows what changed.\n\n## Headless CLIs\n\nEvery stage is also a module CLI for batch / scripted use:\n\n```bash\nuv run python -m napari_cotrack.pipeline.extract anchors \\\n    --video VIDEO --output PROJECT/anchors \\\n    --bodyparts thumb,index,middle,ring,wrist \\\n    --mode diverse --n 30\n\nuv run python -m napari_cotrack.pipeline.track    --project PROJECT\nuv run python -m napari_cotrack.pipeline.filter   --project PROJECT\nuv run python -m napari_cotrack.pipeline.render   --project PROJECT\nuv run python -m napari_cotrack.pipeline.review extract-all --project PROJECT --force\nuv run python -m napari_cotrack.pipeline.review promote     --project PROJECT\nuv run python -m napari_cotrack.pipeline.review jumps       --project PROJECT [--extract-corrections]\n```\n\nAll accept `--verbose` for per-chunk / per-bodypart detail.\n\n## Tests\n\n```bash\nuv run python -m pytest tests/\n```\n\nCovers extract uniform/diverse, label-CSV union semantics, sparse-frame\nmapping, CSV round-trip. Stage 3 (track) needs a real GPU + checkpoint;\nsmoke against the synthetic fixture in `tests/_make_fixture.py`.\n\n## Keyboard\n\nWhile editing in napari:\n- **N** / **Shift+N** \u2014 next / previous bodypart (avoids napari's\n  default Tab/Up/Down)\n- **Ctrl+S** / **Cmd+S** \u2014 save labels.csv\n- **Right** / **Left** \u2014 next / prev frame (napari default)\n- **Delete** \u2014 remove selected points (napari default)\n\nSave also fires automatically when you close napari, as a safety net.\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -44,7 +44,7 @@
       "Repository": "https://github.com/RaulSimpetru/napari-cotrack"
     },
     "provides_extra": null,
-    "release_url": "https://pypi.org/project/napari-cotrack/0.1.3/",
+    "release_url": "https://pypi.org/project/napari-cotrack/0.1.7/",
     "requires_dist": [
       "einops>=0.8",
       "imageio[ffmpeg]>=2.37",
@@ -63,11 +63,11 @@
     ],
     "requires_python": ">=3.12",
     "summary": "Anchor-based keypoint tracking through CoTracker3, as a napari plugin.",
-    "version": "0.1.3",
+    "version": "0.1.7",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 36650203,
+  "last_serial": 36652141,
   "ownership": {
     "organization": null,
     "roles": [
@@ -78,90 +78,46 @@
     ]
   },
   "releases": {
-    "0.1.2": [
+    "0.1.7": [
       {
         "comment_text": null,
         "digests": {
-          "blake2b_256": "9b59e47569240558ee045326228461ab8fca2d8572039f803e30e5e7b3eb14f6",
-          "md5": "94fb9b96ea9100b26f3cb32990a15bfe",
-          "sha256": "0faec85668b703a06aaf07bdb76d562a8b51c60dee76b4a5bb7f6c8c5023e39b"
+          "blake2b_256": "f9b2a035275a78989081c4b5265b55dae240a3b4dd8335aa5c36bd7bdccd9a62",
+          "md5": "4c226a84cc872c97521e9e2cce8771f9",
+          "sha256": "53131bf2a0dde624a98ce57752c5c1303d478dd03c8bc8d5eb54d72c99c9aa2f"
         },
         "downloads": -1,
-        "filename": "napari_cotrack-0.1.2-py3-none-any.whl",
+        "filename": "napari_cotrack-0.1.7-py3-none-any.whl",
         "has_sig": false,
-        "md5_digest": "94fb9b96ea9100b26f3cb32990a15bfe",
+        "md5_digest": "4c226a84cc872c97521e9e2cce8771f9",
         "packagetype": "bdist_wheel",
         "python_version": "py3",
         "requires_python": ">=3.12",
-        "size": 103380,
-        "upload_time": "2026-05-01T18:11:07",
-        "upload_time_iso_8601": "2026-05-01T18:11:07.621519Z",
-        "url": "https://files.pythonhosted.org/packages/9b/59/e47569240558ee045326228461ab8fca2d8572039f803e30e5e7b3eb14f6/napari_cotrack-0.1.2-py3-none-any.whl",
+        "size": 103590,
+        "upload_time": "2026-05-01T19:23:29",
+        "upload_time_iso_8601": "2026-05-01T19:23:29.884094Z",
+        "url": "https://files.pythonhosted.org/packages/f9/b2/a035275a78989081c4b5265b55dae240a3b4dd8335aa5c36bd7bdccd9a62/napari_cotrack-0.1.7-py3-none-any.whl",
         "yanked": false,
         "yanked_reason": null
       },
       {
         "comment_text": null,
         "digests": {
-          "blake2b_256": "fd6c6c978fd0be8cab2cb8853c68ee57a0bd2a5d536ab7fd98286b7c85cfcbbb",
-          "md5": "6fb42db1675801806960422664f77d2d",
-          "sha256": "98dc80134cc856ce0314f2e7c535b33fdb923b13d3137755feab7eb9dbba3a6a"
+          "blake2b_256": "6f577cc2ab6cbc4057097e62b37cd651e5c42e58ce969feeb733766c2f3c6e89",
+          "md5": "9605525ede331f9074626640fb79bb5c",
+          "sha256": "97053647696332f5d0f6d02308610c30b5a193e956961dcb0ea43f026a6cbd55"
         },
         "downloads": -1,
-        "filename": "napari_cotrack-0.1.2.tar.gz",
+        "filename": "napari_cotrack-0.1.7.tar.gz",
         "has_sig": false,
-        "md5_digest": "6fb42db1675801806960422664f77d2d",
+        "md5_digest": "9605525ede331f9074626640fb79bb5c",
         "packagetype": "sdist",
         "python_version": "source",
         "requires_python": ">=3.12",
-        "size": 225164,
-        "upload_time": "2026-05-01T18:11:09",
-        "upload_time_iso_8601": "2026-05-01T18:11:09.075589Z",
-        "url": "https://files.pythonhosted.org/packages/fd/6c/6c978fd0be8cab2cb8853c68ee57a0bd2a5d536ab7fd98286b7c85cfcbbb/napari_cotrack-0.1.2.tar.gz",
-        "yanked": false,
-        "yanked_reason": null
-      }
-    ],
-    "0.1.3": [
-      {
-        "comment_text": null,
-        "digests": {
-          "blake2b_256": "adae12bd9768da8130a781e9634ab04ebab385847c78eece29f27d86f868ddbc",
-          "md5": "7d10aeef2d0cc7458bdb38b3f326ec91",
-          "sha256": "02e7abf3dfd2e1ea96be6ba3496c42eb9367463ff9dc9887de992725cf386a77"
-        },
-        "downloads": -1,
-        "filename": "napari_cotrack-0.1.3-py3-none-any.whl",
-        "has_sig": false,
-        "md5_digest": "7d10aeef2d0cc7458bdb38b3f326ec91",
-        "packagetype": "bdist_wheel",
-        "python_version": "py3",
-        "requires_python": ">=3.12",
-        "size": 103385,
-        "upload_time": "2026-05-01T18:20:53",
-        "upload_time_iso_8601": "2026-05-01T18:20:53.060510Z",
-        "url": "https://files.pythonhosted.org/packages/ad/ae/12bd9768da8130a781e9634ab04ebab385847c78eece29f27d86f868ddbc/napari_cotrack-0.1.3-py3-none-any.whl",
-        "yanked": false,
-        "yanked_reason": null
-      },
-      {
-        "comment_text": null,
-        "digests": {
-          "blake2b_256": "4ac6ed70b6ec84acc490de7bcadf76a26dd665f65581d7c8141874df86272729",
-          "md5": "d0db55a603a3657e9e2a2179e5abd108",
-          "sha256": "e09999498765fb89fea168b52b2e5d43be8ff9b0364ef53744067d4fce3ec5f8"
-        },
-        "downloads": -1,
-        "filename": "napari_cotrack-0.1.3.tar.gz",
-        "has_sig": false,
-        "md5_digest": "d0db55a603a3657e9e2a2179e5abd108",
-        "packagetype": "sdist",
-        "python_version": "source",
-        "requires_python": ">=3.12",
-        "size": 225192,
-        "upload_time": "2026-05-01T18:20:54",
-        "upload_time_iso_8601": "2026-05-01T18:20:54.800589Z",
-        "url": "https://files.pythonhosted.org/packages/4a/c6/ed70b6ec84acc490de7bcadf76a26dd665f65581d7c8141874df86272729/napari_cotrack-0.1.3.tar.gz",
+        "size": 226647,
+        "upload_time": "2026-05-01T19:23:31",
+        "upload_time_iso_8601": "2026-05-01T19:23:31.433908Z",
+        "url": "https://files.pythonhosted.org/packages/6f/57/7cc2ab6cbc4057097e62b37cd651e5c42e58ce969feeb733766c2f3c6e89/napari_cotrack-0.1.7.tar.gz",
         "yanked": false,
         "yanked_reason": null
       }
@@ -171,42 +127,42 @@
     {
       "comment_text": null,
       "digests": {
-        "blake2b_256": "adae12bd9768da8130a781e9634ab04ebab385847c78eece29f27d86f868ddbc",
-        "md5": "7d10aeef2d0cc7458bdb38b3f326ec91",
-        "sha256": "02e7abf3dfd2e1ea96be6ba3496c42eb9367463ff9dc9887de992725cf386a77"
+        "blake2b_256": "f9b2a035275a78989081c4b5265b55dae240a3b4dd8335aa5c36bd7bdccd9a62",
+        "md5": "4c226a84cc872c97521e9e2cce8771f9",
+        "sha256": "53131bf2a0dde624a98ce57752c5c1303d478dd03c8bc8d5eb54d72c99c9aa2f"
       },
       "downloads": -1,
-      "filename": "napari_cotrack-0.1.3-py3-none-any.whl",
+      "filename": "napari_cotrack-0.1.7-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "7d10aeef2d0cc7458bdb38b3f326ec91",
+      "md5_digest": "4c226a84cc872c97521e9e2cce8771f9",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.12",
-      "size": 103385,
-      "upload_time": "2026-05-01T18:20:53",
-      "upload_time_iso_8601": "2026-05-01T18:20:53.060510Z",
-      "url": "https://files.pythonhosted.org/packages/ad/ae/12bd9768da8130a781e9634ab04ebab385847c78eece29f27d86f868ddbc/napari_cotrack-0.1.3-py3-none-any.whl",
+      "size": 103590,
+      "upload_time": "2026-05-01T19:23:29",
+      "upload_time_iso_8601": "2026-05-01T19:23:29.884094Z",
+      "url": "https://files.pythonhosted.org/packages/f9/b2/a035275a78989081c4b5265b55dae240a3b4dd8335aa5c36bd7bdccd9a62/napari_cotrack-0.1.7-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": null,
       "digests": {
-        "blake2b_256": "4ac6ed70b6ec84acc490de7bcadf76a26dd665f65581d7c8141874df86272729",
-        "md5": "d0db55a603a3657e9e2a2179e5abd108",
-        "sha256": "e09999498765fb89fea168b52b2e5d43be8ff9b0364ef53744067d4fce3ec5f8"
+        "blake2b_256": "6f577cc2ab6cbc4057097e62b37cd651e5c42e58ce969feeb733766c2f3c6e89",
+        "md5": "9605525ede331f9074626640fb79bb5c",
+        "sha256": "97053647696332f5d0f6d02308610c30b5a193e956961dcb0ea43f026a6cbd55"
       },
       "downloads": -1,
-      "filename": "napari_cotrack-0.1.3.tar.gz",
+      "filename": "napari_cotrack-0.1.7.tar.gz",
       "has_sig": false,
-      "md5_digest": "d0db55a603a3657e9e2a2179e5abd108",
+      "md5_digest": "9605525ede331f9074626640fb79bb5c",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.12",
-      "size": 225192,
-      "upload_time": "2026-05-01T18:20:54",
-      "upload_time_iso_8601": "2026-05-01T18:20:54.800589Z",
-      "url": "https://files.pythonhosted.org/packages/4a/c6/ed70b6ec84acc490de7bcadf76a26dd665f65581d7c8141874df86272729/napari_cotrack-0.1.3.tar.gz",
+      "size": 226647,
+      "upload_time": "2026-05-01T19:23:31",
+      "upload_time_iso_8601": "2026-05-01T19:23:31.433908Z",
+      "url": "https://files.pythonhosted.org/packages/6f/57/7cc2ab6cbc4057097e62b37cd651e5c42e58ce969feeb733766c2f3c6e89/napari_cotrack-0.1.7.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
