@@ -1,0 +1,91 @@
+{
+  "name": "napari-unet-assistant",
+  "display_name": "U-Net Assistant",
+  "visibility": "public",
+  "icon": "",
+  "categories": [],
+  "schema_version": "0.2.1",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-unet-assistant.toolbox",
+        "title": "U-Net Assistant Toolbox",
+        "python_name": "napari_unet_assistant.widgets.toolbox_widget:toolbox_widget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "napari-unet-assistant.toolbox",
+        "display_name": "U-Net Assistant",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "napari-unet-assistant",
+    "version": "0.1.0",
+    "dynamic": [
+      "license-file"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "a napari plugin for TIFF-based 2D and 3D U-Net segmentation workflows.",
+    "description": "# napari-unet-assistant\n\n`napari-unet-assistant` is a napari plugin for TIFF-based 2D and 3D U-Net segmentation workflows.\n\nIt is designed for users who already have paired images and masks and want to train a U-Net model, run inference, and inspect results directly inside napari.\n\nThis plugin is different from a SAM-based training assistant. It focuses on conventional supervised U-Net training from existing image-mask pairs.\n\n## Current features\n\n- TIFF-first image and mask pairing\n- 2D U-Net training\n- 3D U-Net training\n- Binary segmentation\n- Multiclass segmentation\n- Patch-based training\n- Optional empty-mask patch inclusion\n- Conservative augmentation\n- 80/20 validation split\n- Continue training from a previous run\n- Inference from a saved run folder\n- Single-image inference\n- Folder inference\n- 2D and 3D prediction support\n- TIFF prediction output\n- napari-based visualization and QC\n\n## Installation\n```BASH\npip install git+https://github.com/wulinteousa2-hash/napari-unet-assistant.git\n```\nOR\n```BASH\ngit clone https://github.com/wulinteousa2-hash/napari-unet-assistant.git\ncd napari-unet-assistant\npip install -e .\nnapari\n```\n\n## Intended workflow\n\n1. Prepare an image folder.\n2. Prepare a mask folder.\n3. Pair images and masks by filename.\n4. Train a 2D or 3D U-Net model.\n5. Save the best model checkpoint and training metadata.\n6. Load a saved run folder.\n7. Run inference on new images or volumes.\n8. Review prediction masks in napari.\n\n## Supported data\n\n#### 2D training\n- image: `(Y, X)` grayscale\n- mask: `(Y, X)` grayscale labels\n- `0 = background` , `nonzero = foreground`\n\n#### 3D training\n- image: `(Z, Y, X)` grayscale\n- mask: `(Z, Y, X)` integer labels\n- Multiclass masks should use integer labels, \nfor example:\n\n- 0 = background\n- 1 = class 1\n- 2 = class 2\n- 3 = class 3 \n\n#### Dtypes observed\n- images: `uint8`, `uint16`\n- masks: `uint8`\n\n### Current priorities\n- TIFF first\n- OME-Zarr later\n- no spectral/lambda workflow in this phase\n\n### Pairing logic\n- image folder and mask folder are selected separately\n- mask suffixes supported:\n  - `_mask.tif`\n  - `_mask.tiff`\n  - `_m.tif`\n  - `_m.tiff`\n- unmatched items are skipped and reported\n\n### Training modes\n- 2D binary default\n- 3D supports:\n  - binary\n  - multiclass\n\n### Patch extraction\n#### 2D XY patch options\n- 64\n- 128\n- 256\n- 512\n- 1024\n\nDefault:\n- 256 x 256\n\n#### 3D patch options\nZ:\n- 8\n- 16\n- 32\n- 64\n\nXY:\n- 64\n- 128\n- 256\n- 512\n- 1024\n\nDefault:\n- 16 x 256 x 256\n\n### Overlap\n- overlap is percent\n- `0` = no overlap\n- `10` = 10% overlap\n\n### Empty-mask patch policy\n- user can choose whether to include empty-mask patches\n\n### Backend\n- PyTorch only\n- CPU fallback required\n- CUDA expected\n- DGX Spark target\n\n### Validation\n- default: 80/20 split\n- optional: k-fold\n\n### Checkpoint policy\n- save best model only\n\n### Inference\n- load from saved run folder\n- read JSON config from training\n- TIFF output only\n\n### Outputs saved in user-selected run folder\n- best model checkpoint\n- config JSON\n- metrics CSV\n- training history CSV\n- pair report CSV\n- prediction TIFF outputs\n\n## Reference\n\nThis project builds on U-Net-based nerve morphometry workflows described in:\n\nMoiseev D, Hu B, Li J. Morphometric Analysis of Peripheral Myelinated Nerve Fibers through Deep Learning. *Journal of the Peripheral Nervous System*. 2019;24(1):87-93. https://pmc.ncbi.nlm.nih.gov/articles/PMC6420354/\n",
+    "description_content_type": "text/markdown",
+    "keywords": "napari,u-net,segmentation,annotation,microscopy,image analysis",
+    "home_page": null,
+    "download_url": null,
+    "author": "Wulin Teo",
+    "author_email": null,
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "MIT",
+    "classifier": [
+      "Development Status :: 3 - Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "requires_dist": [
+      "napari",
+      "numpy",
+      "magicgui",
+      "qtpy",
+      "tifffile",
+      "zarr",
+      "ome-zarr",
+      "dask[array]",
+      "torch",
+      "torchvision"
+    ],
+    "requires_python": ">=3.10",
+    "requires_external": null,
+    "project_url": [
+      "Homepage, https://github.com/wulinteousa2-hash/napari-unet-assistant",
+      "Repository, https://github.com/wulinteousa2-hash/napari-unet-assistant",
+      "Issues, https://github.com/wulinteousa2-hash/napari-unet-assistant/issues"
+    ],
+    "provides_extra": null,
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}

@@ -1,0 +1,152 @@
+{
+  "info": {
+    "author": "Wulin Teo",
+    "author_email": null,
+    "bugtrack_url": null,
+    "classifiers": [
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "License :: OSI Approved :: MIT License",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-training-assistant\n\nA napari plugin that treats a Training Project Folder as the persistent workspace\nfor a SAM3-to-U-Net training loop.\n\nThe project folder owns accepted image/mask pairs, dataset manifests, training\nsettings, auto-configuration decisions, checkpoints, benchmark history,\nprediction outputs, and logs.\n\n## Current Scope\n\nThis plugin currently implements the persistent project workspace, SAM3 preview\nannotation flow, U-Net architecture configuration, checkpoint metadata, imported\nstarting-weight tracking, prediction output storage, and dataset mask\npreparation.\n\nThe actual PyTorch training runner is not wired in yet. The current `Train\nU-Net` action registers a placeholder checkpoint so the persistence and UI flow\ncan be validated before connecting the real trainer.\n\n## User Interface\n\nThe dock widget is organized as a tabbed workflow with a compact project status\nbar at the top.\n\nAlways visible:\n\n- Project selector\n- Short project path\n- Project state\n- Dataset count\n- Latest checkpoint\n- Latest benchmark summary\n\nTabs:\n\n- **SAM3**: configure SAM3 model folders, choose a prompt mode, auto-create\n  prompt layers, prepare preview labels, and accept preview masks into the\n  persistent dataset.\n- **Dataset**: choose image/mask layers, prepare masks, add accepted pairs, and\n  inspect the compact dataset table.\n- **Train**: choose training mode, dataset source, starting point, and core\n  training parameters.\n- **Checkpoints**: inspect checkpoint history and choose a checkpoint for\n  continued training.\n- **Predict**: save prediction layers into the project.\n- **Advanced**: edit U-Net architecture, import pretrained weights, and update\n  project notes.\n\nTraining-related actions are disabled until the user selects or creates a\nTraining Project Folder.\n\n## Training Project Folder\n\nThe Training Project Folder is the persistent workspace. Users should select or\ncreate it before adding masks, training U-Net, or saving predictions.\n\nExpected structure:\n\n```text\ntraining_project/\n    project_config.json\n\n    architecture/\n        architecture_config.json\n\n    sam3/\n        sam3_config.json\n\n    dataset/\n        images/\n        masks/\n        manifest.json\n\n    models/\n        imported/\n        model_registry.json\n        starting_weights_config.json\n\n    checkpoints/\n        checkpoints.json\n        latest.pt\n        unet_run_001.pt\n        unet_run_002.pt\n\n    predictions/\n        prediction_001.tif\n        prediction_002.tif\n\n    history/\n        training_runs.json\n        benchmark_history.csv\n\n    logs/\n        training.log\n```\n\nReopening the same project restores dataset history, training settings, U-Net\narchitecture settings, starting-weight choice, checkpoint history, latest\ncheckpoint pointer, benchmark history, and previously selected layer names.\n\n## SAM3 Annotation Tab\n\nThe SAM3 tab is task-driven. The user selects an image layer and a prompt mode;\nthe plugin creates or reuses the expected napari prompt layer automatically.\n\nSupported prompt modes in the compact UI:\n\n- **2D box**: creates/selects `SAM3 boxes` as a Shapes layer in rectangle mode.\n- **2D points**: creates/selects `SAM3 points` as a Points layer.\n- **Live points**: creates/selects `SAM3 live points` for immediate\n  point-driven preview.\n- **2D exemplar**: creates/selects `SAM3 exemplar boxes` as a Shapes layer.\n- **3D / multiplex**: creates/selects `SAM3 3D prompts` for SAM3.1 multiplex\n  propagation.\n\nModel folder expectations:\n\n- 2D modes use a SAM3.0 image model folder containing `sam3.pt` or\n  `model.safetensors`.\n- 3D / multiplex mode uses a SAM3.1 model folder containing\n  `sam3.1_multiplex.pt`.\n- CPU is only treated as valid for 2D mode. SAM3.1 multiplex requires CUDA.\n\nThe SAM3 tab prepares layers, validates model folders, runs SAM3 previews, and\nwrites results to `SAM3 preview labels` for 2D modes or `SAM3 propagated labels`\nfor SAM3.1 multiplex propagation. SAM3.1 multiplex uses CUDA and delegates the\nvideo propagation flow to `napari-sam3-assistant`; frame results are queued and\nwritten back to napari labels through a Qt timer so layer refreshes do not\nthrottle propagation. The **Accept preview to Dataset** button routes the\npreview through the same persistent mask-preparation path as the Dataset tab.\n\n## U-Net Architecture\n\nThe trainable model is a U-Net-family segmentation model. SAM3 is treated as an\nannotation source for generating candidate masks, not as the trainable model.\n\nThe default backend is:\n\n```json\n{\n  \"backend\": \"basic_unet\",\n  \"spatial_dims\": \"2d\",\n  \"preset\": \"standard_unet\",\n  \"depth\": 4,\n  \"base_channels\": 32,\n  \"normalization\": \"batch\",\n  \"upsampling\": \"transpose\",\n  \"input_channels\": 1,\n  \"output_mode\": \"binary\",\n  \"num_classes\": 2,\n  \"output_channels\": 1,\n  \"activation\": \"sigmoid\",\n  \"loss\": \"bce_dice\",\n  \"threshold\": 0.5\n}\n```\n\nFor the default 2D U-Net:\n\n- Feature channels are `[32, 64, 128, 256, 512]`.\n- There are 4 encoder levels, 1 bottleneck, and 4 decoder levels.\n- Each block uses 2 convolution layers.\n- The architecture has 18 main convolution layers, 4 upsampling layers, and 1\n  final projection layer.\n\nThe schema already records dimensionality so future 3D U-Net support can be\nadded without changing the project folder structure. The UI currently marks 3D\nU-Net options as future/unsupported.\n\n## Binary And Multiclass Masks\n\nBinary mode is the default:\n\n- `0` means background.\n- nonzero source labels can be merged into `1` foreground.\n- model output has 1 channel.\n- prediction uses sigmoid plus threshold.\n\nMulticlass mode is supported in the project schema:\n\n- masks should contain integer labels from `0` to `num_classes - 1`.\n- model output channels equal `num_classes`.\n- prediction uses channel argmax.\n\n## Mask Preparation Quick Fix\n\nSAM-style masks may contain multiple instance IDs for the same semantic object:\n\n```text\n0 = background\n1 = object instance A\n2 = object instance B\n3 = object instance C\n```\n\nFor binary U-Net training, the default quick fix is:\n\n```python\nmask = (mask > 0).astype(\"uint8\")\n```\n\nThis saves the training mask as:\n\n```text\n0 = background\n1 = foreground\n```\n\nThe dataset manifest records the source labels, saved labels, target class name,\nand label transform so the conversion is auditable.\n\n## Starting Weights\n\nSupported starting-weight choices in the UI:\n\n- Train from scratch\n- Continue from latest project checkpoint\n- Continue from selected project checkpoint\n- Start from imported pretrained U-Net\n\nImported `.pt` and `.pth` files are copied into `models/imported/` and tracked\nin `models/model_registry.json`. A PyTorch checkpoint alone is not considered\nself-describing; the project also stores the architecture config used with that\ncheckpoint.\n\nCheckpoint compatibility is checked against:\n\n- backend\n- dimensionality\n- preset\n- depth\n- base channels\n- normalization\n- upsampling\n- input channels\n- output mode\n- number of classes\n- output channels\n\n## Checkpoint Metadata\n\nEvery successful training run should create a new numbered checkpoint. Previous\ncheckpoints are not overwritten by default. `latest.pt` is only updated after a\nsuccessful checkpoint registration.\n\nEach checkpoint records:\n\n- checkpoint ID\n- parent checkpoint ID\n- training mode\n- dataset pair IDs used\n- image and patch counts\n- train/validation split\n- loss metrics\n- Dice/IoU metrics, when available\n- timestamp\n- checkpoint path\n- architecture snapshot\n- starting weights snapshot\n- architecture summary\n\n## Development Notes\n\nThe default U-Net descriptor and lazy PyTorch builder live in\n`src/napari_training_assistant/unet.py`. The builder imports PyTorch lazily so\nthe plugin metadata and persistence layer can still import in environments where\nTorch is not installed.\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": null,
+    "home_page": null,
+    "keywords": null,
+    "license": "MIT",
+    "license_expression": null,
+    "license_files": null,
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-training-assistant",
+    "package_url": "https://pypi.org/project/napari-training-assistant/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-training-assistant/",
+    "project_urls": null,
+    "provides_extra": null,
+    "release_url": "https://pypi.org/project/napari-training-assistant/0.2.0/",
+    "requires_dist": [
+      "napari>=0.5.0",
+      "qtpy",
+      "numpy",
+      "tifffile"
+    ],
+    "requires_python": ">=3.10",
+    "summary": "Persistent SAM3-to-U-Net training project workspace for napari.",
+    "version": "0.2.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 36679212,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "viralvector"
+      }
+    ]
+  },
+  "releases": {
+    "0.2.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "1c0871a2b64830e48d6de098049d050e3ea6f1caf9d3ff5fddc77c85b8a9f779",
+          "md5": "c7e8b967fd48ade364cbc6b8ac886293",
+          "sha256": "607ffa20c6986402be9c4bc332bd9b0726dfbb392c5fad6e0155e84275e258ef"
+        },
+        "downloads": -1,
+        "filename": "napari_training_assistant-0.2.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "c7e8b967fd48ade364cbc6b8ac886293",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 58812,
+        "upload_time": "2026-05-03T00:09:06",
+        "upload_time_iso_8601": "2026-05-03T00:09:06.218060Z",
+        "url": "https://files.pythonhosted.org/packages/1c/08/71a2b64830e48d6de098049d050e3ea6f1caf9d3ff5fddc77c85b8a9f779/napari_training_assistant-0.2.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "24756b6b16e658872bcca22d39cd0953fa440bdff62dfbe1a5efc27a30818a6c",
+          "md5": "6cac923c889ae575ce57adcb5d860759",
+          "sha256": "592870551f553f33ca94cd15e06ab4c6d128750f8b07d0d2052c437a113cbd97"
+        },
+        "downloads": -1,
+        "filename": "napari_training_assistant-0.2.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "6cac923c889ae575ce57adcb5d860759",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 59667,
+        "upload_time": "2026-05-03T00:09:08",
+        "upload_time_iso_8601": "2026-05-03T00:09:08.027268Z",
+        "url": "https://files.pythonhosted.org/packages/24/75/6b6b16e658872bcca22d39cd0953fa440bdff62dfbe1a5efc27a30818a6c/napari_training_assistant-0.2.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "1c0871a2b64830e48d6de098049d050e3ea6f1caf9d3ff5fddc77c85b8a9f779",
+        "md5": "c7e8b967fd48ade364cbc6b8ac886293",
+        "sha256": "607ffa20c6986402be9c4bc332bd9b0726dfbb392c5fad6e0155e84275e258ef"
+      },
+      "downloads": -1,
+      "filename": "napari_training_assistant-0.2.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "c7e8b967fd48ade364cbc6b8ac886293",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.10",
+      "size": 58812,
+      "upload_time": "2026-05-03T00:09:06",
+      "upload_time_iso_8601": "2026-05-03T00:09:06.218060Z",
+      "url": "https://files.pythonhosted.org/packages/1c/08/71a2b64830e48d6de098049d050e3ea6f1caf9d3ff5fddc77c85b8a9f779/napari_training_assistant-0.2.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "24756b6b16e658872bcca22d39cd0953fa440bdff62dfbe1a5efc27a30818a6c",
+        "md5": "6cac923c889ae575ce57adcb5d860759",
+        "sha256": "592870551f553f33ca94cd15e06ab4c6d128750f8b07d0d2052c437a113cbd97"
+      },
+      "downloads": -1,
+      "filename": "napari_training_assistant-0.2.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "6cac923c889ae575ce57adcb5d860759",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.10",
+      "size": 59667,
+      "upload_time": "2026-05-03T00:09:08",
+      "upload_time_iso_8601": "2026-05-03T00:09:08.027268Z",
+      "url": "https://files.pythonhosted.org/packages/24/75/6b6b16e658872bcca22d39cd0953fa440bdff62dfbe1a5efc27a30818a6c/napari_training_assistant-0.2.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
