@@ -1,0 +1,93 @@
+{
+  "name": "quanti-fret",
+  "display_name": "quanti-fret",
+  "visibility": "public",
+  "icon": "",
+  "categories": [],
+  "schema_version": "0.2.1",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "quanti-fret.run",
+        "title": "QuanTI-FRET",
+        "python_name": "quanti_fret.apps.napari:QtfNapariWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "quanti-fret.run",
+        "display_name": "QuanTI-FRET",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "quanti-fret",
+    "version": "1.0.0",
+    "dynamic": null,
+    "platform": null,
+    "supported_platform": null,
+    "summary": "Performs QuanTI-FRET calibration and analysis from 3-channel movies",
+    "description": "# QuanTI-FRET\n\n[Home](https://liphy-annuaire.univ-grenoble-alpes.fr/pages_personnelles/aurelie_dupont/quantifret/index_quantifret.html) |\n[Documentation](https://liphy.gricad-pages.univ-grenoble-alpes.fr/quanti-fret/) |\n[Source](https://gricad-gitlab.univ-grenoble-alpes.fr/liphy/quanti-fret) |\n[PyPI](https://pypi.org/project/quanti-fret/) |\n[Napari](https://napari-hub.org/plugins/quanti-fret.html) |\n[Contact](https://liphy-annuaire.univ-grenoble-alpes.fr/pages_personnelles/aurelie_dupont/index.html)\n\n`quanti-fret` is a Python tool that performs **QuanTI-FRET** calibration and\nanalysis from 3-channel movies.\n\nIf you use the **QuanTI-FRET** app in your scientific work, please cite:\n> Leblanc, J., Lombard, A.H., Saumureau, A. et al. Live-cell quantitative FRET\n> imaging made simple by autocalibration in QuanTI-FRET. Eur. Phys. J. E 48, 74\n> (2025). https://doi.org/10.1140/epje/s10189-025-00541-z\n\n1. [Description](#description)\n5. [Documentation](#documentation)\n2. [Napari Plugin](#napari-plugin)\n3. [Standalone GUI App](#standalone-gui-app)\n4. [Standalone CLI App](#standalone-cli-app)\n6. [For developpers](#for-developpers)\n\n## Description\n\nThe **QuanTI-FRET** method proposes calibrating the instrument and the FRET pair\nto simply calculate absolute FRET probabilities from a triplet of images\nacquired under the same conditions and with the same FRET pair. All the\nphotophysical and instrumental factors are included in this calibration, leaving\nthe variability of the results to biological origins.\n\nThe `quanti-fret` package provides all the tools to perform first the\ncalibration, and then to make quantitative FRET measurement of your experiments,\nusing only your triplet images.\n\nIt can be used:\n* As a [Napari](https://napari.org) plugin\n* With the Standalone GUI app\n* On the terminal with a CLI (Command Line Interface) app\n\n\n\n## Documentation\n\nYou can find the online documentation\n[here](https://liphy.gricad-pages.univ-grenoble-alpes.fr/quanti-fret/).\n\n\n\n## Napari Plugin\n\n**QuanTI-FRET** was designed to be integrated into the\n[Napari](https://napari.org) tool as a plugin.\n\n\n### Installation\n\n**QuanTI-FRET** is available in the\n[Napari Hub](https://napari-hub.org/plugins/quanti-fret.html) under the name\n`quanti-fret`.\n\nTo install it:\n* Have a look [here](https://napari.org/stable/tutorials/fundamentals/installation.html#napari-installation)\n  to install Napari\n* Have a look [here](https://napari.org/stable/plugins/start_using_plugins/finding_and_installing_plugins.html#find-and-install-plugins)\n  to install a plugin\n\n\n### Getting Started\n\nTo open the plugin, go to the `Plugins` menu and click on `QuanTI-FRET (quanti-fret)`\n\n\n\n## Standalone GUI App\n\nYou can also use the **QuanTI-FRET** software as a standalone GUI or CLI app\noutside Napari.\n\n\n### Installation\n\n#### Set up your environment\n\nIt is good practice to set up a virtual environment and install the tool inside\nyour environment.\n\n##### With Conda\n\n```bash\nconda create --name quantifret\nconda activate quantifret\nconda install pip\n```\n\n##### With Pyenv\n\n```bash\npyenv virtualenv [PYTHON_VERSION>=3.10] quantifret\npyenv activate quantifret\npip install --upgrade pip\n```\n\n#### Install `Qt`\n\nIf you want to use the GUI application, you need to install `Qt`.\n\nIt is not in the defaults dependencies as the `quanti_fret` modules also comes\nup with a CLI app, or can be imported directly inside your Python code. So we\ndon't want to penalize all the users by forcing a `Qt` dependency.\n\n`quanti-fret` supports `Qt5` and `Qt6` using either `PyQt` or `PySide`\n\n```bash\npip install [pyqt6 | pyqt5 | pyside6 | pyside2] # Choose one package\n```\n\n#### Install the module\n\nFinally, you can install the `quanti_fret` module by running:\n```bash\npip install quanti-fret\n```\n\n#### Upgrade the module\n\n```bash\npip install quanti-fret --upgrade\n```\n\n\n### Getting Started\n\nRun the following command inside your environement:`\n\n```bash\nquanti-fret-run\n```\n\n\n## Standalone CLI App\n\nFor automation purposes, or if you don't have access to a graphic server, you\ncan use the CLI app.\n\n### Installation\n\nDo all the steps of [the standalone GUI app installation](#standalone-gui-app)\nexcept for the **Qt** part\n\n### Getting Started\n\n#### Generate your config files\n\nYou first need to generate one config file for the calibration phase, and one\nfor the fret phase:\n\n```bash\nquanti-fret-run generate_config calibration path/to/new/calibration.ini\nquanti-fret-run generate_config fret path/to/new/fret.ini\n```\n\nYou then need to modify them to fit your requirements (see the\n[documentation](#documentation))\n\n#### Run the calibration\n\n```bash\nquanti-fret-run cli calibration path/to/new/calibration.ini\n```\n\n#### Run the fret on the series\n```bash\nquanti-fret-run cli fret path/to/new/fret.ini\n```\n\n\n\n## For developpers\n\nHere are some indications dedicated to the developpers\n\n\n### Poetry\n\n`quanti-fret` is using poetry as a build system.\n\nTo install it, go to their [doc page](https://python-poetry.org/docs/)\n\n> *Note*: You need to install at least poetry 2.0\n\n\n### Clone the project\n\n\n```bash\ngit clone https://gricad-gitlab.univ-grenoble-alpes.fr/liphy/quanti-fret.git\ncd quanti-fret/\n```\n\n> *Note*\n>\n> To build the doc and run the tests, you need to have\n> [git-lfs](https://git-lfs.com/) installed.\n>\n> If you installed it after cloning, please run\n> ```bash\n> git lfs fetch\n> git lfs checkout\n> ```\n\n\n### Install QuanTI-FRET\n\n```bash\npoetry install\n```\n\n\n### Run the tests\n\n```bash\npytest\nflake8\nmypy .\n```\n\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": null,
+    "download_url": null,
+    "author": "Aur\u00e9lie Dupont",
+    "author_email": "aurelie.dupont@univ-grenoble-alpes.fr",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": null,
+    "classifier": [
+      "Development Status :: 6 - Mature",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "License :: OSI Approved :: BSD License",
+      "Natural Language :: English",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3",
+      "Topic :: Scientific/Engineering",
+      "Topic :: Scientific/Engineering :: Image Processing",
+      "Topic :: Scientific/Engineering :: Physics",
+      "Typing :: Typed"
+    ],
+    "requires_dist": [
+      "matplotlib (>=3.10.7,<4.0.0)",
+      "numpy (>=2.2.6,<3.0.0)",
+      "pandas (>=2.3.3,<3.0.0)",
+      "platformdirs (>=4.5.0,<5.0.0)",
+      "qtpy (>=2.4.3,<3.0.0)",
+      "scipy (>=1.15.3,<2.0.0)",
+      "tifffile (>=2025.5.10,<2026.0.0)",
+      "tqdm (>=4.67.1,<5.0.0)"
+    ],
+    "requires_python": ">=3.10",
+    "requires_external": null,
+    "project_url": [
+      "Changelog, https://gricad-gitlab.univ-grenoble-alpes.fr/liphy/quanti-fret/-/blob/main/CHANGELOG.md?ref_type=heads",
+      "Documentation, https://liphy.gricad-pages.univ-grenoble-alpes.fr/quanti-fret/",
+      "Homepage, https://liphy-annuaire.univ-grenoble-alpes.fr/pages_personnelles/aurelie_dupont/quantifret/index_quantifret.html",
+      "Repository, https://gricad-gitlab.univ-grenoble-alpes.fr/liphy/quanti-fret",
+      "Releasenotes, https://gricad-gitlab.univ-grenoble-alpes.fr/liphy/quanti-fret/-/releases"
+    ],
+    "provides_extra": null,
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}

@@ -1,0 +1,404 @@
+{
+  "info": {
+    "author": null,
+    "author_email": "Ilan Theodoro <ilan.silva@czbiohub.org>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 3 - Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "Intended Audience :: Science/Research",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Scientific/Engineering :: Image Processing",
+      "Topic :: Scientific/Engineering :: Visualization",
+      "Topic :: Software Development :: Libraries :: Python Modules"
+    ],
+    "description": "# Napari MCP Server\n\n[![Tests](https://github.com/royerlab/napari-mcp/workflows/Tests/badge.svg)](https://github.com/royerlab/napari-mcp/actions)\n[![codecov](https://codecov.io/gh/royerlab/napari-mcp/graph/badge.svg?token=E1WY58V877)](https://codecov.io/gh/royerlab/napari-mcp)\n[![PyPI version](https://badge.fury.io/py/napari-mcp.svg)](https://badge.fury.io/py/napari-mcp)\n[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)\n[![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)\n\nMCP server for remote control of napari viewers via Model Context Protocol (MCP). Perfect for AI-assisted microscopy analysis with Claude Desktop and other LLM applications.\n\nhttps://github.com/user-attachments/assets/d261674c-9875-4671-8c60-a7f49d6f1b84\n\n## \ud83d\ude80 Quick Start (3 Steps)\n\n### 1. Install the Package\n\n```bash\npip install napari-mcp\n```\n\n### 2. Auto-Configure Your AI Application\n\n```bash\n# For Claude Desktop\nnapari-mcp-install install claude-desktop\n\n# Include a napari GUI backend in the uv environment\nnapari-mcp-install install claude-desktop --backend pyqt6\n\n# For other applications (Claude Code, Cursor, Cline, etc.)\nnapari-mcp-install install --help  # See all options\n```\n\n### 3. Restart Your Application & Start Using\n\nRestart your AI app and you're ready! Try asking:\n```\n\"Can you call session_information() to show my napari session details?\"\n```\n\n**\u2192 See [Full Documentation](https://royerlab.github.io/napari-mcp/) for detailed guides**\n\n## \ud83d\udd0c Using as a napari Plugin\n\nnapari-mcp can also be used as a **napari plugin** for direct integration with a running napari session:\n\n1. **Start napari** normally: `napari`\n2. **Open the widget**: Plugins \u2192 napari-mcp: MCP Server Control\n3. **Click \"Start Server\"** to expose your current session to AI assistants\n4. **Connect your AI app** using the standard installer: `napari-mcp-install install <app>`\n\nThis mode enables AI assistants to control your **current napari session** rather than starting a new viewer. Perfect for integrating with existing workflows!\n\n**\u2192 See [Plugin Guide](https://royerlab.github.io/napari-mcp/guides/napari-plugin/) for detailed instructions**\n\n## \ud83c\udfaf What Can You Do?\n\n### Basic Image Analysis\n```\n\"Load the image from ./data/sample.tif and apply a viridis colormap\"\n\"Create point annotations at coordinates [[100,100], [200,200]]\"\n\"Take a screenshot and save it\"\n```\n\n### Advanced Workflows\n```\n\"Execute this code to create a filtered version:\nfrom scipy import ndimage\nfiltered = ndimage.gaussian_filter(viewer.layers[0].data, sigma=2)\nviewer.add_image(filtered, name='filtered')\"\n\n\"Install scikit-image and segment the cells in this microscopy image\"\n```\n\n### 3D/4D Navigation\n```\n\"Switch to 3D display mode\"\n\"Navigate to time point 5, Z-slice 10\"\n\"Create a rotating animation of this volume\"\n```\n\n### Automated Workflows\nWant to automate image processing with Python scripts? Use any LLM (OpenAI, Anthropic, etc.) with napari MCP:\n\n**\u2192 See [Python Integration Examples](docs/examples/README.md)** for batch processing and workflow automation\n\n## \ud83e\udd16 Supported AI Applications\n\n| Application | Command | Status |\n|-------------|---------|--------|\n| **Claude Desktop** | `napari-mcp-install install claude-desktop` | \u2705 Full Support |\n| **Claude Code** | `napari-mcp-install install claude-code` | \u2705 Full Support |\n| **Cursor IDE** | `napari-mcp-install install cursor` | \u2705 Full Support |\n| **Cline (VS Code)** | `napari-mcp-install install cline-vscode` | \u2705 Full Support |\n| **Cline (Cursor)** | `napari-mcp-install install cline-cursor` | \u2705 Full Support |\n| **Gemini CLI** | `napari-mcp-install install gemini` | \u2705 Full Support |\n| **Codex CLI** | `napari-mcp-install install codex` | \u2705 Full Support |\n\n**\u2192 See [Integration Guides](docs/integrations/index.md) for application-specific instructions**\n\n## \ud83d\udee0 Available MCP Tools\n\nThe server exposes 16 tools for complete napari control:\n\n### Core Functions\n- **Session Management**: `init_viewer`, `close_viewer`, `session_information`\n- **Layer Operations**: `add_layer`, `list_layers`, `get_layer`, `remove_layer`, `set_layer_properties`, `reorder_layer`, `apply_to_layers`, `save_layer_data`\n- **Viewer Controls**: `configure_viewer`\n- **Utilities**: `screenshot`, `execute_code`, `install_packages`, `read_output`\n\n## \u26a0\ufe0f Security Notice\n\n!!! warning \"Code Execution Capabilities\"\n    This server includes powerful tools that allow arbitrary code execution:\n\n    - **`execute_code()`** - Runs Python code in the server environment\n    - **`install_packages()`** - Installs packages via pip\n\n    The bridge server binds to `127.0.0.1` (localhost only) with no authentication.\n    Any local process can invoke these tools.\n\n    **Use only with trusted AI assistants on local networks.**\n    Never expose to public internet without proper sandboxing.\n\n## \ud83d\udcd6 Documentation\n\n- **[Quick Start Guide](docs/getting-started/quickstart.md)** - Get running in 3 minutes\n- **[Installation Options](docs/getting-started/installation.md)** - Advanced installation methods\n- **[Integration Guides](docs/integrations/index.md)** - Setup for specific AI applications\n- **[Python Examples](docs/examples/README.md)** - Automate workflows with custom scripts\n- **[Troubleshooting](docs/guides/troubleshooting.md)** - Common issues and solutions\n- **[API Reference](https://royerlab.github.io/napari-mcp/api/)** - Complete tool documentation\n\n## \ud83e\uddea Development Setup\n\n```bash\n\n# Clone repository\ngit clone https://github.com/royerlab/napari-mcp.git\ncd napari-mcp\n\n# Install with development dependencies\npip install -e \".[dev]\"\n\n# Run tests\npytest -m \"not realgui\"  # Skip GUI tests\npytest --cov=src --cov-report=html  # With coverage\n```\n\n## \ud83e\udd1d Contributing\n\nContributions are welcome! Please:\n\n1. Fork the repository\n2. Create a feature branch (`git checkout -b feature/amazing-feature`)\n3. Make your changes with tests\n4. Run pre-commit hooks: `pre-commit run --all-files`\n5. Commit changes (`git commit -m 'Add amazing feature'`)\n6. Push to branch (`git push origin feature/amazing-feature`)\n7. Open a Pull Request\n\n## \ud83d\udccb Architecture\n\n- **`state.py`** \u2014 `ServerState` holding all mutable state (viewer, locks, execution namespace)\n- **`server.py`** \u2014 `create_server(state)` factory; tools defined as closures over state\n- **`qt_helpers.py`** \u2014 Qt application and viewer lifecycle management\n- **`output.py`** \u2014 Output truncation utility\n- **`bridge_server.py`** \u2014 Plugin bridge server (overrides 3 tools for Qt thread safety)\n- **`viewer_protocol.py`** \u2014 `ViewerProtocol` for typed viewer backends\n- **`cli/`** \u2014 `napari-mcp-install` CLI for configuring AI applications\n\nKey features:\n- **Thread-safe**: All napari operations are serialized\n- **Non-blocking**: Qt event loop runs asynchronously\n- **Stateful**: Maintains viewer state across tool calls\n- **Extensible**: Easy to add new tools\n\n## \ud83d\udcda Resources\n\n- **[napari](https://napari.org/)** - Multi-dimensional image viewer\n- **[Model Context Protocol](https://modelcontextprotocol.io/)** - MCP specification\n- **[FastMCP](https://github.com/jlowin/fastmcp)** - Python MCP framework\n- **[Claude Desktop](https://claude.ai/download)** - AI assistant with MCP support\n\n## \ud83d\udcc4 License\n\nBSD-3-Clause License - see [LICENSE](LICENSE) file for details.\n\n## \ud83d\ude4f Acknowledgments\n\n- [napari team](https://napari.org/) for the excellent imaging platform\n- [FastMCP](https://github.com/jlowin/fastmcp) for the MCP framework\n- [Anthropic](https://www.anthropic.com/) for Claude and MCP development\n- [astral-sh](https://astral.sh/) for uv dependency management\n\n---\n\n**Built with \u2764\ufe0f for the microscopy and AI communities**\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": "napari, mcp, microscopy, image-analysis, ai, claude",
+    "license": "BSD-3-Clause",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": "Ilan Theodoro <ilan.silva@czbiohub.org>",
+    "name": "napari-mcp",
+    "package_url": "https://pypi.org/project/napari-mcp/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-mcp/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/royerlab/napari-mcp/issues",
+      "Documentation": "https://royerlab.github.io/napari-mcp/",
+      "Homepage": "https://github.com/royerlab/napari-mcp",
+      "Repository": "https://github.com/royerlab/napari-mcp"
+    },
+    "provides_extra": [
+      "dev",
+      "all"
+    ],
+    "release_url": "https://pypi.org/project/napari-mcp/0.1.0/",
+    "requires_dist": [
+      "fastmcp>=2.10.3",
+      "napari>=0.5.5",
+      "qtpy>=2.4.1",
+      "Pillow>=10.3.0",
+      "imageio>=2.34.0",
+      "numpy>=1.26.0",
+      "typer>=0.9.0",
+      "rich>=13.0.0",
+      "toml>=0.10.2",
+      "tomli>=2.0; python_version < \"3.11\"",
+      "ruff>=0.12.10; extra == \"dev\"",
+      "mypy>=1.17.0; extra == \"dev\"",
+      "types-toml>=0.10.8.20240310; extra == \"dev\"",
+      "types-Pillow>=10.0.0; extra == \"dev\"",
+      "pre-commit>=4.3.0; extra == \"dev\"",
+      "bandit>=1.8.6; extra == \"dev\"",
+      "napari-mcp[dev]; extra == \"all\""
+    ],
+    "requires_python": ">=3.10",
+    "summary": "MCP server for remote control of napari viewers via Model Context Protocol",
+    "version": "0.1.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 35475044,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "ilan.theodoro"
+      }
+    ]
+  },
+  "releases": {
+    "0.0.1a0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "ae2c9778c43c2a00d596b2f6e04006fb4f34dec6b31207cccb9a5e2b5fa57b17",
+          "md5": "ab0f72f6a06dea54b02d20f477f1d588",
+          "sha256": "5517636ce160b4175ccb3fb272be31a4cd7d8638db6e3c919f454b4ec4b05adf"
+        },
+        "downloads": -1,
+        "filename": "napari_mcp-0.0.1a0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "ab0f72f6a06dea54b02d20f477f1d588",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 27680,
+        "upload_time": "2025-09-15T17:44:44",
+        "upload_time_iso_8601": "2025-09-15T17:44:44.929003Z",
+        "url": "https://files.pythonhosted.org/packages/ae/2c/9778c43c2a00d596b2f6e04006fb4f34dec6b31207cccb9a5e2b5fa57b17/napari_mcp-0.0.1a0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "90f07d6d97a67bed3cc5971febe36755cb3b6bf56785bc4ceee41fd627ac44c6",
+          "md5": "43bcfc0280cfc965c7b89a6ca17c32b5",
+          "sha256": "f35abc5a89762bad92488e13434971461e5f2a625c87d9698fb4037bdc24b81c"
+        },
+        "downloads": -1,
+        "filename": "napari_mcp-0.0.1a0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "43bcfc0280cfc965c7b89a6ca17c32b5",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 331539,
+        "upload_time": "2025-09-15T17:44:46",
+        "upload_time_iso_8601": "2025-09-15T17:44:46.402718Z",
+        "url": "https://files.pythonhosted.org/packages/90/f0/7d6d97a67bed3cc5971febe36755cb3b6bf56785bc4ceee41fd627ac44c6/napari_mcp-0.0.1a0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.2": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "917b915ef88bc5cd73434ed23765ca6d243f995e236380729e1fc7db681337a7",
+          "md5": "e650b28e1246abe7b2567a7a743c9fee",
+          "sha256": "2235af037bb1f7ccd25424c3886f75a801308c51153ec2e7e97b9f50765b8a58"
+        },
+        "downloads": -1,
+        "filename": "napari_mcp-0.0.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "e650b28e1246abe7b2567a7a743c9fee",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 29625,
+        "upload_time": "2025-09-16T22:25:16",
+        "upload_time_iso_8601": "2025-09-16T22:25:16.390083Z",
+        "url": "https://files.pythonhosted.org/packages/91/7b/915ef88bc5cd73434ed23765ca6d243f995e236380729e1fc7db681337a7/napari_mcp-0.0.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "12b28b1c1ee4526423efa9a2fad57651c6d5b07d63afcab48b8b8297352c3395",
+          "md5": "6a3d7b7401b093e23da5ba6c4a56e413",
+          "sha256": "027c40f31829ed98ec1393cee1ff0a6383af919aa7b7bcb6b75700465d99cf8d"
+        },
+        "downloads": -1,
+        "filename": "napari_mcp-0.0.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "6a3d7b7401b093e23da5ba6c4a56e413",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 315627,
+        "upload_time": "2025-09-16T22:25:17",
+        "upload_time_iso_8601": "2025-09-16T22:25:17.841350Z",
+        "url": "https://files.pythonhosted.org/packages/12/b2/8b1c1ee4526423efa9a2fad57651c6d5b07d63afcab48b8b8297352c3395/napari_mcp-0.0.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.3": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "9c20191fd7311f4d7784f44ff1c39867cc98171abc8193920032c8d1e24f6807",
+          "md5": "caa0fed9d45d77f75772cca0c6682252",
+          "sha256": "951f1c07181bd684970817e04cc8aaeedfd0efba44ff320cfa7e3e59577a0229"
+        },
+        "downloads": -1,
+        "filename": "napari_mcp-0.0.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "caa0fed9d45d77f75772cca0c6682252",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 31087,
+        "upload_time": "2025-09-19T06:55:17",
+        "upload_time_iso_8601": "2025-09-19T06:55:17.437287Z",
+        "url": "https://files.pythonhosted.org/packages/9c/20/191fd7311f4d7784f44ff1c39867cc98171abc8193920032c8d1e24f6807/napari_mcp-0.0.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "7442cfc65018f982091e574e16d0b493572ee1d085734e799ddfce7e7963dae0",
+          "md5": "4eb8e7f32053eebcffeb938c6695f3e2",
+          "sha256": "15574db3aef0249c29adbc0bcf2116eee24970d53b0c9497565167c044569ff0"
+        },
+        "downloads": -1,
+        "filename": "napari_mcp-0.0.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "4eb8e7f32053eebcffeb938c6695f3e2",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 312118,
+        "upload_time": "2025-09-19T06:55:19",
+        "upload_time_iso_8601": "2025-09-19T06:55:19.877684Z",
+        "url": "https://files.pythonhosted.org/packages/74/42/cfc65018f982091e574e16d0b493572ee1d085734e799ddfce7e7963dae0/napari_mcp-0.0.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.4": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "418221755b030e737015bf71268277944cf4949c283fcdd83f65c7181006e70f",
+          "md5": "40cbc9b61503b277a28d1683c8c689d3",
+          "sha256": "be8cd968b5054f30972c17bd22c5e16a13ccb0fd8edec7403cdc7c6895889ed7"
+        },
+        "downloads": -1,
+        "filename": "napari_mcp-0.0.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "40cbc9b61503b277a28d1683c8c689d3",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 47997,
+        "upload_time": "2025-09-30T07:43:45",
+        "upload_time_iso_8601": "2025-09-30T07:43:45.786728Z",
+        "url": "https://files.pythonhosted.org/packages/41/82/21755b030e737015bf71268277944cf4949c283fcdd83f65c7181006e70f/napari_mcp-0.0.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "cf9d68bb342111e81b47db669ae4f6554b4467c68766986d05b68728e8be2dcf",
+          "md5": "63692b3c2a5b8c7d6e054ecaf326416b",
+          "sha256": "4cf55c9454e018091a66e32471580e8a76065f5b00b16b018607d401b6bb0072"
+        },
+        "downloads": -1,
+        "filename": "napari_mcp-0.0.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "63692b3c2a5b8c7d6e054ecaf326416b",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 335667,
+        "upload_time": "2025-09-30T07:43:47",
+        "upload_time_iso_8601": "2025-09-30T07:43:47.281504Z",
+        "url": "https://files.pythonhosted.org/packages/cf/9d/68bb342111e81b47db669ae4f6554b4467c68766986d05b68728e8be2dcf/napari_mcp-0.0.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "621e2581eb097e9968ad284a6aa85a94ec1bda24d1d3d6a9e8e9dc6922785adf",
+          "md5": "1a2c293377905c873120aa645b038bfa",
+          "sha256": "7f91d94084769ef0e16cbc50b5b2afe87a699fa4fd2f22bd59a33a34af8297ae"
+        },
+        "downloads": -1,
+        "filename": "napari_mcp-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "1a2c293377905c873120aa645b038bfa",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 57453,
+        "upload_time": "2026-03-25T18:18:08",
+        "upload_time_iso_8601": "2026-03-25T18:18:08.534362Z",
+        "url": "https://files.pythonhosted.org/packages/62/1e/2581eb097e9968ad284a6aa85a94ec1bda24d1d3d6a9e8e9dc6922785adf/napari_mcp-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "bf042376efbdd79b7526ff7725724c3ab8e98c224022a4126bfb2f8f80402cf6",
+          "md5": "49f7106ec77668a9ab438b5077e6484c",
+          "sha256": "a8ca249122ab0bc378b5270f9146d1d427984e4d25567c5b5c54986c21aefc02"
+        },
+        "downloads": -1,
+        "filename": "napari_mcp-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "49f7106ec77668a9ab438b5077e6484c",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 345951,
+        "upload_time": "2026-03-25T18:18:10",
+        "upload_time_iso_8601": "2026-03-25T18:18:10.081088Z",
+        "url": "https://files.pythonhosted.org/packages/bf/04/2376efbdd79b7526ff7725724c3ab8e98c224022a4126bfb2f8f80402cf6/napari_mcp-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.0rc0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "b4e74abeb3b549ca8864da921b18ea84f36e6af8cebfa574724af30b790ebeed",
+          "md5": "e0329e6cbd5b2b1a33787a9ae30c50e1",
+          "sha256": "66ad7871150cfa7f2cd668254471cccff3903adc182319f7bec5f976e87e8ec3"
+        },
+        "downloads": -1,
+        "filename": "napari_mcp-0.1.0rc0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "e0329e6cbd5b2b1a33787a9ae30c50e1",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 57587,
+        "upload_time": "2026-03-17T05:44:53",
+        "upload_time_iso_8601": "2026-03-17T05:44:53.353264Z",
+        "url": "https://files.pythonhosted.org/packages/b4/e7/4abeb3b549ca8864da921b18ea84f36e6af8cebfa574724af30b790ebeed/napari_mcp-0.1.0rc0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "b5d48732b8a5c67ee6029578cf649a3e0a0d969b9f5893e6c44c81263d92c1e1",
+          "md5": "7f14a8db8ccb4fb3a1938e0b310d4e94",
+          "sha256": "681365527a7a8844460f3010e912a1f990ac680f1751f2182ae3f9ddc7be1bf2"
+        },
+        "downloads": -1,
+        "filename": "napari_mcp-0.1.0rc0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "7f14a8db8ccb4fb3a1938e0b310d4e94",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 346076,
+        "upload_time": "2026-03-17T05:44:54",
+        "upload_time_iso_8601": "2026-03-17T05:44:54.750717Z",
+        "url": "https://files.pythonhosted.org/packages/b5/d4/8732b8a5c67ee6029578cf649a3e0a0d969b9f5893e6c44c81263d92c1e1/napari_mcp-0.1.0rc0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "621e2581eb097e9968ad284a6aa85a94ec1bda24d1d3d6a9e8e9dc6922785adf",
+        "md5": "1a2c293377905c873120aa645b038bfa",
+        "sha256": "7f91d94084769ef0e16cbc50b5b2afe87a699fa4fd2f22bd59a33a34af8297ae"
+      },
+      "downloads": -1,
+      "filename": "napari_mcp-0.1.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "1a2c293377905c873120aa645b038bfa",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.10",
+      "size": 57453,
+      "upload_time": "2026-03-25T18:18:08",
+      "upload_time_iso_8601": "2026-03-25T18:18:08.534362Z",
+      "url": "https://files.pythonhosted.org/packages/62/1e/2581eb097e9968ad284a6aa85a94ec1bda24d1d3d6a9e8e9dc6922785adf/napari_mcp-0.1.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "bf042376efbdd79b7526ff7725724c3ab8e98c224022a4126bfb2f8f80402cf6",
+        "md5": "49f7106ec77668a9ab438b5077e6484c",
+        "sha256": "a8ca249122ab0bc378b5270f9146d1d427984e4d25567c5b5c54986c21aefc02"
+      },
+      "downloads": -1,
+      "filename": "napari_mcp-0.1.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "49f7106ec77668a9ab438b5077e6484c",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.10",
+      "size": 345951,
+      "upload_time": "2026-03-25T18:18:10",
+      "upload_time_iso_8601": "2026-03-25T18:18:10.081088Z",
+      "url": "https://files.pythonhosted.org/packages/bf/04/2376efbdd79b7526ff7725724c3ab8e98c224022a4126bfb2f8f80402cf6/napari_mcp-0.1.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
