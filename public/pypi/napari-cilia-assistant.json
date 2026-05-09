@@ -15,7 +15,7 @@
       "Programming Language :: Python :: 3.12",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "\n## User Interface\n\n<video src=\"docs/ui.mp4\" controls width=\"100%\" aria-label=\"Cilia Assistant UI demo\"></video>\n\n# napari-cilia-assistant\n\n`napari-cilia-assistant` is a napari plugin for transparent, ROI-based quantification of ciliary beat frequency (CBF) from high-speed AVI microscopy videos.\n\nThe plugin is designed for collaborative scientific review. It opens AVI files, reads acquisition metadata, loads a selected movie as a napari time stack, lets the user place a rectangular ROI over visibly beating cilia, computes a time-intensity trace, estimates the dominant beat frequency by FFT, provides a peak-interval sanity check, generates a kymograph, and exports raw signal/FFT data plus a combined batch results table.\n\n## Scientific purpose\n\nThe goal is to support a defensible first-pass measurement of ciliary motion from high-speed video data. The current implementation quantifies rhythmic motion frequency, not full ciliary waveform or clinical diagnostic beat-pattern classification.\n\nUse this tool to answer questions such as:\n\n- Are cilia beating within the selected region?\n- What is the dominant CBF in this ROI?\n- Does WT and mutant/KO tissue show a measurable difference in rhythmic cilia motion?\n- Does treatment shift the dominant CBF compared with control videos?\n- Is the measured frequency supported by both the FFT plot and the kymograph?\n\n## Current features\n\n### Single-video workflow\n\n- Open one AVI video through the napari widget.\n- Read and display AVI metadata: FPS, frame count, duration, width, height, and codec.\n- Load AVI data as a grayscale `T, Y, X` image stack.\n- Create/edit a napari rectangular ROI over active cilia.\n- Measure ROI mean-intensity change over time.\n- Estimate CBF using FFT dominant-frequency analysis.\n- Estimate CBF using a peak-interval method as an independent sanity check.\n- Plot ROI intensity versus time with detected peaks.\n- Plot FFT power spectrum and mark the reported dominant frequency.\n- Generate a kymograph layer from the selected ROI.\n- Export the last ROI signal and FFT spectrum as CSV files.\n- Clear the log panel between videos or measurement runs.\n- Copy the current measurement graph to the clipboard.\n- Save the current measurement graph as a TIFF image.\n\n## Reviewer-facing method summary\n\nHigh-speed AVI videos were loaded as grayscale time stacks. For each measurement, a rectangular ROI was manually positioned over a region containing visibly beating cilia. The mean pixel intensity within the ROI was calculated for every frame to generate a one-dimensional temporal signal. The signal was detrended, mean-centered, windowed with a Hanning window, and transformed into the frequency domain using a real-valued FFT. The dominant frequency within a user-defined CBF search range was reported as the primary CBF estimate. A second estimate was obtained from the median interval between detected peaks in the same ROI time-intensity signal. A kymograph was generated from the center line of the ROI to provide a visual audit of periodic motion.\n\nFor batch analysis, each AVI is treated as an independent video record with its own file path, metadata, group label, FPS value, ROI coordinates, FFT result, peak-interval result, QC status, and notes. The combined CSV output allows WT/KO or treatment-control comparisons to be reviewed outside napari.\n\nThe exported CSV files contain the exact time-intensity trace and FFT spectrum used for the last measurement, and the batch CSV contains the per-video summary table used for comparison.\n\n## Why this approach is scientifically reasonable\n\nHigh-speed video microscopy is a standard approach for evaluating ciliary beat frequency and beat pattern. Chilvers and O'Callaghan directly compared digital high-speed video analysis with photomultiplier and photodiode approaches and showed that method-specific measurements are not interchangeable, supporting the need to report the method and maintain consistent analysis conditions.\n\nJackson and Bottier reviewed modern human airway ciliary-function assessment and described CBF as a quantitative measure influenced by environmental and technical factors, including temperature, pH, medium, additives, vibration, and time from sampling. They also note that HSVA recordings can be analyzed within an ROI and that CBF can be measured computationally using tools such as SAVA, ciliaFA, Fiji/ImageJ FFT plugins, and CiliarMove.\n\nFrancis described a practical mouse airway cilia protocol using high-speed video microscopy, kymograph-based CBF counting, and microsphere tracking for cilia-generated flow. That protocol supports the use of high-speed imaging, kymographs, and visible audit of cilia motion as part of quantitative motility assessment.\n\n## Recommended acquisition and analysis conditions\n\nFor publication-quality reporting, record and report:\n\n| Item | Why it matters |\n|---|---|\n| Frame rate / FPS | Converts frame intervals and FFT frequency bins into Hz. Wrong FPS gives wrong CBF. |\n| Number of frames analyzed | Determines frequency resolution and stability of FFT estimation. |\n| Temperature | CBF is temperature-sensitive; uncontrolled room temperature can reduce reproducibility. |\n| Medium / buffer and pH | Ciliary motility is environmentally dependent. |\n| Sample type | Trachea, nasal brushing, ALI culture, spheroid, or other preparation may behave differently. |\n| ROI location | ROI should cover a visibly active ciliated edge, not static tissue or debris. |\n| Frequency search range | Prevents low-frequency drift or high-frequency noise from being reported as CBF. |\n| Replicate strategy | Use multiple ROIs, multiple videos, and biological replicates when making group-level claims. |\n| Group label | Supports downstream WT/KO or treatment-control comparison. |\n\n## Practical workflow\n\n### Single-video workflow\n\n1. Open napari.\n2. Open `Plugins > Cilia Assistant`.\n3. Click **Open AVI**.\n4. Confirm the detected FPS. Correct it manually if the AVI metadata are wrong.\n5. Click **Create / Edit ROI Rectangle**.\n6. Move/resize the ROI over visibly beating cilia.\n7. Set the expected CBF search range, for example `3\u201325 Hz` for many airway recordings.\n8. Click **Measure CBF from Selected ROI**.\n9. Review:\n   - ROI mean-intensity trace,\n   - detected peaks,\n   - FFT spectrum,\n   - FFT peak/background value,\n   - kymograph.\n10. Export the signal and FFT CSV if the ROI result is scientifically usable.\n\n## Interpreting the output\n\n### FFT CBF\n\nThe FFT CBF is the dominant frequency within the selected frequency range. This is the primary automated estimate.\n\nA strong measurement should show:\n\n- a clear oscillatory ROI intensity trace,\n- a dominant FFT peak within the expected biological range,\n- reasonable agreement between FFT CBF and peak-interval CBF,\n- visible periodic structure in the kymograph.\n\n### Peak-interval CBF\n\nThe peak-interval method detects repeated maxima in the ROI intensity trace and converts the median interval between peaks into Hz. It is useful as a check but may fail when the signal is weak, noisy, clipped, or irregular.\n\n### Kymograph\n\nThe kymograph is a reviewer-friendly audit image. Repeated bands or waves indicate periodic motion along the selected ROI line. If the kymograph does not show visible periodic structure, the numerical CBF should be treated cautiously.\n\n### FFT power\n\nFFT power shows how strongly each frequency is present in the ROI intensity signal.\n\nThe plugin first converts the ROI mean-intensity trace from the time domain into the frequency domain using FFT. The x-axis shows frequency in Hz. The y-axis, FFT power, is not ciliary beat frequency itself. Instead, it represents the relative strength of oscillation at each frequency.\n\nThe reported CBF is the frequency with the strongest FFT power within the selected search range. For example, if the strongest peak is at 4.8 Hz, the ROI intensity signal is oscillating most strongly at approximately 4.8 cycles per second.\n\nA strong result usually has one clear dominant FFT peak above the local background. A weak or noisy result may show several small peaks, broad peaks, or no clear dominant peak. In that case, the CBF should be interpreted cautiously and checked against the raw movie, ROI placement, peak-interval result, and kymograph.\n\nImportant: FFT power is a signal-strength measure, not a biological \u201cforce\u201d or \u201camount of beating.\u201d A higher FFT power means the selected ROI has a stronger periodic intensity rhythm at that frequency. It does not necessarily mean the cilia are beating faster or more normally.\n\n## How CBF is quantified\n\n`napari-cilia-assistant` estimates ciliary beat frequency (CBF) from rhythmic intensity changes in a user-selected region of interest (ROI).\n\nThe workflow is:\n\n1. The AVI video is loaded as a grayscale time stack with shape `T, Y, X`, where `T` is frame number.\n2. The user places a rectangular ROI over visibly beating cilia.\n3. For each frame, the plugin calculates the mean pixel intensity inside the ROI.\n4. This produces a one-dimensional signal:\n\n   `mean intensity vs time`\n\n5. The signal is detrended, mean-centered, and multiplied by a Hanning window.\n6. The plugin applies a real-valued fast Fourier transform using NumPy:\n\n   ```python\n   freqs = np.fft.rfftfreq(len(clean), d=1.0 / fps)\n   power = np.abs(np.fft.rfft(clean)) ** 2\n   \n   ```\n7. The plugin searches only within the user-defined frequency range, for example 3\u201325 Hz.\n8. The frequency with the highest FFT power inside that range is reported as the FFT-derived CBF.\n\nIn simple terms:\n\nCBF Hz = the strongest rhythmic frequency detected in the ROI intensity signal.\n\n### What measures faster beating?\n\nFaster beating is measured by CBF in Hz.\n\nFor example:\n\n3 Hz means approximately 3 beat cycles per second.\n5 Hz means approximately 5 beat cycles per second.\n20 Hz means approximately 20 beat cycles per second.\n\nA higher CBF value means faster rhythmic motion in the selected ROI, provided that the FPS metadata are correct and the ROI is placed over true ciliary motion.\n\n### Why peak-interval analysis is included\n\nThe FFT result is the primary automated estimate. The peak-interval result is a sanity check.\n\nThe peak-interval method detects repeated peaks in the ROI intensity trace and estimates CBF from the median time between peaks. If FFT CBF and peak-interval CBF are similar, confidence in the measurement is higher. If they strongly disagree, the ROI or video should be reviewed.\n\n### Why kymograph review is included\n\nThe kymograph provides a visual audit of periodic motion. Repeated bands or waves support the presence of rhythmic beating. If the kymograph does not show clear periodic structure, the numerical CBF should be interpreted cautiously.\n\n### Important limitation\n\nThis workflow estimates beat frequency, not full ciliary waveform. A sample can have a normal or high CBF but still have abnormal beat pattern or poor flow generation. For waveform or flow interpretation, CBF should be combined with raw video review, kymograph review, and, where available, beat-pattern or particle-flow analysis.\n\n## Critical limitations\n\n1. **CBF is not waveform analysis.** A normal frequency can coexist with abnormal ciliary beat pattern.\n2. **ROI placement is critical.** The algorithm measures intensity fluctuation in the selected region. Poor ROI placement can measure tissue drift, illumination fluctuation, moving debris, or whole-frame motion instead of cilia.\n3. **Whole-frame measurement is exploratory.** It can detect global motion but is not preferred for publication-style CBF.\n4. **Method-specific reference ranges are required.** CBF values should not be compared across different acquisition systems, frame rates, temperatures, or analysis methods without validation.\n5. **Mixed motility phenotypes can be misleading.** Static, twitching, hyperfrequent, and normally beating regions can coexist. A single mean CBF may not represent the sample.\n6. **Batch analysis does not replace biological replication.** Multiple videos from the same animal/sample are technical or sampling replicates, not independent biological replicates unless designed as such.\n7. **This plugin is not a diagnostic PCD classifier.** It supports quantitative motion analysis but does not replace expert HSVA beat-pattern assessment, electron microscopy, genetic testing, or clinical interpretation.\n\n## Suggested reporting language\n\n> Ciliary beat frequency was quantified from high-speed AVI microscopy videos using `napari-cilia-assistant`. Videos were loaded as grayscale time stacks. A rectangular ROI was placed over visibly beating cilia, and mean ROI intensity was measured across frames. The temporal signal was detrended, windowed, and analyzed by FFT. The dominant frequency within the predefined search range was reported as CBF. Peak-interval analysis and ROI kymographs were used as visual/quantitative quality-control checks. Raw ROI time-intensity traces, FFT spectra, and combined per-video batch results were exported as CSV files for reproducibility.\n\n## Installation for development\n\n```bash\npip install -e .\n```\n\n## Minimal package files\n\n```text\nnapari_cilia_assistant/\n  __init__.py\n  _analysis.py\n  _widget.py\nnapari.yaml\nREADME.md\n```\n\n## References\n\n1. Chilvers MA, O'Callaghan C. Analysis of ciliary beat pattern and beat frequency using digital high speed imaging: comparison with the photomultiplier and photodiode methods. *Thorax*. 2000;55:314-317. doi:10.1136/thorax.55.4.314\n2. Jackson CL, Bottier M. Methods for the assessment of human airway ciliary function. *European Respiratory Journal*. 2022;60:2102300. doi:10.1183/13993003.02300-2021\n3. Francis R. A Simple Method for Imaging and Quantifying Respiratory Cilia Motility in Mouse Models. *Methods and Protocols*. 2025;8:113. doi:10.3390/mps8050113\n",
+    "description": "# napari-cilia-assistant\n\n`napari-cilia-assistant` is a napari plugin for measuring ciliary beat frequency (CBF) from high-speed AVI microscopy videos.\n\n![Cilia Assistant UI](docs/ui.png)\n\n[Watch the demo video](docs/ui.mp4)\n\n## Install\n\nInstall conda-forge first:\nhttps://conda-forge.org/download/\n\nThen open a terminal and run:\n\n```bash\nconda create -n cilia-assistant python=3.11 -y\nconda activate cilia-assistant\nconda install -c conda-forge napari pyqt git -y\ngit clone https://github.com/wulinteousa2-hash/napari-cilia-assistant.git\ncd napari-cilia-assistant\npip install -e .\nnapari\n```\n\nIn napari, open `Plugins > Cilia Assistant`.\n\n## What It Does\n\n- Opens one AVI video through the napari widget.\n- Reads video metadata such as FPS, frame count, size, and duration.\n- Loads AVI data as a grayscale `T, Y, X` image stack.\n- Lets the user draw/edit a rectangular ROI over active cilia.\n- Measures ROI mean-intensity change over time.\n- Estimates CBF using FFT and peak-interval checks.\n- Creates a kymograph layer from the selected ROI.\n- Exports the last ROI signal and FFT spectrum as CSV files.\n- Copies or saves the current measurement graph.\n\n## Basic Workflow\n\n1. Open napari.\n2. Open `Plugins > Cilia Assistant`.\n3. Click **Open AVI**.\n4. Confirm the FPS. Correct it manually if the AVI metadata are wrong.\n5. Click **Create / Edit ROI Rectangle**.\n6. Move/resize the ROI over visibly beating cilia.\n7. Set the expected CBF search range, for example `3-25 Hz`.\n8. Click **Measure CBF from Selected ROI**.\n9. Review the trace, FFT peak, peak-interval result, and kymograph.\n10. Export the CSV files if the result is usable.\n\n## Output\n\n- **FFT CBF:** dominant frequency in the selected search range.\n- **Peak-interval CBF:** independent check based on repeated peaks in the ROI signal.\n- **Kymograph:** visual audit of periodic motion in the ROI.\n- **CSV export:** raw ROI time-intensity signal and FFT power spectrum.\n\n## Good Measurement Practice\n\n- Use videos with known FPS.\n- Keep temperature, medium, and timing consistent across samples.\n- Place the ROI on active cilia, not static tissue, debris, or whole-frame motion.\n- Use multiple ROIs/videos and biological replicates for group comparisons.\n- Treat whole-frame motion frequency as exploratory only.\n\n## Limitations\n\nThis plugin measures beat frequency, not full ciliary waveform or clinical diagnostic beat pattern. A sample can have a normal CBF but abnormal waveform or poor flow generation. Always review the raw video and kymograph before interpreting the number.\n\n## References\n\n1. Chilvers MA, O'Callaghan C. Analysis of ciliary beat pattern and beat frequency using digital high speed imaging: comparison with the photomultiplier and photodiode methods. *Thorax*. 2000;55:314-317. doi:10.1136/thorax.55.4.314\n2. Jackson CL, Bottier M. Methods for the assessment of human airway ciliary function. *European Respiratory Journal*. 2022;60:2102300. doi:10.1183/13993003.02300-2021\n3. Francis R. A Simple Method for Imaging and Quantifying Respiratory Cilia Motility in Mouse Models. *Methods and Protocols*. 2025;8:113. doi:10.3390/mps8050113\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -46,7 +46,7 @@
       "Repository": "https://github.com/wulinteousa2-hash/napari-cilia-assistant"
     },
     "provides_extra": null,
-    "release_url": "https://pypi.org/project/napari-cilia-assistant/1.0.0/",
+    "release_url": "https://pypi.org/project/napari-cilia-assistant/1.0.2/",
     "requires_dist": [
       "napari",
       "numpy",
@@ -58,11 +58,11 @@
     ],
     "requires_python": ">=3.10",
     "summary": "A napari plugin for measuring ciliary beat frequency from high-speed microscopy videos.",
-    "version": "1.0.0",
+    "version": "1.0.2",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 36895450,
+  "last_serial": 36898481,
   "ownership": {
     "organization": null,
     "roles": [
@@ -204,48 +204,136 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "1.0.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "f8a8df9c6444bd2361a67578005e50c3009ede10ed230589d68f014c0010271b",
+          "md5": "e83f6de9aad73d45fec367637a4d6664",
+          "sha256": "fee424f06d219f0ee0fd40ab5fb8102196958aad5d80244e407e5e46ab593933"
+        },
+        "downloads": -1,
+        "filename": "napari_cilia_assistant-1.0.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "e83f6de9aad73d45fec367637a4d6664",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 19625,
+        "upload_time": "2026-05-09T17:37:41",
+        "upload_time_iso_8601": "2026-05-09T17:37:41.497766Z",
+        "url": "https://files.pythonhosted.org/packages/f8/a8/df9c6444bd2361a67578005e50c3009ede10ed230589d68f014c0010271b/napari_cilia_assistant-1.0.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "384f6f48bdf9224199080543ea87b56be5159868d4dfd0bc86395921546f3108",
+          "md5": "0cd759dc1530a550ac259264c1d6eb5c",
+          "sha256": "ca3c332c1a458487521b9c284e0e6c036d742499875e4e822da0dc05a4695952"
+        },
+        "downloads": -1,
+        "filename": "napari_cilia_assistant-1.0.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "0cd759dc1530a550ac259264c1d6eb5c",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 20091,
+        "upload_time": "2026-05-09T17:37:42",
+        "upload_time_iso_8601": "2026-05-09T17:37:42.693679Z",
+        "url": "https://files.pythonhosted.org/packages/38/4f/6f48bdf9224199080543ea87b56be5159868d4dfd0bc86395921546f3108/napari_cilia_assistant-1.0.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.2": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "bad7f5435ee68abbea67ad781db5465dff40f763d848d91e58893cd00c87aba5",
+          "md5": "0f5e153ecc13997fa2573a49f6a6c214",
+          "sha256": "b078225d9de6f990e56194a81ecb1d80865aa8a43d47b2adae39126b3d811273"
+        },
+        "downloads": -1,
+        "filename": "napari_cilia_assistant-1.0.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "0f5e153ecc13997fa2573a49f6a6c214",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 19641,
+        "upload_time": "2026-05-09T17:44:40",
+        "upload_time_iso_8601": "2026-05-09T17:44:40.299240Z",
+        "url": "https://files.pythonhosted.org/packages/ba/d7/f5435ee68abbea67ad781db5465dff40f763d848d91e58893cd00c87aba5/napari_cilia_assistant-1.0.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "c258161827b3b5f13076a30b0c33eee81cec270861bb5acbfda8acec4f8d8f38",
+          "md5": "85a51f6057718fb4d5b0fd8a33cf68df",
+          "sha256": "6288f9662b1f0dc1c23dd37791cc9be7c14b9aa778248beb9e5bc72739368ae3"
+        },
+        "downloads": -1,
+        "filename": "napari_cilia_assistant-1.0.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "85a51f6057718fb4d5b0fd8a33cf68df",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 20134,
+        "upload_time": "2026-05-09T17:44:41",
+        "upload_time_iso_8601": "2026-05-09T17:44:41.497950Z",
+        "url": "https://files.pythonhosted.org/packages/c2/58/161827b3b5f13076a30b0c33eee81cec270861bb5acbfda8acec4f8d8f38/napari_cilia_assistant-1.0.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": null,
       "digests": {
-        "blake2b_256": "fec7cdbd8ee5897c35032c1e0184afcc51d31f0933567a504f89bd490749eb18",
-        "md5": "d7331f17c2e8f00bb7c4765e81f896da",
-        "sha256": "d85b103a0ba504b2948a858bcb2a71a035aed9b93182f449ba540bd208fa2090"
+        "blake2b_256": "bad7f5435ee68abbea67ad781db5465dff40f763d848d91e58893cd00c87aba5",
+        "md5": "0f5e153ecc13997fa2573a49f6a6c214",
+        "sha256": "b078225d9de6f990e56194a81ecb1d80865aa8a43d47b2adae39126b3d811273"
       },
       "downloads": -1,
-      "filename": "napari_cilia_assistant-1.0.0-py3-none-any.whl",
+      "filename": "napari_cilia_assistant-1.0.2-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "d7331f17c2e8f00bb7c4765e81f896da",
+      "md5_digest": "0f5e153ecc13997fa2573a49f6a6c214",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.10",
-      "size": 21735,
-      "upload_time": "2026-05-09T15:14:34",
-      "upload_time_iso_8601": "2026-05-09T15:14:34.690741Z",
-      "url": "https://files.pythonhosted.org/packages/fe/c7/cdbd8ee5897c35032c1e0184afcc51d31f0933567a504f89bd490749eb18/napari_cilia_assistant-1.0.0-py3-none-any.whl",
+      "size": 19641,
+      "upload_time": "2026-05-09T17:44:40",
+      "upload_time_iso_8601": "2026-05-09T17:44:40.299240Z",
+      "url": "https://files.pythonhosted.org/packages/ba/d7/f5435ee68abbea67ad781db5465dff40f763d848d91e58893cd00c87aba5/napari_cilia_assistant-1.0.2-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": null,
       "digests": {
-        "blake2b_256": "da7a06aba4285d67d660d8e0d779adefd5ceb7ced100b92282e8fb38469ca6d5",
-        "md5": "1f32c7c21c7d7119882e9e5406905862",
-        "sha256": "a866cfd9293718dd6908efc27478a8756025b4e883d4fec5e8cc926f047162d9"
+        "blake2b_256": "c258161827b3b5f13076a30b0c33eee81cec270861bb5acbfda8acec4f8d8f38",
+        "md5": "85a51f6057718fb4d5b0fd8a33cf68df",
+        "sha256": "6288f9662b1f0dc1c23dd37791cc9be7c14b9aa778248beb9e5bc72739368ae3"
       },
       "downloads": -1,
-      "filename": "napari_cilia_assistant-1.0.0.tar.gz",
+      "filename": "napari_cilia_assistant-1.0.2.tar.gz",
       "has_sig": false,
-      "md5_digest": "1f32c7c21c7d7119882e9e5406905862",
+      "md5_digest": "85a51f6057718fb4d5b0fd8a33cf68df",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.10",
-      "size": 25354,
-      "upload_time": "2026-05-09T15:14:35",
-      "upload_time_iso_8601": "2026-05-09T15:14:35.939307Z",
-      "url": "https://files.pythonhosted.org/packages/da/7a/06aba4285d67d660d8e0d779adefd5ceb7ced100b92282e8fb38469ca6d5/napari_cilia_assistant-1.0.0.tar.gz",
+      "size": 20134,
+      "upload_time": "2026-05-09T17:44:41",
+      "upload_time_iso_8601": "2026-05-09T17:44:41.497950Z",
+      "url": "https://files.pythonhosted.org/packages/c2/58/161827b3b5f13076a30b0c33eee81cec270861bb5acbfda8acec4f8d8f38/napari_cilia_assistant-1.0.2.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
