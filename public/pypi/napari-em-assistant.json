@@ -11,7 +11,7 @@
       "Programming Language :: Python :: 3.11",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "# napari-em-assistant\n\nTask-based electron microscopy image processing tools for napari.\n\n`napari-em-assistant` is organized around small, explicit processing tasks that\ncan be used interactively on an active napari layer or applied to folders of EM\nimages. The first task is ImageJ/Fiji-style local contrast enhancement with\nCLAHE.\n\n## Current Task\n\n### Enhance Local Contrast CLAHE\n\nThe CLAHE task provides a napari widget for 2D grayscale EM images and 3D\ngrayscale stacks. It follows the ImageJ/Fiji dialog shape and default values:\n\n- block size: `127`\n- histogram bins: `256`\n- maximum slope: `3.00`\n- mask: `*None*`\n- fast: checked\n\nThe widget can:\n\n- show a top acceleration bar for CPU, CUDA via CuPy, or CPU fallback\n- preview CLAHE on the active image layer\n- apply CLAHE to the active 2D image layer or 3D grayscale stack\n- create a new layer named `<source_layer_name>_CLAHE`\n- batch process TIFF folders to an output folder\n- show batch progress with load/process checks, status, and output path\n\n## Backends\n\n- `opencv_cpu`: fast CPU approximation using `cv2.createCLAHE`.\n- `imagej_reference`: Python implementation ported from Fiji's\n  `mpicbg.ij.clahe.PlugIn` 2D grayscale CLAHE path. 3D stacks are processed\n  slice-by-slice. The `fast` checkbox only affects this backend.\n- `gpu_cupy`: experimental CuPy/CUDA batch backend. If CuPy or a CUDA device is\n  not available, it falls back to `opencv_cpu`. It may be slower than\n  `opencv_cpu` for many current workloads because the implementation pays GPU\n  transfer overhead and is not yet a fully optimized CUDA CLAHE kernel.\n\nThe acceleration bar shows the active mode for the selected backend. Detailed\nCuPy/OpenCV CUDA availability is still available in the tooltip for diagnostics.\n\nOpenCV CLAHE parameters are not identical to ImageJ/Fiji CLAHE parameters.\nUse `imagej_reference` when Fiji-style output is the priority. Current OpenCV\nand CuPy paths should be treated as practical approximations.\n\n## Install\n\nFrom this repository:\n\n```bash\npip install -e .\n```\n\nOptional CuPy support depends on the workstation CUDA stack. A convenience extra\nis provided:\n\n```bash\npip install -e \".[gpu]\"\n```\n\nIf that wheel does not match the local CUDA runtime, install the correct CuPy\npackage manually and keep the base plugin install CPU-only.\n\n## Use In napari\n\nAfter installation, open napari and choose:\n\n```text\nPlugins > Enhance Local Contrast CLAHE\n```\n\nFor interactive use, select a 2D grayscale image layer or 3D grayscale stack and\nuse `Preview` or `Apply to Active Layer`.\n\nFor batch use, choose an input folder containing 2D images or 3D grayscale\nstacks saved as `.tif` or `.tiff` files, choose an output folder, select a\nbackend, and run the batch. Outputs are saved as:\n\n```text\n<stem>_clahe.tif\n```\n\n## Validation\n\nThe current implementation is tested for:\n\n- widget and backend imports\n- Fiji-derived `imagej_reference` fast and exact paths\n- OpenCV CLAHE on synthetic `uint8` and `uint16` images\n- shape preservation\n- dtype preservation where possible\n- 3D stack support\n- GPU stub behavior\n- `gpu_cupy` CPU fallback behavior\n- batch result and progress reporting\n\nRun tests with:\n\n```bash\npython3 -m pytest tests/tasks/test_enhance_local_contrast_clahe.py\n```\n",
+    "description": "# napari-em-assistant\n\nTask-based electron microscopy image processing tools for napari.\n\n`napari-em-assistant` is organized around small, explicit processing tasks that\ncan be used interactively on an active napari layer or applied to folders of EM\nimages. The first tasks are ImageJ/Fiji-style local contrast enhancement with\nCLAHE and frictionless 2D/3D image cropping.\n\n## Current Task\n\n### Enhance Local Contrast CLAHE\n\nThe CLAHE task provides a napari widget for 2D grayscale EM images and 3D\ngrayscale stacks. It follows the ImageJ/Fiji dialog shape and default values:\n\n- block size: `127`\n- histogram bins: `256`\n- maximum slope: `3.00`\n- mask: `*None*`\n- fast: checked\n\nThe widget can:\n\n- show a top acceleration bar for CPU, CUDA via CuPy, or CPU fallback\n- preview CLAHE on the active image layer\n- apply CLAHE to the active 2D image layer or 3D grayscale stack\n- create a new layer named `<source_layer_name>_CLAHE`\n- batch process TIFF folders to an output folder\n- show batch progress with load/process checks, status, and output path\n\n## Backends\n\n- `opencv_cpu`: fast CPU approximation using `cv2.createCLAHE`.\n- `imagej_reference`: Python implementation ported from Fiji's\n  `mpicbg.ij.clahe.PlugIn` 2D grayscale CLAHE path. 3D stacks are processed\n  slice-by-slice. The `fast` checkbox only affects this backend.\n- `gpu_cupy`: experimental CuPy/CUDA batch backend. If CuPy or a CUDA device is\n  not available, it falls back to `opencv_cpu`. It may be slower than\n  `opencv_cpu` for many current workloads because the implementation pays GPU\n  transfer overhead and is not yet a fully optimized CUDA CLAHE kernel.\n\nThe acceleration bar shows the active mode for the selected backend. Detailed\nCuPy/OpenCV CUDA availability is still available in the tooltip for diagnostics.\n\nOpenCV CLAHE parameters are not identical to ImageJ/Fiji CLAHE parameters.\nThe OpenCV backend is faster, but it rescales the ImageJ-style `maximum slope`\nbefore passing it as OpenCV `clipLimit` for a more ImageJ-like user experience;\n`maximum slope` values up to `1` apply no enhancement in the OpenCV backend. Use\n`imagej_reference` when Fiji-style output is the priority. Current OpenCV and\nCuPy paths should be treated as practical approximations.\n\n## Install\n\nFrom this repository:\n\n```bash\npip install -e .\n```\n\nOptional CuPy support depends on the workstation CUDA stack. A convenience extra\nis provided:\n\n```bash\npip install -e \".[gpu]\"\n```\n\nIf that wheel does not match the local CUDA runtime, install the correct CuPy\npackage manually and keep the base plugin install CPU-only.\n\n## Use In napari\n\nAfter installation, open napari and choose:\n\n```text\nPlugins > Enhance Local Contrast CLAHE\n```\n\nFor interactive use, select a 2D grayscale image layer or 3D grayscale stack and\nuse `Preview` or `Apply to Active Layer`.\n\n### Crop Image\n\nThe crop task provides a compact widget for 2D images and 3D grayscale stacks.\nIt is organized around four imaging workflows: crop from a drawn ROI, tile by\ntotal tile count, tile by pixel size, and advanced coordinate cropping. A progress bar reports\nsaved or created crop pieces as `completed / total`.\nThe widget asks for confirmation before likely mistakes, including very tiny\ncrops from a large source image/stack and operations that would save more than\n1000 crop TIFF files.\n\nFor detailed step-by-step crop workflows, see\n[src/napari_em_assistant/tasks/crop_image/README.md](src/napari_em_assistant/tasks/crop_image/README.md).\n\nFor large images, choose a save folder and use either tiling workflow:\n\n- `Tile by Total Count`: enter the total number of output tiles wanted. The\n  plugin chooses a near-even Y/X grid automatically and keeps full Z depth for\n  3D stacks. For example, `6` creates six image tiles.\n- `Tile by Pixel Size`: save tiles with the requested output dimensions. For\n  example, a `6000 x 6000 x 500` stack with `z size = 0`, `y size = 2000`, and\n  `x size = 2000` writes nine `500 x 2000 x 2000` stack tiles. `z size = 0`\n  keeps the full Z depth in every tile.\n\nFor batch use, choose an input folder containing 2D images or 3D grayscale\nstacks saved as `.tif` or `.tiff` files, choose an output folder, select a\nbackend, and run the batch. Outputs are saved as:\n\n```text\n<stem>_clahe.tif\n```\n\n## Validation\n\nThe current implementation is tested for:\n\n- widget and backend imports\n- Fiji-derived `imagej_reference` fast and exact paths\n- OpenCV CLAHE on synthetic `uint8` and `uint16` images\n- shape preservation\n- dtype preservation where possible\n- 3D stack support\n- GPU stub behavior\n- `gpu_cupy` CPU fallback behavior\n- batch result and progress reporting\n\nRun tests with:\n\n```bash\npython3 -m pytest tests/tasks/test_enhance_local_contrast_clahe.py\n```\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -38,7 +38,7 @@
       "Repository": "https://github.com/wulinteousa2-hash/napari-em-assistant"
     },
     "provides_extra": null,
-    "release_url": "https://pypi.org/project/napari-em-assistant/0.2.2/",
+    "release_url": "https://pypi.org/project/napari-em-assistant/0.2.3/",
     "requires_dist": [
       "numpy",
       "tifffile",
@@ -48,11 +48,11 @@
     ],
     "requires_python": ">=3.11",
     "summary": "Task-based EM image processing assistant for napari",
-    "version": "0.2.2",
+    "version": "0.2.3",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 36831563,
+  "last_serial": 37090720,
   "ownership": {
     "organization": null,
     "roles": [
@@ -238,48 +238,92 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.2.3": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "34ec5f9dc2dad9b1dd89374c22852cffc9b80238562afa3868e7a86e440f54db",
+          "md5": "227ff6ee202a9409147eda3a344705a9",
+          "sha256": "09f398c6e5f1afe3ca28f0f263032623faf0176b27bb48d1bf8d221803e2f36f"
+        },
+        "downloads": -1,
+        "filename": "napari_em_assistant-0.2.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "227ff6ee202a9409147eda3a344705a9",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 31993,
+        "upload_time": "2026-05-15T18:45:16",
+        "upload_time_iso_8601": "2026-05-15T18:45:16.783054Z",
+        "url": "https://files.pythonhosted.org/packages/34/ec/5f9dc2dad9b1dd89374c22852cffc9b80238562afa3868e7a86e440f54db/napari_em_assistant-0.2.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "2a4732e3cf009b2253295ab8037891abd25262b6c0ca94ec237690d3976f165b",
+          "md5": "62b870ac4980c1037ca5b9afa4929221",
+          "sha256": "780bafa882e421b3cab41792c806972fefc83decaa55e9613c4df6ab6cda2e15"
+        },
+        "downloads": -1,
+        "filename": "napari_em_assistant-0.2.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "62b870ac4980c1037ca5b9afa4929221",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 28312,
+        "upload_time": "2026-05-15T18:45:17",
+        "upload_time_iso_8601": "2026-05-15T18:45:17.763429Z",
+        "url": "https://files.pythonhosted.org/packages/2a/47/32e3cf009b2253295ab8037891abd25262b6c0ca94ec237690d3976f165b/napari_em_assistant-0.2.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": null,
       "digests": {
-        "blake2b_256": "25d8a0bd2b7dde9c606a8a69e27e49d204393d2e076093a95a52cfeedfddbea8",
-        "md5": "182b5477651a33402f54eb95068ab91d",
-        "sha256": "605b7dbe0f7bcf5a649605c2261e715e80273cac128489745ad8bcc4a57278b9"
+        "blake2b_256": "34ec5f9dc2dad9b1dd89374c22852cffc9b80238562afa3868e7a86e440f54db",
+        "md5": "227ff6ee202a9409147eda3a344705a9",
+        "sha256": "09f398c6e5f1afe3ca28f0f263032623faf0176b27bb48d1bf8d221803e2f36f"
       },
       "downloads": -1,
-      "filename": "napari_em_assistant-0.2.2-py3-none-any.whl",
+      "filename": "napari_em_assistant-0.2.3-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "182b5477651a33402f54eb95068ab91d",
+      "md5_digest": "227ff6ee202a9409147eda3a344705a9",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.11",
-      "size": 19894,
-      "upload_time": "2026-05-07T13:59:01",
-      "upload_time_iso_8601": "2026-05-07T13:59:01.649425Z",
-      "url": "https://files.pythonhosted.org/packages/25/d8/a0bd2b7dde9c606a8a69e27e49d204393d2e076093a95a52cfeedfddbea8/napari_em_assistant-0.2.2-py3-none-any.whl",
+      "size": 31993,
+      "upload_time": "2026-05-15T18:45:16",
+      "upload_time_iso_8601": "2026-05-15T18:45:16.783054Z",
+      "url": "https://files.pythonhosted.org/packages/34/ec/5f9dc2dad9b1dd89374c22852cffc9b80238562afa3868e7a86e440f54db/napari_em_assistant-0.2.3-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": null,
       "digests": {
-        "blake2b_256": "7992b2d7edad18d8253dda6caa3bcedc04b2069f9188020944deaf0e589eb3f4",
-        "md5": "879bf972b839b6503d6d7c6cf270047e",
-        "sha256": "c9bb3e7f03091738e720de0d8c1df001cb714c8d0664f69f5db0d54bdd0c03ae"
+        "blake2b_256": "2a4732e3cf009b2253295ab8037891abd25262b6c0ca94ec237690d3976f165b",
+        "md5": "62b870ac4980c1037ca5b9afa4929221",
+        "sha256": "780bafa882e421b3cab41792c806972fefc83decaa55e9613c4df6ab6cda2e15"
       },
       "downloads": -1,
-      "filename": "napari_em_assistant-0.2.2.tar.gz",
+      "filename": "napari_em_assistant-0.2.3.tar.gz",
       "has_sig": false,
-      "md5_digest": "879bf972b839b6503d6d7c6cf270047e",
+      "md5_digest": "62b870ac4980c1037ca5b9afa4929221",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.11",
-      "size": 17065,
-      "upload_time": "2026-05-07T13:59:02",
-      "upload_time_iso_8601": "2026-05-07T13:59:02.754896Z",
-      "url": "https://files.pythonhosted.org/packages/79/92/b2d7edad18d8253dda6caa3bcedc04b2069f9188020944deaf0e589eb3f4/napari_em_assistant-0.2.2.tar.gz",
+      "size": 28312,
+      "upload_time": "2026-05-15T18:45:17",
+      "upload_time_iso_8601": "2026-05-15T18:45:17.763429Z",
+      "url": "https://files.pythonhosted.org/packages/2a/47/32e3cf009b2253295ab8037891abd25262b6c0ca94ec237690d3976f165b/napari_em_assistant-0.2.3.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
