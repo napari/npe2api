@@ -1,0 +1,170 @@
+{
+  "info": {
+    "author": "Simon Leclerc",
+    "author_email": "simon.leclerc@gu.se",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "\n[![License MIT](https://img.shields.io/badge/license-MIT-green)](https://github.com/CCI-GU-Sweden/simple-napari-cci-annotator/blob/main/LICENSE)\n[![Python 3.10\u20133.12](https://img.shields.io/badge/python-3.10%20|%203.11%20|%203.12-blue)](https://python.org)\n[![tests](https://github.com/CCI-GU-Sweden/simple-napari-cci-annotator/workflows/tests/badge.svg)](https://github.com/CCI-GU-Sweden/simple-napari-cci-annotator/actions)\n\n# Simple napari annotator\n\nMinimal napari plugin for YOLO bbox detection + quick correction + retraining.\n\nNo dataset browser, no extra workflow logic. User provides the image in napari.\n\n## UI flow\n\n1. Path to model (`.pt`) or model folder\n2. `Load model`\n3. `Predict`\n4. Optional destination folder for retrained model (browse or type)\n5. Edit boxes in napari shapes layer (`yolo_bboxes`)\n6. `Add correction`\n7. `Retrain`\n\n![UI](assets/Plugin_UI.png)\n\n## Starting from scratch\n\nThe model input supports either:\n\n- A `.pt` model file, or\n- A folder path.\n\nFolder behavior on `Load model`:\n\n- If the folder already contains one or more `.pt` files, the first one is loaded.\n- If the folder contains no `.pt` file, the plugin copies the bundled `yolov8n.pt` into that folder and loads it.\n- Empty model input is invalid and will show an error.\n\nIf you do not have a model yet, start from a pretrained YOLOv8 nano checkpoint and use it as your initial file:\n\n- Direct download: <https://github.com/ultralytics/assets/releases/latest/download/yolov8n.pt>\n- Model overview: <https://docs.ultralytics.com/models/yolov8/>\n\nAfter downloading, select that `yolov8n.pt` file in the Model field and continue with the correction/retrain loop.\n\n![Loading a model](assets/Loading_model.png)\n\n## Assumptions\n\n- Input image is already RGB 8-bit (or compatible with clipping/conversion).\n- Single class (`0: LABEL`) for now.\n- Exactly one image layer should be present when using `Add correction`.\n\n![Predicting label](assets/Predicting_label.png)\n\n## Folder behavior\n\nGiven a model path like:\n\n`.../my_model/best.pt`\n\nThe plugin uses `.../my_model` as root.\n\n### Add correction\n\nEach click saves:\n\n- Image to `my_model/corrections/<image_name>_<timestamp>.png`\n- Labels to `my_model/corrections/<image_name>_<timestamp>.txt`\n- Training config to `my_model/corrections/training_config.json` (created/updated)\n\nImage layer behavior:\n\n- If no image layer exists, `Add correction` shows an error.\n- If more than one image layer exists, `Add correction` shows an error.\n- If exactly one image layer exists, that image layer is used for saving correction image data.\n\n`training_config.json` defaults:\n\n- `image_size`: prefilled from the current image size using `max(height, width)`\n- `batch`: `8`\n- `epochs`: `100`\n- `patience`: `30`\n\nYou can edit this file before clicking `Retrain`.\n\nLabel format is YOLO detection:\n\n`class x_center y_center width height`\n\nnormalized to `[0, 1]`.\n\n### Retrain\n\nEach click creates:\n\n- `<retrain_root>/dataset/`\n  - `images/train`, `images/val`\n  - `labels/train`, `labels/val`\n  - `dataset.yaml`\n- Trains YOLO from those corrections\n- Copies best model to:\n  - `<retrain_root>/best.pt`\n- Deletes training traces folder after extracting `best.pt`\n\n`<retrain_root>` resolution:\n\n- If destination field is set, retraining outputs there.\n- Otherwise it defaults to `my_model/retrained_<timestamp>`.\n\nSo the retrained folder keeps a clean dataset + final model, without run artifacts.\n\nWarning: Data labeled will be equally divided between traning and validation (50%).\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": "MIT License\n        \n        Copyright (c) 2026 LECLERC Simon\n        \n        Permission is hereby granted, free of charge, to any person obtaining a copy\n        of this software and associated documentation files (the \"Software\"), to deal\n        in the Software without restriction, including without limitation the rights\n        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n        copies of the Software, and to permit persons to whom the Software is\n        furnished to do so, subject to the following conditions:\n        \n        The above copyright notice and this permission notice shall be included in all\n        copies or substantial portions of the Software.\n        \n        THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n        SOFTWARE.\n        ",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "simple-napari-cci-annotator",
+    "package_url": "https://pypi.org/project/simple-napari-cci-annotator/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/simple-napari-cci-annotator/",
+    "project_urls": null,
+    "provides_extra": [
+      "all",
+      "testing"
+    ],
+    "release_url": "https://pypi.org/project/simple-napari-cci-annotator/0.0.2/",
+    "requires_dist": [
+      "numpy",
+      "qtpy",
+      "ultralytics",
+      "pillow",
+      "napari[all]; extra == \"all\"",
+      "tox; extra == \"testing\"",
+      "pytest; extra == \"testing\"",
+      "pytest-cov; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "napari; extra == \"testing\"",
+      "pyqt5; extra == \"testing\""
+    ],
+    "requires_python": ">=3.9",
+    "summary": "Plugin to easly test a yolo model and retrain it",
+    "version": "0.0.2",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 35308524,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "leclercsimon74"
+      }
+    ]
+  },
+  "releases": {
+    "0.0.2": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "16b274e542bea4acbf4d319c8fe962a2dc13311e08646deaa4d6eef70a4033d7",
+          "md5": "bb5ca883919f464e9bcafd921da68129",
+          "sha256": "4555da51a674a1e4e991cc0b6b4c7404668e65694f277fdd978afdb3095e2e36"
+        },
+        "downloads": -1,
+        "filename": "simple_napari_cci_annotator-0.0.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "bb5ca883919f464e9bcafd921da68129",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 5972413,
+        "upload_time": "2026-03-20T09:13:34",
+        "upload_time_iso_8601": "2026-03-20T09:13:34.944797Z",
+        "url": "https://files.pythonhosted.org/packages/16/b2/74e542bea4acbf4d319c8fe962a2dc13311e08646deaa4d6eef70a4033d7/simple_napari_cci_annotator-0.0.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "07ebd02a6e53e1520a4889b3799bbea2533cb4a05c79545fe6bb05d2c8cebfa0",
+          "md5": "7680e5a25155f1877ffd0940e49be104",
+          "sha256": "309290e039127f7159b1afeac7720fdfaa33f2b9b19c330e2c001f64f70e9844"
+        },
+        "downloads": -1,
+        "filename": "simple_napari_cci_annotator-0.0.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "7680e5a25155f1877ffd0940e49be104",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 5977692,
+        "upload_time": "2026-03-20T09:13:37",
+        "upload_time_iso_8601": "2026-03-20T09:13:37.098353Z",
+        "url": "https://files.pythonhosted.org/packages/07/eb/d02a6e53e1520a4889b3799bbea2533cb4a05c79545fe6bb05d2c8cebfa0/simple_napari_cci_annotator-0.0.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "16b274e542bea4acbf4d319c8fe962a2dc13311e08646deaa4d6eef70a4033d7",
+        "md5": "bb5ca883919f464e9bcafd921da68129",
+        "sha256": "4555da51a674a1e4e991cc0b6b4c7404668e65694f277fdd978afdb3095e2e36"
+      },
+      "downloads": -1,
+      "filename": "simple_napari_cci_annotator-0.0.2-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "bb5ca883919f464e9bcafd921da68129",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.9",
+      "size": 5972413,
+      "upload_time": "2026-03-20T09:13:34",
+      "upload_time_iso_8601": "2026-03-20T09:13:34.944797Z",
+      "url": "https://files.pythonhosted.org/packages/16/b2/74e542bea4acbf4d319c8fe962a2dc13311e08646deaa4d6eef70a4033d7/simple_napari_cci_annotator-0.0.2-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "07ebd02a6e53e1520a4889b3799bbea2533cb4a05c79545fe6bb05d2c8cebfa0",
+        "md5": "7680e5a25155f1877ffd0940e49be104",
+        "sha256": "309290e039127f7159b1afeac7720fdfaa33f2b9b19c330e2c001f64f70e9844"
+      },
+      "downloads": -1,
+      "filename": "simple_napari_cci_annotator-0.0.2.tar.gz",
+      "has_sig": false,
+      "md5_digest": "7680e5a25155f1877ffd0940e49be104",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.9",
+      "size": 5977692,
+      "upload_time": "2026-03-20T09:13:37",
+      "upload_time_iso_8601": "2026-03-20T09:13:37.098353Z",
+      "url": "https://files.pythonhosted.org/packages/07/eb/d02a6e53e1520a4889b3799bbea2533cb4a05c79545fe6bb05d2c8cebfa0/simple_napari_cci_annotator-0.0.2.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

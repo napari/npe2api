@@ -1,0 +1,530 @@
+{
+  "info": {
+    "author": "Herearii Metuarea, Abdoul djalil Ousseini Hamza, Walter Guerra, Andrea Patocchi, Lidia Lozano, Shauny Van Hoye, Francois Laurens, Jeremy Labrosse, Pejman Rasti, David Rousseau",
+    "author_email": "herearii.metuarea@gmail.com",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# DeepPhenoTree\n\n[![License GNU LGPL v3.0](https://img.shields.io/pypi/l/deepphenotree.svg?color=green)](https://github.com/hereariim/deepphenotree/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/deepphenotree.svg?color=green)](https://pypi.org/project/deepphenotree)\n[![Python Version](https://img.shields.io/pypi/pyversions/deepphenotree.svg?color=green)](https://python.org)\n[![tests](https://github.com/hereariim/deepphenotree/workflows/tests/badge.svg)](https://github.com/hereariim/deepphenotree/actions)\n[![codecov](https://codecov.io/gh/hereariim/deepphenotree/branch/main/graph/badge.svg)](https://codecov.io/gh/hereariim/deepphenotree)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/deepphenotree)](https://napari-hub.org/plugins/deepphenotree)\n[![npe2](https://img.shields.io/badge/plugin-npe2-blue?link=https://napari.org/stable/plugins/index.html)](https://napari.org/stable/plugins/index.html)\n[![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-purple.json)](https://github.com/copier-org/copier)\n\n\nHerearii Metuarea, Abdoul-Djalil Ousseini Hamza, Walter Guerra\u2020,  Andrea Patocchi, Lidia Lozano,  Shauny Van Hoye,  Francois Laurens, Jeremy Labrosse,  Pejman Rasti,  David Rousseau\u2020.\n\n\u2020 project lead\n\n<img width=\"1920\" alt=\"Capture d&#39;\u00e9cran 2026-04-02 120703\" src=\"https://github.com/user-attachments/assets/5794772e-fcf0-40fd-a8af-372f327f8a4d\" />\n\n<img width=\"1920\" alt=\"DeepPhenoTreeTools\" src=\"https://github.com/user-attachments/assets/03c19ce6-1cf7-42e4-80b5-a9ade8fe9ebf\" />\n\nDeepPhenoTree is though as a tool to enable automatic detection of phenological stages associated with flowering, fruitlet, and fruit in harvest time from images using deep learning\u2013based object detection models.\n\nThis [napari] plugin was generated with [copier] using the [napari-plugin-template] (None).\n\n### Contribution\n\n### Article (under review)\n\n*DeepPhenoTree \u2013 Apple Edition: a Multi-site apple phenology RGB annotated dataset with deep learning baseline models.*\nHerearii Metuarea, Abdoul djalil Ousseni hamza, Walter Guerra,  Andrea Patocchi, Lidia Lozano,  Shauny Van Hoye,  Francois Laurens, Jeremy Labrosse,  Pejman Rasti,  David Rousseau.\n\n### Dataset\n\nHerearii Metuarea; Abdoul djalil Ousseni hamza; Lou Decastro; Jade Marhadour; Oumaima Karia; Lor\u00e8ne Masson; Marie Kourkoumelis-Rodostamos; Walter Guerra; Francesca Zuffa; Francesco Panzeri; Andrea Patocchi; Lidia Lozano; Shauny Van Hoye; Marijn Rymenants; Fran\u00e7ois Laurens; Jeremy Labrosse; Pejman Rasti; David Rousseau, 2026, \"DeepPhenoTree - Apple Edition\", https://doi.org/10.57745/NORPF1, Recherche Data Gouv, V5, UNF:6:FyJNuJx4BVZxWuG8hI4gEw== [fileUNF]\n\n----------------------------------\n\n## Installation\n\nYou can install `deepphenotree` via [pip]:\n\n```\npip install deepphenotree\n```\n\nIf napari is not already installed, you can install `deepphenotree` with **napari** and **Qt** via:\n\n```\npip install \"deepphenotree[all]\"\n```\n\nTo install latest development version :\n\n```\npip install git+https://github.com/hereariim/deepphenotree.git\n```\n\nGPU is mandatory for time processing and models running (especially RT-DETR). Please visit the official PyTorch website to get the appropriate installation command:\n\ud83d\udc49 https://pytorch.org/get-started/locally\n\n**Exemple : GPU (CUDA 12.1)**\n\n    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121\n\n## Getting started\n\n### Running from Python\n\n#### 1. Load sample image\n\n```\nfrom deepphenotree._sample_data import DeepPhenoTreeData\n\n# Flowering data\ndata_flower = DeepPhenoTreeData('Flowering')\nimages = data_flower.data # Dimension : (5120, 5120, 3, 4)\ncountry = data_flower.names # ['Belgium', 'Italy', 'Spain', 'Switzerland']\n\n# Fruitlet data\ndata_fruitlet = DeepPhenoTreeData('Fruitlet')\n# Fruit data\ndata_fruit = DeepPhenoTreeData('Fruit')\n```\n\n#### 2. Run inference\n\n```\nfrom deepphenotree.inference import YoloInferencer\nimage = # Your RGB image\n\n# Flowering task\ninfer = YoloInferencer(\"Flowering\")\nbbx = infer.predict_boxes(image)\n\n# Fruitlet task\ninfer = YoloInferencer(\"Fruitlet\")\nbbx = infer.predict_boxes(image)\n\n# Fruit task\ninfer = YoloInferencer(\"Fruit\")\nbbx = infer.predict_boxes(image)\n```\n\n### Running from Napari\n\nThis plugin is a tool to perform targeted image inference on user-provided images. Users can run three specific detection tasks via dedicated buttons: flowering, fruitlet, and fruit detection. The plugin returns the coordinates of bounding boxes around detected objects, and a message informs the user of the number of detected boxes. Several developments are ongoing\u2014feel free to contact us if you have requests or suggestions.\n\n<!-- <img width=\"1854\" height=\"1048\" alt=\"Screenshot from 2026-01-09 16-38-04\" src=\"https://github.com/user-attachments/assets/385c5867-ffd1-4de0-8bff-2af0ca1d052b\" /> -->\n\n<img width=\"1854\" alt=\"Deepphenotree_plugin\" src=\"https://github.com/user-attachments/assets/8b03f625-f4e9-458d-b9d5-35f75fceb1eb\" />\n\n### Scheme\n\n<img width=\"1920\" alt=\"User_tool\" src=\"https://github.com/user-attachments/assets/2b1e9bc6-ca87-4315-83a4-7c1c5d4aff6a\" />\n\n### Input\n\nUser drag and drop RGB image on napari window. Otherwise, user can select an image among suggested images from the plugin :\n\nFile > Open Sample > DeepPhenoTree > images\n\nNote : The images available in Open Sample > DeepPhenoTree correspond to the test data associated with the models provided in this plugin.\n\n### Process\n\nUser click to make inference in image : \n- Flowering : Detect all objects (from BBCH 00 to BBCH 69) from bud developpement to flowering.\n- Fruitlet : Detect fruit in developement (from BBCH 71 to 77)\n- Fruit : Detect all fruit in harvest time (from BBCH 81 to 89)\n\n### Output\n\nBounding box displayed in layer Flowering for flowering, Fruitlet for fruitlet and Fruit for fruit.\n\n## Model\n\nDeepPhenoTree consists of a RT-DETR trained on DeepPhenoTree dataset. \n\nThe trained models used in this project are **not publicly available**. They are part of ongoing research and collaborative projects, and therefore cannot be distributed at this time.  \nHowever, the codebase is provided to ensure **reproducibility** and **transparency** of the proposed methodology.\n\n### Images results\n\n**Standard deviation is computed over 5-fold cross-validation. Overall (4 sites) denotes the aggregated evaluation across the four experimental sites (Switzerland, Belgium, Spain, and Italy).**\n\n| Dataset      | Location               | Precision        | Recall           | mAP@.5         | mAP@.5:.95     |\n| ------------ | ---------------------- | ---------------- | ---------------- | -------------- | -------------- |\n|              | Overall (4 sites)      | 0.69 \u00b1 0.01      | 0.58 \u00b1 0.02      | 0.65 \u00b1 0.02    | 0.37 \u00b1 0.02    |\n|              | Switzerland            | 0.73 \u00b1 0.02      | 0.60 \u00b1 0.04      | 0.68 \u00b1 0.03    | 0.40 \u00b1 0.04    |\n| Flowering    | Belgium                | 0.72 \u00b1 0.02      | 0.63 \u00b1 0.03      | 0.69 \u00b1 0.03    | 0.40 \u00b1 0.03    |\n|              | Spain                  | 0.66 \u00b1 0.01      | 0.53 \u00b1 0.05      | 0.60 \u00b1 0.03    | 0.30 \u00b1 0.02    |\n|              | Italy                  | 0.69 \u00b1 0.04      | 0.61 \u00b1 0.03      | 0.67 \u00b1 0.04    | 0.40 \u00b1 0.04    |\n| ------------ | ---------------------- | ---------------- | ---------------- | -------------- | -------------- |\n|              | Overall (4 sites)      | 0.85 \u00b1 0.02      | 0.73 \u00b1 0.02      | 0.82 \u00b1 0.02    | 0.53 \u00b1 0.01    |\n|              | Switzerland            | 0.86 \u00b1 0.04      | 0.78 \u00b1 0.04      | 0.84 \u00b1 0.06    | 0.56 \u00b1 0.04    |\n| Fruitlet     | Belgium                | 0.83 \u00b1 0.03      | 0.65 \u00b1 0.04      | 0.77 \u00b1 0.04    | 0.52 \u00b1 0.14    |\n|              | Spain                  | 0.86 \u00b1 0.02      | 0.72 \u00b1 0.03      | 0.81 \u00b1 0.03    | 0.52 \u00b1 0.03    |\n|              | Italy                  | 0.88 \u00b1 0.01      | 0.80 \u00b1 0.01      | 0.88 \u00b1 0.01    | 0.61 \u00b1 0.01    |\n| ------------ | ---------------------- | ---------------- | ---------------- | -------------- | -------------- |\n|              | Overall (4 sites)      | 0.87 \u00b1 0.01      | 0.79 \u00b1 0.01      | 0.86 \u00b1 0.01    | 0.57 \u00b1 0.01    |\n|              | Switzerland            | 0.86 \u00b1 0.03      | 0.80 \u00b1 0.02      | 0.87 \u00b1 0.02    | 0.59 \u00b1 0.01    |\n| Fruit        | Belgium                | 0.90 \u00b1 0.01      | 0.84 \u00b1 0.01      | 0.90 \u00b1 0.01    | 0.63 \u00b1 0.02    |\n|              | Spain                  | 0.86 \u00b1 0.02      | 0.75 \u00b1 0.02      | 0.84 \u00b1 0.02    | 0.51 \u00b1 0.03    |\n|              | Italy                  | 0.88 \u00b1 0.02      | 0.84 \u00b1 0.03      | 0.90 \u00b1 0.02    | 0.66 \u00b1 0.02    |\n\n\n## DeepPhenoTree Dataset\n\nDeepPhenoTree \u2013 Apple Edition, a multi-site, multi-variety,  RGB  image  dataset  dedicated  to  the  classification  of  key  apple  treephenological stages.\n\n<img width=\"1920\" alt=\"IRTA_time\" src=\"https://github.com/user-attachments/assets/a05aedc7-2ad2-40cc-86d3-b3b94c6caa74\" />\n\n## Acknowlegments\n\nThis work is led by IRHS, Universit\u00e9 d'Angers, INRAe, Institut Agro. It is supported by :\n\n- The European Union\u2019s Horizon Europe research innovation programme under grant agreement No 101094587 ([PHENET project](https://doi.org/10.3030/101094587))\n- The French National Research Agency (ANR) as part of the Programme d'Investissements d'Avenir under grant agreement ANR-11-INBS-0012 ([PHENOME-EMPHASIS](https://anr.fr/ProjetIA-11-INBS-0012))\n- The French National Research Agency (ANR) as part of the France 2030 investment plan under grant agreement ANR-22-PEAE-0012 ([AGROECOPHEN](https://anr.fr/ProjetIA-22-PEAE-0012))\n- The HPC resources of IDRIS under the allocation 2024-AD010115553 made by GENCI.\n\n\n## Contact\n\nImhorphen team, bioimaging research group\n42 rue George Morel, Angers, France\n\n- Herearii Metuarea, herearii.metuarea@univ-angers.fr\n- Abdoul-Djalil Ousseini Hamza, abdoul-djalil.ousseini-hamza@inrae.fr\n- Pr David Rousseau, david.rousseau@univ-angers.fr\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [GNU LGPL v3.0] license,\n\"deepphenotree\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n## Citing\n\nIf you use DeepPhenoTree in your research, please use the following BibTeX entry.\n\n```\n@article{metuarea2026deepphenotree,\n  title={DeepPhenoTree--Apple Edition: a Multi-site apple phenology RGB annotated dataset with deep learning baseline models},\n  author={Herearii Metuarea and Abdoul-Djalil Ousseini Hamza and Walter Guerra and Francesca Zuffa and Francesco Panzeri and Andrea Patocchi and Lidia Lozano and Shauny Van Hoye and Fran\u00e7ois Laurens and Jeremy Labrosse and Pejman Rasti and David Rousseau},\n  year={2026}\n}\n```\n\nIf you use DeepPhenoTree dataset in your research, please use the following BibTeX entry.\n\n```\n@dataset{metuarea2026deepphenotree_dataset,\n  author = {Metuarea Herearii and Abdoul-Djalil Ousseini Hamza and Decastro Lou and Marhadour Jade and Karia Oumaima and Masson Lor\u00e8ne and Kourkoumelis-Rodostamos Marie and Guerra Walter and Zuffa Francesca and Panzeri Francesco and Patocchi Andrea and Lozano Lidia and Van Hoye Shauny and Rymenants Marijn and Laurens Fran\u00e7ois and Labrosse Jeremy and Rasti Pejman and Rousseau David},\n  title = {DeepPhenoTree \u2013 Apple Edition},\n  year = {2026},\n  version = {5},\n  publisher = {Recherche Data Gouv},\n  doi = {10.57745/NORPF1}\n}\n```\n\n\n[napari]: https://github.com/napari/napari\n[copier]: https://copier.readthedocs.io/en/stable/\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[napari-plugin-template]: https://github.com/napari/napari-plugin-template\n\n[file an issue]: https://github.com/hereariim/deepphenotree/issues\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": "\n                           GNU LESSER GENERAL PUBLIC LICENSE\n                               Version 3, 29 June 2007\n        \n         Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>\n         Everyone is permitted to copy and distribute verbatim copies\n         of this license document, but changing it is not allowed.\n        \n        \n          This version of the GNU Lesser General Public License incorporates\n        the terms and conditions of version 3 of the GNU General Public\n        License, supplemented by the additional permissions listed below.\n        \n          0. Additional Definitions.\n        \n          As used herein, \"this License\" refers to version 3 of the GNU Lesser\n        General Public License, and the \"GNU GPL\" refers to version 3 of the GNU\n        General Public License.\n        \n          \"The Library\" refers to a covered work governed by this License,\n        other than an Application or a Combined Work as defined below.\n        \n          An \"Application\" is any work that makes use of an interface provided\n        by the Library, but which is not otherwise based on the Library.\n        Defining a subclass of a class defined by the Library is deemed a mode\n        of using an interface provided by the Library.\n        \n          A \"Combined Work\" is a work produced by combining or linking an\n        Application with the Library.  The particular version of the Library\n        with which the Combined Work was made is also called the \"Linked\n        Version\".\n        \n          The \"Minimal Corresponding Source\" for a Combined Work means the\n        Corresponding Source for the Combined Work, excluding any source code\n        for portions of the Combined Work that, considered in isolation, are\n        based on the Application, and not on the Linked Version.\n        \n          The \"Corresponding Application Code\" for a Combined Work means the\n        object code and/or source code for the Application, including any data\n        and utility programs needed for reproducing the Combined Work from the\n        Application, but excluding the System Libraries of the Combined Work.\n        \n          1. Exception to Section 3 of the GNU GPL.\n        \n          You may convey a covered work under sections 3 and 4 of this License\n        without being bound by section 3 of the GNU GPL.\n        \n          2. Conveying Modified Versions.\n        \n          If you modify a copy of the Library, and, in your modifications, a\n        facility refers to a function or data to be supplied by an Application\n        that uses the facility (other than as an argument passed when the\n        facility is invoked), then you may convey a copy of the modified\n        version:\n        \n           a) under this License, provided that you make a good faith effort to\n           ensure that, in the event an Application does not supply the\n           function or data, the facility still operates, and performs\n           whatever part of its purpose remains meaningful, or\n        \n           b) under the GNU GPL, with none of the additional permissions of\n           this License applicable to that copy.\n        \n          3. Object Code Incorporating Material from Library Header Files.\n        \n          The object code form of an Application may incorporate material from\n        a header file that is part of the Library.  You may convey such object\n        code under terms of your choice, provided that, if the incorporated\n        material is not limited to numerical parameters, data structure\n        layouts and accessors, or small macros, inline functions and templates\n        (ten or fewer lines in length), you do both of the following:\n        \n           a) Give prominent notice with each copy of the object code that the\n           Library is used in it and that the Library and its use are\n           covered by this License.\n        \n           b) Accompany the object code with a copy of the GNU GPL and this license\n           document.\n        \n          4. Combined Works.\n        \n          You may convey a Combined Work under terms of your choice that,\n        taken together, effectively do not restrict modification of the\n        portions of the Library contained in the Combined Work and reverse\n        engineering for debugging such modifications, if you also do each of\n        the following:\n        \n           a) Give prominent notice with each copy of the Combined Work that\n           the Library is used in it and that the Library and its use are\n           covered by this License.\n        \n           b) Accompany the Combined Work with a copy of the GNU GPL and this license\n           document.\n        \n           c) For a Combined Work that displays copyright notices during\n           execution, include the copyright notice for the Library among\n           these notices, as well as a reference directing the user to the\n           copies of the GNU GPL and this license document.\n        \n           d) Do one of the following:\n        \n               0) Convey the Minimal Corresponding Source under the terms of this\n               License, and the Corresponding Application Code in a form\n               suitable for, and under terms that permit, the user to\n               recombine or relink the Application with a modified version of\n               the Linked Version to produce a modified Combined Work, in the\n               manner specified by section 6 of the GNU GPL for conveying\n               Corresponding Source.\n        \n               1) Use a suitable shared library mechanism for linking with the\n               Library.  A suitable mechanism is one that (a) uses at run time\n               a copy of the Library already present on the user's computer\n               system, and (b) will operate properly with a modified version\n               of the Library that is interface-compatible with the Linked\n               Version.\n        \n           e) Provide Installation Information, but only if you would otherwise\n           be required to provide such information under section 6 of the\n           GNU GPL, and only to the extent that such information is\n           necessary to install and execute a modified version of the\n           Combined Work produced by recombining or relinking the\n           Application with a modified version of the Linked Version. (If\n           you use option 4d0, the Installation Information must accompany\n           the Minimal Corresponding Source and Corresponding Application\n           Code. If you use option 4d1, you must provide the Installation\n           Information in the manner specified by section 6 of the GNU GPL\n           for conveying Corresponding Source.)\n        \n          5. Combined Libraries.\n        \n          You may place library facilities that are a work based on the\n        Library side by side in a single library together with other library\n        facilities that are not Applications and are not covered by this\n        License, and convey such a combined library under terms of your\n        choice, if you do both of the following:\n        \n           a) Accompany the combined library with a copy of the same work based\n           on the Library, uncombined with any other library facilities,\n           conveyed under the terms of this License.\n        \n           b) Give prominent notice with the combined library that part of it\n           is a work based on the Library, and explaining where to find the\n           accompanying uncombined form of the same work.\n        \n          6. Revised Versions of the GNU Lesser General Public License.\n        \n          The Free Software Foundation may publish revised and/or new versions\n        of the GNU Lesser General Public License from time to time. Such new\n        versions will be similar in spirit to the present version, but may\n        differ in detail to address new problems or concerns.\n        \n          Each version is given a distinguishing version number. If the\n        Library as you received it specifies that a certain numbered version\n        of the GNU Lesser General Public License \"or any later version\"\n        applies to it, you have the option of following the terms and\n        conditions either of that published version or of any later version\n        published by the Free Software Foundation. If the Library as you\n        received it does not specify a version number of the GNU Lesser\n        General Public License, you may choose any version of the GNU Lesser\n        General Public License ever published by the Free Software Foundation.\n        \n          If the Library as you received it specifies that a proxy can decide\n        whether future versions of the GNU Lesser General Public License shall\n        apply, that proxy's public statement of acceptance of any version is\n        permanent authorization for you to choose that version for the\n        Library.\n        ",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "deepphenotree",
+    "package_url": "https://pypi.org/project/deepphenotree/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/deepphenotree/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/hereariim/deepphenotree/issues",
+      "Documentation": "https://github.com/hereariim/deepphenotree#README.md",
+      "Source Code": "https://github.com/hereariim/deepphenotree",
+      "User Support": "https://github.com/hereariim/deepphenotree/issues"
+    },
+    "provides_extra": [
+      "all"
+    ],
+    "release_url": "https://pypi.org/project/deepphenotree/1.0.8/",
+    "requires_dist": [
+      "numpy",
+      "magicgui",
+      "qtpy",
+      "scikit-image",
+      "pillow",
+      "requests",
+      "tqdm",
+      "sahi==0.11.36",
+      "ultralytics==8.3.214",
+      "opencv-python<5,>=4.10",
+      "torch>=2.2",
+      "torchvision>=0.17",
+      "napari[all]; extra == \"all\""
+    ],
+    "requires_python": ">=3.10",
+    "summary": "A simple plugin to use models developped for flowering, fruitlet and fruit",
+    "version": "1.0.8",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 36212885,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "hmetua"
+      }
+    ]
+  },
+  "releases": {
+    "0.0.2": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "d0577944100f32b60dbe44cb4f964a01cd354126d81e718fcf3e57c9af46cfb7",
+          "md5": "61011d661300e7ffaa198d7ad3c80486",
+          "sha256": "b6769022098b262da111beef55bfc56596e0314bcdb21801f8cb846de58a1570"
+        },
+        "downloads": -1,
+        "filename": "deepphenotree-0.0.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "61011d661300e7ffaa198d7ad3c80486",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 5805772,
+        "upload_time": "2026-02-09T18:43:37",
+        "upload_time_iso_8601": "2026-02-09T18:43:37.329433Z",
+        "url": "https://files.pythonhosted.org/packages/d0/57/7944100f32b60dbe44cb4f964a01cd354126d81e718fcf3e57c9af46cfb7/deepphenotree-0.0.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "c83dc7a3aa0a9a62ed05db13c701ddd3256df47d696deebf682257f09ed89c18",
+          "md5": "3cc44ceb444ef646c75beb22ff5356c5",
+          "sha256": "4f15860b6c02becb3de5847f67318d96f0b87d348aa2607fed064f90f97f81cc"
+        },
+        "downloads": -1,
+        "filename": "deepphenotree-0.0.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "3cc44ceb444ef646c75beb22ff5356c5",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 5816563,
+        "upload_time": "2026-02-09T18:43:40",
+        "upload_time_iso_8601": "2026-02-09T18:43:40.020793Z",
+        "url": "https://files.pythonhosted.org/packages/c8/3d/c7a3aa0a9a62ed05db13c701ddd3256df47d696deebf682257f09ed89c18/deepphenotree-0.0.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.3": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "1212a0ad6d660ddefcb39d1a717eb986cda876447359d22da9c500348eb08f6c",
+          "md5": "5b2594837c9f9fde22efc9d9797489eb",
+          "sha256": "091961bf6a139fd82fbfc858c486b2cf182a43d4f7259f67fa1f246e696d3d3f"
+        },
+        "downloads": -1,
+        "filename": "deepphenotree-0.0.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "5b2594837c9f9fde22efc9d9797489eb",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 5806759,
+        "upload_time": "2026-02-12T21:52:45",
+        "upload_time_iso_8601": "2026-02-12T21:52:45.994098Z",
+        "url": "https://files.pythonhosted.org/packages/12/12/a0ad6d660ddefcb39d1a717eb986cda876447359d22da9c500348eb08f6c/deepphenotree-0.0.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "50eda84845421f047469c97fe40dd8d62fcd3344302175abac008b2cbef39dbf",
+          "md5": "87d3acaf3ab7bac98a71c237a31cf64b",
+          "sha256": "b2ed14da4dfa2a6d3f57b2239ccdf842266d5ae76722037ce72ca5f938977513"
+        },
+        "downloads": -1,
+        "filename": "deepphenotree-0.0.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "87d3acaf3ab7bac98a71c237a31cf64b",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 5817833,
+        "upload_time": "2026-02-12T21:52:49",
+        "upload_time_iso_8601": "2026-02-12T21:52:49.919471Z",
+        "url": "https://files.pythonhosted.org/packages/50/ed/a84845421f047469c97fe40dd8d62fcd3344302175abac008b2cbef39dbf/deepphenotree-0.0.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "5021956b6a9ab4a46dd64e0d15eac8afe4e95395c3206ff1c9fcf0555ea62ee8",
+          "md5": "d3c98d0e8ff8a1d02e6f1cc89f7898f1",
+          "sha256": "5496d7ec215253da55d8bef379ada0e7cad50df4a906e26e88d180da50fff060"
+        },
+        "downloads": -1,
+        "filename": "deepphenotree-1.0.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "d3c98d0e8ff8a1d02e6f1cc89f7898f1",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 11519872,
+        "upload_time": "2026-02-25T09:21:17",
+        "upload_time_iso_8601": "2026-02-25T09:21:17.694843Z",
+        "url": "https://files.pythonhosted.org/packages/50/21/956b6a9ab4a46dd64e0d15eac8afe4e95395c3206ff1c9fcf0555ea62ee8/deepphenotree-1.0.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "1faeaf5b04849ca88cb84aa7889f885cabe976adb8fc538905479f4844fa4c61",
+          "md5": "27dc8880bc8286ad94a65ea5c8f3e3ef",
+          "sha256": "947b4cffd0a9d621eb26c8d10375cd0e657b6b8ee8e9533ce57c24556c5a51a0"
+        },
+        "downloads": -1,
+        "filename": "deepphenotree-1.0.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "27dc8880bc8286ad94a65ea5c8f3e3ef",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 11535136,
+        "upload_time": "2026-02-25T09:21:20",
+        "upload_time_iso_8601": "2026-02-25T09:21:20.477471Z",
+        "url": "https://files.pythonhosted.org/packages/1f/ae/af5b04849ca88cb84aa7889f885cabe976adb8fc538905479f4844fa4c61/deepphenotree-1.0.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "e0a8ed02bcf18359a5dbd372d7af994752610da311643b638de47a27472bbd7e",
+          "md5": "e9b2352408a15fc922229d63e58489c7",
+          "sha256": "46806b6d2d439a6b3698d074dd748e09c5a170d8665514e4f6acf3da882ec9e4"
+        },
+        "downloads": -1,
+        "filename": "deepphenotree-1.0.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "e9b2352408a15fc922229d63e58489c7",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 11519963,
+        "upload_time": "2026-02-25T09:50:09",
+        "upload_time_iso_8601": "2026-02-25T09:50:09.486655Z",
+        "url": "https://files.pythonhosted.org/packages/e0/a8/ed02bcf18359a5dbd372d7af994752610da311643b638de47a27472bbd7e/deepphenotree-1.0.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "77cbdba056d63808c8d7e8c6dc35984a5860c97f624e60eae207f4e09932b99a",
+          "md5": "5623a380159a4417ca047ccc90a14ab7",
+          "sha256": "4f22289ad2f37fec95fde516f170f2ca966dcd2832fceff4bf5c1d14b944a4e2"
+        },
+        "downloads": -1,
+        "filename": "deepphenotree-1.0.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "5623a380159a4417ca047ccc90a14ab7",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 11535375,
+        "upload_time": "2026-02-25T09:50:12",
+        "upload_time_iso_8601": "2026-02-25T09:50:12.162510Z",
+        "url": "https://files.pythonhosted.org/packages/77/cb/dba056d63808c8d7e8c6dc35984a5860c97f624e60eae207f4e09932b99a/deepphenotree-1.0.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.2": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "d573688fc25fb3e1a196b444257e70a3ddbd11149fe2f86f56df736d8202eb27",
+          "md5": "3379a24660531cd5cc72d62c28778ad2",
+          "sha256": "e73d8d1ce70a266ecd5a7d39ea7166cb8332a270940447b31bbabe5ce4a9e185"
+        },
+        "downloads": -1,
+        "filename": "deepphenotree-1.0.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "3379a24660531cd5cc72d62c28778ad2",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 11519956,
+        "upload_time": "2026-02-25T09:52:26",
+        "upload_time_iso_8601": "2026-02-25T09:52:26.313008Z",
+        "url": "https://files.pythonhosted.org/packages/d5/73/688fc25fb3e1a196b444257e70a3ddbd11149fe2f86f56df736d8202eb27/deepphenotree-1.0.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "f4e72872327c3064140b7e0c036d3646363d44de4dfa483386e296a9d0a413a1",
+          "md5": "fcca28c62a66142a0442d2caf96d4409",
+          "sha256": "b0b45289ea177997fe99ca46ea195c6c1718c6c4d610612a6de19039376a57c7"
+        },
+        "downloads": -1,
+        "filename": "deepphenotree-1.0.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "fcca28c62a66142a0442d2caf96d4409",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 11535374,
+        "upload_time": "2026-02-25T09:52:28",
+        "upload_time_iso_8601": "2026-02-25T09:52:28.769032Z",
+        "url": "https://files.pythonhosted.org/packages/f4/e7/2872327c3064140b7e0c036d3646363d44de4dfa483386e296a9d0a413a1/deepphenotree-1.0.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.3": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "d453d0ac18cbafa68e2f8dccfeb32f084f50f8345f1b2904ad665f026782c392",
+          "md5": "c2ac0a838ac47944175a18a4d928e9b4",
+          "sha256": "0b38555c5102b863edb41587ea948688ed0df5ab6c775abab50f5616e7caaf50"
+        },
+        "downloads": -1,
+        "filename": "deepphenotree-1.0.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "c2ac0a838ac47944175a18a4d928e9b4",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 11520165,
+        "upload_time": "2026-02-26T10:07:26",
+        "upload_time_iso_8601": "2026-02-26T10:07:26.640511Z",
+        "url": "https://files.pythonhosted.org/packages/d4/53/d0ac18cbafa68e2f8dccfeb32f084f50f8345f1b2904ad665f026782c392/deepphenotree-1.0.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "c4558c7c08243bc4b73308401435cfc21e10a9709480dfa5e4a852c41771f5ef",
+          "md5": "baebc8247bf210668b721e184f9dd862",
+          "sha256": "71d6272ba511c88271f6c0062002eaedbf7d1cd5734044f9d9ed8d0e5f49f4cb"
+        },
+        "downloads": -1,
+        "filename": "deepphenotree-1.0.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "baebc8247bf210668b721e184f9dd862",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 11535273,
+        "upload_time": "2026-02-26T10:07:33",
+        "upload_time_iso_8601": "2026-02-26T10:07:33.250191Z",
+        "url": "https://files.pythonhosted.org/packages/c4/55/8c7c08243bc4b73308401435cfc21e10a9709480dfa5e4a852c41771f5ef/deepphenotree-1.0.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.4": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "85542992083ca7df157521e047012301da973d9a91dea955dcbd1f6f2a023ff4",
+          "md5": "6926dc13b534a027707d7688c1a38af2",
+          "sha256": "27f45613aab8de9664eb2a619edcbda8186c69bf319ffc691fb98c389a68d872"
+        },
+        "downloads": -1,
+        "filename": "deepphenotree-1.0.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "6926dc13b534a027707d7688c1a38af2",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 11520179,
+        "upload_time": "2026-02-26T10:22:31",
+        "upload_time_iso_8601": "2026-02-26T10:22:31.959831Z",
+        "url": "https://files.pythonhosted.org/packages/85/54/2992083ca7df157521e047012301da973d9a91dea955dcbd1f6f2a023ff4/deepphenotree-1.0.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "e4cc4de037c21b445d6a8d28a5d3fc00566cce5cba50006592fac1bfbba258a4",
+          "md5": "add8c408d0d307467f27000c26ad7fa8",
+          "sha256": "071970641d8baa67ee448249b0cd3b53d6ecef83bb23a7e52c1df808a09a0a6c"
+        },
+        "downloads": -1,
+        "filename": "deepphenotree-1.0.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "add8c408d0d307467f27000c26ad7fa8",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 11535340,
+        "upload_time": "2026-02-26T10:22:37",
+        "upload_time_iso_8601": "2026-02-26T10:22:37.106629Z",
+        "url": "https://files.pythonhosted.org/packages/e4/cc/4de037c21b445d6a8d28a5d3fc00566cce5cba50006592fac1bfbba258a4/deepphenotree-1.0.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.6": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "213fd363cf87607226813679f817b6fbaf906146562b2dd535eb66551abf43e6",
+          "md5": "00c5cbb431354a72be83794777db4759",
+          "sha256": "4d9bee4c2f8ac455cb1adec019ff2150226fec07955e4f2a0611b33a8f64bee5"
+        },
+        "downloads": -1,
+        "filename": "deepphenotree-1.0.6-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "00c5cbb431354a72be83794777db4759",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 11520178,
+        "upload_time": "2026-02-26T14:11:30",
+        "upload_time_iso_8601": "2026-02-26T14:11:30.325458Z",
+        "url": "https://files.pythonhosted.org/packages/21/3f/d363cf87607226813679f817b6fbaf906146562b2dd535eb66551abf43e6/deepphenotree-1.0.6-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "0840fac2969de87ba7c3577cdab6b131cd87f6cc58ab0fb8c94db94343c4f324",
+          "md5": "4f253a4f647286cd91df75ff32b6b572",
+          "sha256": "39469f1c9ee2a2030afecf6249f32e17f8fee48d0ffe7d38c9db73e00b23b2d9"
+        },
+        "downloads": -1,
+        "filename": "deepphenotree-1.0.6.tar.gz",
+        "has_sig": false,
+        "md5_digest": "4f253a4f647286cd91df75ff32b6b572",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 11535616,
+        "upload_time": "2026-02-26T14:11:36",
+        "upload_time_iso_8601": "2026-02-26T14:11:36.118919Z",
+        "url": "https://files.pythonhosted.org/packages/08/40/fac2969de87ba7c3577cdab6b131cd87f6cc58ab0fb8c94db94343c4f324/deepphenotree-1.0.6.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.8": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "bc69df137ce3ed23d7fc507a19e5b0b9fb2f0de5ee09bc95410084d01394ff88",
+          "md5": "69ba5974d52a9d275f460fabf4f49d35",
+          "sha256": "a6834d0b449a5d49b9c4011a028ca4d0da50423978e13fc1c62854123cbec4b2"
+        },
+        "downloads": -1,
+        "filename": "deepphenotree-1.0.8-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "69ba5974d52a9d275f460fabf4f49d35",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 13782232,
+        "upload_time": "2026-04-17T13:43:23",
+        "upload_time_iso_8601": "2026-04-17T13:43:23.745161Z",
+        "url": "https://files.pythonhosted.org/packages/bc/69/df137ce3ed23d7fc507a19e5b0b9fb2f0de5ee09bc95410084d01394ff88/deepphenotree-1.0.8-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "83886126b5cf29fdc1c8aa183bf0623aec281a0d22d0a44ec448e219997c6949",
+          "md5": "56042c2f1c8de98941b58caf2d10c15c",
+          "sha256": "b2d2ccd223dce6a688b51b2baf20b81fd602c008f293d34bb6459557c6f225ab"
+        },
+        "downloads": -1,
+        "filename": "deepphenotree-1.0.8.tar.gz",
+        "has_sig": false,
+        "md5_digest": "56042c2f1c8de98941b58caf2d10c15c",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 13799744,
+        "upload_time": "2026-04-17T13:43:27",
+        "upload_time_iso_8601": "2026-04-17T13:43:27.123732Z",
+        "url": "https://files.pythonhosted.org/packages/83/88/6126b5cf29fdc1c8aa183bf0623aec281a0d22d0a44ec448e219997c6949/deepphenotree-1.0.8.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "bc69df137ce3ed23d7fc507a19e5b0b9fb2f0de5ee09bc95410084d01394ff88",
+        "md5": "69ba5974d52a9d275f460fabf4f49d35",
+        "sha256": "a6834d0b449a5d49b9c4011a028ca4d0da50423978e13fc1c62854123cbec4b2"
+      },
+      "downloads": -1,
+      "filename": "deepphenotree-1.0.8-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "69ba5974d52a9d275f460fabf4f49d35",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.10",
+      "size": 13782232,
+      "upload_time": "2026-04-17T13:43:23",
+      "upload_time_iso_8601": "2026-04-17T13:43:23.745161Z",
+      "url": "https://files.pythonhosted.org/packages/bc/69/df137ce3ed23d7fc507a19e5b0b9fb2f0de5ee09bc95410084d01394ff88/deepphenotree-1.0.8-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "83886126b5cf29fdc1c8aa183bf0623aec281a0d22d0a44ec448e219997c6949",
+        "md5": "56042c2f1c8de98941b58caf2d10c15c",
+        "sha256": "b2d2ccd223dce6a688b51b2baf20b81fd602c008f293d34bb6459557c6f225ab"
+      },
+      "downloads": -1,
+      "filename": "deepphenotree-1.0.8.tar.gz",
+      "has_sig": false,
+      "md5_digest": "56042c2f1c8de98941b58caf2d10c15c",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.10",
+      "size": 13799744,
+      "upload_time": "2026-04-17T13:43:27",
+      "upload_time_iso_8601": "2026-04-17T13:43:27.123732Z",
+      "url": "https://files.pythonhosted.org/packages/83/88/6126b5cf29fdc1c8aa183bf0623aec281a0d22d0a44ec448e219997c6949/deepphenotree-1.0.8.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

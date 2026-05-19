@@ -1,0 +1,99 @@
+{
+  "name": "napari-fungiform",
+  "display_name": "Fungiform",
+  "visibility": "public",
+  "icon": "",
+  "categories": [],
+  "schema_version": "0.2.1",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-fungiform.make_widget",
+        "title": "Open Fungiform",
+        "python_name": "fungiform._widget:PipelineWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "napari-fungiform.make_widget",
+        "display_name": "Fungiform",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "napari-fungiform",
+    "version": "0.1.2",
+    "dynamic": [
+      "license-file"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "Napari plugin and CLI for quantifying cell shape and protein distribution on micropatterned substrates.",
+    "description": "# Fungiform\n\n[![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/)\n[![License: BSD-3](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](LICENSE)\n[![CI](https://github.com/lxfhfut/Fungiform/actions/workflows/test.yml/badge.svg)](https://github.com/lxfhfut/Fungiform/actions/workflows/test.yml)\n\nA napari plugin and CLI for **quantifying cell shape and protein distribution\non micropatterned substrates**. Designed for multi-channel fluorescence\nconfocal images of cells grown on mushroom-shaped fibronectin micropatterns.\n\nFungiform aligns a canonical pattern template to each image via normalised\ncross-correlation, warps head / stem / stem-tip sub-regions into image\ncoordinates, segments cells in the cell-border channel, and reports a rich\nper-cell table of region-based protein intensities, stem-axis geometry,\nhead-region protrusions, and nuclear / cytoplasmic ratios.\n\n## Installation\n\n```bash\npip install napari-fungiform\n```\n\nOr from source:\n\n```bash\ngit clone https://github.com/lxfhfut/Fungiform.git\ncd Fungiform\npip install -e .\n```\n\nPython ≥ 3.10 required.\n\n## Quick start\n\n### Napari plugin\n\n```bash\nnapari\n```\n\nThen open **Plugins → Fungiform**. The widget has two sections:\n\n- **Single Input** — point at a single 4-channel TIFF (merged layout) or a\n  folder containing per-channel siblings `*_C0.tif … *_C3.tif` (split layout).\n- **Batch** — point at a folder of images; outputs go to `<folder>/results/`\n  by default.\n\n### CLI\n\n```bash\nfungiform --dir ./my_images --out ./results\n```\n\nCommon flags:\n\n| Flag | Default | Effect |\n|------|---------|--------|\n| `--split-channels` | off | Inputs are split per channel (`*_C0..C3.tif`) |\n| `--channel-cell` | 1 | 1-indexed cell-border channel (e.g. WGA) |\n| `--channel-protein` | 2 | Protein-of-interest channel |\n| `--channel-nucleus` | 3 | Nucleus channel (e.g. DAPI) |\n| `--channel-pattern` | 4 | Pattern channel (e.g. fibronectin) |\n| `--ball-radius-fraction` | 0.25 | Rolling-ball radius as fraction of cell's MIC |\n| `--no-align` | off | Skip NCC alignment (use when no pattern channel) |\n\nRun `fungiform --help` for the full option list.\n\n## Output\n\nFor each input image `MAX_<title>.tif`, Fungiform writes into the output\ndirectory:\n\n```\n_allResults.csv                          # one row per detected cell\nMAX_<title>_Cell_mask.jpg                # labeled segmentation mask\nMAX_<title>_mask_overlay.jpg             # cell channel + segmentation overlay\nMAX_<title>_image_qc.png                 # 3-panel per-image overview\nqc_cells/<Label>_qc.png                  # 6-panel per-cell QC\nprotrusions/<Label>_protrusions.png      # per-cell protrusion detail\nprotrusions/MAX_<title>_protrusions.png  # rolling-ball multi-cell detail\nprotrusions/MAX_<title>_protrusions_overview.png\n```\n\nSee **[docs/Results_interpretations.md](docs/Results_interpretations.md)** for\na column-by-column description of `_allResults.csv` and a panel-by-panel guide\nto every visualisation.\n\n## Pattern templates\n\nFungiform ships with default mushroom-pattern templates (perfect / head /\nstem) under `src/fungiform/templates/`. To use your own pattern shape, supply\n`--pattern-template`, `--head-template`, and `--stem-template` pointing at\nTIFF masks.\n\n## Citation\n\nIf you use Fungiform in your research, please cite this repository:\n\n```bibtex\n@software{fungiform,\n  author = {Lin, Xufeng},\n  title  = {Fungiform: Napari plugin for micropattern cell quantification},\n  url    = {https://github.com/lxfhfut/Fungiform},\n  year   = {2026}\n}\n```\n\n## License\n\nBSD 3-Clause — see [LICENSE](LICENSE).\n",
+    "description_content_type": "text/markdown",
+    "keywords": "napari,microscopy,micropattern,cell-quantification,image-analysis",
+    "home_page": null,
+    "download_url": null,
+    "author": null,
+    "author_email": "Xufeng Lin <lxfhfut@gmail.com>",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "BSD 3-Clause License\n\nCopyright (c) 2026, Xufeng Lin\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n\n1. Redistributions of source code must retain the above copyright notice,\n   this list of conditions and the following disclaimer.\n\n2. Redistributions in binary form must reproduce the above copyright notice,\n   this list of conditions and the following disclaimer in the documentation\n   and/or other materials provided with the distribution.\n\n3. Neither the name of the copyright holder nor the names of its contributors\n   may be used to endorse or promote products derived from this software\n   without specific prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\"\nAND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\nIMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE\nARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE\nLIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR\nCONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF\nSUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS\nINTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN\nCONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)\nARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE\nPOSSIBILITY OF SUCH DAMAGE.\n",
+    "classifier": [
+      "Development Status :: 4 - Beta",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Topic :: Scientific/Engineering :: Bio-Informatics",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "requires_dist": [
+      "numpy",
+      "tifffile",
+      "scikit-image",
+      "scipy",
+      "matplotlib",
+      "napari",
+      "magicgui",
+      "qtpy",
+      "superqt",
+      "pytest; extra == \"dev\"",
+      "pytest-qt; extra == \"dev\""
+    ],
+    "requires_python": ">=3.10",
+    "requires_external": null,
+    "project_url": [
+      "Homepage, https://github.com/lxfhfut/Fungiform",
+      "Repository, https://github.com/lxfhfut/Fungiform",
+      "Issues, https://github.com/lxfhfut/Fungiform/issues",
+      "Documentation, https://github.com/lxfhfut/Fungiform/blob/main/docs/Results_interpretations.md"
+    ],
+    "provides_extra": [
+      "dev"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}

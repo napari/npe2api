@@ -1,0 +1,821 @@
+{
+  "info": {
+    "author": null,
+    "author_email": "Hiroki Kawai <h.kawai888@gmail.com>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-SAM4IS\n\n[English](README.md) | [\u65e5\u672c\u8a9e](README.ja.md)\n\n[![License Apache Software License 2.0](https://img.shields.io/pypi/l/napari-SAM4IS.svg?color=green)](https://github.com/hiroalchem/napari-SAM4IS/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-SAM4IS.svg?color=green)](https://pypi.org/project/napari-SAM4IS)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-SAM4IS.svg?color=green)](https://python.org)\n[![tests](https://github.com/hiroalchem/napari-SAM4IS/workflows/tests/badge.svg)](https://github.com/hiroalchem/napari-SAM4IS/actions)\n[![codecov](https://codecov.io/gh/hiroalchem/napari-SAM4IS/branch/main/graph/badge.svg)](https://codecov.io/gh/hiroalchem/napari-SAM4IS)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-SAM4IS)](https://napari-hub.org/plugins/napari-SAM4IS)\n\n\n### napari plugin for instance and semantic segmentation annotation using Segment Anything Model (SAM)\n\nThis is a plugin for [napari](https://napari.org/), a multi-dimensional image viewer for Python, that allows for instance and semantic segmentation annotation. This plugin provides an easy-to-use interface for annotating images with the option to output annotations as COCO format.\n\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/stable/plugins/index.html\n-->\n\n## Installation\n\n**Requirements**: Python 3.10-3.13\n\n### Step 1: Install napari-SAM4IS\n\nYou can install `napari-SAM4IS` via [pip]:\n\n```bash\npip install napari-SAM4IS\n```\n\nOr via conda:\n\n```bash\nconda install -c conda-forge napari-SAM4IS\n```\n\nTo install the latest development version:\n\n```bash\npip install git+https://github.com/hiroalchem/napari-SAM4IS.git\n```\n\n### Step 2: Install Segment Anything Model (Optional - for local model usage)\n\n**Note**: Installing a SAM model is only required if you plan to use local models. If you're using the API mode, you can skip this step.\n\n#### SAM 1 (vit_h / vit_l / vit_b)\n\n```bash\npip install git+https://github.com/facebookresearch/segment-anything.git\n```\n\nFor more detailed instructions, please refer to the [SAM installation guide](https://github.com/facebookresearch/segment-anything#installation).\n\n#### SAM 3\n\nSAM 3 requires a patched fork for macOS compatibility. Install with:\n\n```bash\npip install git+https://github.com/hiroalchem/sam3.git@patched-macos\n```\n\nIf you use [uv](https://docs.astral.sh/uv/), sam3 and its dependencies are resolved automatically:\n\n```bash\nuv sync --group sam3\n```\n\nSAM 3 also requires the following packages (installed automatically with uv, manually with pip):\n\n```bash\npip install \"numpy>=1.26\" \"timm>=1.0.17\" \"einops>=0.8,<0.9\" \"huggingface-hub>=0.30,<1\" \"av>=12\" \"pycocotools>=2\"\n```\n\n> **Important**: Before using SAM 3, you must request access to the checkpoints on the [SAM 3 Hugging Face repo](https://huggingface.co/facebook/sam3). Once accepted, you need to be authenticated (e.g., `huggingface-cli login`) to download the checkpoints automatically.\n>\n> Alternatively, you can download `sam3.pt` manually and specify the local path in the plugin's checkpoint field.\n\n## Usage\n### Preparation\n1. Open an image in napari and launch the plugin. (Opening an image after launching the plugin is also possible.)\n2. Upon launching the plugin, several layers will be automatically created: SAM-Box, SAM-Positive, SAM-Negative, SAM-Predict, and Accepted. The usage of these layers will be explained later.\n3. Choose between local model or API mode:\n   - **Local Model Mode (SAM 1)**: Select the model you want to use and click the load button. (The default option is recommended.)\n   - **Local Model Mode (SAM 3)**: Select \"SAM3\" from the model dropdown. The model weights will be downloaded automatically from HuggingFace (gated access required), or you can specify a local checkpoint path.\n   - **API Mode**: Check the \"Use API\" checkbox, then enter your API URL and API Key. No model loading is required. This mode is designed to work with the SAM API provided by [LPIXEL Inc.](https://lpixel.net/) via [IMACEL](https://imacel.net/). For API access, please contact [IMACEL](https://imacel.net/contact) directly.\n4. Next, select the image layer you want to annotate.\n5. Then, select whether you want to do instance segmentation or semantic segmentation. (Note that for 3D images, semantic segmentation should be chosen in the current version.)\n6. Finally, select the output layer as \"shapes\" for instance segmentation or \"labels\" for semantic segmentation. (For instance segmentation, the \"Accept\" layer can also be used.)\n\n### Class Management\nYou can define annotation classes to assign to each segmented object. Classes support a hierarchical (parent\u2013child) structure.\n\n1. In the **Class Management** section, type a class name and click **Add** (or press Enter) to add a new top-level class.\n2. To add a subclass, first select a parent class in the tree, type the subclass name, and click **Add Sub**.\n3. Click a class in the tree to select it. The selected class will be assigned to subsequent annotations.\n4. To reassign a class, select an existing annotation in the output Shapes layer, then click the desired class.\n5. Classes with subclasses cannot be deleted. Remove all subclasses first. Classes in use cannot be deleted either.\n6. You can load class definitions from a YAML file (click **Load**). The supported formats are:\n   ```yaml\n   # New hierarchical format\n   classes:\n     - id: 0\n       name: animal\n       children:\n         - id: 1\n           name: cat\n         - id: 2\n           name: dog\n     - id: 3\n       name: vehicle\n   ```\n   ```yaml\n   # Legacy flat format (still supported)\n   names:\n     0: cat\n     1: dog\n     2: bird\n   ```\n7. Class definitions are automatically saved as `class.yaml` alongside the COCO JSON output.\n\n### Annotation with SAM\n1. Select the SAM-Box layer and use the rectangle tool to enclose the object you want to segment.\n2. An automatic segmentation mask will be created and output to the SAM-Predict layer.\n3. You can refine the prediction by adding point prompts: click on the SAM-Positive layer to add points that should be included, or on the SAM-Negative layer to add points that should be excluded.\n4. If you want to make further adjustments, do so in the SAM-Predict layer.\n5. To accept or reject the annotation, press **A** or **R** on the keyboard, respectively.\n6. If you accept the annotation, it will be output as label 1 for semantic segmentation or converted to a polygon and output to the designated layer for instance segmentation. The currently selected class will be assigned to the annotation.\n7. If you reject the annotation, the segmentation mask in the SAM-Predict layer will be discarded.\n8. After accepting or rejecting the annotation, the SAM-Predict layer will automatically reset to blank and return to the SAM-Box layer.\n\n### SAM 3: Detect All\n\nWhen using SAM 3, additional features are available for batch detection:\n\n1. **Prompt Modes**: Choose between Text, Box, or Text+Box prompts using the radio buttons in the SAM3 Prompt section.\n2. **Box prompt**: Draw a bounding box on the SAM-Box layer, then click **Detect All** to detect all instances within the box.\n3. **Text prompt**: Enter a class name or description as the text prompt. The text is derived from the currently selected class name.\n4. **Exemplar-based detection**: Select one or more shapes in the output Shapes layer (e.g., Accepted), then click **Detect All**. The selected shapes are used as exemplar box prompts. This is useful for finding similar objects across the image.\n   - The output Shapes layer must be the active layer for exemplar selection to take effect.\n   - All selected exemplar shapes must belong to the same class.\n   - Exemplar boxes and SAM-Box input can be combined.\n5. **IoU duplicate filtering**: To prevent overlapping annotations, the plugin automatically filters out masks that overlap with existing shapes above a configurable IoU threshold (default: 0.5).\n   - Adjust the threshold using the **IoU Threshold** spinner.\n   - Check **Same class only** to only filter duplicates within the same class, or uncheck it to filter across all classes.\n\n### Manual Annotation (without SAM)\nYou can also annotate without using SAM by enabling **Manual Mode**.\n\n1. Check the **Manual Mode** checkbox. SAM-related controls and layers will be hidden.\n2. The SAM-Predict layer switches to paint mode. Use napari's standard Labels tools (paint brush, eraser, fill) from the layer controls panel to draw your annotation.\n3. Adjust brush size using napari's standard Labels controls.\n4. Press **A** to accept or **R** to reject, just like SAM mode.\n5. After accepting, the painted mask is converted to a polygon (instance mode) or merged into the output Labels layer (semantic mode), with the selected class assigned.\n\n### Annotation Attributes\nEach annotation can have additional attributes to support quality control workflows.\n\n1. Select one or more annotations in the output Shapes layer.\n2. In the **Annotation Attributes** panel, you can set:\n   - **Unclear boundary**: Mark annotations where the object boundary is ambiguous.\n   - **Uncertain class**: Mark annotations where the object class is uncertain.\n3. Click **Accept Selected** to mark the selected annotations as reviewed (sets status to \"approved\" with a timestamp), or **Accept All** to review all annotations at once.\n4. Attributes are saved as part of the COCO JSON output under each annotation's `\"attributes\"` field.\n5. When multiple annotations are selected with mixed attribute values, checkboxes show a mixed state indicator.\n\n### Display Settings\nThe **Display Settings** panel lets you customize the appearance of annotation layers and persist those preferences across sessions.\n\n- **Accepted edge color**: Click the color swatch to open a color picker and change the outline color of accepted annotations. The new color is applied immediately to all existing shapes on the Accepted layer and saved for future sessions.\n- **Annotation text color**: Click the color swatch to change the color of class label text shown on annotation shapes.\n- **Annotation text size**: Adjust the integer spinner to change the font size of class label text.\n\nAll settings are saved to `settings.json` in the OS user-config directory (e.g. `~/Library/Preferences/napari-SAM4IS/` on macOS) and restored automatically on the next launch.\n\n### Saving and Loading Annotations\n1. If you have output to the labels layer, use napari's standard functionality to save the mask.\n2. If you have output to the shapes layer, you can save the shapes layer using napari's standard functionality, or you can click the **Save** button to output a JSON file in COCO format for each image in the folder. (The JSON file will have the same name as the image.) Class definitions will also be saved as `class.yaml` in the same directory.\n3. To load previously saved annotations, click the **Load** button and select a COCO JSON file. Annotations, class definitions, and attributes will be restored.\n4. When switching images via the Image ComboBox, the plugin will:\n   - Prompt to save unsaved annotations (Save / Discard / Cancel)\n   - Automatically clear the output layer\n   - Auto-load annotations from a matching JSON file if one exists\n\n\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [Apache Software License 2.0] license,\n\"napari-SAM4IS\" is free and open source software\n\n## Citation\n\nIf you use napari-SAM4IS in your research, please cite it:\n\n```bibtex\n@software{kawai_napari_sam4is,\n  author  = {Kawai, Hiroki},\n  title   = {napari-SAM4IS},\n  url     = {https://github.com/hiroalchem/napari-SAM4IS},\n  license = {Apache-2.0},\n}\n```\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[file an issue]: https://github.com/hiroalchem/napari-SAM4IS/issues\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": null,
+    "license_expression": "Apache-2.0",
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-SAM4IS",
+    "package_url": "https://pypi.org/project/napari-SAM4IS/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-SAM4IS/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/hiroalchem/napari-SAM4IS/issues",
+      "Documentation": "https://github.com/hiroalchem/napari-SAM4IS#README.md",
+      "Source Code": "https://github.com/hiroalchem/napari-SAM4IS",
+      "User Support": "https://github.com/hiroalchem/napari-SAM4IS/issues"
+    },
+    "provides_extra": [
+      "testing",
+      "dev"
+    ],
+    "release_url": "https://pypi.org/project/napari-SAM4IS/1.0.0/",
+    "requires_dist": [
+      "numpy>=1.23.0",
+      "magicgui>=0.8.0",
+      "qtpy>=2.4.0",
+      "torch>=2.0.0",
+      "torchvision>=0.15.0",
+      "scikit-image>=0.21.0",
+      "napari>=0.4.19",
+      "requests>=2.31.0",
+      "urllib3>=2.0.0",
+      "Pillow>=10.0.0",
+      "pyyaml>=6.0",
+      "platformdirs>=2.0",
+      "tox; extra == \"testing\"",
+      "pytest<9.0,>=7.4.0; extra == \"testing\"",
+      "pytest-cov<6.0,>=4.1.0; extra == \"testing\"",
+      "pytest-qt<5.0,>=4.2.0; extra == \"testing\"",
+      "black<25.0,>=24.0; extra == \"dev\"",
+      "ruff<1.0,>=0.8.0; extra == \"dev\"",
+      "pre-commit; extra == \"dev\""
+    ],
+    "requires_python": ">=3.10",
+    "summary": "Create annotations for instance segmentation using Segment Anything models",
+    "version": "1.0.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 34866507,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "hiroalchem"
+      }
+    ]
+  },
+  "releases": {
+    "0.0.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "3a53a5b929969d10c57faee33c2e553b6f2ccc19aacded9b2ef14b87fcc25664",
+          "md5": "b471fc1a9e16c8504cdbc1e7ad8871ff",
+          "sha256": "8922c5df5a78ea6dfab42d536d61e7a91e01ae6e3c6185e224892ddda36b53f0"
+        },
+        "downloads": -1,
+        "filename": "napari_SAM4IS-0.0.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "b471fc1a9e16c8504cdbc1e7ad8871ff",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 12353,
+        "upload_time": "2023-04-28T06:28:50",
+        "upload_time_iso_8601": "2023-04-28T06:28:50.054787Z",
+        "url": "https://files.pythonhosted.org/packages/3a/53/a5b929969d10c57faee33c2e553b6f2ccc19aacded9b2ef14b87fcc25664/napari_SAM4IS-0.0.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "4cdec707e583c8caab0589ddb5725a95a80ddb66792da815a9e4907d461b2cb8",
+          "md5": "fbdf147b2543a6fc3111410adac02881",
+          "sha256": "86e7c7a2eb501013ffc3917f5e1b7744634f65954be8761a45bb731a91425be3"
+        },
+        "downloads": -1,
+        "filename": "napari-SAM4IS-0.0.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "fbdf147b2543a6fc3111410adac02881",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 11752,
+        "upload_time": "2023-04-28T06:28:52",
+        "upload_time_iso_8601": "2023-04-28T06:28:52.607189Z",
+        "url": "https://files.pythonhosted.org/packages/4c/de/c707e583c8caab0589ddb5725a95a80ddb66792da815a9e4907d461b2cb8/napari-SAM4IS-0.0.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "7644ed547cc32999e9200720244798abdac15a78bbfbfeb642a0539f49691a61",
+          "md5": "6bf935bfa15b79a6c2922ecae7f8cb11",
+          "sha256": "471ec149d54c61be4cc073dfd9aaa96889fe4015e4ccb3893b5446878cc38ae3"
+        },
+        "downloads": -1,
+        "filename": "napari_SAM4IS-0.0.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "6bf935bfa15b79a6c2922ecae7f8cb11",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 12354,
+        "upload_time": "2023-04-28T12:56:19",
+        "upload_time_iso_8601": "2023-04-28T12:56:19.261655Z",
+        "url": "https://files.pythonhosted.org/packages/76/44/ed547cc32999e9200720244798abdac15a78bbfbfeb642a0539f49691a61/napari_SAM4IS-0.0.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "9a436b3cebd5c4d2967eaa46d4eb5d288debe8dfc3f12f532998173ebaee5e61",
+          "md5": "91abd3bb8c33eaede4b71aaade05c3d3",
+          "sha256": "d79221f4a7f1cd9da6dbfd2dfeeb8dfb78d090b206f1640a914f859c4dab95bf"
+        },
+        "downloads": -1,
+        "filename": "napari-SAM4IS-0.0.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "91abd3bb8c33eaede4b71aaade05c3d3",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 11776,
+        "upload_time": "2023-04-28T12:56:22",
+        "upload_time_iso_8601": "2023-04-28T12:56:22.875504Z",
+        "url": "https://files.pythonhosted.org/packages/9a/43/6b3cebd5c4d2967eaa46d4eb5d288debe8dfc3f12f532998173ebaee5e61/napari-SAM4IS-0.0.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.3": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "b1ff269bae04bd17ddddf12c0dda979e1fe0809006f4d6b3fe2b220e5ac97657",
+          "md5": "775fb77cda68a75753c4d15a645763e9",
+          "sha256": "6e93752541aa4eff4930ef43943ca64995cc480723dd5f70a617f40730a7ec46"
+        },
+        "downloads": -1,
+        "filename": "napari_SAM4IS-0.0.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "775fb77cda68a75753c4d15a645763e9",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 12357,
+        "upload_time": "2023-04-28T22:37:47",
+        "upload_time_iso_8601": "2023-04-28T22:37:47.898000Z",
+        "url": "https://files.pythonhosted.org/packages/b1/ff/269bae04bd17ddddf12c0dda979e1fe0809006f4d6b3fe2b220e5ac97657/napari_SAM4IS-0.0.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "1aa091d199a207a5b4e3ca4c6c63a0f61661b98ffd9478561ad3f725cec43dfe",
+          "md5": "1cfa043ee4e347fcbf0fd2748e7149cf",
+          "sha256": "0fa67878741b8886804ffa1518cece471e0f67d114bb4ee74b5d0a558a54680a"
+        },
+        "downloads": -1,
+        "filename": "napari-SAM4IS-0.0.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "1cfa043ee4e347fcbf0fd2748e7149cf",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 11785,
+        "upload_time": "2023-04-28T22:37:52",
+        "upload_time_iso_8601": "2023-04-28T22:37:52.057967Z",
+        "url": "https://files.pythonhosted.org/packages/1a/a0/91d199a207a5b4e3ca4c6c63a0f61661b98ffd9478561ad3f725cec43dfe/napari-SAM4IS-0.0.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.4": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "8e46a14b7952207a54d713e44e049b75ebce274cd75949269e1613b4bb1128ec",
+          "md5": "971c7ea7ab48208c179b3a70abed7fdd",
+          "sha256": "369e4f26d9b20c93a0b92eafe0685adf5c235833e832f8a7fc49c354db058e21"
+        },
+        "downloads": -1,
+        "filename": "napari_SAM4IS-0.0.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "971c7ea7ab48208c179b3a70abed7fdd",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 13555,
+        "upload_time": "2023-05-01T06:34:08",
+        "upload_time_iso_8601": "2023-05-01T06:34:08.094090Z",
+        "url": "https://files.pythonhosted.org/packages/8e/46/a14b7952207a54d713e44e049b75ebce274cd75949269e1613b4bb1128ec/napari_SAM4IS-0.0.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "31f18072c2f6d6461a7fc16971ff4aaaddefb4fd03e9ab166692e05ce0ff0a02",
+          "md5": "fae43c17bcc086326b0edf7223549900",
+          "sha256": "83c6ef4b9af90c3ef1f018713cf116fb6309ca5c81d77fca1e9f68390d5fc6d2"
+        },
+        "downloads": -1,
+        "filename": "napari-SAM4IS-0.0.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "fae43c17bcc086326b0edf7223549900",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 13005,
+        "upload_time": "2023-05-01T06:34:09",
+        "upload_time_iso_8601": "2023-05-01T06:34:09.780354Z",
+        "url": "https://files.pythonhosted.org/packages/31/f1/8072c2f6d6461a7fc16971ff4aaaddefb4fd03e9ab166692e05ce0ff0a02/napari-SAM4IS-0.0.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.5": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "19ff73008605bf8fddb6b24ed6fa817a92652142910bdd5d735473ca1577b7ba",
+          "md5": "86f2381482e32db146d1e30928d7544c",
+          "sha256": "e37dcee69cb5e03974a5c3f81a0b6eee12b0498c0140c2f11ed5e58006ebdeef"
+        },
+        "downloads": -1,
+        "filename": "napari_SAM4IS-0.0.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "86f2381482e32db146d1e30928d7544c",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 14187,
+        "upload_time": "2023-07-08T11:11:56",
+        "upload_time_iso_8601": "2023-07-08T11:11:56.693737Z",
+        "url": "https://files.pythonhosted.org/packages/19/ff/73008605bf8fddb6b24ed6fa817a92652142910bdd5d735473ca1577b7ba/napari_SAM4IS-0.0.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "cda92f82f9464d0a0d83cd3001b4ce2095705c3d2c472bcb2a588be2fd9526b3",
+          "md5": "744db7cb2762e61231494162153ca7e1",
+          "sha256": "5a0b97e340acd93c0accb2457c76df2b105907e1984b2085ccecc5b89a5b057a"
+        },
+        "downloads": -1,
+        "filename": "napari-SAM4IS-0.0.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "744db7cb2762e61231494162153ca7e1",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 13585,
+        "upload_time": "2023-07-08T11:11:59",
+        "upload_time_iso_8601": "2023-07-08T11:11:59.040086Z",
+        "url": "https://files.pythonhosted.org/packages/cd/a9/2f82f9464d0a0d83cd3001b4ce2095705c3d2c472bcb2a588be2fd9526b3/napari-SAM4IS-0.0.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.6": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "5dc191dcc83563dcb40368f3342b386ce486de8449fbe1a143a6eef0337070c0",
+          "md5": "11985d47eabf7732d18c5d6456c7924b",
+          "sha256": "355c96df57495ac687b8ffdcd74ca9ab2d3d4d4261a3c7edd5f63a0261d1f4bc"
+        },
+        "downloads": -1,
+        "filename": "napari_sam4is-0.0.6-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "11985d47eabf7732d18c5d6456c7924b",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 16082,
+        "upload_time": "2025-07-17T05:09:49",
+        "upload_time_iso_8601": "2025-07-17T05:09:49.313997Z",
+        "url": "https://files.pythonhosted.org/packages/5d/c1/91dcc83563dcb40368f3342b386ce486de8449fbe1a143a6eef0337070c0/napari_sam4is-0.0.6-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "2e841cbf30492dbbacad73a562b4072c1969d22285cc82b27cda7a0648311e31",
+          "md5": "a36d655f469c4101524c467b709d7a09",
+          "sha256": "3e1d22fc0be98b89fc04c701223bc5adc5249c0d00551780354c27f59c35d196"
+        },
+        "downloads": -1,
+        "filename": "napari_SAM4IS-0.0.6-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "a36d655f469c4101524c467b709d7a09",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 14246,
+        "upload_time": "2023-12-06T07:21:32",
+        "upload_time_iso_8601": "2023-12-06T07:21:32.618042Z",
+        "url": "https://files.pythonhosted.org/packages/2e/84/1cbf30492dbbacad73a562b4072c1969d22285cc82b27cda7a0648311e31/napari_SAM4IS-0.0.6-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "827409cf3cfb20bdcb30e2fc7e29fc2b37537a823e0017919efb3069e4debedc",
+          "md5": "c25ef46bb03f61a4f301cf2ad44ac54a",
+          "sha256": "553823e132a789c62c5e718f1a75858f4935f4ab03a6ff910315529f5a09c9a1"
+        },
+        "downloads": -1,
+        "filename": "napari-SAM4IS-0.0.6.tar.gz",
+        "has_sig": false,
+        "md5_digest": "c25ef46bb03f61a4f301cf2ad44ac54a",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 13694,
+        "upload_time": "2023-12-06T07:21:35",
+        "upload_time_iso_8601": "2023-12-06T07:21:35.782871Z",
+        "url": "https://files.pythonhosted.org/packages/82/74/09cf3cfb20bdcb30e2fc7e29fc2b37537a823e0017919efb3069e4debedc/napari-SAM4IS-0.0.6.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.9": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "79cc48dff4fda6e2826d63d4cc3a797b298fa9d6980d633b155fbdf233310b28",
+          "md5": "25dbfd9aec33fa4e1f111f90f20703aa",
+          "sha256": "cd5e6db398aae221bc5c8e43606568ad831b986c05dd8133d78e2c720f6b5fc4"
+        },
+        "downloads": -1,
+        "filename": "napari_sam4is-0.0.9-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "25dbfd9aec33fa4e1f111f90f20703aa",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 15956,
+        "upload_time": "2025-07-17T05:22:46",
+        "upload_time_iso_8601": "2025-07-17T05:22:46.959027Z",
+        "url": "https://files.pythonhosted.org/packages/79/cc/48dff4fda6e2826d63d4cc3a797b298fa9d6980d633b155fbdf233310b28/napari_sam4is-0.0.9-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "4fb3b0fc10072f6eea3eb0e3ac2a48bad87cb1c59ee2dfe096bcc83cee738e88",
+          "md5": "a55a1283527f79eeeea6a83881d8ea7f",
+          "sha256": "e89144279dd9df52583e849079e0da7e42d8a83ec185f66f6bf715144eb41d24"
+        },
+        "downloads": -1,
+        "filename": "napari_sam4is-0.0.9.tar.gz",
+        "has_sig": false,
+        "md5_digest": "a55a1283527f79eeeea6a83881d8ea7f",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 15371,
+        "upload_time": "2025-07-17T05:22:48",
+        "upload_time_iso_8601": "2025-07-17T05:22:48.314090Z",
+        "url": "https://files.pythonhosted.org/packages/4f/b3/b0fc10072f6eea3eb0e3ac2a48bad87cb1c59ee2dfe096bcc83cee738e88/napari_sam4is-0.0.9.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "2ea7d2a397f982fb817e61e24c05d67ad986137a1192cfa53a7eb4eb19deeccf",
+          "md5": "ab4115c4acba9e4e5d9f557fcee68340",
+          "sha256": "60a150eba7835d6cfa9f188ca5d9da3ab42ce0123e6a61fbc4217ddd2aa2a5b9"
+        },
+        "downloads": -1,
+        "filename": "napari_sam4is-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "ab4115c4acba9e4e5d9f557fcee68340",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 16218,
+        "upload_time": "2025-07-17T08:21:35",
+        "upload_time_iso_8601": "2025-07-17T08:21:35.666800Z",
+        "url": "https://files.pythonhosted.org/packages/2e/a7/d2a397f982fb817e61e24c05d67ad986137a1192cfa53a7eb4eb19deeccf/napari_sam4is-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "a438ba1992fc0f4be5b3daf7274a8a6be37e3aef7a9585e376d16a3a916d90cb",
+          "md5": "b2a956fd129894c1048b31fe8158e973",
+          "sha256": "2daf9107bb6e991111177132116d097f1663dad0ce26c6b198f95e9b2943fa1c"
+        },
+        "downloads": -1,
+        "filename": "napari_sam4is-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "b2a956fd129894c1048b31fe8158e973",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 15671,
+        "upload_time": "2025-07-17T08:21:37",
+        "upload_time_iso_8601": "2025-07-17T08:21:37.415238Z",
+        "url": "https://files.pythonhosted.org/packages/a4/38/ba1992fc0f4be5b3daf7274a8a6be37e3aef7a9585e376d16a3a916d90cb/napari_sam4is-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "8eba47443510d99bf7da4b6d538f495750238d97ef93edcf5f8bc4971b1b11f6",
+          "md5": "01f2d66f9ecb41664cd2ded4fe6e2f5c",
+          "sha256": "7b657d8001c43c1ec98a8fbed96b466d56ef40a9d6ac21820bab4c86b21b0d6d"
+        },
+        "downloads": -1,
+        "filename": "napari_sam4is-0.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "01f2d66f9ecb41664cd2ded4fe6e2f5c",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 17094,
+        "upload_time": "2025-07-23T07:09:27",
+        "upload_time_iso_8601": "2025-07-23T07:09:27.312270Z",
+        "url": "https://files.pythonhosted.org/packages/8e/ba/47443510d99bf7da4b6d538f495750238d97ef93edcf5f8bc4971b1b11f6/napari_sam4is-0.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "b7f723f19b13daef378545eaf019a8a6adc91cc5b19ebe64287a6f21b370a5b9",
+          "md5": "866551acce47c1fee70234ad45f991cc",
+          "sha256": "6b4271e41858f6cde23828e4aa4e970e99f34473777564ed9d1b0248a35b3bcc"
+        },
+        "downloads": -1,
+        "filename": "napari_sam4is-0.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "866551acce47c1fee70234ad45f991cc",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 16450,
+        "upload_time": "2025-07-23T07:09:28",
+        "upload_time_iso_8601": "2025-07-23T07:09:28.525975Z",
+        "url": "https://files.pythonhosted.org/packages/b7/f7/23f19b13daef378545eaf019a8a6adc91cc5b19ebe64287a6f21b370a5b9/napari_sam4is-0.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.4": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "026aa7f20c2ec5c7046b154e9d74635563db180e831d3edb6075397b380596fe",
+          "md5": "c6f6a2662d2dd4a61a406e9688f0307e",
+          "sha256": "36501a2ed2f7961f61ab05b7ca39379a210dc3c33e037a6908f1e5f93490dad3"
+        },
+        "downloads": -1,
+        "filename": "napari_sam4is-0.1.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "c6f6a2662d2dd4a61a406e9688f0307e",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 31100,
+        "upload_time": "2026-02-13T12:31:52",
+        "upload_time_iso_8601": "2026-02-13T12:31:52.960382Z",
+        "url": "https://files.pythonhosted.org/packages/02/6a/a7f20c2ec5c7046b154e9d74635563db180e831d3edb6075397b380596fe/napari_sam4is-0.1.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "8cb3725b4889e594804ee7a42974b86e4b07a0be752c9c7398d4d4264db2c3ed",
+          "md5": "4a7b57aaa8e0c07f008b0a42e35fec21",
+          "sha256": "f26dcb16f1911e69ce6698dd9123e5a6918b41a65d2de55d4c313a09b533a0c7"
+        },
+        "downloads": -1,
+        "filename": "napari_sam4is-0.1.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "4a7b57aaa8e0c07f008b0a42e35fec21",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 30465,
+        "upload_time": "2026-02-13T12:31:53",
+        "upload_time_iso_8601": "2026-02-13T12:31:53.855798Z",
+        "url": "https://files.pythonhosted.org/packages/8c/b3/725b4889e594804ee7a42974b86e4b07a0be752c9c7398d4d4264db2c3ed/napari_sam4is-0.1.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.5": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "75aaee6e7008a371f1447e9d367eadf402869fadcb0520974c7ceef6df78d16f",
+          "md5": "2f66bab0946fde258f57b2432cf5e158",
+          "sha256": "122b87312edf563d81c298f165143de5db48b28e73f54257ae77b82d0ec34c87"
+        },
+        "downloads": -1,
+        "filename": "napari_sam4is-0.1.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "2f66bab0946fde258f57b2432cf5e158",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 31080,
+        "upload_time": "2026-02-17T04:59:22",
+        "upload_time_iso_8601": "2026-02-17T04:59:22.934613Z",
+        "url": "https://files.pythonhosted.org/packages/75/aa/ee6e7008a371f1447e9d367eadf402869fadcb0520974c7ceef6df78d16f/napari_sam4is-0.1.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "61ff30ff538353296271a1bb1e58e685141405d180e33b3eaddc88c33f23291e",
+          "md5": "57b57f0fbcb039d23103549039ce4b45",
+          "sha256": "91eb38afdd326119ef07fa2ec80c89d55723956c4e19621f976fb086dc23f9ae"
+        },
+        "downloads": -1,
+        "filename": "napari_sam4is-0.1.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "57b57f0fbcb039d23103549039ce4b45",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 30345,
+        "upload_time": "2026-02-17T04:59:24",
+        "upload_time_iso_8601": "2026-02-17T04:59:24.339751Z",
+        "url": "https://files.pythonhosted.org/packages/61/ff/30ff538353296271a1bb1e58e685141405d180e33b3eaddc88c33f23291e/napari_sam4is-0.1.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.6": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "4dbb1038b2f34a487c276a030eb618c98232bed2a9fbe4c1e9f838b1c01934a2",
+          "md5": "33dc8645aa4175c317357ad9bd7c09df",
+          "sha256": "c18ceb55614216bb5cd45ee37ee3835267961ac444df74b30e0c945d0c95dfd3"
+        },
+        "downloads": -1,
+        "filename": "napari_sam4is-0.1.6-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "33dc8645aa4175c317357ad9bd7c09df",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 3190561,
+        "upload_time": "2026-03-01T13:17:25",
+        "upload_time_iso_8601": "2026-03-01T13:17:25.329038Z",
+        "url": "https://files.pythonhosted.org/packages/4d/bb/1038b2f34a487c276a030eb618c98232bed2a9fbe4c1e9f838b1c01934a2/napari_sam4is-0.1.6-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "64ab85148a564639d9d74744507ebefd9e27b0413a4bab6693394dcaeb0dff59",
+          "md5": "d1076afd829ed5379b16bbc6b1daa698",
+          "sha256": "eef8ac183f80a5d48376aefe395a69770db592c5039ce98ac07e7c97ee104a9d"
+        },
+        "downloads": -1,
+        "filename": "napari_sam4is-0.1.6.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d1076afd829ed5379b16bbc6b1daa698",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 3182935,
+        "upload_time": "2026-03-01T13:17:26",
+        "upload_time_iso_8601": "2026-03-01T13:17:26.690855Z",
+        "url": "https://files.pythonhosted.org/packages/64/ab/85148a564639d9d74744507ebefd9e27b0413a4bab6693394dcaeb0dff59/napari_sam4is-0.1.6.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "7211af4a3274cafd7e16013d6a017759f39ca89a4834f89c908354d992006eb6",
+          "md5": "073f3aebca7d10b35a65ff054c6acf94",
+          "sha256": "0bd188f9b30d6c66595b3d98a929f4ef9fa20878ec27a48e326f59e88d918575"
+        },
+        "downloads": -1,
+        "filename": "napari_sam4is-0.2.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "073f3aebca7d10b35a65ff054c6acf94",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 3193310,
+        "upload_time": "2026-03-02T12:14:31",
+        "upload_time_iso_8601": "2026-03-02T12:14:31.989595Z",
+        "url": "https://files.pythonhosted.org/packages/72/11/af4a3274cafd7e16013d6a017759f39ca89a4834f89c908354d992006eb6/napari_sam4is-0.2.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "cfc0a2be64aefa0f697bd2b995d7acb42dc1a4165eb8b3ecee532bc60ba2ee1a",
+          "md5": "71053fa3d33cd2b31c38c7baac84f23a",
+          "sha256": "0db548d637937a2d71e1eddd0a42689476b5f3596ebf1777bca86bda2962cfa0"
+        },
+        "downloads": -1,
+        "filename": "napari_sam4is-0.2.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "71053fa3d33cd2b31c38c7baac84f23a",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 3185805,
+        "upload_time": "2026-03-02T12:14:33",
+        "upload_time_iso_8601": "2026-03-02T12:14:33.488613Z",
+        "url": "https://files.pythonhosted.org/packages/cf/c0/a2be64aefa0f697bd2b995d7acb42dc1a4165eb8b3ecee532bc60ba2ee1a/napari_sam4is-0.2.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "3c30f72b5f05f36db6479d696aaa94adfdd7559d9df06d67966ae7b3f1195dbf",
+          "md5": "eff98ef98e340e8e5a4621bb58cc2918",
+          "sha256": "d078a7009d358fcda6e8bf01fe06255ea8fda038dfb183234e3b21192a78d4b7"
+        },
+        "downloads": -1,
+        "filename": "napari_sam4is-0.2.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "eff98ef98e340e8e5a4621bb58cc2918",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 3196366,
+        "upload_time": "2026-03-04T02:27:01",
+        "upload_time_iso_8601": "2026-03-04T02:27:01.394225Z",
+        "url": "https://files.pythonhosted.org/packages/3c/30/f72b5f05f36db6479d696aaa94adfdd7559d9df06d67966ae7b3f1195dbf/napari_sam4is-0.2.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "d542cd0c408cc0a47a3534a1f553c7129a197a790d86e96680dd1cc1cc965bec",
+          "md5": "40782dde69df77618fe1f3470ed8ba1c",
+          "sha256": "5695e55b06d114f089695192d6934f2dc24cebd3b91620f46151c1cbd643871b"
+        },
+        "downloads": -1,
+        "filename": "napari_sam4is-0.2.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "40782dde69df77618fe1f3470ed8ba1c",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 3188187,
+        "upload_time": "2026-03-04T02:27:03",
+        "upload_time_iso_8601": "2026-03-04T02:27:03.202894Z",
+        "url": "https://files.pythonhosted.org/packages/d5/42/cd0c408cc0a47a3534a1f553c7129a197a790d86e96680dd1cc1cc965bec/napari_sam4is-0.2.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "a13136ff4602412baf2f592b2632284fd6d7a2757f0084766e2f57cb542596ea",
+          "md5": "325971623efac0ad3602709e7e6e5479",
+          "sha256": "57b37f261104e5bde0fa84d6482bc761e18aa4c244d835d45900105badfb7f15"
+        },
+        "downloads": -1,
+        "filename": "napari_sam4is-1.0.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "325971623efac0ad3602709e7e6e5479",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 3206439,
+        "upload_time": "2026-03-06T00:11:54",
+        "upload_time_iso_8601": "2026-03-06T00:11:54.534653Z",
+        "url": "https://files.pythonhosted.org/packages/a1/31/36ff4602412baf2f592b2632284fd6d7a2757f0084766e2f57cb542596ea/napari_sam4is-1.0.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "55273a55f6c5663bb7b9a5dcef64f2f491f414dff9165941ef42e29be681207a",
+          "md5": "d46d954790b77cc9a875982fd48ea152",
+          "sha256": "91d189598dd23889de8999603a500a5cda239c8ea8af48aa3c9325ee8fd16089"
+        },
+        "downloads": -1,
+        "filename": "napari_sam4is-1.0.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d46d954790b77cc9a875982fd48ea152",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 3197840,
+        "upload_time": "2026-03-06T00:11:56",
+        "upload_time_iso_8601": "2026-03-06T00:11:56.154086Z",
+        "url": "https://files.pythonhosted.org/packages/55/27/3a55f6c5663bb7b9a5dcef64f2f491f414dff9165941ef42e29be681207a/napari_sam4is-1.0.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "a13136ff4602412baf2f592b2632284fd6d7a2757f0084766e2f57cb542596ea",
+        "md5": "325971623efac0ad3602709e7e6e5479",
+        "sha256": "57b37f261104e5bde0fa84d6482bc761e18aa4c244d835d45900105badfb7f15"
+      },
+      "downloads": -1,
+      "filename": "napari_sam4is-1.0.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "325971623efac0ad3602709e7e6e5479",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.10",
+      "size": 3206439,
+      "upload_time": "2026-03-06T00:11:54",
+      "upload_time_iso_8601": "2026-03-06T00:11:54.534653Z",
+      "url": "https://files.pythonhosted.org/packages/a1/31/36ff4602412baf2f592b2632284fd6d7a2757f0084766e2f57cb542596ea/napari_sam4is-1.0.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "55273a55f6c5663bb7b9a5dcef64f2f491f414dff9165941ef42e29be681207a",
+        "md5": "d46d954790b77cc9a875982fd48ea152",
+        "sha256": "91d189598dd23889de8999603a500a5cda239c8ea8af48aa3c9325ee8fd16089"
+      },
+      "downloads": -1,
+      "filename": "napari_sam4is-1.0.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "d46d954790b77cc9a875982fd48ea152",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.10",
+      "size": 3197840,
+      "upload_time": "2026-03-06T00:11:56",
+      "upload_time_iso_8601": "2026-03-06T00:11:56.154086Z",
+      "url": "https://files.pythonhosted.org/packages/55/27/3a55f6c5663bb7b9a5dcef64f2f491f414dff9165941ef42e29be681207a/napari_sam4is-1.0.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

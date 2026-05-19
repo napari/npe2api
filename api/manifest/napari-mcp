@@ -1,0 +1,109 @@
+{
+  "name": "napari-mcp",
+  "display_name": "Napari MCP",
+  "visibility": "public",
+  "icon": "",
+  "categories": [],
+  "schema_version": "0.2.1",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-mcp.mcp_control_widget",
+        "title": "MCP Server Control",
+        "python_name": "napari_mcp.widget:MCPControlWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "napari-mcp.mcp_control_widget",
+        "display_name": "MCP Server Control",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "napari-mcp",
+    "version": "0.1.0",
+    "dynamic": [
+      "license-file"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "MCP server for remote control of napari viewers via Model Context Protocol",
+    "description": "# Napari MCP Server\n\n[![Tests](https://github.com/royerlab/napari-mcp/workflows/Tests/badge.svg)](https://github.com/royerlab/napari-mcp/actions)\n[![codecov](https://codecov.io/gh/royerlab/napari-mcp/graph/badge.svg?token=E1WY58V877)](https://codecov.io/gh/royerlab/napari-mcp)\n[![PyPI version](https://badge.fury.io/py/napari-mcp.svg)](https://badge.fury.io/py/napari-mcp)\n[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)\n[![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)\n\nMCP server for remote control of napari viewers via Model Context Protocol (MCP). Perfect for AI-assisted microscopy analysis with Claude Desktop and other LLM applications.\n\nhttps://github.com/user-attachments/assets/d261674c-9875-4671-8c60-a7f49d6f1b84\n\n## 🚀 Quick Start (3 Steps)\n\n### 1. Install the Package\n\n```bash\npip install napari-mcp\n```\n\n### 2. Auto-Configure Your AI Application\n\n```bash\n# For Claude Desktop\nnapari-mcp-install install claude-desktop\n\n# Include a napari GUI backend in the uv environment\nnapari-mcp-install install claude-desktop --backend pyqt6\n\n# For other applications (Claude Code, Cursor, Cline, etc.)\nnapari-mcp-install install --help  # See all options\n```\n\n### 3. Restart Your Application & Start Using\n\nRestart your AI app and you're ready! Try asking:\n```\n\"Can you call session_information() to show my napari session details?\"\n```\n\n**→ See [Full Documentation](https://royerlab.github.io/napari-mcp/) for detailed guides**\n\n## 🔌 Using as a napari Plugin\n\nnapari-mcp can also be used as a **napari plugin** for direct integration with a running napari session:\n\n1. **Start napari** normally: `napari`\n2. **Open the widget**: Plugins → napari-mcp: MCP Server Control\n3. **Click \"Start Server\"** to expose your current session to AI assistants\n4. **Connect your AI app** using the standard installer: `napari-mcp-install install <app>`\n\nThis mode enables AI assistants to control your **current napari session** rather than starting a new viewer. Perfect for integrating with existing workflows!\n\n**→ See [Plugin Guide](https://royerlab.github.io/napari-mcp/guides/napari-plugin/) for detailed instructions**\n\n## 🎯 What Can You Do?\n\n### Basic Image Analysis\n```\n\"Load the image from ./data/sample.tif and apply a viridis colormap\"\n\"Create point annotations at coordinates [[100,100], [200,200]]\"\n\"Take a screenshot and save it\"\n```\n\n### Advanced Workflows\n```\n\"Execute this code to create a filtered version:\nfrom scipy import ndimage\nfiltered = ndimage.gaussian_filter(viewer.layers[0].data, sigma=2)\nviewer.add_image(filtered, name='filtered')\"\n\n\"Install scikit-image and segment the cells in this microscopy image\"\n```\n\n### 3D/4D Navigation\n```\n\"Switch to 3D display mode\"\n\"Navigate to time point 5, Z-slice 10\"\n\"Create a rotating animation of this volume\"\n```\n\n### Automated Workflows\nWant to automate image processing with Python scripts? Use any LLM (OpenAI, Anthropic, etc.) with napari MCP:\n\n**→ See [Python Integration Examples](docs/examples/README.md)** for batch processing and workflow automation\n\n## 🤖 Supported AI Applications\n\n| Application | Command | Status |\n|-------------|---------|--------|\n| **Claude Desktop** | `napari-mcp-install install claude-desktop` | ✅ Full Support |\n| **Claude Code** | `napari-mcp-install install claude-code` | ✅ Full Support |\n| **Cursor IDE** | `napari-mcp-install install cursor` | ✅ Full Support |\n| **Cline (VS Code)** | `napari-mcp-install install cline-vscode` | ✅ Full Support |\n| **Cline (Cursor)** | `napari-mcp-install install cline-cursor` | ✅ Full Support |\n| **Gemini CLI** | `napari-mcp-install install gemini` | ✅ Full Support |\n| **Codex CLI** | `napari-mcp-install install codex` | ✅ Full Support |\n\n**→ See [Integration Guides](docs/integrations/index.md) for application-specific instructions**\n\n## 🛠 Available MCP Tools\n\nThe server exposes 16 tools for complete napari control:\n\n### Core Functions\n- **Session Management**: `init_viewer`, `close_viewer`, `session_information`\n- **Layer Operations**: `add_layer`, `list_layers`, `get_layer`, `remove_layer`, `set_layer_properties`, `reorder_layer`, `apply_to_layers`, `save_layer_data`\n- **Viewer Controls**: `configure_viewer`\n- **Utilities**: `screenshot`, `execute_code`, `install_packages`, `read_output`\n\n## ⚠️ Security Notice\n\n!!! warning \"Code Execution Capabilities\"\n    This server includes powerful tools that allow arbitrary code execution:\n\n    - **`execute_code()`** - Runs Python code in the server environment\n    - **`install_packages()`** - Installs packages via pip\n\n    The bridge server binds to `127.0.0.1` (localhost only) with no authentication.\n    Any local process can invoke these tools.\n\n    **Use only with trusted AI assistants on local networks.**\n    Never expose to public internet without proper sandboxing.\n\n## 📖 Documentation\n\n- **[Quick Start Guide](docs/getting-started/quickstart.md)** - Get running in 3 minutes\n- **[Installation Options](docs/getting-started/installation.md)** - Advanced installation methods\n- **[Integration Guides](docs/integrations/index.md)** - Setup for specific AI applications\n- **[Python Examples](docs/examples/README.md)** - Automate workflows with custom scripts\n- **[Troubleshooting](docs/guides/troubleshooting.md)** - Common issues and solutions\n- **[API Reference](https://royerlab.github.io/napari-mcp/api/)** - Complete tool documentation\n\n## 🧪 Development Setup\n\n```bash\n\n# Clone repository\ngit clone https://github.com/royerlab/napari-mcp.git\ncd napari-mcp\n\n# Install with development dependencies\npip install -e \".[dev]\"\n\n# Run tests\npytest -m \"not realgui\"  # Skip GUI tests\npytest --cov=src --cov-report=html  # With coverage\n```\n\n## 🤝 Contributing\n\nContributions are welcome! Please:\n\n1. Fork the repository\n2. Create a feature branch (`git checkout -b feature/amazing-feature`)\n3. Make your changes with tests\n4. Run pre-commit hooks: `pre-commit run --all-files`\n5. Commit changes (`git commit -m 'Add amazing feature'`)\n6. Push to branch (`git push origin feature/amazing-feature`)\n7. Open a Pull Request\n\n## 📋 Architecture\n\n- **`state.py`** — `ServerState` holding all mutable state (viewer, locks, execution namespace)\n- **`server.py`** — `create_server(state)` factory; tools defined as closures over state\n- **`qt_helpers.py`** — Qt application and viewer lifecycle management\n- **`output.py`** — Output truncation utility\n- **`bridge_server.py`** — Plugin bridge server (overrides 3 tools for Qt thread safety)\n- **`viewer_protocol.py`** — `ViewerProtocol` for typed viewer backends\n- **`cli/`** — `napari-mcp-install` CLI for configuring AI applications\n\nKey features:\n- **Thread-safe**: All napari operations are serialized\n- **Non-blocking**: Qt event loop runs asynchronously\n- **Stateful**: Maintains viewer state across tool calls\n- **Extensible**: Easy to add new tools\n\n## 📚 Resources\n\n- **[napari](https://napari.org/)** - Multi-dimensional image viewer\n- **[Model Context Protocol](https://modelcontextprotocol.io/)** - MCP specification\n- **[FastMCP](https://github.com/jlowin/fastmcp)** - Python MCP framework\n- **[Claude Desktop](https://claude.ai/download)** - AI assistant with MCP support\n\n## 📄 License\n\nBSD-3-Clause License - see [LICENSE](LICENSE) file for details.\n\n## 🙏 Acknowledgments\n\n- [napari team](https://napari.org/) for the excellent imaging platform\n- [FastMCP](https://github.com/jlowin/fastmcp) for the MCP framework\n- [Anthropic](https://www.anthropic.com/) for Claude and MCP development\n- [astral-sh](https://astral.sh/) for uv dependency management\n\n---\n\n**Built with ❤️ for the microscopy and AI communities**\n",
+    "description_content_type": "text/markdown",
+    "keywords": "napari,mcp,microscopy,image-analysis,ai,claude",
+    "home_page": null,
+    "download_url": null,
+    "author": null,
+    "author_email": "Ilan Theodoro <ilan.silva@czbiohub.org>",
+    "maintainer": null,
+    "maintainer_email": "Ilan Theodoro <ilan.silva@czbiohub.org>",
+    "license": "BSD-3-Clause",
+    "classifier": [
+      "Development Status :: 3 - Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Scientific/Engineering :: Image Processing",
+      "Topic :: Scientific/Engineering :: Visualization",
+      "Topic :: Software Development :: Libraries :: Python Modules"
+    ],
+    "requires_dist": [
+      "fastmcp>=2.10.3",
+      "napari>=0.5.5",
+      "qtpy>=2.4.1",
+      "Pillow>=10.3.0",
+      "imageio>=2.34.0",
+      "numpy>=1.26.0",
+      "typer>=0.9.0",
+      "rich>=13.0.0",
+      "toml>=0.10.2",
+      "tomli>=2.0; python_version < \"3.11\"",
+      "ruff>=0.12.10; extra == \"dev\"",
+      "mypy>=1.17.0; extra == \"dev\"",
+      "types-toml>=0.10.8.20240310; extra == \"dev\"",
+      "types-Pillow>=10.0.0; extra == \"dev\"",
+      "pre-commit>=4.3.0; extra == \"dev\"",
+      "bandit>=1.8.6; extra == \"dev\"",
+      "napari-mcp[dev]; extra == \"all\""
+    ],
+    "requires_python": ">=3.10",
+    "requires_external": null,
+    "project_url": [
+      "Homepage, https://github.com/royerlab/napari-mcp",
+      "Repository, https://github.com/royerlab/napari-mcp",
+      "Documentation, https://royerlab.github.io/napari-mcp/",
+      "Bug Tracker, https://github.com/royerlab/napari-mcp/issues"
+    ],
+    "provides_extra": [
+      "dev",
+      "all"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}

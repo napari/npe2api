@@ -1,0 +1,98 @@
+{
+  "name": "simple-napari-cci-annotator",
+  "display_name": "CCI Annotator",
+  "visibility": "public",
+  "icon": "",
+  "categories": [
+    "Annotation",
+    "Segmentation"
+  ],
+  "schema_version": "0.2.1",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "simple-napari-cci-annotator.open_widget",
+        "title": "Simple CCI annotator plugin",
+        "python_name": "simple_napari_cci_annotator:SimpleCciAnnotatorQWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "simple-napari-cci-annotator.open_widget",
+        "display_name": "Simple CCI Annotator Plugin",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "simple-napari-cci-annotator",
+    "version": "0.0.2",
+    "dynamic": [
+      "license-file"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "Plugin to easly test a yolo model and retrain it",
+    "description": "\n[![License MIT](https://img.shields.io/badge/license-MIT-green)](https://github.com/CCI-GU-Sweden/simple-napari-cci-annotator/blob/main/LICENSE)\n[![Python 3.10–3.12](https://img.shields.io/badge/python-3.10%20|%203.11%20|%203.12-blue)](https://python.org)\n[![tests](https://github.com/CCI-GU-Sweden/simple-napari-cci-annotator/workflows/tests/badge.svg)](https://github.com/CCI-GU-Sweden/simple-napari-cci-annotator/actions)\n\n# Simple napari annotator\n\nMinimal napari plugin for YOLO bbox detection + quick correction + retraining.\n\nNo dataset browser, no extra workflow logic. User provides the image in napari.\n\n## UI flow\n\n1. Path to model (`.pt`) or model folder\n2. `Load model`\n3. `Predict`\n4. Optional destination folder for retrained model (browse or type)\n5. Edit boxes in napari shapes layer (`yolo_bboxes`)\n6. `Add correction`\n7. `Retrain`\n\n![UI](assets/Plugin_UI.png)\n\n## Starting from scratch\n\nThe model input supports either:\n\n- A `.pt` model file, or\n- A folder path.\n\nFolder behavior on `Load model`:\n\n- If the folder already contains one or more `.pt` files, the first one is loaded.\n- If the folder contains no `.pt` file, the plugin copies the bundled `yolov8n.pt` into that folder and loads it.\n- Empty model input is invalid and will show an error.\n\nIf you do not have a model yet, start from a pretrained YOLOv8 nano checkpoint and use it as your initial file:\n\n- Direct download: <https://github.com/ultralytics/assets/releases/latest/download/yolov8n.pt>\n- Model overview: <https://docs.ultralytics.com/models/yolov8/>\n\nAfter downloading, select that `yolov8n.pt` file in the Model field and continue with the correction/retrain loop.\n\n![Loading a model](assets/Loading_model.png)\n\n## Assumptions\n\n- Input image is already RGB 8-bit (or compatible with clipping/conversion).\n- Single class (`0: LABEL`) for now.\n- Exactly one image layer should be present when using `Add correction`.\n\n![Predicting label](assets/Predicting_label.png)\n\n## Folder behavior\n\nGiven a model path like:\n\n`.../my_model/best.pt`\n\nThe plugin uses `.../my_model` as root.\n\n### Add correction\n\nEach click saves:\n\n- Image to `my_model/corrections/<image_name>_<timestamp>.png`\n- Labels to `my_model/corrections/<image_name>_<timestamp>.txt`\n- Training config to `my_model/corrections/training_config.json` (created/updated)\n\nImage layer behavior:\n\n- If no image layer exists, `Add correction` shows an error.\n- If more than one image layer exists, `Add correction` shows an error.\n- If exactly one image layer exists, that image layer is used for saving correction image data.\n\n`training_config.json` defaults:\n\n- `image_size`: prefilled from the current image size using `max(height, width)`\n- `batch`: `8`\n- `epochs`: `100`\n- `patience`: `30`\n\nYou can edit this file before clicking `Retrain`.\n\nLabel format is YOLO detection:\n\n`class x_center y_center width height`\n\nnormalized to `[0, 1]`.\n\n### Retrain\n\nEach click creates:\n\n- `<retrain_root>/dataset/`\n  - `images/train`, `images/val`\n  - `labels/train`, `labels/val`\n  - `dataset.yaml`\n- Trains YOLO from those corrections\n- Copies best model to:\n  - `<retrain_root>/best.pt`\n- Deletes training traces folder after extracting `best.pt`\n\n`<retrain_root>` resolution:\n\n- If destination field is set, retraining outputs there.\n- Otherwise it defaults to `my_model/retrained_<timestamp>`.\n\nSo the retrained folder keeps a clean dataset + final model, without run artifacts.\n\nWarning: Data labeled will be equally divided between traning and validation (50%).\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": null,
+    "download_url": null,
+    "author": "Simon Leclerc",
+    "author_email": "simon.leclerc@gu.se",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "MIT License\n\nCopyright (c) 2026 LECLERC Simon\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n",
+    "classifier": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "requires_dist": [
+      "numpy",
+      "qtpy",
+      "ultralytics",
+      "pillow",
+      "napari[all]; extra == \"all\"",
+      "tox; extra == \"testing\"",
+      "pytest; extra == \"testing\"",
+      "pytest-cov; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "napari; extra == \"testing\"",
+      "pyqt5; extra == \"testing\""
+    ],
+    "requires_python": ">=3.9",
+    "requires_external": null,
+    "project_url": null,
+    "provides_extra": [
+      "all",
+      "testing"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}
