@@ -18,7 +18,7 @@
       "Programming Language :: Python :: 3.13",
       "Topic :: Software Development :: Libraries :: Python Modules"
     ],
-    "description": "# auto-options-python\nMange command options in python and create QWidgets for them.\n",
+    "description": "# auto-options-python\n\nMange command options in python and create QWidgets for them.\n\n## Introduction\n\n<figure>\n  <img src=\"https://github.com/user-attachments/assets/ea23f8a5-81d7-4524-90d0-9d5a4daaea63\" alt=\"A simple options dialog\" style=\"width:250\", align='center'>\n  <figcaption>Fig. 1.1 - A simple dialog created with autooptions</figcaption>\n</figure>\n\nAutooptions allows to create options for operations in napari, in a simple way. Autooptions automatically saves and\nloads non transient options. It can create a dialog from the options, in which the user can change the values of the\noptions. It updates combo-boxes containing layers of a given type when layers of that type are added or removed in\nnapari. The user can provide callbacks that are called when the value of an option changes.\n\nThe option types currently supported are:\n\n- Image\n- FFT (specific to 3D-toolbox)\n- Labels\n- Points\n- Int\n- Float\n- Choice\n- String\n- Boolean\n\nThe layer types (FFT, Labels, Points and Image) and Choice will be represented via combo-boxes in the dialog. Boolean\nis using a checkbox and the others are using input fields.\n\nThe code to create the options-dialog in .1.1 is:\n\n```python\n import napari\n from autooptions.options import Options\n from autooptions.widget import OptionsWidget\n\n viewer = napari.Viewer()\n options = Options(\"3D Toolbox\", \"Convolution\")\n options.addImage()\n options.addImage(name=\"kernel\")\n options.addChoice(\"mode\", choices=[\"same\", \"valid\", \"full\"])\n options.addChoice(\"method\", choices=[\"auto\", \"direct\", \"fft\"])\n options.load()\n widget = OptionsWidget(viewer, options, layout_type=\"vertical\")\n widget.addApplyButton(None)\n viewer.window.add_dock_widget(widget, name=options.optionsName)\n```\n\n## Accessing the values of options\n\nYou can access the user input of the widgets via the options name:\n\n```python\n    print(options.value(\"image\"))\n    print(options.value(\"method\"))\n```\nThe shortcut ``getImageLayer``, allows to directly retrieve the layer selected in the widget, without retrieving the name first and then the layer.\n\n```python\nkernelLayer = widget.getImageLayer(\"kernel\")\n```\n\n## Callbacks\n\nYou can register callbacks for options and for buttons. The callback of an option is called when the user input for the option changed. For the predifined buttons ``apply`` and ``ok`` the values are automatically copied from the widget into the option, before the user registered callback is called.\n\n```python\n options = Options(\"3D Toolbox\", \"Convolution\")\n options.addImage(callback, callback=self.onInputImageChanged)\n self.widget = OptionsWidget(self.viewer, self.options, client=self)\n widget.addApplyButton(self.handleApplyButtonPressed)\n```\n\n## Accessing widgets\n\nYou can access a widget, for example to check that only valid values can be entered:\n\n```python\n    def onInputChanged(self, value):\n        if not value.isnumeric():\n            self.widget.widgets[\"size xy\"][1].setText(str(self.options.value(\"size xy\")))\n```\n\n## Optional options\n\nYou can create optional options :) These are displayed with a checkbox to activate/deactivate them. When deactivated the option will be ignored. This allows to avoid the usage of special values in options that indicate for example that the user doesn't want to enter a value for the option in which case a default or on the fly calculated value is used. \n\n```python\noptions = Options(\"Filament Toolbox\", \"measure_labels\")\noptions.addLabels()\noptions.addImage(optional=[True, False])\n```\n``[True, False]`` indicates that the option is optional and by default deactivated. The value of a deactivated option will be ``None``. \n\n<figure>\n  <img src=\"https://github.com/user-attachments/assets/cd4cdbf3-a626-4c37-b1b5-76481c21cf61\" alt=\"An optional option\" style=\"width:250\", align='center'>\n  <figcaption>Fig. 1.2 - The image option is optional</figcaption>\n</figure>\n\n## Layouts\n\nCurrently the ``vertical`` and the ``grid`` layout are supportet. If no layout is specified the grid layout is used. See Fig.1.1 for a vertical layout. \n\n<figure>\n  <img src=\"https://github.com/user-attachments/assets/7abfa93c-0d02-4bdf-a0fa-ae975bfcbb81\" alt=\"grid layout style=\"width:250\", align='center'>\n  <figcaption>Fig. 1.3 - The same option's dialog as in Fig. 1.1, but with a grid layout.</figcaption>\n</figure>\n\n```python\nimport napari\nfrom autooptions.options import Options\nfrom autooptions.widget import OptionsWidget\n\nviewer = napari.Viewer()\noptions = Options(\"3D Toolbox\", \"Convolution\")\noptions.addImage()\noptions.addImage(name=\"kernel\")\noptions.addChoice(\"mode\", choices=[\"same\", \"valid\", \"full\"])\noptions.addChoice(\"method\", choices=[\"auto\", \"direct\", \"fft\"])\noptions.load()\nwidget = OptionsWidget(viewer, options, layout_type=\"grid\")\nwidget.addApplyButton(None)\nviewer.window.add_dock_widget(widget, name=options.optionsName)\n```\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -50,7 +50,7 @@
       "User Support": "https://github.com/MontpellierRessourcesImagerie/auto-options-python/issues"
     },
     "provides_extra": null,
-    "release_url": "https://pypi.org/project/auto-options-python/1.1.1/",
+    "release_url": "https://pypi.org/project/auto-options-python/1.1.2/",
     "requires_dist": [
       "appdirs",
       "qtpy",
@@ -60,11 +60,11 @@
     ],
     "requires_python": ">=3.10",
     "summary": "Manage command options in Python and create QWidgets for them.",
-    "version": "1.1.1",
+    "version": "1.1.2",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 37140330,
+  "last_serial": 37316186,
   "ownership": {
     "organization": null,
     "roles": [
@@ -426,48 +426,92 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "1.1.2": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "6168821b6e0f57c298b03c8c3ae308c10b1bf03921c12600488d4d02a3e39850",
+          "md5": "f5e562dc4ba29af0eff774c1236f3c84",
+          "sha256": "f201fa58c3e68a1d08355ee13aeda78790870ea84573c5cdcae3577c846d1152"
+        },
+        "downloads": -1,
+        "filename": "auto_options_python-1.1.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "f5e562dc4ba29af0eff774c1236f3c84",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 27311,
+        "upload_time": "2026-05-22T15:26:45",
+        "upload_time_iso_8601": "2026-05-22T15:26:45.010983Z",
+        "url": "https://files.pythonhosted.org/packages/61/68/821b6e0f57c298b03c8c3ae308c10b1bf03921c12600488d4d02a3e39850/auto_options_python-1.1.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "f9fbb732306c6c27f012681587873bf7f4a389187cae52d84f9f222cfa630abd",
+          "md5": "8a8c69514c75d75379bae770124466f8",
+          "sha256": "e1752c0cc37676921e968776d6ff5f308b6fcf6f69dc2e3506082c2bcc7762cc"
+        },
+        "downloads": -1,
+        "filename": "auto_options_python-1.1.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "8a8c69514c75d75379bae770124466f8",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 31074,
+        "upload_time": "2026-05-22T15:26:46",
+        "upload_time_iso_8601": "2026-05-22T15:26:46.862037Z",
+        "url": "https://files.pythonhosted.org/packages/f9/fb/b732306c6c27f012681587873bf7f4a389187cae52d84f9f222cfa630abd/auto_options_python-1.1.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": null,
       "digests": {
-        "blake2b_256": "4c596c373cfad33e917c7c7781651f109b2a41777a70e25ee5aeeb6f499d6714",
-        "md5": "b51c0483992cedc2f7e87b584f8d220d",
-        "sha256": "0cec794dcc0ba7ed215e6ba1101365bd548af81097761e2b95b42ddc983dc2ee"
+        "blake2b_256": "6168821b6e0f57c298b03c8c3ae308c10b1bf03921c12600488d4d02a3e39850",
+        "md5": "f5e562dc4ba29af0eff774c1236f3c84",
+        "sha256": "f201fa58c3e68a1d08355ee13aeda78790870ea84573c5cdcae3577c846d1152"
       },
       "downloads": -1,
-      "filename": "auto_options_python-1.1.1-py3-none-any.whl",
+      "filename": "auto_options_python-1.1.2-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "b51c0483992cedc2f7e87b584f8d220d",
+      "md5_digest": "f5e562dc4ba29af0eff774c1236f3c84",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.10",
-      "size": 25640,
-      "upload_time": "2026-05-17T21:18:13",
-      "upload_time_iso_8601": "2026-05-17T21:18:13.393692Z",
-      "url": "https://files.pythonhosted.org/packages/4c/59/6c373cfad33e917c7c7781651f109b2a41777a70e25ee5aeeb6f499d6714/auto_options_python-1.1.1-py3-none-any.whl",
+      "size": 27311,
+      "upload_time": "2026-05-22T15:26:45",
+      "upload_time_iso_8601": "2026-05-22T15:26:45.010983Z",
+      "url": "https://files.pythonhosted.org/packages/61/68/821b6e0f57c298b03c8c3ae308c10b1bf03921c12600488d4d02a3e39850/auto_options_python-1.1.2-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": null,
       "digests": {
-        "blake2b_256": "5784a1dd8d58b2dd0d1ce1ffda8a19cc25ab12bec88320eb99d55803d3b73653",
-        "md5": "2c7ebfdf37e53f2dc4acd268073d0022",
-        "sha256": "1709eed4c32562678955e95bcfea08eac8c545a79b78db8bf6879310a9354edc"
+        "blake2b_256": "f9fbb732306c6c27f012681587873bf7f4a389187cae52d84f9f222cfa630abd",
+        "md5": "8a8c69514c75d75379bae770124466f8",
+        "sha256": "e1752c0cc37676921e968776d6ff5f308b6fcf6f69dc2e3506082c2bcc7762cc"
       },
       "downloads": -1,
-      "filename": "auto_options_python-1.1.1.tar.gz",
+      "filename": "auto_options_python-1.1.2.tar.gz",
       "has_sig": false,
-      "md5_digest": "2c7ebfdf37e53f2dc4acd268073d0022",
+      "md5_digest": "8a8c69514c75d75379bae770124466f8",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.10",
-      "size": 28360,
-      "upload_time": "2026-05-17T21:18:14",
-      "upload_time_iso_8601": "2026-05-17T21:18:14.286394Z",
-      "url": "https://files.pythonhosted.org/packages/57/84/a1dd8d58b2dd0d1ce1ffda8a19cc25ab12bec88320eb99d55803d3b73653/auto_options_python-1.1.1.tar.gz",
+      "size": 31074,
+      "upload_time": "2026-05-22T15:26:46",
+      "upload_time_iso_8601": "2026-05-22T15:26:46.862037Z",
+      "url": "https://files.pythonhosted.org/packages/f9/fb/b732306c6c27f012681587873bf7f4a389187cae52d84f9f222cfa630abd/auto_options_python-1.1.2.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
