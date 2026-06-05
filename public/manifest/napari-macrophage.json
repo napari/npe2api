@@ -1,0 +1,127 @@
+{
+  "name": "napari-macrophage",
+  "display_name": "napari-macrophage",
+  "visibility": "public",
+  "icon": "",
+  "categories": [],
+  "schema_version": "0.2.1",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-macrophage.upload_image",
+        "title": "Load Image + Mask",
+        "python_name": "napari_macrophage.build_widgets:make_add_layer_from_tif_widget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-macrophage.upload_zarr",
+        "title": "Load from zarr",
+        "python_name": "napari_macrophage.build_widgets:make_add_layer_from_zarr_widget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-macrophage.edit_overlay_all",
+        "title": "Edit CD206 + DAPI + Masks",
+        "python_name": "napari_macrophage.build_widgets:make_edit_overlay_all_widget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-macrophage.run_watershed_for_all_rois",
+        "title": "Run Watershed for All ROIs",
+        "python_name": "napari_macrophage.build_widgets:make_run_watershed_for_all_rois_widget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "napari-macrophage.upload_image",
+        "display_name": "Load Image + Mask",
+        "autogenerate": false
+      },
+      {
+        "command": "napari-macrophage.upload_zarr",
+        "display_name": "Load from Zarr",
+        "autogenerate": false
+      },
+      {
+        "command": "napari-macrophage.edit_overlay_all",
+        "display_name": "Edit CD206 + DAPI + Masks",
+        "autogenerate": false
+      },
+      {
+        "command": "napari-macrophage.run_watershed_for_all_rois",
+        "display_name": "Run Watershed for All ROIs",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "napari-macrophage",
+    "version": "0.0.3",
+    "dynamic": [
+      "license-file"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "A napari plugin for interactive 3D macrophage image analysis: mask editing, Otsu/Watershed segmentation, YOLO bbox export, and morphology analysis.",
+    "description": "# napari-macrophage\n\nA Napari plugin for macrophage image visualisation, mask editing, Otsu/Watershed segmentation, YOLO-format bbox export/import, and cell analysis.\n\n---\n\n<div align=\"center\">\n  <img src=\"docs/3D_generation.gif\" width=\"600\" alt=\"Demo\" />\n</div>\n\n## Features\n- Load image (CD206, optional DAPI) and 3D mask.\n- Click-to-select object in Masks; delete object in a single slice or across all slices; change or assign new ID; renumber objects.\n- View / edit a single object via an “Object {id}” layer.\n- ROI workflow: draw a bounding box --> preview Otsu segmentation (preview mask with postprocessing and can be adjusted with slider) --> optional Watershed --> save 3D mask. \n- Annotate bounding box and export/import YOLO bounding box: export annotated bounding boxes as YOLO styled .txt file; import bounding boxes from .txt.\n- Perform cell analysis.\n\n---\n\n## Installation\n\nInstall the dependencies and the plugin via pip:\n\nwith conda:\n```bash\nconda create -n mic_napari python=3.11 -y\nconda activate mic_napari\n```\n\nwith pip (if not with conda):\n```bash\npython -m venv .mic_napari\nsource .mic_napari/bin/activate\n```\n\n```bash\npip install -r requirements.txt\npip install -e .\n```\n\nLaunch Napari:\n```bash\nnapari\n```\n\n---\n## Usage\n\n### **1. Load data**\n\nPlease use the following menu options to load your images and masks:\n  - Plugins → napari-macrophage → Load Image + Mask\n  - Expected input format:\n    - **Image**: (Z, Y, X) or (C, Z, Y, X), where C = 2 or 5. For 4D images, the axis with the smallest dimension is assumed to be the channel axis. The expected channel order is: collagen, F480, CD206, DAPI.\n    - **Mask**: (Z, Y, X)\n\n  You will see the following layers in the layer list:\n  - **CD206** layer: image layer showing the CD206 channel.\n  - **DAPI** layer: optional image layer showing the DAPI channel.\n  - **Masks** layer: labels layer showing macrophage IDs (0 = background).\n\n  Additional layers may appear later:\n  - **ROI** layer: shapes layer for drawing rectangle bounding boxes (stored as 4 corners [z, y_min, x_min], [z, y_min, x_max], [z, y_max, x_max], [z, y_max, x_min]).\n  - **Preview Mask** layer: labels layer for Otsu/ Watershed preview.\n  - **Object {id}** layer: temporary labels layer showing one selected object.\n\n  You can also open files via the default Open File option in the menu bar. After clicking on **Edit CD206 + DAPI + Masks**, the images and masks will be prepared for use with the plugin’s functionalities. This currently only supports image of shape (Z, Y, X) or (2, Z, Y, X). It would still be better to load via Plugins → napari-macrophage → Load Image + Mask in the current version of plugin.\n\n\n### **2. Edit masks**\n  - Plugins → napari-macrophage → Edit CD206 + DAPI + Masks\n\nAfter running, additional dock widgets will appear on the right-hand side to support customised functionalities.\n\nWhen the **Masks layer is active**:\n  - **Delete in Slice**: remove the connected component of the selected (click on the object to select) object in the **current slice only**. Other slices with the same object ID remain unchanged. Please remember to click on the background to deselect an object, to avoid accidentally deleting it.\n  - **Delete in ALL Slice**: remove the object with the specified ID completely across **all slices**.\n  - **Change ID**: assign a new object ID to the connected component of the selected object in the current slice.\n  - **New ID**: assigns next available ID to the clicked component.\n  - **Renumber All**: reassign object IDs so that they are consecutive after deleting objects.\n  - **View Object**: select an object ID and click View Object to create a new Object layer in the layer list. You can then view and edit the object mask of the corresponding macrophage in this layer.\n\n     Optional: You can also use any built-in tools of Napari (e.g., label eraser, paint brush, polygon tool) to edit mask shapes or create new masks in the Mask/ Preview Mask/ Object layer.\n\nWhen the **Object x layer is active**:\n  - Changes made in the Masks layer are automatically reflected in the Object layer.\n  - You can edit the object mask using Napari's built-in tools.\n  - To save the changes back to the Masks layer, please click **Apply Changes**; otherwise, changes will **not** be visible in the the Masks layer. \n  - To change object IDs or delete objects, please select the Masks layer as the active layer.\n\n### 3. Segmentation\n**Segmentation** workflow: \n  1) **Add Bbox**: create an new ROI layer in the layer list. User can draw a bounding box (using the Add Rectangles button provided by Napari) around the missing object on this layer. The bounding box will be copied from the current slice forward to form a 3D ROI. The plugin then automatically runs Otsu thresholding within the 3D ROI. A new Preview Mask layer is created to show the candidate object mask. A threshold slider is provided so that you can adjust the segmentation interactively. You can directly edit the Preview Mask layer using Napari’s built-in tools to refine the segmentation.\n\n     Note: when computing the segmentation mask, the plugin automatically performs \n       - per-slice validation: continuity check (if an object is not predicted in >= 3 consecutive slices, any subsequent predictions are ignored) and IoU check (remove predictions that do not overlap with at least one of the previous 2 valid slices), \n       - post-processing (binary opening and closing, small objects removal).\n    \n\n  2) **Save Otsu 3D**: save the 3D Otsu mask. The previewed object with any possible changes will be written back to the Masks layer with the next available ID. The ROI and Preview Mask layers are removed automatically.\n\n     Note: it performs a duplicate check. Before adding the previewed mask to the Masks layer, the plugin checks the next two slices for objects in the same region using IoU comparison: \n       - if an object at similar location already exists, an iteractive dialog will pop up, asking the user to confirm if they really want to create the mask with a new ID:\n         - yes: create a new object;\n         - no: discard the new object and return to editing.\n       - if no similar object exists: the mask is added directly.\n\n  3) **Run Watershed**: runs watershed based on the current Otsu preview; if no bounding box is detected, it can run on the whole image.\n\n  4) **Save Watershed 3D**: save the entire 3D Watershed mask.\n\n\n### **4. YOLO export/import (bounding boxes) to/from .txt**\n  - **Draw BBox**: draw bounding boxes on ROI layer.\n  - **Export**: saves the bounding box as YOLO format.\n  - **Import**: read bounding box from .txt and add them to ROI layer. Only boxes corresponding to the current image will be imported.\n\n### **5. Cells analysis (Volume, Surface, Sphericity)**\n  - A dialog shows a table with:\n    - Label ID\n    - Volume [µm³]\n    - Surface Area [µm²]\n    - Sphericity [–] defined as $\\Psi = \\frac{\\pi^{\\frac{1}{3}} (6V)^{\\frac{2}{3}}} {A}$\n  - Save as .csv: label_id, volume, surface area, sphericity\n\n  Note: Requires voxel size to be set by user. The surface area is approximated with `skimage.measure.marching_cubes` and `mesh_surface_area`. The approximation is not so precise for small cells or cell multiple connected components.\n\n### **6. Isotropic resampling**\nResample CD206 and Masks so that voxel spacing is isotropic:\n  - Performs resampling on the currently active layer.\n  - Target voxel size = min(current vz, vy, vx) in µm.\n  - Image is resampled with trilinear interpolation, mask with nearest-neighbor.\n  - New layers “CD206 (iso)” and “Masks (iso)” may be created.\n\n### **7. Save edited masks**\nPlease use Napari’s built-in **Save** shortcut on your computer.\n\n---\n\n## Automatic Segmentation Pipeline\n\nFor fully automated end-to-end macrophage segmentation (YOLO detection + SAM2 3D segmentation + Cellpose nucleus detection), see the companion pipeline:\n\n👉 **[macrophage-image-processor](https://github.com/Amirhk-dev/macrophage-image-processor)**\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": null,
+    "download_url": null,
+    "author": null,
+    "author_email": "Amirhossein Kardoost <kardoostamirhossein@gmail.com>",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": null,
+    "classifier": [
+      "Framework :: napari",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Operating System :: OS Independent"
+    ],
+    "requires_dist": [
+      "napari[all]",
+      "magicgui",
+      "tifffile",
+      "numpy",
+      "scikit-image",
+      "torch; extra == \"detection\"",
+      "onnxruntime; extra == \"detection\""
+    ],
+    "requires_python": ">=3.10",
+    "requires_external": null,
+    "project_url": null,
+    "provides_extra": [
+      "detection"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}
