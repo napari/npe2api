@@ -1,0 +1,132 @@
+{
+  "name": "napari-easytrack",
+  "display_name": "napari-easytrack",
+  "visibility": "public",
+  "icon": "",
+  "categories": [],
+  "schema_version": "0.2.1",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-easytrack.preset_widget",
+        "title": "btrack Parameter Presets",
+        "python_name": "napari_easytrack.widgets.widget:BtrackPresetWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-easytrack.optimization_widget",
+        "title": "btrack Tuning",
+        "python_name": "napari_easytrack.widgets.optim_widget:BtrackOptimizationWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "napari-easytrack.preset_widget",
+        "display_name": "Tracking",
+        "autogenerate": false
+      },
+      {
+        "command": "napari-easytrack.optimization_widget",
+        "display_name": "Parameter Tuning",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "napari-easytrack",
+    "version": "0.1.6",
+    "dynamic": [
+      "license-file"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "Cell tracking with btrack presets and parameter optimization",
+    "description": "[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18200897.svg)](https://doi.org/10.5281/zenodo.18200897)\n[![Licence](https://img.shields.io/pypi/l/napari-easytrack.svg?color=green)](https://raw.githubusercontent.com/timsmsmsm/easytrack/main/LICENSE.md)\n[![PyPI](https://img.shields.io/pypi/v/napari-easytrack.svg?color=green)](https://pypi.org/project/napari-easytrack)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-easytrack.svg?color=green)](https://python.org)\n[![Documentation](https://readthedocs.org/projects/napari-easytrack/badge/?version=latest)](https://napari-easytrack.readthedocs.io/en/latest/?badge=latest)\n[![tests](https://github.com/timsmsmsm/easytrack/actions/workflows/tests.yml/badge.svg)](https://github.com/timsmsmsm/easytrack/actions/workflows/tests.yml)\n[![Coverage Status](https://coveralls.io/repos/github/timsmsmsm/easytrack/badge.svg?branch=main)](https://coveralls.io/github/timsmsmsm/easytrack?branch=main)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-easytrack)](https://napari-hub.org/plugins/napari-easytrack)\n\n# napari-easytrack\n\n`napari-easytrack` is a napari plugin for automated parameter tuning in cell tracking. It optimises\n[`btrack`](https://github.com/quantumjot/btrack) obtaining a set of optimal tracking parameters for a dataset. Using\nthat optimal set of parameters, `napari-easytrack` can then track the cells in the dataset,\nimproving tracking accuracy and reducing manual correction time.\n\n`napari-easytrack` provides two widgets in napari:\n\n1. An **optimization widget** that optimizes tracking parameters based on a small subset of manually annotated\n   ground-truth data.\n2. A **tracking widget** that uses the optimized parameters to track the entire dataset. Here, we provide different\n   tracking presets so users can choose the one that best fits their data without optimization. If no preset fits the\n   data,\n   users should try to optimize the parameters first with the **optimization widget**.\n\n## Installation\n\nCreate a venv environment with Python 3.11 (recommended) or Python 3.10.\n\n```sh\n python -m venv napari_easytrack-env\n ```\n\nFirst, install [napari](https://napari.org/index.html#installation).\n\nThen, install easytrack via pip:\n\n```sh \npython -m pip install napari-easytrack\n```\n\nTo install the latest development version of `EpiTools` clone this repository\nand run\n\n```sh\npython -m pip install -e .\n```\n\n## Usage\n\nTo use `napari-easytrack`, first launch napari:\n\n```sh\nnapari\n```\n\nOnce in napari, click on the \"Plugins\" menu, then select \"napari-easytrack\" and click \"Tracking\" to open the tracking\nwidget. We recommend starting with the `Tracking` widget to test the plugin with the provided presets.\n\n### Tracking Widget\n\nOnce in the `Tracking` widget, you can select one of the presets from the dropdown menu:\n\n- `Epithelial cells`: for tracking epithelial cells in 2D+time datasets.\n- `Epithelial cells (Z-tracking)`: for tracking epithelial cells in 3D (space) datasets.\n- `Custom JSON`: if none of the presets fit your data, you can provide a custom JSON file with tracking parameters\n  optimised for your dataset. You can obtain this JSON file by first using the `Parameter tuning` widget.\n\nOnce you have selected your presets, select the \"Segmentation Layer\" to apply the tracking to and click \"Apply\nTracking\".\nWe also provide, in case it is needed, a \"Clean Segmentation\" and \"Remove Small Objects\" to improve the provided\nsegmentation. In addition, you can also save your own configuration of parameters as a JSON file for future use by\nclicking on \"Save Config (JSON)\".\n\n### Parameter tuning Widget\n\nTo optimise your own tracking parameters specific to your dataset, you are required to provide some ground-truth data with\ncells segmented and tracked. You will select this dataset as \"Ground Truth Layer\" in the `Parameter tuning` widget. As a\nfirst trial, we recommend using a small subset of your data (e.g., 10-20 frames) with a few cells tracked (e.g., 5-10\ncells).\nWith all the default parameters, click on \"Start Optimization\" to begin the optimisation process. You can cancel the\nprocess at any time by clicking on \"Stop Optimization\". Once the optimisation is finished, you can save the optimal\nparameters as a JSON file by clicking on \"Save Config\". You can then use this JSON file in the `Tracking` widget to\ntrack\nyour entire dataset, selecting \"Custom JSON\" in the presets dropdown menu.\n\n## Issues\n\nIf you encounter any problems, please\n[file an issue](https://github.com/timsmsmsm/easytrack/issues) along with a\ndetailed description.\n\n## Citation\n\nIf you use `napari-easytrack` in your research, please cite the following paper:\n\n```bibtex\n@software{Huygelen_napari-easytrack,\n    author = {Huygelen, Tim and Lowe, Alan and Mao, Yanlan and Vicente-Munuera, Pablo},\n    license = {MIT},\n    title = {{napari-easytrack}},\n    url = {https://github.com/timsmsmsm/easytrack},\n    year = {2026},\n    doi = {10.5281/zenodo.18200897},\n}\n```\n",
+    "description_content_type": "text/markdown",
+    "keywords": "biology,cell,tracking,tissue",
+    "home_page": null,
+    "download_url": null,
+    "author": null,
+    "author_email": "Tim Huygelen <tim.huygelen.20@ucl.ac.uk>, Pablo Vicente Munuera <p.munuera@ucl.ac.uk>, Yanlan Mao <y.mao@ucl.ac.uk>",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "Copyright (c), 2025, napari-easytrack developers All rights reserved.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.",
+    "classifier": [
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Topic :: Scientific/Engineering :: Image Processing",
+      "Topic :: Scientific/Engineering :: Medical Science Apps.",
+      "Topic :: Scientific/Engineering :: Bio-Informatics"
+    ],
+    "requires_dist": [
+      "magicgui",
+      "napari",
+      "numpy",
+      "btrack",
+      "qtpy",
+      "scipy",
+      "scikit-image",
+      "magicgui",
+      "optuna",
+      "joblib",
+      "traccuracy",
+      "numba==0.62.1",
+      "black; extra == \"dev\"",
+      "mypy; extra == \"dev\"",
+      "pre-commit; extra == \"dev\"",
+      "pyqt5; extra == \"dev\"",
+      "ruff; extra == \"dev\"",
+      "tox; extra == \"dev\"",
+      "myst-parser; extra == \"docs\"",
+      "pydata-sphinx-theme; extra == \"docs\"",
+      "pytz; extra == \"docs\"",
+      "sphinx-autobuild; extra == \"docs\"",
+      "sphinx; extra == \"docs\"",
+      "sphinx_autodoc_typehints; extra == \"docs\"",
+      "sphinxcontrib-video; extra == \"docs\"",
+      "types-pytz; extra == \"docs\"",
+      "sphinx-rtd-theme; extra == \"docs\"",
+      "pyqt5; extra == \"docs\"",
+      "pytest; extra == \"testing\"",
+      "pytest-cov; extra == \"testing\"",
+      "tox; extra == \"testing\"",
+      "imagecodecs; extra == \"testing\"",
+      "coverage; extra == \"testing\""
+    ],
+    "requires_python": ">=3.10",
+    "requires_external": null,
+    "project_url": null,
+    "provides_extra": [
+      "dev",
+      "docs",
+      "testing"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}

@@ -1,0 +1,146 @@
+{
+  "name": "napari-ome-zarr-navigator",
+  "display_name": "napari OME-Zarr Navigator",
+  "visibility": "public",
+  "icon": "",
+  "categories": [
+    "Dataset",
+    "Visualization"
+  ],
+  "schema_version": "0.2.1",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-ome-zarr-navigator.make_plate_browser",
+        "title": "Plate Browser",
+        "python_name": "napari_ome_zarr_navigator:PlateBrowser",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-ome-zarr-navigator.make_roi_loader",
+        "title": "ROI Loader",
+        "python_name": "napari_ome_zarr_navigator.roi_loader:ROILoaderImage",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-ome-zarr-navigator.hiPSC_zarr",
+        "title": "Load hiPSC sample data from Zenodo",
+        "python_name": "napari_ome_zarr_navigator._sample_data:hiPSC_zarr",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-ome-zarr-navigator.leukemia_zarr",
+        "title": "Load leukemia PDX sample data from Zenodo",
+        "python_name": "napari_ome_zarr_navigator._sample_data:leukemia_zarr",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "napari-ome-zarr-navigator.make_plate_browser",
+        "display_name": "Plate Browser",
+        "autogenerate": false
+      },
+      {
+        "command": "napari-ome-zarr-navigator.make_roi_loader",
+        "display_name": "ROI Loader",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": [
+      {
+        "command": "napari-ome-zarr-navigator.hiPSC_zarr",
+        "key": "unique_id.1",
+        "display_name": "hiPSC"
+      },
+      {
+        "command": "napari-ome-zarr-navigator.leukemia_zarr",
+        "key": "unique_id.2",
+        "display_name": "leukemia"
+      }
+    ],
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "napari-ome-zarr-navigator",
+    "version": "0.3.0",
+    "dynamic": null,
+    "platform": null,
+    "supported_platform": null,
+    "summary": "A plugin to browse OME-Zarr plates by conditions and load images, labels and features from ROIs",
+    "description": "# napari-ome-zarr-navigator <img align=\"right\" height=\"150\" src=\"https://raw.githubusercontent.com/fractal-napari-plugins-collection/napari-ome-zarr-navigator/master/docs/images/navigator_logo.png\">\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-ome-zarr-navigator.svg?color=green)](https://github.com/fractal-analytics-platform/napari-ome-zarr-navigator/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-ome-zarr-navigator.svg?color=green)](https://pypi.org/project/napari-ome-zarr-navigator)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-ome-zarr-navigator.svg?color=green)](https://python.org)\n[![tests](https://github.com/fractal-analytics-platform/napari-ome-zarr-navigator/workflows/tests/badge.svg)](https://github.com/fractal-analytics-platform/napari-ome-zarr-navigator/actions)\n[![codecov](https://codecov.io/gh/fractal-analytics-platform/napari-ome-zarr-navigator/branch/main/graph/badge.svg)](https://codecov.io/gh/fractal-analytics-platform/napari-ome-zarr-navigator)\n\nA plugin to browse OME-Zarr plates by conditions and load images, labels and features from ROIs\n\n\n## Usage\n\n### Plate Browser\n\nThe Plate Browser loads an OME-Zarr plate from the local filesystem or via authenticated HTTPS (e.g. a [Fractal Server](https://fractal-analytics-platform.github.io/) instance). It also auto-detects plates opened via [napari-ome-zarr](https://github.com/ome/napari-ome-zarr).\n\n<img width=\"1624\" alt=\"navigator_plate_browser\" src=\"https://github.com/user-attachments/assets/ed1f1c13-1055-4b21-a3e6-100279f64f5b\" />\n\nThe Plate Browser lets you zoom to a selected well (\"Go to well\"), which draws a bounding box and centers the camera on that well.\n\n<img width=\"1624\" alt=\"plate_browser_go_to_well\" src=\"https://github.com/user-attachments/assets/c83c1daf-a5d2-41b7-8685-564f80eb0122\" />\n\nUsing [ngio condition tables](https://biovisioncenter.github.io/ngio/stable/table_specs/table_types/condition_table/), the Plate Browser can filter the well list to any subset defined by one or more conditions. Plate-level condition tables (fast) and image-level condition tables (slower, aggregated on the fly) are both supported.\n\n<img width=\"1512\" alt=\"plate_browser_filtering\" src=\"https://github.com/user-attachments/assets/7938ed80-31ee-4e58-b896-20ed92ea6508\" />\n\n### ROI Loader\n\nThe ROI Loader can be launched directly from napari's *Plugins* menu (standalone) or by selecting a well in the Plate Browser (\"Select ROI to load\"). It supports:\n\n- Loading images from different multiplexing cycles / acquisitions\n- Loading any ROI from [ROI tables](https://biovisioncenter.github.io/ngio/stable/table_specs/table_types/roi_table/), or the whole image when no ROI table is selected\n- Loading label images\n- Loading feature measurements from [feature tables](https://biovisioncenter.github.io/ngio/stable/table_specs/table_types/feature_table/)\n- **Multi-resolution (lazy)** mode — streams a full dask pyramid, optimal for large images and remote data\n- **Fixed resolution** mode — loads a single numpy array, optimal for 3D images and downstream tools in napari that don't handle multi-resolution layers (e.g. the label layer needs to be loaded as fixed resolution for using it in the classifier)\n\nOnce a ROI has been loaded for one well, \"Load selected ROI for additional well(s)\" reuses the same settings for any further wells selected in the Plate Browser.\n\n<img width=\"1624\" alt=\"roi_loader\" src=\"https://github.com/user-attachments/assets/ddd8268f-52ae-4a43-9c00-f52df4422ba3\" />\n\nThis plugin is tested with OME-Zarr files generated by [Fractal](https://fractal-analytics-platform.github.io/) and is designed to work with any OME-Zarr ≥ v0.4. The feature loading workflow is optimised for use with the [napari-feature-classifier](https://github.com/fractal-napari-plugins-collection/napari-feature-classifier).\n\n----------------------------------\n\n\n## Test data\n\nTest & sample data is available at https://zenodo.org/records/20429951\n\n\n## Installation\n\n### Via pixi (recommended)\n\n[pixi](https://pixi.sh) manages all Python and system dependencies in a single step:\n\n```bash\ngit clone https://github.com/fractal-napari-plugins-collection/napari-ome-zarr-navigator\ncd napari-ome-zarr-navigator\npixi run napari\n```\n\nTo launch with the full feature-analysis environment (adds [napari-feature-classifier](https://github.com/fractal-napari-plugins-collection/napari-feature-classifier) and [napari-feature-visualization](https://github.com/fractal-napari-plugins-collection/napari-feature-visualization)):\n\n```bash\npixi run napari-fractal\n```\n\n### Via pip\n\nInstall into an existing Python ≥ 3.11 environment with [napari] already present:\n\n```bash\npip install napari-ome-zarr-navigator\n```\n\nFor a fresh environment we recommend [miniforge](https://github.com/conda-forge/miniforge):\n\n```bash\nconda create -n napari-ome-zarr python=3.12 napari pyqt -c conda-forge\nconda activate napari-ome-zarr\npip install napari-ome-zarr-navigator\nnapari\n```\n\nOptionally also install additional plugins like `napari-feature-classifier` and `napari-feature-visualization`, as in:\n```bash\npip install napari-feature-classifier napari-feature-visualization\n```\n\n## Contributing\n\nContributions are very welcome. Tests can be run with `pixi run test`; please ensure coverage stays the same before submitting a pull request.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-ome-zarr-navigator\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[file an issue]: https://github.com/fractal-analytics-platform/napari-ome-zarr-navigator/issues\n[pip]: https://pypi.org/project/pip/\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": null,
+    "download_url": null,
+    "author": null,
+    "author_email": "Fabio Steffen <fabio.steffen@uzh.ch>, Joel Luethi <joel.luethi@uzh.ch>",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "BSD-3-Clause",
+    "classifier": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "requires_dist": [
+      "magicgui",
+      "napari-ome-zarr<0.8",
+      "ngio<0.6,>=0.5",
+      "numcodecs!=0.14.0,!=0.14.1,!=0.16",
+      "numpy",
+      "ome-zarr",
+      "qtpy",
+      "scikit-image",
+      "wget",
+      "napari; extra == 'testing'",
+      "pytest; extra == 'testing'",
+      "pytest-cov; extra == 'testing'",
+      "pytest-qt; extra == 'testing'",
+      "qtpy; extra == 'testing'"
+    ],
+    "requires_python": "<3.13,>=3.11",
+    "requires_external": null,
+    "project_url": [
+      "Homepage, https://github.com/fractal-analytics-platform/napari-ome-zarr-navigator",
+      "Bug Tracker, https://github.com/fractal-analytics-platform/napari-ome-zarr-navigator/issues",
+      "Documentation, https://github.com/fractal-analytics-platform/napari-ome-zarr-navigator#README.md",
+      "Source Code, https://github.com/fractal-analytics-platform/napari-ome-zarr-navigator",
+      "User Support, https://github.com/fractal-analytics-platform/napari-ome-zarr-navigator/issues"
+    ],
+    "provides_extra": [
+      "testing"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}
