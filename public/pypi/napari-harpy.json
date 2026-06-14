@@ -20,7 +20,7 @@
       "Topic :: Scientific/Engineering :: Bio-Informatics",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "<p align=\"center\">\n  <img src=\"https://raw.githubusercontent.com/vibspatial/napari-harpy/main/docs/_static/logo.png\" alt=\"Harpy logo\" width=\"200\">\n</p>\n\n<h1 align=\"center\">napari-harpy: a spatial omics interface for napari.</h1>\n\n[![PyPI](https://img.shields.io/pypi/v/napari-harpy.svg)](https://pypi.org/project/napari-harpy/)\n\nBuilt around [`SpatialData`](https://spatialdata.scverse.org/en/stable/) and [`Harpy`](https://harpy.readthedocs.io/en/latest/) for interactive exploration, feature extraction, and object classification.\n\n`napari-harpy` is a napari plugin for viewing, exploring, and analyzing\n`SpatialData` datasets. It includes its own viewer for loading and\nbrowsing data inside napari, alongside feature extraction and interactive\nobject classification workflows.\n\n## Installation\n\nInstall from [PyPI](https://pypi.org/project/napari-harpy/):\n\n```bash\npip install napari-harpy\n```\n\n## Quickstart\n\nThe quickest way to try the plugin is to create a small example `SpatialData`\nobject, write it to a temporary zarr store, read it back as an on-disk dataset,\nand launch the Harpy napari interface with `Interactive`.\n\n```python\nimport tempfile\nfrom pathlib import Path\n\nfrom spatialdata import read_zarr\n\nfrom napari_harpy import Interactive\nfrom napari_harpy.datasets import blobs_multi_region\n\nzarr_path = Path(tempfile.mkdtemp()) / \"blobs_multi_region.zarr\"\n\nsdata = blobs_multi_region()\nsdata.write(zarr_path)\n\nsdata = read_zarr(zarr_path)\nInteractive(sdata)\n```\n\nThis opens napari with the Harpy widgets docked and the\n`blobs_multi_region` dataset available in the shared viewer state.\n\nThe current repository contains three working widgets:\n\n- `Viewer`\n- `Feature Extraction`\n- `Object Classification`\n\nToday the plugin supports:\n\n- loading and viewing `SpatialData` through the Harpy viewer widget\n- selecting a labels element, optional image, compatible coordinate system, and\n  linked table from the shared loaded `SpatialData`\n- calculating intensity and morphology features through Harpy\n- writing feature matrices into the selected `AnnData` table linked to the\n  labels element, as `.obsm[feature_key]`, with companion metadata in\n  `.uns[\"feature_matrices\"][feature_key]`\n- interactive manual annotation of instances in labels elements\n- background `RandomForestClassifier` retraining on the selected feature\n  matrix stored in `.obsm[feature_key]` of the `AnnData` table linked to the\n  labels element\n- live prediction updates and labels recoloring\n- explicit write-back of in-memory table state to zarr\n- explicit reload of on-disk table state back into memory\n- multi-sample workflows through multi-region tables and explicit\n  labels/image/coordinate-system matching\n- headless feature extraction and classifier application for scripted or batch\n  processing\n\nExample napari-harpy session:\n\n<p align=\"center\">\n  <img src=\"https://raw.githubusercontent.com/vibspatial/napari-harpy/main/docs/_static/Screenshot%202026-05-19%20at%2014.25.23.png\" alt=\"napari-harpy viewer example screenshot\" width=\"900\">\n</p>\n\n<p align=\"center\">\n  <img src=\"https://raw.githubusercontent.com/vibspatial/napari-harpy/main/docs/_static/Screenshot%202026-05-09%20at%2021.31.53.png\" alt=\"napari-harpy object classification example screenshot\" width=\"900\">\n</p>\n\n## Headless and Multi-Sample Workflows\n\nFor scripted or batch processing, use the public `napari_harpy.headless` module.\nIt can apply an exported classifier to an existing feature matrix, or compute\nthe required features before applying the classifier.\n\nThe headless APIs accept one labels element or a sequence of labels elements.\nFor multi-sample data, pass matching labels, image, and coordinate-system\nsequences so Harpy can build or apply a shared table-level feature matrix across\nthe selected samples. When features need image intensities, the channel\nselection is read from the exported classifier's `source_channels` metadata.\n\n```python\nfrom spatialdata import read_zarr\n\nfrom napari_harpy import headless\n\nsdata = read_zarr(\"experiment.zarr\")\n\nresult = headless.apply_classifier_with_feature_extraction_from_path(\n    sdata,\n    \"classifier.harpy-classifier.joblib\",\n    table_name=\"table_multi\",\n    labels_name=[\"sample_1_labels\", \"sample_2_labels\"],\n    coordinate_system=[\"sample_1\", \"sample_2\"],\n    image_name=[\"sample_1_image\", \"sample_2_image\"],\n)\n```\n\n## Local development\n\nCreate the development environment:\n\n```bash\n./create_env.sh\n```\n\nThen launch napari:\n\n```bash\nsource .venv/bin/activate\nnapari\n```\n\nOpen the widgets from the napari plugin menu:\n\n- `Plugins -> napari-harpy -> Viewer`\n- `Plugins -> napari-harpy -> Feature Extraction`\n- `Plugins -> napari-harpy -> Object Classification`\n\n## Debug script\n\nA small local debug script is available at\n[`scripts/debug_widget.py`](scripts/debug_widget.py).\n\nIt creates a temporary `blobs_multi_region` zarr store, loads it into napari,\nand docks the Harpy widgets automatically.\nThis is useful for quickly reproducing widget behavior during development.\n\nRun it with:\n\n```bash\nsource .venv/bin/activate\npython scripts/debug_widget.py\n```\n",
+    "description": "<p align=\"center\">\n  <img src=\"https://raw.githubusercontent.com/vibspatial/napari-harpy/main/docs/_static/logo.png\" alt=\"Harpy logo\" width=\"200\">\n</p>\n\n<h1 align=\"center\">napari-harpy: a spatial omics interface for napari.</h1>\n\n[![PyPI](https://img.shields.io/pypi/v/napari-harpy.svg)](https://pypi.org/project/napari-harpy/)\n\nBuilt around [`SpatialData`](https://spatialdata.scverse.org/en/stable/) and [`Harpy`](https://harpy.readthedocs.io/en/latest/) for interactive exploration, feature extraction, and object classification.\n\n`napari-harpy` is a napari plugin for viewing, exploring, and analyzing\n`SpatialData` datasets. It includes its own viewer for loading and\nbrowsing data inside napari, alongside annotation, feature extraction, and\ninteractive object classification workflows.\n\n## Installation\n\nInstall from [PyPI](https://pypi.org/project/napari-harpy/):\n\n```bash\npip install napari-harpy\n```\n\n## Quickstart\n\nThe quickest way to try the plugin is to create a small example `SpatialData`\nobject, write it to a temporary zarr store, read it back as an on-disk dataset,\nand launch the Harpy napari interface with `Interactive`.\n\n```python\nimport tempfile\nfrom pathlib import Path\n\nfrom spatialdata import read_zarr\n\nfrom napari_harpy import Interactive\nfrom napari_harpy.datasets import blobs_multi_region\n\nzarr_path = Path(tempfile.mkdtemp()) / \"blobs_multi_region.zarr\"\n\nsdata = blobs_multi_region()\nsdata.write(zarr_path)\n\nsdata = read_zarr(zarr_path)\nInteractive(sdata)\n```\n\nThis opens napari with the Harpy widgets docked and the\n`blobs_multi_region` dataset available in the shared viewer state.\n\nThe current repository contains four working widgets:\n\n- `Viewer`\n- `Feature Extraction`\n- `Object Classification`\n- `Annotation`\n\nToday the plugin supports:\n\n- loading and viewing `SpatialData` through the Harpy viewer widget\n- selecting a labels element, optional image, compatible coordinate system, and\n  linked table from the shared loaded `SpatialData`\n- calculating intensity and morphology features through Harpy\n- writing feature matrices into the selected `AnnData` table linked to the\n  labels element, as `.obsm[feature_key]`, with companion metadata in\n  `.uns[\"feature_matrices\"][feature_key]`\n- interactive manual annotation of instances in labels elements\n- interactive creation and editing of polygon shapes annotations\n- background `RandomForestClassifier` retraining on the selected feature\n  matrix stored in `.obsm[feature_key]` of the `AnnData` table linked to the\n  labels element\n- live prediction updates and labels recoloring\n- explicit write-back of in-memory table state to zarr\n- explicit reload of on-disk table state back into memory\n- multi-sample workflows through multi-region tables and explicit\n  labels/image/coordinate-system matching\n- headless feature extraction and classifier application for scripted or batch\n  processing\n\nExample napari-harpy session:\n\n<p align=\"center\">\n  <img src=\"https://raw.githubusercontent.com/vibspatial/napari-harpy/main/docs/_static/viewer.png\" alt=\"napari-harpy viewer example screenshot\" width=\"900\">\n</p>\n\n<p align=\"center\">\n  <img src=\"https://raw.githubusercontent.com/vibspatial/napari-harpy/main/docs/_static/object_classification.png\" alt=\"napari-harpy object classification example screenshot\" width=\"900\">\n</p>\n\n## Headless and Multi-Sample Workflows\n\nFor scripted or batch processing, use the public `napari_harpy.headless` module.\nIt can apply an exported classifier to an existing feature matrix, or compute\nthe required features before applying the classifier.\n\nThe headless APIs accept one labels element or a sequence of labels elements.\nFor multi-sample data, pass matching labels, image, and coordinate-system\nsequences so Harpy can build or apply a shared table-level feature matrix across\nthe selected samples. When features need image intensities, the channel\nselection is read from the exported classifier's `source_channels` metadata.\n\n```python\nfrom spatialdata import read_zarr\n\nfrom napari_harpy import headless\n\nsdata = read_zarr(\"experiment.zarr\")\n\nresult = headless.apply_classifier_with_feature_extraction_from_path(\n    sdata,\n    \"classifier.harpy-classifier.joblib\",\n    table_name=\"table_multi\",\n    labels_name=[\"sample_1_labels\", \"sample_2_labels\"],\n    coordinate_system=[\"sample_1\", \"sample_2\"],\n    image_name=[\"sample_1_image\", \"sample_2_image\"],\n)\n```\n\n## Local development\n\nCreate the development environment:\n\n```bash\n./create_env.sh\n```\n\nThen launch napari:\n\n```bash\nsource .venv/bin/activate\nnapari\n```\n\nOpen the widgets from the napari plugin menu:\n\n- `Plugins -> napari-harpy -> Viewer`\n- `Plugins -> napari-harpy -> Feature Extraction`\n- `Plugins -> napari-harpy -> Object Classification`\n- `Plugins -> napari-harpy -> Annotation`\n\n## Debug script\n\nA small local debug script is available at\n[`scripts/debug_widget.py`](scripts/debug_widget.py).\n\nIt creates a temporary `blobs_multi_region` zarr store, loads it into napari,\nand docks the Harpy widgets automatically.\nThis is useful for quickly reproducing widget behavior during development.\n\nRun it with:\n\n```bash\nsource .venv/bin/activate\npython scripts/debug_widget.py\n```\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -58,7 +58,7 @@
       "docs",
       "test"
     ],
-    "release_url": "https://pypi.org/project/napari-harpy/0.0.9/",
+    "release_url": "https://pypi.org/project/napari-harpy/0.0.11/",
     "requires_dist": [
       "dask[dataframe]",
       "harpy-analysis>=0.4.0",
@@ -99,11 +99,11 @@
     ],
     "requires_python": "<3.15,>=3.11",
     "summary": "A spatial omics interface for napari.",
-    "version": "0.0.9",
+    "version": "0.0.11",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 37779122,
+  "last_serial": 38034294,
   "ownership": {
     "organization": null,
     "roles": [
@@ -154,6 +154,50 @@
         "upload_time": "2026-05-19T12:09:10",
         "upload_time_iso_8601": "2026-05-19T12:09:10.914790Z",
         "url": "https://files.pythonhosted.org/packages/c3/62/6dac123a251d9643ef1140aace01f73e9c8c0eab7e9a4fd0a458ade9d0ce/napari_harpy-0.0.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.11": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "5fdc37c91abff16ba8229825316a62fae3b357767be40c2b40e3a9e5dea3b1b6",
+          "md5": "1835e2aa36a5464432dfb3dbd1703098",
+          "sha256": "153626838a653501419c12e6ebc0b82d45866cf7f38302e1ad006cda7ed7ae03"
+        },
+        "downloads": -1,
+        "filename": "napari_harpy-0.0.11-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "1835e2aa36a5464432dfb3dbd1703098",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.15,>=3.11",
+        "size": 524915,
+        "upload_time": "2026-06-14T19:19:28",
+        "upload_time_iso_8601": "2026-06-14T19:19:28.058935Z",
+        "url": "https://files.pythonhosted.org/packages/5f/dc/37c91abff16ba8229825316a62fae3b357767be40c2b40e3a9e5dea3b1b6/napari_harpy-0.0.11-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "c3a50b264d26be9ca437ab735bdd612ad5067ac4f1980b755e95d26f7303c9d8",
+          "md5": "a8ae59ac6f29bcddc69fb47271ef0709",
+          "sha256": "3dc5be993a50ebf63fe4a3024344eeb4569deb3b0ca6c43a493e9141baa206d1"
+        },
+        "downloads": -1,
+        "filename": "napari_harpy-0.0.11.tar.gz",
+        "has_sig": false,
+        "md5_digest": "a8ae59ac6f29bcddc69fb47271ef0709",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.15,>=3.11",
+        "size": 19567339,
+        "upload_time": "2026-06-14T19:19:30",
+        "upload_time_iso_8601": "2026-06-14T19:19:30.139282Z",
+        "url": "https://files.pythonhosted.org/packages/c3/a5/0b264d26be9ca437ab735bdd612ad5067ac4f1980b755e95d26f7303c9d8/napari_harpy-0.0.11.tar.gz",
         "yanked": false,
         "yanked_reason": null
       }
@@ -515,42 +559,42 @@
     {
       "comment_text": null,
       "digests": {
-        "blake2b_256": "332f0dfc2ac23fd50ca8122eff047a93b9fff01a7afd599d94a18126356945ee",
-        "md5": "aef599e568d9e6fa369d98442650c29f",
-        "sha256": "aa7c8b6c55297a19d0d904b67699baf70d906be2fb5feec700e3d62a8034a8c5"
+        "blake2b_256": "5fdc37c91abff16ba8229825316a62fae3b357767be40c2b40e3a9e5dea3b1b6",
+        "md5": "1835e2aa36a5464432dfb3dbd1703098",
+        "sha256": "153626838a653501419c12e6ebc0b82d45866cf7f38302e1ad006cda7ed7ae03"
       },
       "downloads": -1,
-      "filename": "napari_harpy-0.0.9-py3-none-any.whl",
+      "filename": "napari_harpy-0.0.11-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "aef599e568d9e6fa369d98442650c29f",
+      "md5_digest": "1835e2aa36a5464432dfb3dbd1703098",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": "<3.15,>=3.11",
-      "size": 503090,
-      "upload_time": "2026-06-06T19:25:35",
-      "upload_time_iso_8601": "2026-06-06T19:25:35.208289Z",
-      "url": "https://files.pythonhosted.org/packages/33/2f/0dfc2ac23fd50ca8122eff047a93b9fff01a7afd599d94a18126356945ee/napari_harpy-0.0.9-py3-none-any.whl",
+      "size": 524915,
+      "upload_time": "2026-06-14T19:19:28",
+      "upload_time_iso_8601": "2026-06-14T19:19:28.058935Z",
+      "url": "https://files.pythonhosted.org/packages/5f/dc/37c91abff16ba8229825316a62fae3b357767be40c2b40e3a9e5dea3b1b6/napari_harpy-0.0.11-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": null,
       "digests": {
-        "blake2b_256": "aafda9ce536ef4488e1ea827e0918de96df4c54ffff2cf862aef9cbf3b76d586",
-        "md5": "74c7de4c6d4274b9109cb0ebb147a00e",
-        "sha256": "d620e1364c03636327296adee8d066d2d088991162c61f8dec9f7cb8ad30e96b"
+        "blake2b_256": "c3a50b264d26be9ca437ab735bdd612ad5067ac4f1980b755e95d26f7303c9d8",
+        "md5": "a8ae59ac6f29bcddc69fb47271ef0709",
+        "sha256": "3dc5be993a50ebf63fe4a3024344eeb4569deb3b0ca6c43a493e9141baa206d1"
       },
       "downloads": -1,
-      "filename": "napari_harpy-0.0.9.tar.gz",
+      "filename": "napari_harpy-0.0.11.tar.gz",
       "has_sig": false,
-      "md5_digest": "74c7de4c6d4274b9109cb0ebb147a00e",
+      "md5_digest": "a8ae59ac6f29bcddc69fb47271ef0709",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": "<3.15,>=3.11",
-      "size": 11817386,
-      "upload_time": "2026-06-06T19:25:38",
-      "upload_time_iso_8601": "2026-06-06T19:25:38.163132Z",
-      "url": "https://files.pythonhosted.org/packages/aa/fd/a9ce536ef4488e1ea827e0918de96df4c54ffff2cf862aef9cbf3b76d586/napari_harpy-0.0.9.tar.gz",
+      "size": 19567339,
+      "upload_time": "2026-06-14T19:19:30",
+      "upload_time_iso_8601": "2026-06-14T19:19:30.139282Z",
+      "url": "https://files.pythonhosted.org/packages/c3/a5/0b264d26be9ca437ab735bdd612ad5067ac4f1980b755e95d26f7303c9d8/napari_harpy-0.0.11.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
