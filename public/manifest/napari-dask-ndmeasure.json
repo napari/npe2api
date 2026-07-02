@@ -1,0 +1,88 @@
+{
+  "name": "napari-dask-ndmeasure",
+  "display_name": "Dask ndmeasure",
+  "visibility": "public",
+  "icon": null,
+  "categories": [],
+  "schema_version": "0.2.0",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-dask-ndmeasure.measure_widget",
+        "title": "Open Measure widget",
+        "python_name": "napari_dask_ndmeasure._widget:MeasureWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "napari-dask-ndmeasure.measure_widget",
+        "display_name": "Measure (dask-image)",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "napari-dask-ndmeasure",
+    "version": "0.2.0",
+    "dynamic": null,
+    "platform": null,
+    "supported_platform": null,
+    "summary": "Out-of-core regionprops-style measurements for huge labelled images in napari",
+    "description": "# napari-dask-ndmeasure\n\n[![PyPI](https://img.shields.io/pypi/v/napari-dask-ndmeasure.svg)](https://pypi.org/project/napari-dask-ndmeasure/)\n[![Python versions](https://img.shields.io/pypi/pyversions/napari-dask-ndmeasure.svg)](https://pypi.org/project/napari-dask-ndmeasure/)\n[![License: GPLv3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)\n\nOut-of-core, chunk-parallel regionprops-style measurements for **huge**\nlabelled images inside napari.\n\n`skimage.measure.regionprops` needs the full labelled + intensity array in\nRAM — fine for one tile, not for a hundred-thousand-object OME-ZARR volume.\nThis plugin measures a `Labels` layer directly against an `Image` layer via\n[`dask-image`](https://image.dask.org)'s `ndmeasure`, working straight off\nthe layers' backing dask/zarr arrays, chunk by chunk, without ever\nmaterializing the whole volume.\n\n## Install\n\n```bash\npip install napari-dask-ndmeasure\n```\n\n## Use\n\n1. Open your image + labels in napari (e.g. via\n   [patchworks](https://github.com/imcf/patchworks)'s\n   `view_in_napari(...)`, which also sets each layer's physical `scale`, so\n   measurements come out in µm — not just pixels).\n2. `Plugins → Dask ndmeasure → Measure (dask-image)`.\n3. Pick the Image and Labels layer, check the measurements you want, hit\n   **Measure**. A progress bar tracks which stat is currently computing; the\n   UI stays responsive throughout (measurement runs in a background thread).\n4. Browse the table in the dock widget, or **Save CSV…** (defaults to\n   `<labels layer name>_measurements.csv`).\n\nThe measured table is also written to the Labels layer's `.features`, so you\ncan immediately color the layer by any measured value via napari's built-in\n\"color by feature\" for Labels layers.\n\nRe-clicking **Measure** with the same layers/level/stats is instant — results\nare cached for the session (in memory; cleared when the widget/viewer\ncloses).\n\nEvery array is rechunked to a bounded size before measuring, regardless of\nhow the layer was loaded — a plain numpy-backed layer (or any dask array\nthat isn't already sensibly chunked) would otherwise become **one giant\nchunk**, silently forcing the whole volume into RAM during computation. This\nis what actually made the out-of-core promise real for non-pyramid layers.\n\n## Measurements\n\n| Stat | Needs intensity image | Notes |\n|---|---|---|\n| `area` | no | voxel count (+ `area_um2`/`area_um3` if the layer is calibrated) |\n| `centroid` | no | geometric centroid, one column per axis (+ `_um` twins) |\n| `weighted_centroid` | yes | intensity-weighted centroid |\n| `mean_intensity` | yes | |\n| `std_intensity` | yes | |\n| `min_intensity` | yes | |\n| `max_intensity` | yes | |\n\n## Multiscale / pyramid layers\n\nA \"Pyramid level\" spin box lets you measure a coarser level first — much\nfaster, handy to sanity-check the setup before running the full-resolution\npass on a very large volume.\n\n## Development\n\n```bash\ngit clone https://github.com/imcf/napari-dask-ndmeasure\ncd napari-dask-ndmeasure\npip install -e \".[dev]\"\npytest\n```\n\n## License\n\nGNU General Public License v3.0 (GPL-3.0). See [LICENSE](LICENSE).\n",
+    "description_content_type": "text/markdown",
+    "keywords": "bioimage,dask,image processing,napari,regionprops",
+    "home_page": null,
+    "download_url": null,
+    "author": null,
+    "author_email": "Laurent Guerard <laurent.guerard@unibas.ch>",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "GPL-3.0-only",
+    "classifier": [
+      "Development Status :: 3 - Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+      "Programming Language :: Python :: 3",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "requires_dist": [
+      "dask-image>=2023.3.0",
+      "dask[array]>=2023.1.0",
+      "magicgui",
+      "napari>=0.7.1",
+      "numpy>=1.24",
+      "pandas>=1.5",
+      "qtpy",
+      "pyqt5; extra == 'dev'",
+      "pytest; extra == 'dev'",
+      "pytest-qt; extra == 'dev'"
+    ],
+    "requires_python": ">=3.9",
+    "requires_external": null,
+    "project_url": [
+      "Homepage, https://github.com/imcf/napari-dask-ndmeasure"
+    ],
+    "provides_extra": [
+      "dev"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}
