@@ -1,0 +1,1039 @@
+{
+  "info": {
+    "author": "Lars Kr\u00e4mer, Fabian Isensee, Maximilian Rokuss",
+    "author_email": "lars.kraemer@dkfz-heidelberg.de, f.isensee@dkfz-heidelberg.de, maximilian.rokuss@dkfz-heidelberg.de",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: Apache Software License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "<img src=\"https://github.com/MIC-DKFZ/napari-nninteractive/raw/main/imgs/nnInteractive_header.png\"  width=\"1200\">\n\n# nnInteractive: Redefining 3D Promptable Segmentation\n\nThis repository contains the napari plugin for nnInteractive. Check out the\n[python backend](https://github.com/MIC-DKFZ/nnInteractive) and [MITK integration](https://www.mitk.org/MITK-nnInteractive) for more.\n\n## What is nnInteractive?\n\n> Isensee, F.\\*, Rokuss, M.\\*, Kr\u00e4mer, L.\\*, Dinkelacker, S., Ravindran, A., Stritzke, F., Hamm, B., Wald, T., Langenberg, M., Ulrich, C., Deissler, J., Floca, R., & Maier-Hein, K. (2025). nnInteractive: Redefining 3D Promptable Segmentation. https://arxiv.org/abs/2503.08373 \\\n> \\*: equal contribution\n\nLink: [![arXiv](https://img.shields.io/badge/arXiv-2503.08373-b31b1b.svg)](https://arxiv.org/abs/2503.08373)\n\n##### Abstract:\n\nAccurate and efficient 3D segmentation is essential for both clinical and research applications.\nWhile foundation models like SAM have revolutionized interactive segmentation, their 2D design and domain shift limitations make them ill-suited for 3D medical images.\nCurrent adaptations address some of these challenges but remain limited, either lacking volumetric awareness, offering restricted interactivity, or supporting only a small set of structures and modalities.\nUsability also remains a challenge, as current tools are rarely integrated into established imaging platforms and often rely on cumbersome web-based interfaces with restricted functionality.\nWe introduce nnInteractive, the first comprehensive 3D interactive open-set segmentation method.\nIt supports diverse prompts\u2014including points, scribbles, boxes, and a novel lasso prompt\u2014while leveraging intuitive 2D interactions to generate full 3D segmentations.\nTrained on 120+ diverse volumetric 3D datasets (CT, MRI, PET, 3D Microscopy, etc.), nnInteractive sets a new state-of-the-art in accuracy, adaptability, and usability.\nCrucially, it is the first method integrated into widely used image viewers (e.g., Napari, MITK), ensuring broad accessibility for real-world clinical and research applications.\nExtensive benchmarking demonstrates that nnInteractive far surpasses existing methods, setting a new standard for AI-driven interactive 3D segmentation.\n\n<img src=\"https://github.com/MIC-DKFZ/napari-nninteractive/raw/main/imgs/figure1_method.png\" width=\"1200\">\n\n## Demo Videos\n\n<a href=\"https://www.youtube.com/watch?v=H_L6LL0FRoo\">\n    <img src=\"https://img.youtube.com/vi/H_L6LL0FRoo/0.jpg\" width=\"270\">\n</a>\n<a href=\"https://www.youtube.com/watch?v=YoMZ7Xv7gKI\">\n    <img src=\"https://img.youtube.com/vi/YoMZ7Xv7gKI/0.jpg\" width=\"270\">\n</a>\n<a href=\"https://www.youtube.com/watch?v=V0rqPYA3sjA\">\n    <img src=\"https://img.youtube.com/vi/V0rqPYA3sjA/0.jpg\" width=\"270\">\n</a>\n\n## Installation\n\n`napari-nninteractive` installs as a **lightweight, torch-free remote client by default** \u2014 it can drive a remote `nninteractive-server` straight away, on any machine. **Local (in-process) inference is an opt-in extra** (`[local]`) that adds the full nnInteractive backend (PyTorch + nnU-Net) and needs an Nvidia GPU.\n\n| Mode | Install | PyTorch? | Hardware |\n|------|---------|----------|----------|\n| **Remote client** (default) | `pip install napari-nninteractive` | **No** (lightweight, torch-free) | anything \u2014 laptop, Mac, no GPU |\n| **Local inference** | `pip install \"napari-nninteractive[local]\"` (+ PyTorch) | **Yes** (large download) | Linux/Windows + Nvidia GPU \u2014 10 GB VRAM recommended, \\<6 GB works for small objects |\n\n> [!TIP]\n> **On a Mac, or without a capable Nvidia GPU?** The default install is already exactly what you want \u2014 stop after Step 2. nnInteractive relies heavily on 3D convolutions, which are prohibitively slow on Apple Silicon (MPS) and CPU hardware, so running the model on a remote GPU and driving it from napari is the recommended, and often only practical, way to use it on these machines. See [Remote inference (server / client)](#remote-inference-server--client) for how to set up and connect to the server.\n\n### Step 1 \u2014 Create a virtual environment\n\nnnInteractive supports Python 3.10+ and works with Conda, pip, or any other virtual environment. Here's an example using Conda:\n\n```bash\nconda create -n nnInteractive python=3.12\nconda activate nnInteractive\n```\n\nInstall napari if you don't already have it:\n\n```bash\npip install napari[all]\n```\n\n### Step 2 \u2014 Install the plugin (remote client, torch-free)\n\n```bash\npip install napari-nninteractive\n```\n\nThis is the **entire** install if you only drive a remote `nninteractive-server`: no PyTorch, no GPU required. The plugin starts in Remote mode \u2014 see [Remote inference (server / client)](#remote-inference-server--client) to connect.\n\n### Step 3 \u2014 (Optional) Enable local inference\n\nOnly needed if **this** machine runs the model itself. Requires a Linux or Windows computer with an Nvidia GPU.\n\n**1. Install the correct PyTorch for your system.** Go to the [PyTorch homepage](https://pytorch.org/get-started/locally/) and pick the right configuration. PyTorch must be installed via pip nowadays, which is fine inside a conda environment. For Ubuntu with an Nvidia GPU, pick 'stable', 'Linux', 'Pip', 'Python', CUDA version does not matter (ensure your driver is up to date!). Then execute the command that is displayed, for example:\n\n```bash\npip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu126\n```\n\n**2. Add the `[local]` extra** (pulls the full nnInteractive backend + nnU-Net):\n\n```bash\npip install \"napari-nninteractive[local]\"\n```\n\nQuote the brackets so your shell does not treat them as a glob (required in zsh / macOS). Model weights are downloaded automatically on first use; this can take a couple of minutes depending on your connection.\n\nYou can do this at **any** time: if you started with the default client-only install and the **Local** switch in the plugin is greyed out, just run the command above (after installing PyTorch) and restart napari to unlock local inference.\n\n### Install from source (optional)\n\n```bash\ngit clone https://github.com/MIC-DKFZ/napari-nninteractive\ncd napari-nninteractive\npip install -e .                 # remote client (torch-free) \u2014 the default\npip install -e \".[local]\"        # local inference \u2014 also install PyTorch first (see Step 3)\n```\n\n## Getting Started\n\nUse one of these three options to start napari and activate the plugin.\nAfterward, Drag and drop your images into napari.\n\n\\***Note if getting asked which plugin to use for opening .nii.gz files use napari-nifti.**\n\na) Start napari, then Plugins -> nnInteractive.\n\n```\nnapari\n```\n\nb) Run this to start napari with the plugin already started.\n\n```\nnapari -w napari-nninteractive\n```\n\nc) Run this to start napari with the plugin and open an image directly\n\n```\nnapari demo_data/liver_145_0000.nii.gz -w napari-nninteractive\n```\n\n# How to use\n\n**Note:** To open Nifti (.nii.gz, .nii) files we recommend to select napari-nifti.\n\n<img src=\"https://github.com/MIC-DKFZ/napari-nninteractive/raw/main/imgs/gui_instuctions.png\" width=\"1200\">\n\n## Remote inference (server / client)\n\n**This is the recommended way to run nnInteractive on a Mac or any machine without a capable Nvidia GPU.** nnInteractive\ndepends heavily on 3D convolutions, which are prohibitively slow on Apple Silicon (MPS) and CPU \u2014 in practice, remote\ninference is the only usable option on those systems.\n\nYou run the model on a remote machine and drive it from napari over the network. One server hosts the model and serves\nmultiple napari clients; each client gets its own independent session (image, prompts, segmentation), while the\nmodel weights are loaded once and shared. The napari client has no GPU requirements, so it runs fine on a laptop or Mac.\n\n### On the GPU machine \u2014 start the server\n\n```bash\nnninteractive-server \\\n    --model-dir /path/to/checkpoint_folder \\\n    --fold 0 \\\n    --host 0.0.0.0 --port 1527 \\\n    --max-sessions 4 \\\n    --api-key \"$(openssl rand -hex 32)\"\n```\n\nShare the printed API key with your users via whatever channel you use for shared credentials. For a single-user setup over SSH (no API key, no exposed port), see the SSH-tunnel section in the full docs linked below.\n\n### In napari \u2014 connect to the server\n\n1. Start napari with the plugin (`napari -w napari-nninteractive`).\n2. In the plugin panel, flip the **Local | Remote** switch to **Remote**.\n3. Enter the **Server URL** (e.g. `http://gpu-box.lab:1527`) and the **API key**.\n4. Click **Connect**. On success the status line shows `connected (...)`.\n5. Use **Initialize** and the rest of the workflow exactly as in local mode \u2014 point, bbox, scribble, and lasso prompts all behave the same; only the prediction runs on the remote GPU.\n\nThe model checkpoint is fixed by the server at startup, so the local checkpoint selector is hidden in Remote mode.\n\n> [!NOTE]\n> The **default install is the torch-free client**, so unless you added the `[local]` extra\n> the plugin starts directly in Remote mode and the **Local** switch is greyed out. Hover the\n> switch (or read the one-line notice printed on start-up) for the reason and the exact\n> command. To unlock local inference, install PyTorch and the extra\n> (`pip install \"napari-nninteractive[local]\"`; see Step 3 of [Installation](#installation) above),\n> then restart napari.\n\n### \u2026or run the server in Docker\n\nIf you'd rather not install the backend on the GPU box, the server is also published as a Docker\nimage with the model **baked in** (a GPU host with the\n[NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)\nis required):\n\n```bash\ndocker run --gpus all -p 1527:1527 \\\n    -e NN_INTERACTIVE_API_KEY=\"$(openssl rand -hex 32)\" \\\n    ghcr.io/mic-dkfz/nninteractive-server:latest\n```\n\nA `lite` tag is also available if you'd rather mount your own checkpoint folder at `/model` (or\nfetch a model by id at startup). See the backend\n[DOCKER.md](https://github.com/MIC-DKFZ/nnInteractive/blob/master/nnInteractive/inference/server/DOCKER.md)\nfor both flavours and all configuration options.\n\n### Things to be aware of\n\n- **Lost connection or idle timeout.** Server-side sessions are reaped after 10 minutes of inactivity (configurable on the server), and a server that goes away (restart, crash, network drop) ends the session too. When this happens the plugin resets the **Connect** button and asks you to reconnect. **Your current segmentation is preserved** on the client: after you reconnect and click **Initialize** again, the image is re-uploaded and the segmentation is restored so you can keep refining where you left off. Only the in-progress prompt markers (the individual points/boxes/scribbles) need to be redone.\n- **Server full.** If all session slots are taken, Connect reports `server is full, try again later`. Retry shortly.\n- **Concurrent users.** Multiple researchers can use the same server independently. Predictions are serialized on the GPU, so heavy concurrent use makes individual predictions wait briefly \u2014 scale out by running one server per GPU.\n- **Corporate proxies.** If your client machine sets `HTTP_PROXY` / `HTTPS_PROXY`, add the server host to `NO_PROXY`, otherwise requests get intercepted and Connect will report an HTML/proxy error.\n\nFor full details \u2014 all server flags, authentication, TLS / reverse-proxy setup, SSH tunnels, troubleshooting \u2014 see [SERVER_CLIENT.md in the nnInteractive backend repo](https://github.com/MIC-DKFZ/nnInteractive/blob/master/SERVER_CLIENT.md).\n\n## Citation\n\nWhen using nnInteractive, please cite the following paper:\n\n> Isensee, F.\\*, Rokuss, M.\\*, Kr\u00e4mer, L.\\*, Dinkelacker, S., Ravindran, A., Stritzke, F., Hamm, B., Wald, T., Langenberg, M., Ulrich, C., Deissler, J., Floca, R., & Maier-Hein, K. (2025). nnInteractive: Redefining 3D Promptable Segmentation. https://arxiv.org/abs/2503.08373 \\\n> \\*: equal contribution\n\nLink: [![arXiv](https://img.shields.io/badge/arXiv-2503.08373-b31b1b.svg)](https://arxiv.org/abs/2503.08373)\n\n# License\n\nNote that while this repository is available under Apache-2.0 license (see [LICENSE](./LICENSE)), the [model checkpoint](https://huggingface.co/MIC-DKFZ/nnInteractive) is `Creative Commons Attribution Non Commercial Share Alike 4.0`!\n\n______________________________________________________________________\n\n## Acknowledgments\n\n<p align=\"left\">\n  <img src=\"https://github.com/MIC-DKFZ/napari-nninteractive/raw/main/imgs/Logos/HI_Logo.png\" width=\"150\"> &nbsp;&nbsp;&nbsp;&nbsp;\n  <img src=\"https://github.com/MIC-DKFZ/napari-nninteractive/raw/main/imgs/Logos/DKFZ_Logo.png\" width=\"500\">\n</p>\n\nThis repository is developed and maintained by the Applied Computer Vision Lab (ACVL)\nof [Helmholtz Imaging](https://www.helmholtz-imaging.de/) and the\n[Division of Medical Image Computing](https://www.dkfz.de/en/medical-image-computing) at DKFZ.\n\nThis [napari] plugin was generated with [copier] using the [napari-plugin-template].\n\n[copier]: https://copier.readthedocs.io/en/stable/\n[napari]: https://github.com/napari/napari\n[napari-plugin-template]: https://github.com/napari/napari-plugin-template\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": "Apache License\n                                   Version 2.0, January 2004\n                                http://www.apache.org/licenses/\n        \n           TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n        \n           1. Definitions.\n        \n              \"License\" shall mean the terms and conditions for use, reproduction,\n              and distribution as defined by Sections 1 through 9 of this document.\n        \n              \"Licensor\" shall mean the copyright owner or entity authorized by\n              the copyright owner that is granting the License.\n        \n              \"Legal Entity\" shall mean the union of the acting entity and all\n              other entities that control, are controlled by, or are under common\n              control with that entity. For the purposes of this definition,\n              \"control\" means (i) the power, direct or indirect, to cause the\n              direction or management of such entity, whether by contract or\n              otherwise, or (ii) ownership of fifty percent (50%) or more of the\n              outstanding shares, or (iii) beneficial ownership of such entity.\n        \n              \"You\" (or \"Your\") shall mean an individual or Legal Entity\n              exercising permissions granted by this License.\n        \n              \"Source\" form shall mean the preferred form for making modifications,\n              including but not limited to software source code, documentation\n              source, and configuration files.\n        \n              \"Object\" form shall mean any form resulting from mechanical\n              transformation or translation of a Source form, including but\n              not limited to compiled object code, generated documentation,\n              and conversions to other media types.\n        \n              \"Work\" shall mean the work of authorship, whether in Source or\n              Object form, made available under the License, as indicated by a\n              copyright notice that is included in or attached to the work\n              (an example is provided in the Appendix below).\n        \n              \"Derivative Works\" shall mean any work, whether in Source or Object\n              form, that is based on (or derived from) the Work and for which the\n              editorial revisions, annotations, elaborations, or other modifications\n              represent, as a whole, an original work of authorship. For the purposes\n              of this License, Derivative Works shall not include works that remain\n              separable from, or merely link (or bind by name) to the interfaces of,\n              the Work and Derivative Works thereof.\n        \n              \"Contribution\" shall mean any work of authorship, including\n              the original version of the Work and any modifications or additions\n              to that Work or Derivative Works thereof, that is intentionally\n              submitted to Licensor for inclusion in the Work by the copyright owner\n              or by an individual or Legal Entity authorized to submit on behalf of\n              the copyright owner. For the purposes of this definition, \"submitted\"\n              means any form of electronic, verbal, or written communication sent\n              to the Licensor or its representatives, including but not limited to\n              communication on electronic mailing lists, source code control systems,\n              and issue tracking systems that are managed by, or on behalf of, the\n              Licensor for the purpose of discussing and improving the Work, but\n              excluding communication that is conspicuously marked or otherwise\n              designated in writing by the copyright owner as \"Not a Contribution.\"\n        \n              \"Contributor\" shall mean Licensor and any individual or Legal Entity\n              on behalf of whom a Contribution has been received by Licensor and\n              subsequently incorporated within the Work.\n        \n           2. Grant of Copyright License. Subject to the terms and conditions of\n              this License, each Contributor hereby grants to You a perpetual,\n              worldwide, non-exclusive, no-charge, royalty-free, irrevocable\n              copyright license to reproduce, prepare Derivative Works of,\n              publicly display, publicly perform, sublicense, and distribute the\n              Work and such Derivative Works in Source or Object form.\n        \n           3. Grant of Patent License. Subject to the terms and conditions of\n              this License, each Contributor hereby grants to You a perpetual,\n              worldwide, non-exclusive, no-charge, royalty-free, irrevocable\n              (except as stated in this section) patent license to make, have made,\n              use, offer to sell, sell, import, and otherwise transfer the Work,\n              where such license applies only to those patent claims licensable\n              by such Contributor that are necessarily infringed by their\n              Contribution(s) alone or by combination of their Contribution(s)\n              with the Work to which such Contribution(s) was submitted. If You\n              institute patent litigation against any entity (including a\n              cross-claim or counterclaim in a lawsuit) alleging that the Work\n              or a Contribution incorporated within the Work constitutes direct\n              or contributory patent infringement, then any patent licenses\n              granted to You under this License for that Work shall terminate\n              as of the date such litigation is filed.\n        \n           4. Redistribution. You may reproduce and distribute copies of the\n              Work or Derivative Works thereof in any medium, with or without\n              modifications, and in Source or Object form, provided that You\n              meet the following conditions:\n        \n              (a) You must give any other recipients of the Work or\n                  Derivative Works a copy of this License; and\n        \n              (b) You must cause any modified files to carry prominent notices\n                  stating that You changed the files; and\n        \n              (c) You must retain, in the Source form of any Derivative Works\n                  that You distribute, all copyright, patent, trademark, and\n                  attribution notices from the Source form of the Work,\n                  excluding those notices that do not pertain to any part of\n                  the Derivative Works; and\n        \n              (d) If the Work includes a \"NOTICE\" text file as part of its\n                  distribution, then any Derivative Works that You distribute must\n                  include a readable copy of the attribution notices contained\n                  within such NOTICE file, excluding those notices that do not\n                  pertain to any part of the Derivative Works, in at least one\n                  of the following places: within a NOTICE text file distributed\n                  as part of the Derivative Works; within the Source form or\n                  documentation, if provided along with the Derivative Works; or,\n                  within a display generated by the Derivative Works, if and\n                  wherever such third-party notices normally appear. The contents\n                  of the NOTICE file are for informational purposes only and\n                  do not modify the License. You may add Your own attribution\n                  notices within Derivative Works that You distribute, alongside\n                  or as an addendum to the NOTICE text from the Work, provided\n                  that such additional attribution notices cannot be construed\n                  as modifying the License.\n        \n              You may add Your own copyright statement to Your modifications and\n              may provide additional or different license terms and conditions\n              for use, reproduction, or distribution of Your modifications, or\n              for any such Derivative Works as a whole, provided Your use,\n              reproduction, and distribution of the Work otherwise complies with\n              the conditions stated in this License.\n        \n           5. Submission of Contributions. Unless You explicitly state otherwise,\n              any Contribution intentionally submitted for inclusion in the Work\n              by You to the Licensor shall be under the terms and conditions of\n              this License, without any additional terms or conditions.\n              Notwithstanding the above, nothing herein shall supersede or modify\n              the terms of any separate license agreement you may have executed\n              with Licensor regarding such Contributions.\n        \n           6. Trademarks. This License does not grant permission to use the trade\n              names, trademarks, service marks, or product names of the Licensor,\n              except as required for reasonable and customary use in describing the\n              origin of the Work and reproducing the content of the NOTICE file.\n        \n           7. Disclaimer of Warranty. Unless required by applicable law or\n              agreed to in writing, Licensor provides the Work (and each\n              Contributor provides its Contributions) on an \"AS IS\" BASIS,\n              WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or\n              implied, including, without limitation, any warranties or conditions\n              of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A\n              PARTICULAR PURPOSE. You are solely responsible for determining the\n              appropriateness of using or redistributing the Work and assume any\n              risks associated with Your exercise of permissions under this License.\n        \n           8. Limitation of Liability. In no event and under no legal theory,\n              whether in tort (including negligence), contract, or otherwise,\n              unless required by applicable law (such as deliberate and grossly\n              negligent acts) or agreed to in writing, shall any Contributor be\n              liable to You for damages, including any direct, indirect, special,\n              incidental, or consequential damages of any character arising as a\n              result of this License or out of the use or inability to use the\n              Work (including but not limited to damages for loss of goodwill,\n              work stoppage, computer failure or malfunction, or any and all\n              other commercial damages or losses), even if such Contributor\n              has been advised of the possibility of such damages.\n        \n           9. Accepting Warranty or Additional Liability. While redistributing\n              the Work or Derivative Works thereof, You may choose to offer,\n              and charge a fee for, acceptance of support, warranty, indemnity,\n              or other liability obligations and/or rights consistent with this\n              License. However, in accepting such obligations, You may act only\n              on Your own behalf and on Your sole responsibility, not on behalf\n              of any other Contributor, and only if You agree to indemnify,\n              defend, and hold each Contributor harmless for any liability\n              incurred by, or claims asserted against, such Contributor by reason\n              of your accepting any such warranty or additional liability.\n        \n           END OF TERMS AND CONDITIONS\n        \n           APPENDIX: How to apply the Apache License to your work.\n        \n              To apply the Apache License to your work, attach the following\n              boilerplate notice, with the fields enclosed by brackets \"{}\"\n              replaced with your own identifying information. (Don't include\n              the brackets!)  The text should be enclosed in the appropriate\n              comment syntax for the file format. We also recommend that a\n              file or class name and description of purpose be included on the\n              same \"printed page\" as the copyright notice for easier\n              identification within third-party archives.\n        \n           Copyright [2025] [Division of Medical Image Computing, German Cancer Research Center (DKFZ), Heidelberg, Germany]\n        \n           Licensed under the Apache License, Version 2.0 (the \"License\");\n           you may not use this file except in compliance with the License.\n           You may obtain a copy of the License at\n        \n               http://www.apache.org/licenses/LICENSE-2.0\n        \n           Unless required by applicable law or agreed to in writing, software\n           distributed under the License is distributed on an \"AS IS\" BASIS,\n           WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n           See the License for the specific language governing permissions and\n           limitations under the License.\n        ",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-nninteractive",
+    "package_url": "https://pypi.org/project/napari-nninteractive/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-nninteractive/",
+    "project_urls": {
+      "Code": "https://github.com/MIC-DKFZ/napari-nninteractive",
+      "Homepage": "https://github.com/MIC-DKFZ/napari-nninteractive"
+    },
+    "provides_extra": [
+      "local",
+      "testing"
+    ],
+    "release_url": "https://pypi.org/project/napari-nninteractive/2.5.0/",
+    "requires_dist": [
+      "numpy",
+      "qtpy",
+      "napari-nifti",
+      "napari_toolkit",
+      "nninteractive-client>=2.5.0",
+      "nnInteractive>=2.5.0; extra == \"local\"",
+      "tox; extra == \"testing\"",
+      "pytest; extra == \"testing\"",
+      "pytest-cov; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "napari; extra == \"testing\"",
+      "pyqt5; extra == \"testing\""
+    ],
+    "requires_python": ">=3.10",
+    "summary": "nnInteractive plugin for Napari",
+    "version": "2.5.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 38591888,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "isenseef"
+      },
+      {
+        "role": "Maintainer",
+        "user": "kraemer"
+      }
+    ]
+  },
+  "releases": {
+    "1.0.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "22ecc3964d1761b8984991784c70f6650fb4a2c99752d78cb2e40f41e9fe4085",
+          "md5": "737c865e66dc351708b11d8b230e0b65",
+          "sha256": "8c371f4c72ef9f8daad9230674dde504d9ede75b69bb7b8909f7bed367c62059"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-1.0.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "737c865e66dc351708b11d8b230e0b65",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 30905,
+        "upload_time": "2025-03-11T19:11:40",
+        "upload_time_iso_8601": "2025-03-11T19:11:40.497139Z",
+        "url": "https://files.pythonhosted.org/packages/22/ec/c3964d1761b8984991784c70f6650fb4a2c99752d78cb2e40f41e9fe4085/napari_nninteractive-1.0.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "8f4f456884c9d5b2c110abd5fee3af7b5be410e7701c901188f75eb5b0b6666a",
+          "md5": "d25b150789d13f30d62d21ea409641b3",
+          "sha256": "72971fc87734323e8881802781085d0d2580478501af39836f0c8ca76fb0b4f3"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-1.0.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "d25b150789d13f30d62d21ea409641b3",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 36430,
+        "upload_time": "2025-03-14T15:15:36",
+        "upload_time_iso_8601": "2025-03-14T15:15:36.525034Z",
+        "url": "https://files.pythonhosted.org/packages/8f/4f/456884c9d5b2c110abd5fee3af7b5be410e7701c901188f75eb5b0b6666a/napari_nninteractive-1.0.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "f08cd8d9ed1c49dd41fa5983710ac43390e6867245e9aef2fdd2626c510c1333",
+          "md5": "6cc5b0db2de302f7e1d413c9df7becf8",
+          "sha256": "5017bcbcd95ad8dbfbb0f7c844299f5823753a4cafaa627ae9d0403e9733e748"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-1.0.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "6cc5b0db2de302f7e1d413c9df7becf8",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 32876,
+        "upload_time": "2025-03-14T15:15:38",
+        "upload_time_iso_8601": "2025-03-14T15:15:38.100658Z",
+        "url": "https://files.pythonhosted.org/packages/f0/8c/d8d9ed1c49dd41fa5983710ac43390e6867245e9aef2fdd2626c510c1333/napari_nninteractive-1.0.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.2": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "1b81abcff7b932495ce470570269b4400eab119fb298eb482030a44843368146",
+          "md5": "ac03d9a273ff6b540d357a27970fdaaf",
+          "sha256": "41f9ecee0b216786e4a12b801ed148230bdeacc94a33b47398aa3b99c4bce8c3"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-1.0.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "ac03d9a273ff6b540d357a27970fdaaf",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 36668,
+        "upload_time": "2025-03-24T10:27:29",
+        "upload_time_iso_8601": "2025-03-24T10:27:29.859959Z",
+        "url": "https://files.pythonhosted.org/packages/1b/81/abcff7b932495ce470570269b4400eab119fb298eb482030a44843368146/napari_nninteractive-1.0.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "ae60244da4d1c5db3c6cf18efa1968d42f36fe677ac01ba3a7675108898b999d",
+          "md5": "2602f96ea0ae64b7afed626b5dea27b5",
+          "sha256": "baec375f0b3c8c9faf15f005e20876e50d7c0b54554a10ea7a9efd619651a9ad"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-1.0.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "2602f96ea0ae64b7afed626b5dea27b5",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 33101,
+        "upload_time": "2025-03-24T10:27:31",
+        "upload_time_iso_8601": "2025-03-24T10:27:31.157472Z",
+        "url": "https://files.pythonhosted.org/packages/ae/60/244da4d1c5db3c6cf18efa1968d42f36fe677ac01ba3a7675108898b999d/napari_nninteractive-1.0.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.3": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "57e5c2561937c4423aaecfaca72a7d68bd6e9f18ba23be95284edf9891e02292",
+          "md5": "ca319352576935e7ca8f37a8edcdbf88",
+          "sha256": "73e60177af105e0efd74e40cc5b65e3c35f44fd7c77869ea652694130fd33c1b"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-1.0.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "ca319352576935e7ca8f37a8edcdbf88",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 36675,
+        "upload_time": "2025-03-26T15:51:21",
+        "upload_time_iso_8601": "2025-03-26T15:51:21.094394Z",
+        "url": "https://files.pythonhosted.org/packages/57/e5/c2561937c4423aaecfaca72a7d68bd6e9f18ba23be95284edf9891e02292/napari_nninteractive-1.0.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "91e3c599e4e79ee96b71dff39aee49db7987ae4153f2d82bef9ff4ecff6b4151",
+          "md5": "2737b5b529640a9db2f73658b181e951",
+          "sha256": "3aab5c499e2e1735dceca3a762d5060f79438c24d538e7bd73a0063645b9921e"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-1.0.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "2737b5b529640a9db2f73658b181e951",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 33129,
+        "upload_time": "2025-03-26T15:51:22",
+        "upload_time_iso_8601": "2025-03-26T15:51:22.561853Z",
+        "url": "https://files.pythonhosted.org/packages/91/e3/c599e4e79ee96b71dff39aee49db7987ae4153f2d82bef9ff4ecff6b4151/napari_nninteractive-1.0.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.4": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "999caedcee7338a9ea1785136f9f91c4984788c3722cafe21536beabe35dd900",
+          "md5": "0c2432f787fd8385460892d65dcf9f2a",
+          "sha256": "128dcdb3cb0ec22d76763cdbb4c9819302fc7b2ddc5c25c15457fd793c075884"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-1.0.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "0c2432f787fd8385460892d65dcf9f2a",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 36712,
+        "upload_time": "2025-04-30T07:11:59",
+        "upload_time_iso_8601": "2025-04-30T07:11:59.257303Z",
+        "url": "https://files.pythonhosted.org/packages/99/9c/aedcee7338a9ea1785136f9f91c4984788c3722cafe21536beabe35dd900/napari_nninteractive-1.0.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "666f6bac98bd85686a1631a60c43818a0b9bf27214c87a03eafe2eae418dad3b",
+          "md5": "740308adfb1a2ff21eb1205a9f79fb46",
+          "sha256": "2f3357bb74dec244ca5723a1ca289e078b575593fc6c17d8658a392e0fc70490"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-1.0.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "740308adfb1a2ff21eb1205a9f79fb46",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 33191,
+        "upload_time": "2025-04-30T07:12:01",
+        "upload_time_iso_8601": "2025-04-30T07:12:01.251331Z",
+        "url": "https://files.pythonhosted.org/packages/66/6f/6bac98bd85686a1631a60c43818a0b9bf27214c87a03eafe2eae418dad3b/napari_nninteractive-1.0.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.5": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "0a6ec983758576d6b981a25a3e6de46204a15712809743382c2b1a53fc541c25",
+          "md5": "ae828d5fdfcf15fcec71a2f6b6259937",
+          "sha256": "9afdab4540fff80488fbc0628e45da1ff95ccfbe29ab0ed9a0746220dace873e"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-1.0.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "ae828d5fdfcf15fcec71a2f6b6259937",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 36756,
+        "upload_time": "2025-07-30T13:09:07",
+        "upload_time_iso_8601": "2025-07-30T13:09:07.511473Z",
+        "url": "https://files.pythonhosted.org/packages/0a/6e/c983758576d6b981a25a3e6de46204a15712809743382c2b1a53fc541c25/napari_nninteractive-1.0.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "f374208e24afb4ed5140a84a463228e1080eeef8a4ba52585c4c5c5101b1eb6e",
+          "md5": "0bda5782b1c0b44dfde6d5d9b370d705",
+          "sha256": "7481c1675f7cbf256e0aed06d2cd25ba26c3a66d4a390ef9c4b1027e47a793a9"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-1.0.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "0bda5782b1c0b44dfde6d5d9b370d705",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 33028,
+        "upload_time": "2025-07-30T13:09:09",
+        "upload_time_iso_8601": "2025-07-30T13:09:09.000839Z",
+        "url": "https://files.pythonhosted.org/packages/f3/74/208e24afb4ed5140a84a463228e1080eeef8a4ba52585c4c5c5101b1eb6e/napari_nninteractive-1.0.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.6": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "1fc40f453a066b6df9093f9d679a3dc2a70ebf0e180ccbb50ee8e19f65ed31db",
+          "md5": "50979bf1a9e84bccc0ce99ba38faccb0",
+          "sha256": "c1b4b80541b46ac85284d8449bfe2bb85122eda32da70d0c5c3c5d1fb7b95e85"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-1.0.6-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "50979bf1a9e84bccc0ce99ba38faccb0",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 37294,
+        "upload_time": "2025-10-06T12:57:21",
+        "upload_time_iso_8601": "2025-10-06T12:57:21.744219Z",
+        "url": "https://files.pythonhosted.org/packages/1f/c4/0f453a066b6df9093f9d679a3dc2a70ebf0e180ccbb50ee8e19f65ed31db/napari_nninteractive-1.0.6-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "193878a6998403e3c96da8f1df1d015c7f53006334081ed292898458fb72cca5",
+          "md5": "6f3ef3c94620a3d50e2233818afea943",
+          "sha256": "fa138f66663f314b965abbbbf5130b1e237e37fc08f8957d1dc445832cbd622c"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-1.0.6.tar.gz",
+        "has_sig": false,
+        "md5_digest": "6f3ef3c94620a3d50e2233818afea943",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 33345,
+        "upload_time": "2025-10-06T12:57:23",
+        "upload_time_iso_8601": "2025-10-06T12:57:23.429591Z",
+        "url": "https://files.pythonhosted.org/packages/19/38/78a6998403e3c96da8f1df1d015c7f53006334081ed292898458fb72cca5/napari_nninteractive-1.0.6.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.7": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "be752b8e5f28db062a7aa436a5e800f05573006dfb269a3802914b8a4bf724a6",
+          "md5": "a758241766c7503e00340664b75dd0a3",
+          "sha256": "bd2c2ce815a68726f8d514ca86dfd3e089f182a979102071f539226f898416c0"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-1.0.7-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "a758241766c7503e00340664b75dd0a3",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 37621,
+        "upload_time": "2026-05-28T07:23:02",
+        "upload_time_iso_8601": "2026-05-28T07:23:02.284303Z",
+        "url": "https://files.pythonhosted.org/packages/be/75/2b8e5f28db062a7aa436a5e800f05573006dfb269a3802914b8a4bf724a6/napari_nninteractive-1.0.7-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "a3510985655947d7b5e26cd0b2d92961a8168a5305c08101e7e84441bfae99e0",
+          "md5": "1b6502d6d35d7aa1d393fcf9fba3a0af",
+          "sha256": "291be7ca104df118910e5d230954586bb676436591c09f8db13d9fd404644549"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-1.0.7.tar.gz",
+        "has_sig": false,
+        "md5_digest": "1b6502d6d35d7aa1d393fcf9fba3a0af",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 33625,
+        "upload_time": "2026-05-28T07:23:03",
+        "upload_time_iso_8601": "2026-05-28T07:23:03.515639Z",
+        "url": "https://files.pythonhosted.org/packages/a3/51/0985655947d7b5e26cd0b2d92961a8168a5305c08101e7e84441bfae99e0/napari_nninteractive-1.0.7.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "2.0.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "5e7ac2bae9f03f368897bc3fdd741e305cdc82184c59cdbbd5dbb0d4011289de",
+          "md5": "5a59d0fa1824fbc6f959d718709740ed",
+          "sha256": "84d49d7fad93e09ead7eb0fdf87dc04b4caea897ce3eb1395d1125341c605964"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-2.0.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "5a59d0fa1824fbc6f959d718709740ed",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 38884,
+        "upload_time": "2026-05-28T07:30:46",
+        "upload_time_iso_8601": "2026-05-28T07:30:46.362118Z",
+        "url": "https://files.pythonhosted.org/packages/5e/7a/c2bae9f03f368897bc3fdd741e305cdc82184c59cdbbd5dbb0d4011289de/napari_nninteractive-2.0.0-py3-none-any.whl",
+        "yanked": true,
+        "yanked_reason": "wrong nninteractive backend dependency"
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "f5042bcd94a99c3bda144589d2994d4406c982f948ec2ecbb0ad8675dc44b73e",
+          "md5": "e1fc03d54b5e278744afbed4e2871ac1",
+          "sha256": "af876314813cbee337c5ff16e6cee38880809b2b38c5844af6f08288fb46af51"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-2.0.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e1fc03d54b5e278744afbed4e2871ac1",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 34690,
+        "upload_time": "2026-05-28T07:30:47",
+        "upload_time_iso_8601": "2026-05-28T07:30:47.744126Z",
+        "url": "https://files.pythonhosted.org/packages/f5/04/2bcd94a99c3bda144589d2994d4406c982f948ec2ecbb0ad8675dc44b73e/napari_nninteractive-2.0.0.tar.gz",
+        "yanked": true,
+        "yanked_reason": "wrong nninteractive backend dependency"
+      }
+    ],
+    "2.0.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "dd174e1cbc51fc63d9577756a416642f65ec02e25ea6f0452792a5c2c65b2a77",
+          "md5": "f656855a17e9bcbff926d35a119022d9",
+          "sha256": "e5c3c357a7ce115f17415bde18bed3534082d2deb494dd7d24c1601fc16e5608"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-2.0.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "f656855a17e9bcbff926d35a119022d9",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 38879,
+        "upload_time": "2026-05-28T07:53:01",
+        "upload_time_iso_8601": "2026-05-28T07:53:01.497571Z",
+        "url": "https://files.pythonhosted.org/packages/dd/17/4e1cbc51fc63d9577756a416642f65ec02e25ea6f0452792a5c2c65b2a77/napari_nninteractive-2.0.1-py3-none-any.whl",
+        "yanked": true,
+        "yanked_reason": "wrong nninteractive backend dependency"
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "ed99302d4fbe8bb72327b9d1e560605d350a115c4904fba6ae693f2227b2a7ca",
+          "md5": "3ffc81ee924586b4a335715028227b48",
+          "sha256": "8e3da55483407033c70b4ed6c228049e3fa7ade520d9b5f19fce219c2f5cf14c"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-2.0.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "3ffc81ee924586b4a335715028227b48",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 34662,
+        "upload_time": "2026-05-28T07:53:02",
+        "upload_time_iso_8601": "2026-05-28T07:53:02.663284Z",
+        "url": "https://files.pythonhosted.org/packages/ed/99/302d4fbe8bb72327b9d1e560605d350a115c4904fba6ae693f2227b2a7ca/napari_nninteractive-2.0.1.tar.gz",
+        "yanked": true,
+        "yanked_reason": "wrong nninteractive backend dependency"
+      }
+    ],
+    "2.0.2": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "492a308891e9fe3d8ef5cc8cbbc36d74c1dfda1d80fb1f4f135bff5ff120c2d0",
+          "md5": "e53d08cee1f7e831234826e66b2b091d",
+          "sha256": "37e54e9bac54b0681eeec844afa31df8757d4d81389a98826c11aab7e2f4be7b"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-2.0.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "e53d08cee1f7e831234826e66b2b091d",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 38879,
+        "upload_time": "2026-05-28T07:56:09",
+        "upload_time_iso_8601": "2026-05-28T07:56:09.513581Z",
+        "url": "https://files.pythonhosted.org/packages/49/2a/308891e9fe3d8ef5cc8cbbc36d74c1dfda1d80fb1f4f135bff5ff120c2d0/napari_nninteractive-2.0.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "ecd215e81c3dbf5cf2ff1181004344897cdf78fdcec47f6ba73fe5d76e4b8562",
+          "md5": "2484168daee9564ad7e045fd40c72faf",
+          "sha256": "35ed80d34679a4bc12cc98841f0509505fa55dfeba17aaa07bdfe9fd82b3f82d"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-2.0.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "2484168daee9564ad7e045fd40c72faf",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 34666,
+        "upload_time": "2026-05-28T07:56:10",
+        "upload_time_iso_8601": "2026-05-28T07:56:10.823745Z",
+        "url": "https://files.pythonhosted.org/packages/ec/d2/15e81c3dbf5cf2ff1181004344897cdf78fdcec47f6ba73fe5d76e4b8562/napari_nninteractive-2.0.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "2.1.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "051818c2842b73d3d55e088788dfa4545ab211b302d166bd0199cbbac8ca8818",
+          "md5": "15e7cbdb6609f12fb6295374704cca19",
+          "sha256": "273699cbe2530a0ae9b279fb717ea48f3d6701dae8e425ff72da9cb32800541b"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-2.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "15e7cbdb6609f12fb6295374704cca19",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 42198,
+        "upload_time": "2026-05-28T14:14:42",
+        "upload_time_iso_8601": "2026-05-28T14:14:42.573469Z",
+        "url": "https://files.pythonhosted.org/packages/05/18/18c2842b73d3d55e088788dfa4545ab211b302d166bd0199cbbac8ca8818/napari_nninteractive-2.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "d68c868e3b02700810b74f1141dd015f0debea6f0e1b1dcf646e99d506abd38c",
+          "md5": "d699797072c7537340f065461ad9ad83",
+          "sha256": "0b1989d4f03b66a2837e408bfb3acb0649547215a9b53e42575bd6c79c02f833"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-2.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d699797072c7537340f065461ad9ad83",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 37873,
+        "upload_time": "2026-05-28T14:14:43",
+        "upload_time_iso_8601": "2026-05-28T14:14:43.793912Z",
+        "url": "https://files.pythonhosted.org/packages/d6/8c/868e3b02700810b74f1141dd015f0debea6f0e1b1dcf646e99d506abd38c/napari_nninteractive-2.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "2.1.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "ad800ea6961a89d8c8cf5f3c15fd738099ce8f28bb62520930607bf6e371f62b",
+          "md5": "f88e0d12cf9e90811a7230d30f857e1f",
+          "sha256": "5a972a424342798578ff8c678b9f0c28f16d3e39ce087e068bf7c2b4834527dc"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-2.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "f88e0d12cf9e90811a7230d30f857e1f",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 45153,
+        "upload_time": "2026-05-29T13:06:10",
+        "upload_time_iso_8601": "2026-05-29T13:06:10.924140Z",
+        "url": "https://files.pythonhosted.org/packages/ad/80/0ea6961a89d8c8cf5f3c15fd738099ce8f28bb62520930607bf6e371f62b/napari_nninteractive-2.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "b6290f1e7444b9811760c7b9334b6674879859480e3ed59d78e6baae99f63ab5",
+          "md5": "e2bd43b55ec20dc418e158dac86b827f",
+          "sha256": "fa7a249c178591df93dbb82c9ab38135653fe3b958373677f17429b2b47351ec"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-2.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e2bd43b55ec20dc418e158dac86b827f",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 42407,
+        "upload_time": "2026-05-29T13:06:12",
+        "upload_time_iso_8601": "2026-05-29T13:06:12.328655Z",
+        "url": "https://files.pythonhosted.org/packages/b6/29/0f1e7444b9811760c7b9334b6674879859480e3ed59d78e6baae99f63ab5/napari_nninteractive-2.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "2.2.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "5443ea3914385b4c99f00dcc6acb330155b7ec6f4206dfe6b58647d759090cb4",
+          "md5": "8f090285ab9dd7dc5e23ef814edbc2de",
+          "sha256": "07321d4393142492f7602639f0cbcab59a26c39402d564b07109f63b89f71c69"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-2.2.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "8f090285ab9dd7dc5e23ef814edbc2de",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 45633,
+        "upload_time": "2026-06-03T10:25:46",
+        "upload_time_iso_8601": "2026-06-03T10:25:46.624184Z",
+        "url": "https://files.pythonhosted.org/packages/54/43/ea3914385b4c99f00dcc6acb330155b7ec6f4206dfe6b58647d759090cb4/napari_nninteractive-2.2.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "2343178eb1f68564a6c44072c4fd93091903952483b703bc9356444af4b42439",
+          "md5": "3dbb5bc471eede57c6e90e660fce879e",
+          "sha256": "23f2b8c25e17cdb5e3c99f456b7b9642f07fccb21cbf4d6557d854267c6f12fc"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-2.2.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "3dbb5bc471eede57c6e90e660fce879e",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 42666,
+        "upload_time": "2026-06-03T10:25:47",
+        "upload_time_iso_8601": "2026-06-03T10:25:47.965947Z",
+        "url": "https://files.pythonhosted.org/packages/23/43/178eb1f68564a6c44072c4fd93091903952483b703bc9356444af4b42439/napari_nninteractive-2.2.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "2.3.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "cec689225163a09eb650a5fbc785a759fd86b31b20540d87bab6baa4f0a076fe",
+          "md5": "67314e551e3c70fb3d243892bd89b14d",
+          "sha256": "8cee8679542b99b730b00307315e4a1356946581a68e9662f541551310fdab41"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-2.3.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "67314e551e3c70fb3d243892bd89b14d",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 50804,
+        "upload_time": "2026-06-22T12:05:03",
+        "upload_time_iso_8601": "2026-06-22T12:05:03.272867Z",
+        "url": "https://files.pythonhosted.org/packages/ce/c6/89225163a09eb650a5fbc785a759fd86b31b20540d87bab6baa4f0a076fe/napari_nninteractive-2.3.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "0696336a68a8097c4a9c1fe1640cebc7f4708b0f2a4ea33e1d120e79c1f1a61b",
+          "md5": "2180dd8163e69cf21a8488084de3b09b",
+          "sha256": "5d6b3dd9b589c47e59b928746b4c5f1620a834c2d18b933fac69d7ff2fc0d708"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-2.3.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "2180dd8163e69cf21a8488084de3b09b",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 47280,
+        "upload_time": "2026-06-22T12:05:04",
+        "upload_time_iso_8601": "2026-06-22T12:05:04.424604Z",
+        "url": "https://files.pythonhosted.org/packages/06/96/336a68a8097c4a9c1fe1640cebc7f4708b0f2a4ea33e1d120e79c1f1a61b/napari_nninteractive-2.3.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "2.3.2": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "b8642ef52374eda9bf05873fa06160ed3868b89037d10322cb4230291ad6e22c",
+          "md5": "4f77ad05fa39857e50a3e768b9edbe0a",
+          "sha256": "1235be04da5da713510e520d52c418d16c6f38985109e8ba38fc9693a3a91f5c"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-2.3.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "4f77ad05fa39857e50a3e768b9edbe0a",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 51795,
+        "upload_time": "2026-06-23T07:46:08",
+        "upload_time_iso_8601": "2026-06-23T07:46:08.719716Z",
+        "url": "https://files.pythonhosted.org/packages/b8/64/2ef52374eda9bf05873fa06160ed3868b89037d10322cb4230291ad6e22c/napari_nninteractive-2.3.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "6864923e7b7f0e3b74dd6018e5627d4ce5f410f5c15343362653f36dc5cc43f5",
+          "md5": "d5d10eb33e13f32faee22c7607a76923",
+          "sha256": "eac4d874565a38b407ad29fd39cb5378f74f0a6ce354ebfae8725eaff219690a"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-2.3.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d5d10eb33e13f32faee22c7607a76923",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 48335,
+        "upload_time": "2026-06-23T07:46:10",
+        "upload_time_iso_8601": "2026-06-23T07:46:10.502861Z",
+        "url": "https://files.pythonhosted.org/packages/68/64/923e7b7f0e3b74dd6018e5627d4ce5f410f5c15343362653f36dc5cc43f5/napari_nninteractive-2.3.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "2.4.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "48b392a71d82fe38e33b71b388b15b9dbf893dfa17b6d6deac3a86b49e4199e8",
+          "md5": "2dd78fc55bdbf067426d7b97a2e5d0c4",
+          "sha256": "c161590957c55d5cef4b2e46f716dfc89b247f95ae200a7554a965eccac4d173"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-2.4.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "2dd78fc55bdbf067426d7b97a2e5d0c4",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 55607,
+        "upload_time": "2026-06-26T09:40:22",
+        "upload_time_iso_8601": "2026-06-26T09:40:22.279908Z",
+        "url": "https://files.pythonhosted.org/packages/48/b3/92a71d82fe38e33b71b388b15b9dbf893dfa17b6d6deac3a86b49e4199e8/napari_nninteractive-2.4.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "0126fef6a1b364676b3ed2fe74f94a0dd22f22b8de2c25c4a1b27fc0c441b661",
+          "md5": "ccfde29ce3d125d0b0a9dda4c160699b",
+          "sha256": "ebaca6d946251830ef022bcfcacef790583d88f9440555c497263aa2596f25ed"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-2.4.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "ccfde29ce3d125d0b0a9dda4c160699b",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 53187,
+        "upload_time": "2026-06-26T09:40:23",
+        "upload_time_iso_8601": "2026-06-26T09:40:23.800959Z",
+        "url": "https://files.pythonhosted.org/packages/01/26/fef6a1b364676b3ed2fe74f94a0dd22f22b8de2c25c4a1b27fc0c441b661/napari_nninteractive-2.4.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "2.4.2": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "4b44e16e35eee5a55a4563a9aab55ce4c3af4bf250a310e70356446362320208",
+          "md5": "46f49c2ca45ff9b20ada7ab458c3ee37",
+          "sha256": "3d8852d4f441170390455de1062e000384a3015216d499925f94b7165e8b4720"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-2.4.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "46f49c2ca45ff9b20ada7ab458c3ee37",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 57757,
+        "upload_time": "2026-06-29T08:26:54",
+        "upload_time_iso_8601": "2026-06-29T08:26:54.784564Z",
+        "url": "https://files.pythonhosted.org/packages/4b/44/e16e35eee5a55a4563a9aab55ce4c3af4bf250a310e70356446362320208/napari_nninteractive-2.4.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "d2304805d88056f2c173a9907ec6ea50d2a1a5ceea7916b3bd8b85b55bd2e882",
+          "md5": "95afe3e3627f04e8b952f53c64b3da52",
+          "sha256": "1a4c50585e54fa77a2445f6779dc5705ad00dcf5663bf4e9ae6c7f2782599d8b"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-2.4.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "95afe3e3627f04e8b952f53c64b3da52",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 55717,
+        "upload_time": "2026-06-29T08:26:56",
+        "upload_time_iso_8601": "2026-06-29T08:26:56.409855Z",
+        "url": "https://files.pythonhosted.org/packages/d2/30/4805d88056f2c173a9907ec6ea50d2a1a5ceea7916b3bd8b85b55bd2e882/napari_nninteractive-2.4.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "2.4.3": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "0a6387d0ac9de10c1e63eef393603dff635401657dfcb3a68699b96eae69befa",
+          "md5": "4372668e1ab0c7463ab169fe21888207",
+          "sha256": "3ff0843b5aff26765e57efa95a0ed0d7b0d0ab790e3142eebf756cd0029fff0c"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-2.4.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "4372668e1ab0c7463ab169fe21888207",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 57883,
+        "upload_time": "2026-06-29T09:29:25",
+        "upload_time_iso_8601": "2026-06-29T09:29:25.568524Z",
+        "url": "https://files.pythonhosted.org/packages/0a/63/87d0ac9de10c1e63eef393603dff635401657dfcb3a68699b96eae69befa/napari_nninteractive-2.4.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "3a3588989c8a4d618cdef7e8f1db40fbb9337f42d3b07f39aad6af0e6aa9b529",
+          "md5": "8aaebcf26a1c024edb462d5d6c5f7aec",
+          "sha256": "17b631579cc73169985e5f140550064526855f46d37a433884d4dd5b8d469df9"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-2.4.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "8aaebcf26a1c024edb462d5d6c5f7aec",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 55846,
+        "upload_time": "2026-06-29T09:29:26",
+        "upload_time_iso_8601": "2026-06-29T09:29:26.922511Z",
+        "url": "https://files.pythonhosted.org/packages/3a/35/88989c8a4d618cdef7e8f1db40fbb9337f42d3b07f39aad6af0e6aa9b529/napari_nninteractive-2.4.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "2.4.4": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "4c3f88f5e67afe2dbbcddff95f2bea41ba9cd08df30660dd51ee3f488050cbc6",
+          "md5": "287362f5ca136a8d842740db139fef09",
+          "sha256": "8b57d2cfdd96b2e35d2c5bc23cbbd0f8770379acb44f91c566ace8be79f7091f"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-2.4.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "287362f5ca136a8d842740db139fef09",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 58229,
+        "upload_time": "2026-06-30T14:47:24",
+        "upload_time_iso_8601": "2026-06-30T14:47:24.242704Z",
+        "url": "https://files.pythonhosted.org/packages/4c/3f/88f5e67afe2dbbcddff95f2bea41ba9cd08df30660dd51ee3f488050cbc6/napari_nninteractive-2.4.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "c348b8dd9f2bba414924865b9ab2242e04b577b5392fe7b0292f3bd9f26b6347",
+          "md5": "92148e85ad555772aff5df2df5fa64f5",
+          "sha256": "3cfe7fe9ddaa8249fc37829d9f4c32d658c606b965951e1f4f6b647b79e2bed0"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-2.4.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "92148e85ad555772aff5df2df5fa64f5",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 56158,
+        "upload_time": "2026-06-30T14:47:25",
+        "upload_time_iso_8601": "2026-06-30T14:47:25.498525Z",
+        "url": "https://files.pythonhosted.org/packages/c3/48/b8dd9f2bba414924865b9ab2242e04b577b5392fe7b0292f3bd9f26b6347/napari_nninteractive-2.4.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "2.5.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "71f862f2d293b2c07b8b7746936368c87c3ed9b5b3755e5f0f8a767711b50b20",
+          "md5": "30cdef000e0d7c02727f14a4f8fb55db",
+          "sha256": "3c2be0d10d31e1ca83d2657a4f13fc0d6ce8ab8944106aae141f8b9673018015"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-2.5.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "30cdef000e0d7c02727f14a4f8fb55db",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 64004,
+        "upload_time": "2026-07-02T11:35:16",
+        "upload_time_iso_8601": "2026-07-02T11:35:16.664897Z",
+        "url": "https://files.pythonhosted.org/packages/71/f8/62f2d293b2c07b8b7746936368c87c3ed9b5b3755e5f0f8a767711b50b20/napari_nninteractive-2.5.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "4e833279c590936b6bbd24ec8096dffc61d3ad07fed9510d4a1e325ceddf0f8b",
+          "md5": "3282459cad64d62d180c7a4de4cfd4d1",
+          "sha256": "ccaacfed6cbc9cf9ffa225bf2f0f0e2090bde22c54985a7cfc2d67a5f733da80"
+        },
+        "downloads": -1,
+        "filename": "napari_nninteractive-2.5.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "3282459cad64d62d180c7a4de4cfd4d1",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 61958,
+        "upload_time": "2026-07-02T11:35:18",
+        "upload_time_iso_8601": "2026-07-02T11:35:18.079869Z",
+        "url": "https://files.pythonhosted.org/packages/4e/83/3279c590936b6bbd24ec8096dffc61d3ad07fed9510d4a1e325ceddf0f8b/napari_nninteractive-2.5.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "71f862f2d293b2c07b8b7746936368c87c3ed9b5b3755e5f0f8a767711b50b20",
+        "md5": "30cdef000e0d7c02727f14a4f8fb55db",
+        "sha256": "3c2be0d10d31e1ca83d2657a4f13fc0d6ce8ab8944106aae141f8b9673018015"
+      },
+      "downloads": -1,
+      "filename": "napari_nninteractive-2.5.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "30cdef000e0d7c02727f14a4f8fb55db",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.10",
+      "size": 64004,
+      "upload_time": "2026-07-02T11:35:16",
+      "upload_time_iso_8601": "2026-07-02T11:35:16.664897Z",
+      "url": "https://files.pythonhosted.org/packages/71/f8/62f2d293b2c07b8b7746936368c87c3ed9b5b3755e5f0f8a767711b50b20/napari_nninteractive-2.5.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "4e833279c590936b6bbd24ec8096dffc61d3ad07fed9510d4a1e325ceddf0f8b",
+        "md5": "3282459cad64d62d180c7a4de4cfd4d1",
+        "sha256": "ccaacfed6cbc9cf9ffa225bf2f0f0e2090bde22c54985a7cfc2d67a5f733da80"
+      },
+      "downloads": -1,
+      "filename": "napari_nninteractive-2.5.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "3282459cad64d62d180c7a4de4cfd4d1",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.10",
+      "size": 61958,
+      "upload_time": "2026-07-02T11:35:18",
+      "upload_time_iso_8601": "2026-07-02T11:35:18.079869Z",
+      "url": "https://files.pythonhosted.org/packages/4e/83/3279c590936b6bbd24ec8096dffc61d3ad07fed9510d4a1e325ceddf0f8b/napari_nninteractive-2.5.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

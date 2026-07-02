@@ -1,0 +1,106 @@
+{
+  "name": "napari-sam3-assistant",
+  "display_name": "SAM3 Assistant",
+  "visibility": "public",
+  "icon": "",
+  "categories": [
+    "Utilities"
+  ],
+  "schema_version": "0.2.1",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-sam3-assistant.make_widget",
+        "title": "SAM3 Assistant",
+        "python_name": "napari_sam3_assistant.widgets.main_widget:MainWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-sam3-assistant.make_mask_operations_widget",
+        "title": "SAM3 Mask Operations",
+        "python_name": "napari_sam3_assistant.widgets.mask_operations_widget:MaskOperationsWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "napari-sam3-assistant.make_widget",
+        "display_name": "SAM3 Assistant",
+        "autogenerate": false
+      },
+      {
+        "command": "napari-sam3-assistant.make_mask_operations_widget",
+        "display_name": "SAM3 Mask Operations",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "napari-sam3-assistant",
+    "version": "4.4.0",
+    "dynamic": [
+      "license-file"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "A napari plugin for Segment Anything Model 3 (SAM3) image segmentation with Simple and Advanced workflows, text, points, boxes, exemplars, tiled ROI inference, mask operations, and 3D/video-like propagation",
+    "description": "# napari-sam3-assistant\n\n[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20367206.svg)](https://doi.org/10.5281/zenodo.20367206)\n\n![napari-sam3-assistant UI](docs/ui.png)\n\nLatest version: `4.4.0`\n\n`napari-sam3-assistant` is a napari plugin for local Segment Anything Model 3\n(SAM3) segmentation. It provides:\n\n- a guided `Simple` mode for common segmentation work;\n- an `Advanced` mode for model setup, batch runs, tiled inference, result\n  tables, and 3D/video-style propagation;\n- a separate `SAM3 Mask Operations` widget for cleanup, relabeling, isolation,\n  merge, overlap inspection, and export.\n\nThe plugin is intended for researchers who want SAM3 results back in napari as\nnormal `Labels`, `Shapes`, and table-style outputs that can be reviewed,\ncorrected, saved, and exported.\n\n## What It Does\n\n- Segment 2D images with point, box/Shapes, labels-mask, text, or exemplar\n  prompts.\n- Search for similar features with exemplar prompting from a drawn region or\n  crop image.\n- Correct previews with Live Points using positive and negative clicks.\n- Run tiled inference on large TIFF or OME-Zarr-style images.\n- In Advanced mode, run Phase 1 Huge Volume exemplar scans by processing 3D stacks slice by slice and writing tiled masks directly to OME-Zarr.\n- Scan large 2D images tile by tile from an exemplar ROI and stitch the result\n  into full-size labels.\n- Run experimental folder batch inference from a tested exemplar, writing TIFF\n  or OME-Zarr masks to disk without loading full batch outputs into the viewer.\n- Propagate prompts through 3D stacks or video-like data when the installed SAM3\n  backend supports the workflow.\n- Save previews, clean connected components, relabel values, isolate overlapping\n  candidates, merge labels/layers, inspect overlap, and export final masks.\n- In Mask Operations, edit bounded regions with `Mask Cleanup / Multiclass` and save the current working region back to OME-Zarr or out to TIFF.\n\n## Documentation\n\nStart here:\n\n1. [Installation](docs/installation.md)\n2. [Model setup](docs/model_setup.md)\n3. [User guide](docs/user_guide.md)\n4. [Mask operations](docs/mask_operations.md)\n5. [Troubleshooting](docs/troubleshooting.md)\n6. [Huge Volume Mode](docs/huge_volume_mode.md)\n\nSpecialized setup:\n\n- [CPU-only SAM3.0 setup](docs/cpu_only.md)\n- [Windows SAM3.1 workaround](windows_sam31_workaround/README.md)\n\nMaintainer notes:\n\n- [Documentation strategy](docs/documentation_strategy.md)\n- [Changelog](CHANGELOG.md)\n\n## Quick Start\n\n1. Install napari, PyTorch, the SAM3 backend, and this plugin.\n2. Download the SAM3 model files from Meta's gated Hugging Face repositories.\n3. Launch napari.\n4. Open `Plugins > SAM3 Assistant`.\n5. Choose a model folder.\n6. In `Simple` mode, select an image, choose a task tab, add a prompt, and click\n   `Run`, `Run Current ROI`, or `Start 3D`.\n7. Use `Mask Ops` or `Plugins > SAM3 Mask Operations` when the preview needs\n   cleanup, merge, or export.\n\nFor full setup commands, see [Installation](docs/installation.md).\n\n## Requirements\n\n- Python `>=3.11`\n- napari `>=0.5`\n- SAM3 Python package importable as `sam3`\n- CUDA-enabled PyTorch and torchvision for normal use\n- Local SAM3 model directory containing:\n  - `config.json`\n  - `processor_config.json`\n  - a weight file such as `sam3.pt`, `model.safetensors`, or\n    `sam3.1_multiplex.pt`\n\nCPU-only use is experimental and limited to SAM3.0 2D image workflows with a\nCPU-safe SAM3 backend. See [CPU-only SAM3.0 setup](docs/cpu_only.md).\n\n## Model Files\n\nSAM3 is not bundled with this plugin. Install the SAM3 backend separately and\ndownload model files from Meta's gated Hugging Face repositories:\n\n- https://huggingface.co/facebook/sam3\n- https://huggingface.co/facebook/sam3.1\n\nExample SAM3.0 folder:\n\n```text\nD:\\models\\sam3\\\n  config.json\n  processor_config.json\n  sam3.pt\n```\n\nExample SAM3.1 folder:\n\n```text\nD:\\models\\sam3_1\\\n  config.json\n  processor_config.json\n  sam3.1_multiplex.pt\n```\n\nCurrent model support:\n\n- SAM3.0 weights: 2D image tasks and 3D/video propagation\n- SAM3.1 `sam3.1_multiplex.pt`: 3D/video propagation through the SAM3.1\n  multiplex video predictor\n- SAM3.1 is not currently routed through the plugin's 2D image model loader\n\nSee [Model setup](docs/model_setup.md) for validation and device details.\n\n## Prompt Guidance\n\nFor microscopy and other research images, the most useful prompts are usually\nvisual examples and local corrections, not text descriptions.\n\nRecommended starting order:\n\n1. `Exemplar` with a box or Shapes region for feature search.\n2. `Live Points` with positive and negative points for local correction and\n   repeatable object-by-object segmentation.\n3. `3D Multiplex` with a box or Shapes region for propagating one selected\n   object through slices or frames.\n4. `2D Slice` with point or box prompts for quick single-plane local masks.\n\nText prompting is available, but it is least reliable for specialized\nmicroscopy/anatomy terms. Labels-mask prompts are also available, but they are\nbest treated as an advanced option when you already have a useful rough mask.\n\nShapes prompts are treated as bounding boxes by the current SAM3 prompt path.\nRectangles are the clearest choice. Polygons can mark a region, but SAM3\nreceives the polygon's bounding rectangle, not the exact polygon contour.\n\nSee [User guide](docs/user_guide.md) for detailed examples.\n\n## Workflow Highlights\n\nFast local segmentation loop:\n\n1. Use `Exemplar`, `2D Slice`, or a box/Shapes prompt to create a preview.\n2. Switch to `Live Points` when the preview is close.\n3. Add positive points on missed parts and negative points on leakage.\n4. Use the Live Points right-click menu to `Accept + Clear`. This menu is available in both Simple mode and Advanced mode while Live Points is active.\n5. Click `Save Labels` or `Save & Clean`.\n6. Move to the next object or ROI and repeat.\n\nTiled ROI loop:\n\n1. Enable tiled inference and choose a tile/ROI size.\n2. Draw or select a prompt box/point.\n3. Click `Run Current ROI Only` to test that local region.\n4. Changing ROI size recomputes the next local region; previous active ROIs are reused only when the requested size still matches.\n\nExemplar scan loop:\n\n1. Draw a tight exemplar region around a representative object.\n2. Run the current ROI first.\n3. If the ROI result is good, scan the full image by tiles.\n4. Review `SAM3 tiled exemplar labels` and `SAM3 tiled exemplar boxes`.\n5. Use `SAM3 Mask Operations` for cleanup, isolation, merge, and export.\n\nTiled exemplar scans are a search workflow, not an exact repeat of `Run Current ROI Only`. The current tiled scan uses one exemplar crop as a visual reference for each tile by composing an exemplar-plus-tile image, then writes the tile-side result back to the full canvas. Multiple boxes in the current ROI can help `Run Current ROI Only` when they overlap that ROI, but tiled scan currently uses the first collected exemplar crop as the default reference for all tiles.\n\nExperimental folder batch loop:\n\n1. In Advanced `Exemplar segmentation`, load one representative image or crop.\n2. Enable tiled inference, choose tile size and overlap, and draw/select the exemplar box.\n3. Click `Run Current ROI Only` to confirm the exemplar works locally.\n4. Check `Run folder batch`; Step 4 shows input folder, output folder, and output format.\n5. Click `Run Folder Batch`. Masks are written to disk with the same input stem plus `_mask`, such as `image001_mask.tif` or `image001_mask.ome.zarr`.\n\nFolder batch is experimental. Input currently supports common 2D image files and TIFF stacks (`.tif`, `.tiff`, `.png`, `.jpg`, `.jpeg`, `.bmp`). OME-Zarr and ND2 input, nested-folder mirroring, overwrite/resume policy, and chunked output for truly huge `100k x 100k` images are not wired yet. Batch outputs are not automatically loaded into the viewer; drag written masks or OME-Zarr outputs into napari to review quality.\n\nHuge Volume Phase 1 is available in Advanced Exemplar mode for 3D stacks. Enable `Enable tiled inference`, check `Scan all Z slices to OME-Zarr`, then use `Scan Z Stack by Tiles`. This path writes tile labels directly to an OME-Zarr mask store and does not create a full in-memory volume. To curate the result, drag/open the mask as a Labels layer, use `Mask Operations > Mask Cleanup / Multiclass` with `Current slice` or a small `Z range` plus `Manual ROI`/`Drawn ROI`, then use `Region Output` to write the current working region back to the loaded OME-Zarr store/array or export it as TIFF. Region Output reports OME-Zarr shape/chunks/axes/dtype and requires an explicit override before writing to a different store. Mask Cleanup blocks unsafe huge-volume choices such as `Whole volume` and unbounded `Full mask`. Seam merging, cross-Z object linking, and resumable jobs are planned later phases.\n\nAdvanced mode also includes `Detection threshold`, with default `0.35`. Lower\nvalues accept weaker candidates and may add false positives. Higher values are\nstricter and may miss faint or uncommon structures. The Results table `Score`\nis backend confidence when available; it is a review aid, not a scientific\nquality measurement.\n\n## Output Layers\n\nCommon preview layers:\n\n```text\nSAM3 preview labels\nSAM3 preview masks\nSAM3 preview boxes\nSAM3 propagated preview labels\nSAM3 tiled exemplar labels\nSAM3 tiled exemplar masks\nSAM3 tiled exemplar boxes\n```\n\nCommon saved or curated layers:\n\n```text\nSAM3 saved labels\nSAM3 saved propagated labels\nSAM3 saved tiled exemplar labels\nisolated_objects\nmerged_class_mask\nfinal_training_mask\n```\n\n## Current Status\n\nThis project is young and under active development. The core inference workflow\nis stable: collect prompts in napari, run SAM3 locally, write previews back to\nnapari, and help users save masks. Mask Operations is useful but still evolving.\nThe UI may continue to change, so the documentation is organized around user\ntasks rather than exact layout alone.\n\n## Development\n\nInstall in editable mode:\n\n```bash\npip install -e .\n```\n\nRun tests:\n\n```bash\nPYTHONPATH=src pytest -q\n```\n\nThe test suite covers coordinate mapping, prompt collection, adapter utility\nbehavior, mask operation services, and static widget UI checks. It does not\ndownload SAM3 weights.\n\n## Citation\n\nIf you use `napari-sam3-assistant` in your work, please cite the Zenodo archive for version `4.4.0`:\n\nTeo, Wulin. (2026). `napari-sam3-assistant` (Version 4.4.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.20367206\n\n```bibtex\n@software{teo_2026_napari_sam3_assistant,\n  author = {Teo, Wulin},\n  title = {napari-sam3-assistant},\n  version = {4.4.0},\n  year = {2026},\n  publisher = {Zenodo},\n  doi = {10.5281/zenodo.20367206},\n  url = {https://doi.org/10.5281/zenodo.20367206}\n}\n```\n\n## References\n\n- SAM3 repository: https://github.com/facebookresearch/sam3\n- SAM3 model files: https://huggingface.co/facebook/sam3\n- PyTorch installation selector: https://pytorch.org/get-started/locally/\n\n## Acknowledgement\n\nThe demo image was provided by the Electron Microscopy Core Facility at Houston\nMethodist Research Institute.\n\n## License\n\nMIT. See the project license file.\n",
+    "description_content_type": "text/markdown",
+    "keywords": "napari,SAM3,segmentation,tracking,microscopy,image analysis",
+    "home_page": null,
+    "download_url": null,
+    "author": "Wulin Teo",
+    "author_email": null,
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "MIT",
+    "classifier": [
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "License :: OSI Approved :: MIT License",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.11",
+      "Topic :: Scientific/Engineering :: Image Processing",
+      "Topic :: Scientific/Engineering :: Artificial Intelligence"
+    ],
+    "requires_dist": [
+      "napari>=0.5.0",
+      "qtpy",
+      "numpy",
+      "scipy",
+      "pillow",
+      "tifffile",
+      "zarr",
+      "ome-zarr"
+    ],
+    "requires_python": ">=3.11",
+    "requires_external": null,
+    "project_url": [
+      "Homepage, https://github.com/wulinteousa2-hash/napari-sam3-assistant",
+      "Repository, https://github.com/wulinteousa2-hash/napari-sam3-assistant",
+      "Issues, https://github.com/wulinteousa2-hash/napari-sam3-assistant/issues",
+      "DOI, https://doi.org/10.5281/zenodo.20367206"
+    ],
+    "provides_extra": null,
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}

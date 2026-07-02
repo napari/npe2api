@@ -1,0 +1,218 @@
+{
+  "info": {
+    "author": "Nickolas Pippi Peranzoni",
+    "author_email": "nickolas.pippiperanzoni@gmail.com",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 3 - Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "License :: OSI Approved :: MIT License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-cell-curator\r\n\r\nA [napari](https://napari.org) plugin for manual curation of cell tracking data from time-lapse microscopy experiments.\r\n\r\n---\r\n\r\n## Overview\r\n\r\n**napari-cell-curator** provides a full-featured dock widget that lets you inspect, correct, and annotate cell tracks directly inside napari. It works with a standard triplet of files:\r\n\r\n| File | Description |\r\n|---|---|\r\n| `cell_tracks.csv` | Tracking table with columns `trackId`, `frame`, `Center_of_the_object_0`, `Center_of_the_object_1`, `continuous_label`, `Outcome`, `Parent_ID` |\r\n| `cell_mask.tif` | 4-D label image (T \u00d7 H \u00d7 W, uint32) |\r\n| `cell_image.tif` | 4-D raw microscopy image (T \u00d7 H \u00d7 W) |\r\n\r\n---\r\n\r\n## Installation\r\n\r\n```bash\r\npip install napari-cell-curator\r\n```\r\n\r\nFor video export support, also install:\r\n\r\n```bash\r\npip install \"imageio[ffmpeg]\"\r\n```\r\n\r\n---\r\n\r\n## Usage\r\n\r\n1. Open napari.\r\n2. Go to **Plugins \u2192 Cell Curator Pro**.\r\n3. Browse to your CSV, mask TIFF, and image TIFF files.\r\n4. Click **Load and Open Curator**.\r\n\r\nThe curator dock panel will appear on the right side of the viewer.\r\n\r\n### Mouse shortcuts\r\n\r\n| Action | Result |\r\n|---|---|\r\n| `Shift + Click` on a cell | Loads that cell's ID into box **[A]** |\r\n| `Ctrl + Click` on a cell | Loads that cell's ID into box **[B]** |\r\n| `X` or `x` | Delete cell [A] from the current frame |\r\n| `Ctrl + Z` | Undo the last operation (up to 3 steps) |\r\n\r\n---\r\n\r\n## Toolbar Buttons\r\n\r\n### Basic Tools\r\n\r\n| Button | Description |\r\n|---|---|\r\n| **Undo** | Reverts the last operation (up to 3 steps). |\r\n| **Shuffle Colors** | Randomizes the napari label color seed. Useful to distinguish adjacent cells. |\r\n| **Merge** | Replaces every occurrence of ID [A] with ID [B] across the entire video and CSV. |\r\n| **Swap/Cut (From this frame forward)** | Swaps IDs [A] and [B] from the current frame to the end. If [B] is 0, a new ID is generated automatically. |\r\n| **Local Swap (THIS frame only)** | Swaps [A] and [B] only in the current frame. |\r\n| **Baptize Mask (New ID)** | Assigns a fresh unique ID to the mask currently painted as [A]. |\r\n| **Sync Paintings (This Frame)** | Reads the label image for the current frame and updates the CSV centroids accordingly. |\r\n| **Sync Everything (Entire Video)** | Recalculates centroids from the label image for all frames and reconciles the CSV. |\r\n| **Harmonize Colors** | Detects disconnected regions sharing the same ID and splits them. Then aligns `continuous_label` with `trackId`. |\r\n| **Delete Cell [A] (This frame)** | Erases the mask of cell [A] from the current frame and removes its CSV row. |\r\n| **Exterminate Track [A] (Entire video)** | Removes cell [A] from every frame of both the mask and the CSV. |\r\n| **Rescue Orphans** | Finds masks in the label image that have no corresponding CSV row and assigns them new IDs. |\r\n| **Auto-Tracking (ID [A] only)** | Runs conflict resolution (automatic local swap), predator-mode absorption, and centroid gap filling for track [A]. |\r\n\r\n### Outcome Flags\r\n\r\nApplied to track ID [A]. Flags are automatically propagated to all frames of the track by the visual engine.\r\n\r\n| Button | Flag value |\r\n|---|---|\r\n| **Flag: MITOSIS** | `Mitosis` |\r\n| **Flag: END (Left the frame)** | `End` |\r\n| **Flag: DEATH/SENESCENCE** | `Death/Senescence` |\r\n| **Clear Flags from ID [A]** | Removes all manual flags; the auto-organizer keeps `Start` on the first frame. |\r\n\r\n### Lineage Tree\r\n\r\n| Button | Description |\r\n|---|---|\r\n| **Link Mother [A] -> Daughter [B]** | Sets [A] as the parent of [B] in the `Parent_ID` column. Automatically flags [A] as `Mitosis`. |\r\n| **Re-sequence Tree** | Renumbers all lineage IDs hierarchically (family 1 \u2192 daughters 11, 12 \u2192 grandchildren 111, 112, 121\u2026). Also handles individually flagged cells without children. |\r\n| **Cut Post-Mitosis Ghosts** | Detects mother cells that continue to exist in the mask after their division frame and splits them off with new IDs. |\r\n| **View Lineage Tree Graph** | Opens a matplotlib window showing the full lineage tree. |\r\n\r\n### Navigation\r\n\r\n| Button | Description |\r\n|---|---|\r\n| **Focus Mode** | Isolates a single cell in the viewer. All other masks are hidden. Click again to disable. |\r\n| **Jump to Next Unlinked Cell** | Advances the viewer to the next frame containing a cell with no lineage assignment and no outcome flag. |\r\n\r\n### Diagnostics & Export\r\n\r\n| Button | Description |\r\n|---|---|\r\n| **Run Diagnostics** | Prints a quality report to the terminal: short tracks, time gaps, spatial jumps, anomalous mitosis durations, and cells without a final outcome flag. |\r\n| **Export Cell Video [A]** | Saves a 100\u00d7100 px MP4 cropped around cell [A] with its mask highlighted in cyan. |\r\n| **Export Presentation (Screen)** | Saves a full-resolution screen capture of the napari canvas as an MP4. |\r\n| **SAVE ALL AND ANALYZE ERRORS** | Runs quality control (short tracks, gaps, jumps), shows an interactive dialog to remove or keep anomalies, checks for duplicate IDs, and writes the CSV and mask TIFF to disk. |\r\n\r\n---\r\n\r\n## CSV Format\r\n\r\nThe plugin reads and writes a CSV with at minimum these columns:\r\n\r\n```\r\ntrackId, frame, Center_of_the_object_0, Center_of_the_object_1, continuous_label, Outcome, Parent_ID\r\n```\r\n\r\n- `Center_of_the_object_0` \u2192 X coordinate (column)\r\n- `Center_of_the_object_1` \u2192 Y coordinate (row)\r\n- `Outcome` \u2192 One of `Start`, `Mitosis`, `End`, `Death/Senescence`, or empty\r\n- `Parent_ID` \u2192 ID of the mother cell, or `-1` if none\r\n\r\nOlder CSV files using the column name `Desfecho` instead of `Outcome` are automatically migrated on load and save.\r\n\r\n---\r\n\r\n## Requirements\r\n\r\n- Python \u2265 3.9\r\n- napari \u2265 0.4.17\r\n- numpy, pandas, tifffile, magicgui, qtpy, matplotlib, scikit-image\r\n- `imageio[ffmpeg]` (optional, for video export)\r\n\r\n---\r\n\r\n## License\r\n\r\nMIT License. See [LICENSE](LICENSE).\r\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": "https://github.com/nickpippi/napari-cell-curator",
+    "keywords": null,
+    "license": "MIT",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-cell-curator",
+    "package_url": "https://pypi.org/project/napari-cell-curator/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-cell-curator/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/YOUR_USERNAME/napari-cell-curator/issues",
+      "Documentation": "https://github.com/YOUR_USERNAME/napari-cell-curator#readme",
+      "Homepage": "https://github.com/nickpippi/napari-cell-curator"
+    },
+    "provides_extra": [
+      "testing",
+      "video"
+    ],
+    "release_url": "https://pypi.org/project/napari-cell-curator/0.1.1/",
+    "requires_dist": [
+      "napari>=0.4.17",
+      "napari-plugin-engine>=0.2.0",
+      "numpy",
+      "pandas",
+      "tifffile",
+      "magicgui",
+      "qtpy",
+      "matplotlib",
+      "scikit-image",
+      "pytest; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "imageio[ffmpeg]; extra == \"video\""
+    ],
+    "requires_python": ">=3.9",
+    "summary": "A napari plugin for manual cell tracking curation",
+    "version": "0.1.1",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 36125923,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "nickpippi"
+      }
+    ]
+  },
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "9b7a4d26c9a617a19ccdffd30a3bcedf6a2dc4c1b83d6734bbd2b0bf5f056ca1",
+          "md5": "2576f45c763dc154c6894fe775c1ba34",
+          "sha256": "3ad87810754fb9383c7dac622ccc76609e9729404c3cbc7d6ce1c133523b2927"
+        },
+        "downloads": -1,
+        "filename": "napari_cell_curator-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "2576f45c763dc154c6894fe775c1ba34",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 19638,
+        "upload_time": "2026-04-14T21:33:32",
+        "upload_time_iso_8601": "2026-04-14T21:33:32.852504Z",
+        "url": "https://files.pythonhosted.org/packages/9b/7a/4d26c9a617a19ccdffd30a3bcedf6a2dc4c1b83d6734bbd2b0bf5f056ca1/napari_cell_curator-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "8ed01b0c65a081ca85a125b7d9d67e6c470fda82d66e52dfe2b5a7f23cc8786f",
+          "md5": "da1f638ce94e351733007b6007cdfa25",
+          "sha256": "b6d48f7f44d5c832813a5af676f0178b5a3eec640cafdaf0d0786a276a0e9f91"
+        },
+        "downloads": -1,
+        "filename": "napari_cell_curator-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "da1f638ce94e351733007b6007cdfa25",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 21519,
+        "upload_time": "2026-04-14T21:33:34",
+        "upload_time_iso_8601": "2026-04-14T21:33:34.060190Z",
+        "url": "https://files.pythonhosted.org/packages/8e/d0/1b0c65a081ca85a125b7d9d67e6c470fda82d66e52dfe2b5a7f23cc8786f/napari_cell_curator-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "f2f941f9cbb63c87cf344aa365f26a81bbe4db3ffd0779baedf2b82404d51898",
+          "md5": "334868e94121d642d655998e04ffb395",
+          "sha256": "f3431f5448aa5ba50268c512ce22f0c192b12ea751b4cd28b504ba69079d5c5a"
+        },
+        "downloads": -1,
+        "filename": "napari_cell_curator-0.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "334868e94121d642d655998e04ffb395",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 19737,
+        "upload_time": "2026-04-14T21:37:18",
+        "upload_time_iso_8601": "2026-04-14T21:37:18.548509Z",
+        "url": "https://files.pythonhosted.org/packages/f2/f9/41f9cbb63c87cf344aa365f26a81bbe4db3ffd0779baedf2b82404d51898/napari_cell_curator-0.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "a8819b5f02c943a197399bee36bc17deceaddb7ffcf10ae15000d9288868d54c",
+          "md5": "e4459e9d09384952fc02e30e07d85aa8",
+          "sha256": "c6d313385eb84511ccd897570e60cb98a5892398bc593c12cd42baa32a017a67"
+        },
+        "downloads": -1,
+        "filename": "napari_cell_curator-0.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e4459e9d09384952fc02e30e07d85aa8",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 21602,
+        "upload_time": "2026-04-14T21:37:19",
+        "upload_time_iso_8601": "2026-04-14T21:37:19.529257Z",
+        "url": "https://files.pythonhosted.org/packages/a8/81/9b5f02c943a197399bee36bc17deceaddb7ffcf10ae15000d9288868d54c/napari_cell_curator-0.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "f2f941f9cbb63c87cf344aa365f26a81bbe4db3ffd0779baedf2b82404d51898",
+        "md5": "334868e94121d642d655998e04ffb395",
+        "sha256": "f3431f5448aa5ba50268c512ce22f0c192b12ea751b4cd28b504ba69079d5c5a"
+      },
+      "downloads": -1,
+      "filename": "napari_cell_curator-0.1.1-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "334868e94121d642d655998e04ffb395",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.9",
+      "size": 19737,
+      "upload_time": "2026-04-14T21:37:18",
+      "upload_time_iso_8601": "2026-04-14T21:37:18.548509Z",
+      "url": "https://files.pythonhosted.org/packages/f2/f9/41f9cbb63c87cf344aa365f26a81bbe4db3ffd0779baedf2b82404d51898/napari_cell_curator-0.1.1-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "a8819b5f02c943a197399bee36bc17deceaddb7ffcf10ae15000d9288868d54c",
+        "md5": "e4459e9d09384952fc02e30e07d85aa8",
+        "sha256": "c6d313385eb84511ccd897570e60cb98a5892398bc593c12cd42baa32a017a67"
+      },
+      "downloads": -1,
+      "filename": "napari_cell_curator-0.1.1.tar.gz",
+      "has_sig": false,
+      "md5_digest": "e4459e9d09384952fc02e30e07d85aa8",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.9",
+      "size": 21602,
+      "upload_time": "2026-04-14T21:37:19",
+      "upload_time_iso_8601": "2026-04-14T21:37:19.529257Z",
+      "url": "https://files.pythonhosted.org/packages/a8/81/9b5f02c943a197399bee36bc17deceaddb7ffcf10ae15000d9288868d54c/napari_cell_curator-0.1.1.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

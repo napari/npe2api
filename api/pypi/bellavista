@@ -1,0 +1,297 @@
+{
+  "info": {
+    "author": null,
+    "author_email": "Annabelle Coles <acoles@salk.edu>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Programming Language :: Python :: 3"
+    ],
+    "description": "# BellaVista\n\nBellaVista is a visualization tool utilizing the [napari](https://napari.org/) viewer for interactive exploration of imaging-based spatial transcriptomic data. This BellaVista release is designed for data already processed through the KoLab-MERFISH pipeline. BellaVista can be used to visualize the 4 key dataset components of each KoLab-MERFISH dataset: (1) Cell boundary & nuclear images (WGA & DAPI), (2) Cell segmentation boundaries, (3) Transcript locations, (4) Cell network connectivity graphs. Note: BellaVista is purely a visualization tool - it does not perform data processing or analysis :)\n\n## Quick Start (with sample data)\n\nThis short demo will load a sample FOV from the TAC mouse heart. BellaVista is installed and run via the command line. Run the steps below in the `Terminal` (macOS/Linux) or `PowerShell` (Windows) application. \n\n> **Note:** BellaVista requires a monitor display to render images in the napari viewer.\n\n### 1. Install [uv](https://docs.astral.sh/uv/getting-started/installation/)\n```\n# macOS/Linux\ncurl -LsSf https://astral.sh/uv/install.sh | sh\n\n# Windows\npowershell -ExecutionPolicy ByPass -c \"irm https://astral.sh/uv/install.ps1 | iex\"\n```\n>  **Important:**\n> Restart the shell (close and reopen the terminal) to complete the installation. \n\n### 2. Launch BellaVista \n```\nuvx -p 3.12 bellavista\n```\n\n<br>\n\n> Linux note: If you see the error: `Could not load the Qt platform plugin \"xcb\" in \"\" even though it was found.` Install the required system libraries: `sudo apt install libxcb-cursor0 libxkbcommon-x11-0 libxcb-xinerama0`. Then re-run step 2!\n\n<br>\n\n>  **NOTE:**\n> It will take a few minutes to download and create the required data files. The terminal will print updates & display progress bars for time consuming steps. The sample data is a single FOV from the TAC mouse heart and is ~17MB. \n\nAfter successfully loading BellaVista, you should see the message `Data Loaded!` in the terminal. A napari window should appear displaying the sample data similar to the image below:\n\n<p align=\"middle\">\n<img src=\"https://raw.githubusercontent.com/pkosurilab/BellaVista-KoLab-MERFISH/main/images/BellaVista_demo_launch_screen.png\" alt=\"BellaVista demo sample TAC dataset initial screen\" width=\"800\" />\n</p>\n\nNow, you can interactively move around the napari canvas to explore the data.\nTry zooming in & out, plotting cell-type-specific transcripts, cell boundaries, and cell networks!\n\n<p align=\"middle\">\n<img src=\"https://raw.githubusercontent.com/pkosurilab/BellaVista-KoLab-MERFISH/main/images/BellaVista_sample_demo.png\" alt=\"BellaVista demo sample TAC dataset\" width=\"800\" />\n</p>\n\n## BellaVista Widget Menu\n\nBellaVista uses the napari interface and features a widget located on the right side of the napari window to plot each dataset feature. The widget has four components:\n\n\n<!-- \n<p align=\"left\">\n  \n  <h3 align=\"left\">Image Widget</h3>\n  <img src=\"https://raw.githubusercontent.com/pkosurilab/BellaVista-KoLab-MERFISH/main/images/image_widget.png\"\n  alt=\"BellaVista image widget\" width=\"200\" />\n\n  The image widget features a dropdown menu with the images that are available to plot. The demo dataset contains WGA and DAPI images. \n</p> -->\n\n\n<p align=\"left\">\n  \n  <h3 align=\"left\">Gene Widget</h3>\n  <img src=\"https://raw.githubusercontent.com/pkosurilab/BellaVista-KoLab-MERFISH/main/images/gene_widget.png\"\n  alt=\"BellaVista gene widget\" width=\"200\" />\n  \n  The gene widget features a dropdown menu with the genes in the gene panel, and a dropdown menu to select cell-type-specific transcripts. \n\n* \"all transcripts\" = all transcript molecules (un-partitioned) -- this includes all transcripts, both transcripts assigned to cells and unassigned transcripts\n* \"CM transcripts\" = cardiomyocyte transcripts\n* \"EC transcripts\" = endothelial cell transcripts\n* \"IC transcripts\" = immune cell transcripts\n* \"FB transcripts\" = fibroblast transcripts\n* \"CM 1-2-3 transcripts\" = cardiomyocyte transcripts from CM1, CM2 & CM3 subclusters (spatially-scrubbed)\n\nTo plot the transcripts from a gene, select the gene from the dropdown gene list, select your cell-type of interest, then press `Plot`! Each individual transcript molecule will be plotted as a single point. The layer color is random, and can be changed using the \"Layer Color\" text input & button. The input color value can be provided as a hexcode value e.g. `#FF00FF` or by name e.g. `Magenta`.\n\n</p>\n\n<p align=\"left\">\n  \n  <h3 align=\"left\">Segmentation Widget</h3>\n  <img src=\"https://raw.githubusercontent.com/pkosurilab/BellaVista-KoLab-MERFISH/main/images/segmentation_widget.png\"\n  alt=\"BellaVista segmentation widget\" width=\"200\" />\n\n  The segmentation widget features a dropdown menu with cell-type-specific cell segmentation boundaries. \n\n* \"all boundaries\" = all segmentation mask boundaries\n* \"CM boundaries\" = cardiomyocyte boundaries\n* \"EC boundaries\" = endothelial cell boundaries\n* \"IC boundaries\" = immune cell boundaries\n* \"FB boundaries\" = fibroblast boundaries\n* \"CM 1-2-3 boundaries\" = cardiomyocyte boundaries from CM1, CM2 & CM3 subclusters (spatially-scrubbed)\n\nThe boundaries for each cell type will be colored as follows: CM: pink, EC: green, IC: blue, FB: yellow. To change the color of the cell boundaries, use the \"colormap\" option on the layer control menu. For the best visualization, you should select a colormap starting with \"single-hue\"!\n\n</p>\n\n<p align=\"left\">\n  \n  <h3 align=\"left\">Network Widget</h3>\n  <img src=\"https://raw.githubusercontent.com/pkosurilab/BellaVista-KoLab-MERFISH/main/images/network_widget.png\"\n  alt=\"BellaVista network widget\" width=\"200\" />\n\n  The network widget can be used to plot the cell connectivity networks. The centroid of each cell is plotted as a node (napari point layer), and is colored by its corresponding cell type: CM: pink, EC: green, IC: blue, FB: yellow. Cardiomyocyte->cell-type-specific edges are plotted, and are colored by the cell-type identity of the corresponding cardiomyocyte's neighbor. Note: this network is cardiomyocyte centric, meaning if two cells are connected, but neither is a cardiomyocyte, then the connection will not be shown.\n  </p>\n\n<p align=\"left\">\n  \n  <h3 align=\"left\">Location Widget</h3>\n  <img src=\"https://raw.githubusercontent.com/pkosurilab/BellaVista-KoLab-MERFISH/main/images/location_widget.png\"\n  alt=\"BellaVista location widget\" width=\"200\" />\n\n  The location widget can be used to save and move to marked camera coordinates. Additionally, the \"Load CSV\" & \"Export CSV\" buttons can be used to export your saved locations or load previously saved locations from a previous session. \n  </p>\n\n>  **NOTE:**\n> If the input files for a feature was not provided or an error occurred during data processing, the corresponding widget may not be available. A detailed log file `error_log.log` can be found in the `BellaVista_outputs` subfolder inside the data folder. \n\n> **That's it for the quick start!** \n\n# Visualizing full MERFISH datasets\n\nWe will share the commands to visualize the Sham and TAC datasets from the mouse heart, including the private url-links. To visualize a dataset hosted on the web, use the following single-line command:\n\n```\nuvx -p 3.12 bellavista --dataset-url \"url-link-to-dataset\"\n```\n\n>  **NOTE:**\n> We recommend having at least 16GB of RAM and 10GB of disk space available to download and visualize the full Sham and TAC datasets. The files will be downloaded and extracted in the folder you're currently in (working directory of your terminal). \n>\n> Each dataset contains WGA & DAPI images, tens-of-thousands of cells, and hundreds-of-millions of transcripts. For visualization, these data will be converted to visualization files that will also require approximately the same amount of space as the raw datasets. So please keep this in mind when downloading the data!\n>\n> It will take a few minutes to download and create the required data files. The terminal will print updates & display progress bars for time consuming steps.\n\n<details>\n<summary><strong>Example terminal outputs</strong></summary>\n  \n```\nCreating BellaVista input files for KoLab-MERFISH:\nProcessing WGA image... WGA OME-Zarr image saved successfully!\nProcessing DAPI image... DAPI OME-Zarr image saved successfully!\nProcessing Transcripts/all_transcripts.csv.gz: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 140/140\nProcessing Transcripts/CM_1-2-3_transcripts.csv.gz: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 140/140\nProcessing Transcripts/CM_transcripts.csv.gz: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 140/140\nProcessing Transcripts/EC_transcripts.csv.gz: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 140/140\nProcessing Transcripts/FB_transcripts.csv.gz: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 140/140\nProcessing Transcripts/IC_transcripts.csv.gz: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 140/140\nProcessing CellBoundaries/all_boundaries.csv.gz: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 84335/84335\nProcessing CellBoundaries/CM_1-2-3_boundaries.csv.gz: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 33512/33512\nProcessing CellBoundaries/CM_boundaries.csv.gz: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 42333/42333\nProcessing CellBoundaries/EC_boundaries.csv.gz: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 22540/22540\nProcessing CellBoundaries/FB_boundaries.csv.gz: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 13052/13052\nProcessing CellBoundaries/IC_boundaries.csv.gz: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 6410/6410\nProcessing cell network graph nodes: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 76984/76984\nProcessing CM network graph edges: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 39532/39532\nProcessing EC network graph edges: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 45939/45939\nProcessing IC network graph edges: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 11888/11888\nProcessing FB network graph edges: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 21467/21467\nBellaVista input files created!\n\nData Loaded!\n```\n</details>\n\nAfter successfully launching BellaVista, you should see the message `Data Loaded!` in the terminal. A napari window should appear displaying the data similar to the image below (TAC dataset shown here):\n\n<p align=\"middle\">\n<img src=\"https://raw.githubusercontent.com/pkosurilab/BellaVista-KoLab-MERFISH/main/images/TAC_WGA.png\" alt=\"BellaVista TAC dataset zoom out\" width=\"800\" />\n</p>\n\nNow, you can interactively move around the napari canvas to explore the data.\nTry zooming in & out, plotting cell-type-specific transcripts, cell boundaries, and cell networks!\n\n<p align=\"middle\">\n<img src=\"https://raw.githubusercontent.com/pkosurilab/BellaVista-KoLab-MERFISH/main/images/BellaVista_demo.png\" alt=\"BellaVista TAC dataset\" width=\"800\" />\n</p>\n\n> **That's it for the example Sham and TAC datasets!** \n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": null,
+    "home_page": null,
+    "keywords": "MERFISH, napari, python, spatial transcriptomics, visualization",
+    "license": "MIT License\n        \n        Copyright (c) 2026 Kosuri Lab @ Salk\n        \n        Permission is hereby granted, free of charge, to any person obtaining a copy\n        of this software and associated documentation files (the \"Software\"), to deal\n        in the Software without restriction, including without limitation the rights\n        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n        copies of the Software, and to permit persons to whom the Software is\n        furnished to do so, subject to the following conditions:\n        \n        The above copyright notice and this permission notice shall be included in all\n        copies or substantial portions of the Software.\n        \n        THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n        SOFTWARE.",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "bellavista",
+    "package_url": "https://pypi.org/project/bellavista/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/bellavista/",
+    "project_urls": {
+      "Issues": "https://github.com/pkosurilab/BellaVista/issues",
+      "Repository": "https://github.com/pkosurilab/BellaVista.git"
+    },
+    "provides_extra": null,
+    "release_url": "https://pypi.org/project/bellavista/0.1.0/",
+    "requires_dist": [
+      "dask-image",
+      "dask[array]",
+      "h5py",
+      "imagecodecs",
+      "matplotlib",
+      "napari-ome-zarr",
+      "napari[all]",
+      "networkx",
+      "numpy>=2",
+      "ome-zarr",
+      "pandas",
+      "pyarrow",
+      "scikit-image",
+      "shapely",
+      "tqdm",
+      "zarr<3"
+    ],
+    "requires_python": ">=3.10",
+    "summary": "Python package for interactive visualization of imaging-based spatial transcriptomics (KoLab-MERFISH edition).",
+    "version": "0.1.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 35766452,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "pkosurilab"
+      }
+    ]
+  },
+  "releases": {
+    "0.0.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "18c7fc19b72ac75b52921ee7175a60cc3ad63932dbe8cf2c850a9117317184c8",
+          "md5": "a2418455edcaccdd1edfbf16a848cd60",
+          "sha256": "25b2bea1573438ecdb232104af9b9df0b053e12e9a5202febcb918cfe41a057a"
+        },
+        "downloads": -1,
+        "filename": "bellavista-0.0.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "a2418455edcaccdd1edfbf16a848cd60",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 37644,
+        "upload_time": "2024-09-26T21:39:35",
+        "upload_time_iso_8601": "2024-09-26T21:39:35.566346Z",
+        "url": "https://files.pythonhosted.org/packages/18/c7/fc19b72ac75b52921ee7175a60cc3ad63932dbe8cf2c850a9117317184c8/bellavista-0.0.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "3dbd385b6b3b1699e597a108c5fd8988509f33811815820b85068b24ebef224a",
+          "md5": "72fdce9a89e72e7b31ee964ace9a481f",
+          "sha256": "8501717610e6c0f2270b0b3b313a491842b6867cf4485f60bcb4586903cbe50e"
+        },
+        "downloads": -1,
+        "filename": "bellavista-0.0.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "72fdce9a89e72e7b31ee964ace9a481f",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 29870,
+        "upload_time": "2024-09-26T21:39:37",
+        "upload_time_iso_8601": "2024-09-26T21:39:37.154039Z",
+        "url": "https://files.pythonhosted.org/packages/3d/bd/385b6b3b1699e597a108c5fd8988509f33811815820b85068b24ebef224a/bellavista-0.0.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "5611abf184917d76ff32043006c16adcf51569a276af093243bd82cc26c23948",
+          "md5": "9192866580065e3bf987424336fb79e5",
+          "sha256": "23c5adf19042074db7c32e50ef0c99a3ac89a74fb7f79cca9b1d6e1efc3874f7"
+        },
+        "downloads": -1,
+        "filename": "bellavista-0.0.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "9192866580065e3bf987424336fb79e5",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 37832,
+        "upload_time": "2024-09-30T23:53:05",
+        "upload_time_iso_8601": "2024-09-30T23:53:05.699373Z",
+        "url": "https://files.pythonhosted.org/packages/56/11/abf184917d76ff32043006c16adcf51569a276af093243bd82cc26c23948/bellavista-0.0.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "blake2b_256": "16d0ec819e8b34e42b9ba219629ee346b33906d501b8200559e179bc51690f38",
+          "md5": "17ecf20c1978ff82fea49490a77cd6fe",
+          "sha256": "0a4de77de774a16e476f9857fd463becfcbb3cc8129681c84abd9cb627dc0bd2"
+        },
+        "downloads": -1,
+        "filename": "bellavista-0.0.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "17ecf20c1978ff82fea49490a77cd6fe",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 30017,
+        "upload_time": "2024-09-30T23:53:07",
+        "upload_time_iso_8601": "2024-09-30T23:53:07.096945Z",
+        "url": "https://files.pythonhosted.org/packages/16/d0/ec819e8b34e42b9ba219629ee346b33906d501b8200559e179bc51690f38/bellavista-0.0.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "fe865e96da27dc0474b2fb37bcf00f7f04229abf73d1648c6dbd781f8be730de",
+          "md5": "d29d81b98513840dc3bbe81d26b37757",
+          "sha256": "9bded61457d5d3d5186dc2e4247437f63c5ba2fef72d9f775ddabe8b700dc8ec"
+        },
+        "downloads": -1,
+        "filename": "bellavista-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "d29d81b98513840dc3bbe81d26b37757",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 21079,
+        "upload_time": "2026-04-03T17:59:36",
+        "upload_time_iso_8601": "2026-04-03T17:59:36.664710Z",
+        "url": "https://files.pythonhosted.org/packages/fe/86/5e96da27dc0474b2fb37bcf00f7f04229abf73d1648c6dbd781f8be730de/bellavista-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "cdcaadf90aeaf89b2b65fc494098fed4fad014c85b167d673d7c4bf0ff5aed04",
+          "md5": "2ee40ad261b317e62d3fc13fb90bf5b4",
+          "sha256": "d4edb66acbdc3c471167f3a98d0c0ec333101a6c117437336335973dacc4cb7a"
+        },
+        "downloads": -1,
+        "filename": "bellavista-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "2ee40ad261b317e62d3fc13fb90bf5b4",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 3435174,
+        "upload_time": "2026-04-03T17:59:38",
+        "upload_time_iso_8601": "2026-04-03T17:59:38.274121Z",
+        "url": "https://files.pythonhosted.org/packages/cd/ca/adf90aeaf89b2b65fc494098fed4fad014c85b167d673d7c4bf0ff5aed04/bellavista-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.0a1": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "5f91e23b36b9741da02824d46eee43e9cfe1642a8de971fecfcebb732b9d9f12",
+          "md5": "94f51c479018d5eb7103e15729366d8a",
+          "sha256": "4dd5d22f2422e0968d65aac65b0fc8db022795a9f1ea7ac82dc73ef240b6a3ea"
+        },
+        "downloads": -1,
+        "filename": "bellavista-0.1.0a1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "94f51c479018d5eb7103e15729366d8a",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 21102,
+        "upload_time": "2026-04-03T00:46:03",
+        "upload_time_iso_8601": "2026-04-03T00:46:03.809537Z",
+        "url": "https://files.pythonhosted.org/packages/5f/91/e23b36b9741da02824d46eee43e9cfe1642a8de971fecfcebb732b9d9f12/bellavista-0.1.0a1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "cc1f0c1169f678dec7b1a47877a3e6d735393728bd5446ceed02f144c6c159fd",
+          "md5": "538bb3dcfaa1b691a4770107bf78a67c",
+          "sha256": "efe5eaadb074dd899633c925460f5e06271a5dc5c5d165ccf727c20212607f43"
+        },
+        "downloads": -1,
+        "filename": "bellavista-0.1.0a1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "538bb3dcfaa1b691a4770107bf78a67c",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 3435186,
+        "upload_time": "2026-04-03T00:46:05",
+        "upload_time_iso_8601": "2026-04-03T00:46:05.481652Z",
+        "url": "https://files.pythonhosted.org/packages/cc/1f/0c1169f678dec7b1a47877a3e6d735393728bd5446ceed02f144c6c159fd/bellavista-0.1.0a1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "fe865e96da27dc0474b2fb37bcf00f7f04229abf73d1648c6dbd781f8be730de",
+        "md5": "d29d81b98513840dc3bbe81d26b37757",
+        "sha256": "9bded61457d5d3d5186dc2e4247437f63c5ba2fef72d9f775ddabe8b700dc8ec"
+      },
+      "downloads": -1,
+      "filename": "bellavista-0.1.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "d29d81b98513840dc3bbe81d26b37757",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.10",
+      "size": 21079,
+      "upload_time": "2026-04-03T17:59:36",
+      "upload_time_iso_8601": "2026-04-03T17:59:36.664710Z",
+      "url": "https://files.pythonhosted.org/packages/fe/86/5e96da27dc0474b2fb37bcf00f7f04229abf73d1648c6dbd781f8be730de/bellavista-0.1.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "digests": {
+        "blake2b_256": "cdcaadf90aeaf89b2b65fc494098fed4fad014c85b167d673d7c4bf0ff5aed04",
+        "md5": "2ee40ad261b317e62d3fc13fb90bf5b4",
+        "sha256": "d4edb66acbdc3c471167f3a98d0c0ec333101a6c117437336335973dacc4cb7a"
+      },
+      "downloads": -1,
+      "filename": "bellavista-0.1.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "2ee40ad261b317e62d3fc13fb90bf5b4",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.10",
+      "size": 3435174,
+      "upload_time": "2026-04-03T17:59:38",
+      "upload_time_iso_8601": "2026-04-03T17:59:38.274121Z",
+      "url": "https://files.pythonhosted.org/packages/cd/ca/adf90aeaf89b2b65fc494098fed4fad014c85b167d673d7c4bf0ff5aed04/bellavista-0.1.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
