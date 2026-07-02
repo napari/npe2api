@@ -11,7 +11,7 @@
       "Programming Language :: Python :: 3",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "# napari-dask-ndmeasure\n\n[![PyPI](https://img.shields.io/pypi/v/napari-dask-ndmeasure.svg)](https://pypi.org/project/napari-dask-ndmeasure/)\n[![Python versions](https://img.shields.io/pypi/pyversions/napari-dask-ndmeasure.svg)](https://pypi.org/project/napari-dask-ndmeasure/)\n[![License: GPLv3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)\n\nOut-of-core, chunk-parallel regionprops-style measurements for **huge**\nlabelled images inside napari.\n\n`skimage.measure.regionprops` needs the full labelled + intensity array in\nRAM \u2014 fine for one tile, not for a hundred-thousand-object OME-ZARR volume.\nThis plugin measures a `Labels` layer directly against an `Image` layer via\n[`dask-image`](https://image.dask.org)'s `ndmeasure`, working straight off\nthe layers' backing dask/zarr arrays, chunk by chunk, without ever\nmaterializing the whole volume.\n\n## Install\n\n```bash\npip install napari-dask-ndmeasure\n```\n\n## Use\n\n1. Open your image + labels in napari (e.g. via\n   [patchworks](https://github.com/imcf/patchworks)'s\n   `view_in_napari(...)`, which also sets each layer's physical `scale`, so\n   measurements come out in \u00b5m \u2014 not just pixels).\n2. `Plugins \u2192 Dask ndmeasure \u2192 Measure (dask-image)`.\n3. Pick the Image and Labels layer, check the measurements you want, hit\n   **Measure**. A progress bar tracks which stat is currently computing; the\n   UI stays responsive throughout (measurement runs in a background thread).\n4. Browse the table in the dock widget, or **Save CSV\u2026** (defaults to\n   `<labels layer name>_measurements.csv`).\n\nThe measured table is also written to the Labels layer's `.features`, so you\ncan immediately color the layer by any measured value via napari's built-in\n\"color by feature\" for Labels layers.\n\nRe-clicking **Measure** with the same layers/level/stats is instant \u2014 results\nare cached for the session (in memory; cleared when the widget/viewer\ncloses).\n\nEvery array is rechunked to a bounded size before measuring, regardless of\nhow the layer was loaded \u2014 a plain numpy-backed layer (or any dask array\nthat isn't already sensibly chunked) would otherwise become **one giant\nchunk**, silently forcing the whole volume into RAM during computation. This\nis what actually made the out-of-core promise real for non-pyramid layers.\n\n## Measurements\n\n| Stat | Needs intensity image | Notes |\n|---|---|---|\n| `area` | no | voxel count (+ `area_um2`/`area_um3` if the layer is calibrated) |\n| `centroid` | no | geometric centroid, one column per axis (+ `_um` twins) |\n| `weighted_centroid` | yes | intensity-weighted centroid |\n| `mean_intensity` | yes | |\n| `std_intensity` | yes | |\n| `min_intensity` | yes | |\n| `max_intensity` | yes | |\n\n## Multiscale / pyramid layers\n\nA \"Pyramid level\" spin box lets you measure a coarser level first \u2014 much\nfaster, handy to sanity-check the setup before running the full-resolution\npass on a very large volume.\n\n## Development\n\n```bash\ngit clone https://github.com/imcf/napari-dask-ndmeasure\ncd napari-dask-ndmeasure\npip install -e \".[dev]\"\npytest\n```\n\n## License\n\nGNU General Public License v3.0 (GPL-3.0). See [LICENSE](LICENSE).\n",
+    "description": "# napari-dask-ndmeasure\n\n[![PyPI](https://img.shields.io/pypi/v/napari-dask-ndmeasure.svg)](https://pypi.org/project/napari-dask-ndmeasure/)\n[![Python versions](https://img.shields.io/pypi/pyversions/napari-dask-ndmeasure.svg)](https://pypi.org/project/napari-dask-ndmeasure/)\n[![License: GPLv3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)\n\nOut-of-core, chunk-parallel regionprops-style measurements for **huge**\nlabelled images inside napari.\n\n`skimage.measure.regionprops` needs the full labelled + intensity array in\nRAM \u2014 fine for one tile, not for a hundred-thousand-object OME-ZARR volume.\nThis plugin measures a `Labels` layer directly against an `Image` layer via\n[`dask-image`](https://image.dask.org)'s `ndmeasure`, working straight off\nthe layers' backing dask/zarr arrays, chunk by chunk, without ever\nmaterializing the whole volume.\n\n## Install\n\n```bash\npip install napari-dask-ndmeasure\n```\n\n## Use\n\n1. Open your image + labels in napari (e.g. via\n   [patchworks](https://github.com/imcf/patchworks)'s\n   `view_in_napari(...)`, which also sets each layer's physical `scale`, so\n   measurements come out in \u00b5m \u2014 not just pixels).\n2. `Plugins \u2192 Dask ndmeasure \u2192 Measure (dask-image)`.\n3. Pick the Image and Labels layer, check the measurements you want, hit\n   **Measure**. The UI stays responsive throughout (runs in a background\n   thread) with a progress bar; every measurement is also written to CSV\n   automatically (no dialog) \u2014 see *Output* below.\n4. Browse the table in the dock widget, or **Save CSV\u2026** to pick a different\n   location (which then becomes the target for future automatic saves too).\n\nThe measured table is also written to the Labels layer's `.features`, so you\ncan immediately color the layer by any measured value via napari's built-in\n\"color by feature\" for Labels layers.\n\nRe-clicking **Measure** with the same layers/level/stats is instant \u2014 results\nare cached for the session (in memory; cleared when the widget/viewer\ncloses).\n\n### Output\n\nEvery successful measurement is written to CSV automatically, no dialog:\n`<save folder>/<labels layer name>_measurements.csv`, where the save folder\nis the last one you picked via **Save CSV\u2026**, or the current working\ndirectory if you never have.\n\n### Keeping RAM and time bounded\n\nTwo things matter for a huge volume, both handled automatically:\n\n- **Chunking.** Every array is rechunked to a bounded size before measuring\n  *only if it needs it* \u2014 a plain numpy-backed layer (or any dask array that\n  isn't already sensibly chunked) would otherwise become **one giant\n  chunk**, silently forcing the whole volume into RAM. A layer that's\n  already a well-chunked OME-ZARR pyramid is left untouched \u2014 rechunking an\n  already-fine array is itself expensive (real data movement), not free\n  insurance.\n- **One combined pass.** All requested stats are computed together in a\n  single `dask.compute()` call, not one at a time. Each `dask-image`\n  measurement function builds its own graph over the same image/labels\n  chunks; computing them separately means every chunk gets read and decoded\n  once *per stat* (4 default stats = 4 full passes over the data). Computing\n  them together lets dask's scheduler share the chunk-read work across all\n  of them. Progress is reported per dask task within each of the two\n  phases (scanning, then computing) \u2014 real counts from the running\n  computation, not a fixed per-stat tick.\n- **Skipping the scan.** If the Labels layer came from\n  [patchworks](https://github.com/imcf/patchworks)'s `view_in_napari(...)`\n  with `sequential_labels=True` at merge time, the layer carries a\n  known-object-count hint. At pyramid level 0 (full resolution) this lets\n  the plugin skip the whole-volume \"scanning for objects\" pass entirely \u2014\n  the status bar says \"using known object count (N) \u2014 skipping scan\" when\n  this kicks in. Not trusted at coarser pyramid levels, since downsampling\n  can drop small objects.\n\nThe **Workers** spin box controls how many threads that combined computation\nuses (default `min(4, cpu count)`). More workers can mean more decoded\nchunks held in memory at once \u2014 turn it down (even to 1) if a measurement is\nstill using too much RAM; turn it up if you have RAM to spare and want it\nfaster.\n\n## Measurements\n\n| Stat | Needs intensity image | Notes |\n|---|---|---|\n| `area` | no | voxel count (+ `area_um2`/`area_um3` if the layer is calibrated) |\n| `centroid` | no | geometric centroid, one column per axis (+ `_um` twins) |\n| `weighted_centroid` | yes | intensity-weighted centroid |\n| `mean_intensity` | yes | |\n| `std_intensity` | yes | |\n| `min_intensity` | yes | |\n| `max_intensity` | yes | |\n\n## Multiscale / pyramid layers\n\nA \"Pyramid level\" spin box lets you measure a coarser level first \u2014 much\nfaster, handy to sanity-check the setup before running the full-resolution\npass on a very large volume.\n\n## Development\n\n```bash\ngit clone https://github.com/imcf/napari-dask-ndmeasure\ncd napari-dask-ndmeasure\npip install -e \".[dev]\"\npytest\n```\n\n## License\n\nGNU General Public License v3.0 (GPL-3.0). See [LICENSE](LICENSE).\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -40,7 +40,7 @@
     "provides_extra": [
       "dev"
     ],
-    "release_url": "https://pypi.org/project/napari-dask-ndmeasure/0.2.0/",
+    "release_url": "https://pypi.org/project/napari-dask-ndmeasure/0.4.0/",
     "requires_dist": [
       "dask-image>=2023.3.0",
       "dask[array]>=2023.1.0",
@@ -55,11 +55,11 @@
     ],
     "requires_python": ">=3.9",
     "summary": "Out-of-core regionprops-style measurements for huge labelled images in napari",
-    "version": "0.2.0",
+    "version": "0.4.0",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 38587850,
+  "last_serial": 38590418,
   "ownership": {
     "organization": "imcf",
     "roles": []
@@ -196,48 +196,136 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.3.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "58de9adaac54882f618a1ec423abec64fe1b9bef1ebe0f12d77cff9f9a175b53",
+          "md5": "4c0ba53aeb25b9940c856f1abbaacdc8",
+          "sha256": "48b05e6a7c5689cca665b87c89cd18de3b4b0fa44935c6c0f2aae1493fa640f9"
+        },
+        "downloads": -1,
+        "filename": "napari_dask_ndmeasure-0.3.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "4c0ba53aeb25b9940c856f1abbaacdc8",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 26770,
+        "upload_time": "2026-07-02T09:39:52",
+        "upload_time_iso_8601": "2026-07-02T09:39:52.773926Z",
+        "url": "https://files.pythonhosted.org/packages/58/de/9adaac54882f618a1ec423abec64fe1b9bef1ebe0f12d77cff9f9a175b53/napari_dask_ndmeasure-0.3.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "5a66dfa382f600410552738db588769cb0ab8932dc3962909fc709d23012b540",
+          "md5": "f8e9cd3af7910704e57419b43f0b5b77",
+          "sha256": "b5bdbb5483f74d6ea5fceaaf48e77ed32f10db43fa306123cec79ffdf79eace9"
+        },
+        "downloads": -1,
+        "filename": "napari_dask_ndmeasure-0.3.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "f8e9cd3af7910704e57419b43f0b5b77",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 29189,
+        "upload_time": "2026-07-02T09:39:54",
+        "upload_time_iso_8601": "2026-07-02T09:39:54.065088Z",
+        "url": "https://files.pythonhosted.org/packages/5a/66/dfa382f600410552738db588769cb0ab8932dc3962909fc709d23012b540/napari_dask_ndmeasure-0.3.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.4.0": [
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "4056fc54ca42f7d1cf91893b2aa77800a39f0bd2e6a70e870a115655fe23b0bc",
+          "md5": "4b524d6d03a373745f666c9128d27ece",
+          "sha256": "3f7d9e96775b4f96abeaef100ab4faf941cbaeda51490c9f27df37ccd0e857e1"
+        },
+        "downloads": -1,
+        "filename": "napari_dask_ndmeasure-0.4.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "4b524d6d03a373745f666c9128d27ece",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 28677,
+        "upload_time": "2026-07-02T10:33:56",
+        "upload_time_iso_8601": "2026-07-02T10:33:56.562613Z",
+        "url": "https://files.pythonhosted.org/packages/40/56/fc54ca42f7d1cf91893b2aa77800a39f0bd2e6a70e870a115655fe23b0bc/napari_dask_ndmeasure-0.4.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "digests": {
+          "blake2b_256": "be377c9bb5a86b1e250437003cb6b953349a014d6a1763339ede10faac31adc6",
+          "md5": "3bbe5daf1d0ad8c17bea8b40cdd5db97",
+          "sha256": "a52122f1578e5a84f50eb58944b5cfafcee5eac61b6fdb758090cf7e0e2c1136"
+        },
+        "downloads": -1,
+        "filename": "napari_dask_ndmeasure-0.4.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "3bbe5daf1d0ad8c17bea8b40cdd5db97",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 31862,
+        "upload_time": "2026-07-02T10:33:57",
+        "upload_time_iso_8601": "2026-07-02T10:33:57.671934Z",
+        "url": "https://files.pythonhosted.org/packages/be/37/7c9bb5a86b1e250437003cb6b953349a014d6a1763339ede10faac31adc6/napari_dask_ndmeasure-0.4.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": null,
       "digests": {
-        "blake2b_256": "c0e0912481ee941d1fb28b2bff73375f3da3fe9656e555c13865fdb491b0d870",
-        "md5": "1538fb865863f7a242ffa27e3ff2ae92",
-        "sha256": "d0af82328a73932f7834be2d8c8c0bb466fe881a385fdf8437cf582604cf2fc0"
+        "blake2b_256": "4056fc54ca42f7d1cf91893b2aa77800a39f0bd2e6a70e870a115655fe23b0bc",
+        "md5": "4b524d6d03a373745f666c9128d27ece",
+        "sha256": "3f7d9e96775b4f96abeaef100ab4faf941cbaeda51490c9f27df37ccd0e857e1"
       },
       "downloads": -1,
-      "filename": "napari_dask_ndmeasure-0.2.0-py3-none-any.whl",
+      "filename": "napari_dask_ndmeasure-0.4.0-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "1538fb865863f7a242ffa27e3ff2ae92",
+      "md5_digest": "4b524d6d03a373745f666c9128d27ece",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.9",
-      "size": 23571,
-      "upload_time": "2026-07-02T09:02:41",
-      "upload_time_iso_8601": "2026-07-02T09:02:41.470164Z",
-      "url": "https://files.pythonhosted.org/packages/c0/e0/912481ee941d1fb28b2bff73375f3da3fe9656e555c13865fdb491b0d870/napari_dask_ndmeasure-0.2.0-py3-none-any.whl",
+      "size": 28677,
+      "upload_time": "2026-07-02T10:33:56",
+      "upload_time_iso_8601": "2026-07-02T10:33:56.562613Z",
+      "url": "https://files.pythonhosted.org/packages/40/56/fc54ca42f7d1cf91893b2aa77800a39f0bd2e6a70e870a115655fe23b0bc/napari_dask_ndmeasure-0.4.0-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
     {
       "comment_text": null,
       "digests": {
-        "blake2b_256": "90c26f48020af64dbb3603157cb4a137bbcf37c083ba847cfa41a9ab630012d7",
-        "md5": "4aa6529aad73a650b3993c951856e8cb",
-        "sha256": "0cf5c86961bd794df5bf7ee87086d22ce5c03f2a72fd18891b1b07d79c75121a"
+        "blake2b_256": "be377c9bb5a86b1e250437003cb6b953349a014d6a1763339ede10faac31adc6",
+        "md5": "3bbe5daf1d0ad8c17bea8b40cdd5db97",
+        "sha256": "a52122f1578e5a84f50eb58944b5cfafcee5eac61b6fdb758090cf7e0e2c1136"
       },
       "downloads": -1,
-      "filename": "napari_dask_ndmeasure-0.2.0.tar.gz",
+      "filename": "napari_dask_ndmeasure-0.4.0.tar.gz",
       "has_sig": false,
-      "md5_digest": "4aa6529aad73a650b3993c951856e8cb",
+      "md5_digest": "3bbe5daf1d0ad8c17bea8b40cdd5db97",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.9",
-      "size": 25389,
-      "upload_time": "2026-07-02T09:02:42",
-      "upload_time_iso_8601": "2026-07-02T09:02:42.738106Z",
-      "url": "https://files.pythonhosted.org/packages/90/c2/6f48020af64dbb3603157cb4a137bbcf37c083ba847cfa41a9ab630012d7/napari_dask_ndmeasure-0.2.0.tar.gz",
+      "size": 31862,
+      "upload_time": "2026-07-02T10:33:57",
+      "upload_time_iso_8601": "2026-07-02T10:33:57.671934Z",
+      "url": "https://files.pythonhosted.org/packages/be/37/7c9bb5a86b1e250437003cb6b953349a014d6a1763339ede10faac31adc6/napari_dask_ndmeasure-0.4.0.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
