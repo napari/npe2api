@@ -14,7 +14,7 @@
       "Topic :: Scientific/Engineering :: Image Processing",
       "Topic :: Scientific/Engineering :: Visualization"
     ],
-    "description": "# napari-vipp\r\n\r\n[![CI](https://github.com/rensutheart/napari-vipp/actions/workflows/ci.yml/badge.svg)](https://github.com/rensutheart/napari-vipp/actions/workflows/ci.yml)\r\n[![PyPI](https://img.shields.io/pypi/v/napari-vipp.svg)](https://pypi.org/project/napari-vipp/)\r\n[![Python](https://img.shields.io/pypi/pyversions/napari-vipp.svg)](https://pypi.org/project/napari-vipp/)\r\n[![License](https://img.shields.io/pypi/l/napari-vipp.svg)](LICENSE)\r\n\r\nnapari-vipp is a napari-native visual image-processing pipeline builder for\r\nbioimage analysis. Build a typed node graph, inspect intermediate images and\r\ntables, tune parameters, save the workflow, and run the same operations without\r\nhiding axis or physical-scale metadata.\r\n\r\n> **Alpha software:** expect breaking workflow and parameter changes. Validate\r\n> outputs on representative data before scientific interpretation or\r\n> publication.\r\n\r\n## Install And Open\r\n\r\nVIPP requires Python 3.12 or newer. If napari is not already installed, install\r\nit with a Qt backend at the same time:\r\n\r\n```bash\r\npython -m pip install \"napari[pyqt6]\"\r\npython -m pip install --pre napari-vipp\r\nnapari\r\n```\r\n\r\nThe `--pre` flag is required while VIPP is published as an alpha release. It is\r\nkept on the VIPP command so napari itself can continue to resolve to a stable\r\nrelease.\r\n\r\nIn napari, open:\r\n\r\n```text\r\nPlugins > VIPP Workflow (napari-vipp)\r\n```\r\n\r\nUse `Open example...` for a runnable workflow with synthetic data. A good first\r\nchoice is `Red-Channel Label Cleanup`; select nodes from left to right to review\r\ntheir parameters, thumbnails, metadata, and outputs.\r\n\r\n![VIPP example workflow chooser](docs/assets/user-guide/vipp-example-chooser.png)\r\n\r\n## What It Supports\r\n\r\n| Area | Current alpha capabilities |\r\n| --- | --- |\r\n| Graph authoring | Searchable node palette, typed ports, dynamic outputs, cycle prevention, undo/redo, graph notes, named tunnels, auto-layout, and saved positions. |\r\n| Images and metadata | Semantic T/C/Z/Y/X axes, scale/units/origin, channel and acquisition metadata, source identity, and operation history. |\r\n| Image processing | Intensity transforms, filters, background correction, thresholding, watershed, binary/label morphology, channels, axes, masks, and composites. |\r\n| Measurements | Object and intensity tables, calibrated morphology, 3D mesh morphology, skeleton/network analysis, colocalization, object association, and table composition. |\r\n| Restoration | Born-Wolf PSF generation, measured-PSF preparation, and manual/cached 2D or 3D Richardson-Lucy and RL-TV deconvolution. |\r\n| Reuse and automation | Workflow JSON, generated headless Python, explicit batch outputs, local collection batch runs, dry-run previews, and workflow/script artifacts. |\r\n| I/O | OME-TIFF, ImageJ TIFF, TIFF, local OME-Zarr 0.4/0.5, NPY/NPZ, common 2D raster formats, and optional microscope readers. |\r\n\r\nMost graph operations are still eager. Large z-stacks and OME-Zarr datasets\r\ntherefore need deliberate cache, preview, and output choices; see the\r\n[cache and memory guide](docs/cache-and-memory.md).\r\n\r\n## Optional Microscope Readers\r\n\r\nInstall only the reader family you need, then restart napari:\r\n\r\n| Format family | Install command |\r\n| --- | --- |\r\n| Nikon ND2 | `python -m pip install --pre \"napari-vipp[nd2]\"` |\r\n| Zeiss CZI | `python -m pip install --pre \"napari-vipp[czi]\"` |\r\n| Mixed microscope formats | `python -m pip install --pre \"napari-vipp[microscope]\"` |\r\n| BioIO/Bio-Formats fallback | `python -m pip install --pre \"napari-vipp[bioformats]\"` |\r\n\r\nThese routes are an experimental foundation: axes and common metadata are\r\nnormalized where the source reader exposes them, but format-specific coverage\r\nstill needs validation against a broader corpus of real acquisition files.\r\n\r\n## Workflow Basics\r\n\r\n1. Add or select an `Image Source` for a napari layer, file, or bundled sample.\r\n2. Add nodes from the palette and connect compatible output and input ports.\r\n3. Select a node to tune parameters and inspect its output metadata.\r\n4. Click `Calculate` for manual/cached nodes such as measurements and\r\n   deconvolution.\r\n5. Pin important image outputs into napari for full-resolution comparison.\r\n6. Save the graph with `Save workflow...`.\r\n7. Add `Batch Output` nodes before `Run batch...` when exact saved outputs\r\n   matter.\r\n\r\nWorkflow JSON stores the graph and optional VIPP UI state, not cached pixels or\r\ntables. `Export Python...` emits direct calls to the headless operation and I/O\r\nfunctions; it does not reproduce interactive caches or full runtime metadata\r\npropagation. See the [user guide](docs/user-guide.md) for details and caveats.\r\n\r\n## Documentation\r\n\r\n- [Documentation index](docs/README.md)\r\n- [User guide](docs/user-guide.md)\r\n- [Image import and export](docs/io-user-guide.md)\r\n- [Example workflow index](examples/README.md)\r\n- [Measurement workflows](docs/measurement-workflows.md)\r\n- [Operator tips](docs/operator-tips.md)\r\n- [Developer notes](docs/developer-notes.md)\r\n- [Current planning and roadmap](docs/planning.md)\r\n\r\n## Development\r\n\r\nCreate a local environment and install the development dependencies:\r\n\r\n```powershell\r\npython -m venv .venv\r\n.venv\\Scripts\\Activate.ps1\r\npython -m pip install -e \".[dev]\"\r\n```\r\n\r\nRun the required checks:\r\n\r\n```bash\r\npython -m npe2 validate src/napari_vipp/napari.yaml\r\npython -m ruff check .\r\npython -m pytest\r\n```\r\n\r\nLaunch a development instance with `python scripts/launch_vipp_sample.py`. The\r\n[architecture reference](docs/architecture.md) explains the graph, metadata,\r\nexecution, persistence, and UI boundaries.\r\n\r\nContributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before\r\nopening a pull request, use [SUPPORT.md](SUPPORT.md) for help and issue-reporting\r\nguidance, and report suspected vulnerabilities privately through\r\n[SECURITY.md](SECURITY.md). All project interactions follow the\r\n[Code of Conduct](CODE_OF_CONDUCT.md).\r\n\r\n## Roadmap\r\n\r\nThe current public alpha is `0.11.0a2`. This patch alpha hardens workflow\r\nrestoration, generated Python, output-path validation, example launching, and\r\nsaved table-column state, and adds cross-platform CI and release-readiness\r\nguidance. The next planned milestone focuses on saved batch configuration and\r\nper-item provenance, followed by scalable OME-Zarr previews and broader\r\nscientific validation. See\r\n[planning.md](docs/planning.md) for the maintained release order and evidence\r\ngates.\r\n\r\n## Citation, Acknowledgement, And License\r\n\r\nIf VIPP contributes to your work, acknowledge `napari-vipp` and link to the\r\n[project repository](https://github.com/rensutheart/napari-vipp). Citation\r\nmetadata is available in [CITATION.cff](CITATION.cff); a DOI or manuscript\r\ncitation can be added when available.\r\n\r\nnapari-vipp is distributed under the BSD 3-Clause License. See\r\n[LICENSE](LICENSE) for the full terms.\r\n",
+    "description": "<p align=\"center\">\r\n  <picture>\r\n    <source media=\"(prefers-color-scheme: dark)\" srcset=\"docs/assets/branding/vipp-logo-dark.svg\">\r\n    <img src=\"docs/assets/branding/vipp-logo.svg\" alt=\"VIPP\" width=\"420\">\r\n  </picture>\r\n</p>\r\n\r\n# VIPP \u2014 Visual Image Processing Platform\r\n\r\n**Visual workflows for reproducible bioimage analysis.**\r\n\r\n[![CI](https://github.com/rensutheart/napari-vipp/actions/workflows/ci.yml/badge.svg)](https://github.com/rensutheart/napari-vipp/actions/workflows/ci.yml)\r\n[![PyPI](https://img.shields.io/pypi/v/napari-vipp.svg)](https://pypi.org/project/napari-vipp/)\r\n[![Python](https://img.shields.io/pypi/pyversions/napari-vipp.svg)](https://pypi.org/project/napari-vipp/)\r\n[![License](https://img.shields.io/pypi/l/napari-vipp.svg)](LICENSE)\r\n\r\n`napari-vipp` is the napari-native implementation of **VIPP, the Visual Image\r\nProcessing Platform**. Build typed node graphs, inspect intermediate images and\r\ntables, tune parameters, save workflows, and repeat the same operations without\r\nhiding axis or physical-scale metadata.\r\n\r\n> **Alpha software:** expect breaking workflow and parameter changes. Validate\r\n> outputs on representative data before scientific interpretation or\r\n> publication.\r\n\r\n## Install And Open\r\n\r\nVIPP requires Python 3.12 or newer. If napari is not already installed, install\r\nit with a Qt backend at the same time:\r\n\r\n```bash\r\npython -m pip install \"napari[pyqt6]\"\r\npython -m pip install --pre napari-vipp\r\nnapari\r\n```\r\n\r\nThe `--pre` flag is required while VIPP is published as an alpha release. It is\r\nkept on the VIPP command so napari itself can continue to resolve to a stable\r\nrelease.\r\n\r\nIn napari, open:\r\n\r\n```text\r\nPlugins > VIPP Workflow (napari-vipp)\r\n```\r\n\r\nUse `Open example...` for a runnable workflow with synthetic data. A good first\r\nchoice is `Red-Channel Label Cleanup`; select nodes from left to right to review\r\ntheir parameters, thumbnails, metadata, and outputs.\r\n\r\n![VIPP example workflow chooser](docs/assets/user-guide/vipp-example-chooser.png)\r\n\r\n## What It Supports\r\n\r\n| Area | Current alpha capabilities |\r\n| --- | --- |\r\n| Graph authoring | Searchable node palette, typed ports, dynamic outputs, cycle prevention, undo/redo, graph notes, named tunnels, auto-layout, and saved positions. |\r\n| Images and metadata | Semantic T/C/Z/Y/X axes, scale/units/origin, channel and acquisition metadata, source identity, and operation history. |\r\n| Image processing | Intensity transforms, filters, background correction, thresholding, watershed, binary/label morphology, channels, axes, masks, and composites. |\r\n| Measurements | Object and intensity tables, calibrated morphology, 3D mesh morphology, skeleton/network analysis, colocalization, object association, and table composition. |\r\n| Restoration | Born-Wolf PSF generation, measured-PSF preparation, and manual/cached 2D or 3D Richardson-Lucy and RL-TV deconvolution. |\r\n| Reuse and automation | Workflow JSON, generated headless Python, explicit batch outputs, local collection batch runs, dry-run previews, and workflow/script artifacts. |\r\n| I/O | OME-TIFF, ImageJ TIFF, TIFF, local OME-Zarr 0.4/0.5, NPY/NPZ, common 2D raster formats, and optional microscope readers. |\r\n\r\nMost graph operations are still eager. Large z-stacks and OME-Zarr datasets\r\ntherefore need deliberate cache, preview, and output choices; see the\r\n[cache and memory guide](docs/cache-and-memory.md).\r\n\r\n## Optional Microscope Readers\r\n\r\nInstall only the reader family you need, then restart napari:\r\n\r\n| Format family | Install command |\r\n| --- | --- |\r\n| Nikon ND2 | `python -m pip install --pre \"napari-vipp[nd2]\"` |\r\n| Zeiss CZI | `python -m pip install --pre \"napari-vipp[czi]\"` |\r\n| Mixed microscope formats | `python -m pip install --pre \"napari-vipp[microscope]\"` |\r\n| BioIO/Bio-Formats fallback | `python -m pip install --pre \"napari-vipp[bioformats]\"` |\r\n\r\nThese routes are an experimental foundation: axes and common metadata are\r\nnormalized where the source reader exposes them, but format-specific coverage\r\nstill needs validation against a broader corpus of real acquisition files.\r\n\r\n## Workflow Basics\r\n\r\n1. Add or select an `Image Source` for a napari layer, file, or bundled sample.\r\n2. Add nodes from the palette and connect compatible output and input ports.\r\n3. Select a node to tune parameters and inspect its output metadata.\r\n4. Click `Calculate` for manual/cached nodes such as measurements and\r\n   deconvolution.\r\n5. Pin important image outputs into napari for full-resolution comparison.\r\n6. Save the graph with `Save workflow...`.\r\n7. Add `Batch Output` nodes before `Run batch...` when exact saved outputs\r\n   matter.\r\n\r\nWorkflow JSON stores the graph and optional VIPP UI state, not cached pixels or\r\ntables. `Export Python...` emits direct calls to the headless operation and I/O\r\nfunctions; it does not reproduce interactive caches or full runtime metadata\r\npropagation. See the [user guide](docs/user-guide.md) for details and caveats.\r\n\r\n## Documentation\r\n\r\n- [Documentation index](docs/README.md)\r\n- [User guide](docs/user-guide.md)\r\n- [Image import and export](docs/io-user-guide.md)\r\n- [Example workflow index](examples/README.md)\r\n- [Measurement workflows](docs/measurement-workflows.md)\r\n- [Operator tips](docs/operator-tips.md)\r\n- [Developer notes](docs/developer-notes.md)\r\n- [Current planning and roadmap](docs/planning.md)\r\n\r\n## Development\r\n\r\nCreate a local environment and install the development dependencies:\r\n\r\n```powershell\r\npython -m venv .venv\r\n.venv\\Scripts\\Activate.ps1\r\npython -m pip install -e \".[dev]\"\r\n```\r\n\r\nRun the required checks:\r\n\r\n```bash\r\npython -m npe2 validate src/napari_vipp/napari.yaml\r\npython -m ruff check .\r\npython -m pytest\r\n```\r\n\r\nLaunch a development instance with `python scripts/launch_vipp_sample.py`. The\r\n[architecture reference](docs/architecture.md) explains the graph, metadata,\r\nexecution, persistence, and UI boundaries.\r\n\r\nContributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before\r\nopening a pull request, use [SUPPORT.md](SUPPORT.md) for help and issue-reporting\r\nguidance, and report suspected vulnerabilities privately through\r\n[SECURITY.md](SECURITY.md). All project interactions follow the\r\n[Code of Conduct](CODE_OF_CONDUCT.md).\r\n\r\n## Roadmap\r\n\r\nThe current public alpha is `0.11.0a3`. This patch alpha makes large-image\r\nanalysis exact and responsive, preserves native threshold and cutoff semantics,\r\nintroduces explicit workflow schema version 2 parameters, and improves\r\nhistogram and colocalization inspection. The next planned milestone focuses on\r\nsaved batch configuration and per-item provenance, followed by scalable\r\nOME-Zarr previews and broader scientific validation. See\r\n[planning.md](docs/planning.md) for the maintained release order and evidence\r\ngates.\r\n\r\n## Citation, Acknowledgement, And License\r\n\r\nIf VIPP contributes to your work, acknowledge `napari-vipp` and link to the\r\n[project repository](https://github.com/rensutheart/napari-vipp). Citation\r\nmetadata is available in [CITATION.cff](CITATION.cff); a DOI or manuscript\r\ncitation can be added when available.\r\n\r\nnapari-vipp is distributed under the BSD 3-Clause License. See\r\n[LICENSE](LICENSE) for the full terms.\r\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -54,7 +54,7 @@
       "microscope",
       "nd2"
     ],
-    "release_url": "https://pypi.org/project/napari-vipp/0.11.0a2/",
+    "release_url": "https://pypi.org/project/napari-vipp/0.11.0a3/",
     "requires_dist": [
       "dask[array]>=2025.2",
       "fsspec>=2024.2",
@@ -93,12 +93,12 @@
       "nd2>=0.11; extra == \"nd2\""
     ],
     "requires_python": ">=3.12",
-    "summary": "Visual image processing pipelines for napari",
-    "version": "0.11.0a2",
+    "summary": "Visual workflows for reproducible bioimage analysis",
+    "version": "0.11.0a3",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 38884048,
+  "last_serial": 38911352,
   "ownership": {
     "organization": null,
     "roles": [
@@ -249,6 +249,54 @@
         "upload_time": "2026-07-11T09:01:57",
         "upload_time_iso_8601": "2026-07-11T09:01:57.887706Z",
         "url": "https://files.pythonhosted.org/packages/ad/76/68d5f852531e5e329385d2a7815a89db14b37725d638c10ac04cdf716ad1/napari_vipp-0.11.0a2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.11.0a3": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "37be10a9b1473b048dc7159fe830cbfd475b01bb2c899691ec1a6ac359450e5c"
+        },
+        "digests": {
+          "blake2b_256": "3c4842d0241a547721e0347813e8a5ed9f47a841c2440a8d469c8a8d26df20dd",
+          "md5": "5078783ff6811cf525ab60e44a6cfe51",
+          "sha256": "08f3b98b667b522c784bea2462568a1762c757f3d08725b5778df0f92bfcbbf2"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.11.0a3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "5078783ff6811cf525ab60e44a6cfe51",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.12",
+        "size": 341193,
+        "upload_time": "2026-07-12T08:35:25",
+        "upload_time_iso_8601": "2026-07-12T08:35:25.105896Z",
+        "url": "https://files.pythonhosted.org/packages/3c/48/42d0241a547721e0347813e8a5ed9f47a841c2440a8d469c8a8d26df20dd/napari_vipp-0.11.0a3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "8fcf109c467ef4dd7b535a6ade1d8972bfacda017eeba658fe6fcf9230aa59a1",
+          "md5": "22d971c3a370a444d08c2bfbfc0e7ac5",
+          "sha256": "4446090a941af222754afd7a131a64de3c4a5be4eae3abefaae0a4d12c8a82c8"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.11.0a3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "22d971c3a370a444d08c2bfbfc0e7ac5",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.12",
+        "size": 783008,
+        "upload_time": "2026-07-12T08:35:26",
+        "upload_time_iso_8601": "2026-07-12T08:35:26.885682Z",
+        "url": "https://files.pythonhosted.org/packages/8f/cf/109c467ef4dd7b535a6ade1d8972bfacda017eeba658fe6fcf9230aa59a1/napari_vipp-0.11.0a3.tar.gz",
         "yanked": false,
         "yanked_reason": null
       }
@@ -690,24 +738,24 @@
     {
       "comment_text": null,
       "core-metadata": {
-        "sha256": "5b02ddae6b4beabb502834399c62937119706bbaff64246ffb38a75d933484e6"
+        "sha256": "37be10a9b1473b048dc7159fe830cbfd475b01bb2c899691ec1a6ac359450e5c"
       },
       "digests": {
-        "blake2b_256": "7c814b3084213e03538a4a89dd90d4f26ea9db60d4a167947bc45aa97c5e5566",
-        "md5": "1f9ecd56a4249eea1924cdce6614be95",
-        "sha256": "5d4e7e102bf75fedc03ba44a29846c1e58cee9b11cd8ba762494882230302229"
+        "blake2b_256": "3c4842d0241a547721e0347813e8a5ed9f47a841c2440a8d469c8a8d26df20dd",
+        "md5": "5078783ff6811cf525ab60e44a6cfe51",
+        "sha256": "08f3b98b667b522c784bea2462568a1762c757f3d08725b5778df0f92bfcbbf2"
       },
       "downloads": -1,
-      "filename": "napari_vipp-0.11.0a2-py3-none-any.whl",
+      "filename": "napari_vipp-0.11.0a3-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "1f9ecd56a4249eea1924cdce6614be95",
+      "md5_digest": "5078783ff6811cf525ab60e44a6cfe51",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.12",
-      "size": 316391,
-      "upload_time": "2026-07-11T09:01:56",
-      "upload_time_iso_8601": "2026-07-11T09:01:56.301850Z",
-      "url": "https://files.pythonhosted.org/packages/7c/81/4b3084213e03538a4a89dd90d4f26ea9db60d4a167947bc45aa97c5e5566/napari_vipp-0.11.0a2-py3-none-any.whl",
+      "size": 341193,
+      "upload_time": "2026-07-12T08:35:25",
+      "upload_time_iso_8601": "2026-07-12T08:35:25.105896Z",
+      "url": "https://files.pythonhosted.org/packages/3c/48/42d0241a547721e0347813e8a5ed9f47a841c2440a8d469c8a8d26df20dd/napari_vipp-0.11.0a3-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
@@ -715,21 +763,21 @@
       "comment_text": null,
       "core-metadata": false,
       "digests": {
-        "blake2b_256": "ad7668d5f852531e5e329385d2a7815a89db14b37725d638c10ac04cdf716ad1",
-        "md5": "e698d249c4444b134ba672a65541067a",
-        "sha256": "97e2ee4c1fb038f0121b4c40925a2b40e3ccc4d15c91e14b9ff5653d86b209bf"
+        "blake2b_256": "8fcf109c467ef4dd7b535a6ade1d8972bfacda017eeba658fe6fcf9230aa59a1",
+        "md5": "22d971c3a370a444d08c2bfbfc0e7ac5",
+        "sha256": "4446090a941af222754afd7a131a64de3c4a5be4eae3abefaae0a4d12c8a82c8"
       },
       "downloads": -1,
-      "filename": "napari_vipp-0.11.0a2.tar.gz",
+      "filename": "napari_vipp-0.11.0a3.tar.gz",
       "has_sig": false,
-      "md5_digest": "e698d249c4444b134ba672a65541067a",
+      "md5_digest": "22d971c3a370a444d08c2bfbfc0e7ac5",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.12",
-      "size": 749702,
-      "upload_time": "2026-07-11T09:01:57",
-      "upload_time_iso_8601": "2026-07-11T09:01:57.887706Z",
-      "url": "https://files.pythonhosted.org/packages/ad/76/68d5f852531e5e329385d2a7815a89db14b37725d638c10ac04cdf716ad1/napari_vipp-0.11.0a2.tar.gz",
+      "size": 783008,
+      "upload_time": "2026-07-12T08:35:26",
+      "upload_time_iso_8601": "2026-07-12T08:35:26.885682Z",
+      "url": "https://files.pythonhosted.org/packages/8f/cf/109c467ef4dd7b535a6ade1d8972bfacda017eeba658fe6fcf9230aa59a1/napari_vipp-0.11.0a3.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
