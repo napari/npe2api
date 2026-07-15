@@ -11,7 +11,7 @@
       "Programming Language :: Python :: 3",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "# napari-chunked-regionprops\n\n[![PyPI](https://img.shields.io/pypi/v/napari-chunked-regionprops.svg)](https://pypi.org/project/napari-chunked-regionprops/)\n[![Python versions](https://img.shields.io/pypi/pyversions/napari-chunked-regionprops.svg)](https://pypi.org/project/napari-chunked-regionprops/)\n[![License: GPLv3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)\n\nOut-of-core, chunk-parallel regionprops-style measurements for **huge**\nlabelled images inside napari.\n\n`skimage.measure.regionprops` needs the full labelled + intensity array in\nRAM \u2014 fine for one tile, not for a hundred-thousand-object OME-ZARR volume.\nThis plugin measures a `Labels` layer directly against an `Image` layer,\nworking straight off the layers' backing dask/zarr arrays: each chunk is\naggregated locally (one `scipy.ndimage` call per chunk, over whichever\nobject ids are actually inside it), then every chunk's small partial sums\nare merged in a single pass \u2014 without ever materializing the whole volume,\nand without task count scaling with object count (see *Keeping RAM and\ntime bounded* below).\n\n## Install\n\n```bash\npip install napari-chunked-regionprops\n```\n\n## Use\n\n1. Open your image + labels in napari (e.g. via\n   [patchworks](https://github.com/imcf/patchworks)'s\n   `view_in_napari(...)`, which also sets each layer's physical `scale`, so\n   measurements come out in \u00b5m \u2014 not just pixels).\n2. `Plugins \u2192 Chunked Regionprops \u2192 Measure`.\n3. Pick the Image and Labels layer, check the measurements you want, hit\n   **Measure**. The UI stays responsive throughout (runs in a background\n   thread) with a progress bar; every measurement is also written to CSV\n   automatically (no dialog) \u2014 see *Output* below.\n4. Browse the table in the dock widget, or **Save CSV\u2026** to pick a different\n   location (which then becomes the target for future automatic saves too).\n\nThe measured table is also written to the Labels layer's `.features`, so you\ncan immediately color the layer by any measured value via napari's built-in\n\"color by feature\" for Labels layers.\n\nRe-clicking **Measure** with the same layers/level/stats is instant \u2014 results\nare cached for the session (in memory; cleared when the widget/viewer\ncloses).\n\n### Output\n\nEvery successful measurement is written to CSV automatically, no dialog:\n`<save folder>/<labels layer name>_measurements.csv`, where the save folder\nis the last one you picked via **Save CSV\u2026**, or the current working\ndirectory if you never have.\n\n### Keeping RAM and time bounded\n\nTwo things matter for a huge volume, both handled automatically:\n\n- **Chunking.** Every array is rechunked to a bounded size before measuring\n  *only if it needs it* \u2014 a plain numpy-backed layer (or any dask array that\n  isn't already sensibly chunked) would otherwise become **one giant\n  chunk**, silently forcing the whole volume into RAM. A layer that's\n  already a well-chunked OME-ZARR pyramid is left untouched \u2014 rechunking an\n  already-fine array is itself expensive (real data movement), not free\n  insurance.\n- **Chunk-local aggregation, not per-object tasks.** Every chunk is visited\n  once per stat-computation phase, regardless of how many objects or stats\n  are requested: one `scipy.ndimage` call per chunk computes partial sums\n  (count, sum, min, max, position sums, \u2026) for whichever ids are actually\n  present in that chunk, then all chunks' partial sums are merged in a\n  single final pass. Task count scales with chunk count, not object count \u2014\n  an earlier version of this plugin used a per-object-id design instead,\n  which built one task *per requested object id*; for a dataset with 100k+\n  objects that made the task graph itself the bottleneck, independent of\n  data size. Progress is reported per dask task within each of the two phases\n  (scanning, then computing) \u2014 real counts from the running computation,\n  not a fixed per-stat tick.\n- **Skipping the scan.** If the Labels layer came from\n  [patchworks](https://github.com/imcf/patchworks)'s `view_in_napari(...)`\n  with `sequential_labels=True` at merge time, the layer carries a\n  known-object-count hint. At pyramid level 0 (full resolution) this lets\n  the plugin skip the whole-volume \"scanning for objects\" pass entirely \u2014\n  the status bar says \"using known object count (N) \u2014 skipping scan\" when\n  this kicks in. Not trusted at coarser pyramid levels, since downsampling\n  can drop small objects.\n\nThe **Workers** spin box controls how many threads that combined computation\nuses (default `min(4, cpu count)`). More workers can mean more decoded\nchunks held in memory at once \u2014 turn it down (even to 1) if a measurement is\nstill using too much RAM; turn it up if you have RAM to spare and want it\nfaster.\n\n## Measurements\n\n| Stat | Needs intensity image | Notes |\n|---|---|---|\n| `area` | no | voxel count (+ `area_um2`/`area_um3` if the layer is calibrated) |\n| `centroid` | no | geometric centroid, one column per axis (+ `_um` twins) |\n| `weighted_centroid` | yes | intensity-weighted centroid |\n| `mean_intensity` | yes | |\n| `std_intensity` | yes | |\n| `min_intensity` | yes | |\n| `max_intensity` | yes | |\n\n## Multiscale / pyramid layers\n\nA \"Pyramid level\" spin box lets you measure a coarser level first \u2014 much\nfaster, handy to sanity-check the setup before running the full-resolution\npass on a very large volume.\n\n## Development\n\n```bash\ngit clone https://github.com/imcf/napari-chunked-regionprops\ncd napari-chunked-regionprops\npip install -e \".[dev]\"\npytest\n```\n\n## License\n\nGNU General Public License v3.0 (GPL-3.0). See [LICENSE](LICENSE).\n",
+    "description": "# napari-chunked-regionprops\n\n[![PyPI](https://img.shields.io/pypi/v/napari-chunked-regionprops.svg)](https://pypi.org/project/napari-chunked-regionprops/)\n[![Python versions](https://img.shields.io/pypi/pyversions/napari-chunked-regionprops.svg)](https://pypi.org/project/napari-chunked-regionprops/)\n[![License: GPLv3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)\n\nOut-of-core, chunk-parallel regionprops-style measurements for **huge**\nlabelled images inside napari.\n\n`skimage.measure.regionprops` needs the full labelled + intensity array in\nRAM \u2014 fine for one tile, not for a hundred-thousand-object OME-ZARR volume.\nThis plugin measures a `Labels` layer directly against an `Image` layer,\nworking straight off the layers' backing dask/zarr arrays: each chunk is\naggregated locally (one `scipy.ndimage` call per chunk, over whichever\nobject ids are actually inside it), then every chunk's small partial sums\nare merged in a single pass \u2014 without ever materializing the whole volume,\nand without task count scaling with object count (see *Keeping RAM and\ntime bounded* below).\n\n## Install\n\n```bash\npip install napari-chunked-regionprops\n```\n\n## Use\n\n1. Open your image + labels in napari (e.g. via\n   [patchworks](https://github.com/imcf/patchworks)'s\n   `view_in_napari(...)`, which also sets each layer's physical `scale`, so\n   measurements come out in \u00b5m \u2014 not just pixels).\n2. `Plugins \u2192 Chunked Regionprops \u2192 Measure`.\n3. Pick the Image and Labels layer, check the measurements you want, hit\n   **Measure**. The UI stays responsive throughout (runs in a background\n   thread) with a progress bar; every measurement is also written to CSV\n   automatically (no dialog) \u2014 see *Output* below.\n4. Browse the table in the dock widget, or **Save CSV\u2026** to pick a different\n   location (which then becomes the target for future automatic saves too).\n\nThe measured table is also written to the Labels layer's `.features`, so you\ncan immediately color the layer by any measured value via napari's built-in\n\"color by feature\" for Labels layers.\n\nRe-clicking **Measure** with the same layers/level/stats is instant \u2014 results\nare cached for the session (in memory; cleared when the widget/viewer\ncloses).\n\n### Output\n\nEvery successful measurement is written to CSV automatically, no dialog:\n`<save folder>/<labels layer name>_measurements.csv`, where the save folder\nis the last one you picked via **Save CSV\u2026**, or the current working\ndirectory if you never have.\n\n### Keeping RAM and time bounded\n\nTwo things matter for a huge volume, both handled automatically:\n\n- **Chunking.** Every array is rechunked to a bounded size before measuring\n  *only if it needs it* \u2014 a plain numpy-backed layer (or any dask array that\n  isn't already sensibly chunked) would otherwise become **one giant\n  chunk**, silently forcing the whole volume into RAM. A layer that's\n  already a well-chunked OME-ZARR pyramid is left untouched \u2014 rechunking an\n  already-fine array is itself expensive (real data movement), not free\n  insurance.\n- **Chunk-local aggregation, not per-object tasks.** Every chunk is visited\n  once per stat-computation phase, regardless of how many objects or stats\n  are requested: one `scipy.ndimage` call per chunk computes partial sums\n  (count, sum, min, max, position sums, \u2026) for whichever ids are actually\n  present in that chunk, then all chunks' partial sums are merged in a\n  single final pass. Task count scales with chunk count, not object count \u2014\n  an earlier version of this plugin used a per-object-id design instead,\n  which built one task *per requested object id*; for a dataset with 100k+\n  objects that made the task graph itself the bottleneck, independent of\n  data size. Progress is reported per dask task within each of the two phases\n  (scanning, then computing) \u2014 real counts from the running computation,\n  not a fixed per-stat tick.\n- **Skipping the scan.** If the Labels layer came from\n  [patchworks](https://github.com/imcf/patchworks)'s `view_in_napari(...)`\n  with `sequential_labels=True` at merge time, the layer carries a\n  known-object-count hint. At pyramid level 0 (full resolution) this lets\n  the plugin skip the whole-volume \"scanning for objects\" pass entirely \u2014\n  the status bar says \"using known object count (N) \u2014 skipping scan\" when\n  this kicks in. Not trusted at coarser pyramid levels, since downsampling\n  can drop small objects.\n\nThe **Workers** spin box controls how many threads that combined computation\nuses (default `min(4, cpu count)`). More workers can mean more decoded\nchunks held in memory at once \u2014 turn it down (even to 1) if a measurement is\nstill using too much RAM; turn it up if you have RAM to spare and want it\nfaster.\n\n## Measurements\n\n| Stat | Needs intensity image | Notes |\n|---|---|---|\n| `area_voxels` | no | voxel count (+ `area_um2`/`area_um3` if the layer is calibrated) |\n| `centroid` | no | geometric centroid, one column per axis (+ `_um` twins) |\n| `weighted_centroid` | yes | intensity-weighted centroid |\n| `mean_intensity` | yes | |\n| `std_intensity` | yes | |\n| `min_intensity` | yes | |\n| `max_intensity` | yes | |\n\n## Multiscale / pyramid layers\n\nA \"Pyramid level\" spin box lets you measure a coarser level first \u2014 much\nfaster, handy to sanity-check the setup before running the full-resolution\npass on a very large volume.\n\n## Development\n\n```bash\ngit clone https://github.com/imcf/napari-chunked-regionprops\ncd napari-chunked-regionprops\npip install -e \".[dev]\"\npytest\n```\n\n## License\n\nGNU General Public License v3.0 (GPL-3.0). See [LICENSE](LICENSE).\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -40,7 +40,7 @@
     "provides_extra": [
       "dev"
     ],
-    "release_url": "https://pypi.org/project/napari-chunked-regionprops/0.10.0/",
+    "release_url": "https://pypi.org/project/napari-chunked-regionprops/0.11.0/",
     "requires_dist": [
       "dask[array]>=2023.1.0",
       "magicgui",
@@ -55,11 +55,11 @@
     ],
     "requires_python": ">=3.9",
     "summary": "Out-of-core regionprops-style measurements for huge labelled images in napari",
-    "version": "0.10.0",
+    "version": "0.11.0",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 38951635,
+  "last_serial": 39016360,
   "ownership": {
     "organization": null,
     "roles": [
@@ -114,6 +114,54 @@
         "upload_time": "2026-07-13T14:33:42",
         "upload_time_iso_8601": "2026-07-13T14:33:42.406204Z",
         "url": "https://files.pythonhosted.org/packages/b0/0c/7ee98674145184da0dfc576b27c985e3a1f5df187151d762860619ce605d/napari_chunked_regionprops-0.10.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.11.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "050bea6c0c63b2fd6c552f2f25cb35fb7feee387dc53677e96c61e8cd7bc9a02"
+        },
+        "digests": {
+          "blake2b_256": "0db7f48f843f3e1f20427778d42aec26f181138f91db6df42516ccbd56f21b35",
+          "md5": "711a286ebc76cbb7215ffe6fedbe2a61",
+          "sha256": "98346f8deedeba04db9afaebb36b2b584172c940eda98aba60726622a8b0b9f1"
+        },
+        "downloads": -1,
+        "filename": "napari_chunked_regionprops-0.11.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "711a286ebc76cbb7215ffe6fedbe2a61",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 37811,
+        "upload_time": "2026-07-15T09:13:08",
+        "upload_time_iso_8601": "2026-07-15T09:13:08.026004Z",
+        "url": "https://files.pythonhosted.org/packages/0d/b7/f48f843f3e1f20427778d42aec26f181138f91db6df42516ccbd56f21b35/napari_chunked_regionprops-0.11.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "0b062ed6a7331fc338b27d7c687e471388462c2123e44f2d984a7d0b6e4c28ec",
+          "md5": "141358dc3bc6de7e91e5d15a96bb33f7",
+          "sha256": "50b5dc135fa67ef2cf65bff07840266399112c7b39a848935f64e697a2753944"
+        },
+        "downloads": -1,
+        "filename": "napari_chunked_regionprops-0.11.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "141358dc3bc6de7e91e5d15a96bb33f7",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 44109,
+        "upload_time": "2026-07-15T09:13:09",
+        "upload_time_iso_8601": "2026-07-15T09:13:09.150418Z",
+        "url": "https://files.pythonhosted.org/packages/0b/06/2ed6a7331fc338b27d7c687e471388462c2123e44f2d984a7d0b6e4c28ec/napari_chunked_regionprops-0.11.0.tar.gz",
         "yanked": false,
         "yanked_reason": null
       }
@@ -363,24 +411,24 @@
     {
       "comment_text": null,
       "core-metadata": {
-        "sha256": "c4e9f811c86dff787aadc1f000e5470278b813100cf34d9068f0a09782d7f2b7"
+        "sha256": "050bea6c0c63b2fd6c552f2f25cb35fb7feee387dc53677e96c61e8cd7bc9a02"
       },
       "digests": {
-        "blake2b_256": "b92cc560526c2999cb4106001d69931a4d6cecf3beb57695e43d12ee64c3eb14",
-        "md5": "5581392bdceabefbbd8455a983c06f91",
-        "sha256": "91d2ee31b4432cf2e0a2bca230a442afb6bd19e7f5fdaa3127e7f4cef35a4b1b"
+        "blake2b_256": "0db7f48f843f3e1f20427778d42aec26f181138f91db6df42516ccbd56f21b35",
+        "md5": "711a286ebc76cbb7215ffe6fedbe2a61",
+        "sha256": "98346f8deedeba04db9afaebb36b2b584172c940eda98aba60726622a8b0b9f1"
       },
       "downloads": -1,
-      "filename": "napari_chunked_regionprops-0.10.0-py3-none-any.whl",
+      "filename": "napari_chunked_regionprops-0.11.0-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "5581392bdceabefbbd8455a983c06f91",
+      "md5_digest": "711a286ebc76cbb7215ffe6fedbe2a61",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.9",
-      "size": 37217,
-      "upload_time": "2026-07-13T14:33:41",
-      "upload_time_iso_8601": "2026-07-13T14:33:41.155709Z",
-      "url": "https://files.pythonhosted.org/packages/b9/2c/c560526c2999cb4106001d69931a4d6cecf3beb57695e43d12ee64c3eb14/napari_chunked_regionprops-0.10.0-py3-none-any.whl",
+      "size": 37811,
+      "upload_time": "2026-07-15T09:13:08",
+      "upload_time_iso_8601": "2026-07-15T09:13:08.026004Z",
+      "url": "https://files.pythonhosted.org/packages/0d/b7/f48f843f3e1f20427778d42aec26f181138f91db6df42516ccbd56f21b35/napari_chunked_regionprops-0.11.0-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
@@ -388,21 +436,21 @@
       "comment_text": null,
       "core-metadata": false,
       "digests": {
-        "blake2b_256": "b00c7ee98674145184da0dfc576b27c985e3a1f5df187151d762860619ce605d",
-        "md5": "098a76d53d76995637e162509d7f9fdb",
-        "sha256": "1646c3cddde710c4361affe05db2e765973224e7bf4266bf7b43f756a29a03d9"
+        "blake2b_256": "0b062ed6a7331fc338b27d7c687e471388462c2123e44f2d984a7d0b6e4c28ec",
+        "md5": "141358dc3bc6de7e91e5d15a96bb33f7",
+        "sha256": "50b5dc135fa67ef2cf65bff07840266399112c7b39a848935f64e697a2753944"
       },
       "downloads": -1,
-      "filename": "napari_chunked_regionprops-0.10.0.tar.gz",
+      "filename": "napari_chunked_regionprops-0.11.0.tar.gz",
       "has_sig": false,
-      "md5_digest": "098a76d53d76995637e162509d7f9fdb",
+      "md5_digest": "141358dc3bc6de7e91e5d15a96bb33f7",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.9",
-      "size": 43071,
-      "upload_time": "2026-07-13T14:33:42",
-      "upload_time_iso_8601": "2026-07-13T14:33:42.406204Z",
-      "url": "https://files.pythonhosted.org/packages/b0/0c/7ee98674145184da0dfc576b27c985e3a1f5df187151d762860619ce605d/napari_chunked_regionprops-0.10.0.tar.gz",
+      "size": 44109,
+      "upload_time": "2026-07-15T09:13:09",
+      "upload_time_iso_8601": "2026-07-15T09:13:09.150418Z",
+      "url": "https://files.pythonhosted.org/packages/0b/06/2ed6a7331fc338b27d7c687e471388462c2123e44f2d984a7d0b6e4c28ec/napari_chunked_regionprops-0.11.0.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
