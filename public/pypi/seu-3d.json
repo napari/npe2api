@@ -5,10 +5,14 @@
     "bugtrack_url": null,
     "classifiers": [
       "Framework :: napari",
-      "Operating System :: Microsoft :: Windows",
-      "Programming Language :: Python :: 3"
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.9"
     ],
-    "description": "# SEU-3D\r\n\r\n## description\r\n\r\n3d visualization and analysis plugin for spatial transcription embryo base on napari\r\n\r\n## updata log\r\n\r\n[1.1.17] full code optimization: fix annotation float matching (cKDTree), add get_expression safety check, add require_active_points decorator, clean duplicate imports, add config.py constants, improve colorbar display (height/word wrap fix), add _color_by_gene caching, 52 unit tests passed\r\n\r\n[1.1.6] first release with napari manifest support\r\n\r\n[1.0.3] fix napari.yaml\r\n\r\n[1.0.2] forget set to upload napari.yaml\r\n\r\n[1.0.1] first release \r\n\r\n## acknoledge\r\n\r\nhttps://github.com/GuignardLab/sc3D\r\nhttps://github.com/GuignardLab/napari-sc3D-viewer\r\n\r\n## environment\r\n",
+    "description": "# SEU-3D\r\n\r\n3D visualization and analysis plugin for spatial transcriptomics embryo data based on napari.\r\n\r\n[![PyPI version](https://img.shields.io/pypi/v/seu-3d.svg)](https://pypi.org/project/seu-3d/)\r\n[![License](https://img.shields.io/pypi/l/seu-3d.svg)](https://github.com/DingAnZhong/SEU-3D)\r\n\r\n## Features\r\n\r\n- **3D Visualization**: Render spatial transcriptomics data in 3D with napari\r\n- **Tissue Filtering**: Filter cells by tissue type, slice, germ layer, and XYZ range\r\n- **Gene Expression Analysis**: Single, dual, and triple gene expression coloring\r\n- **Similarity Search**: Find genes with similar expression patterns\r\n- **Moran's I Spatial Autocorrelation**: Compute spatial gene enrichment\r\n- **Differential Expression**: Identify tissue-specific marker genes\r\n- **Annotation**: Cluster and label cell populations in 3D space\r\n- **Surface Reconstruction**: Generate 3D surfaces for tissue regions (pyvista)\r\n- **Automatic Color Mapping**: Deterministic tissue colors from a discrete colormap\r\n\r\n## Installation\r\n\r\n```bash\r\npip install seu-3d\r\n```\r\n\r\nThen open napari and look for \"Load spatial transcriptomics data\" in the plugins menu.\r\n\r\n## Environment\r\n\r\nAll runtime dependencies are declared in `pyproject.toml` and installed automatically via pip:\r\n\r\n```bash\r\npip install seu-3d              # core functionality\r\npip install \"seu-3d[surface]\"   # + pyvista, for 3D surface reconstruction\r\n```\r\n\r\n- Python >= 3.9\r\n\r\n## Data Format\r\n\r\nThe plugin reads `.h5ad` files. Two fields are **chosen in the widget** when\r\nloading; everything else is auto-detected by fixed names:\r\n\r\n| Field | Location | Required | Used for |\r\n|---|---|---|---|\r\n| *(your choice)* | `adata.obsm` key | Yes | Spatial coordinates. 3D `(x, y, z)` preferred; if 2D `(x, y)`, `obs['z']` is used as z |\r\n| *(your choice)* | `adata.obs` column | Yes | Tissue / cell-type labels (coloring, filtering, diff-expression) |\r\n| `z` | `adata.obs` | Only when the coordinate key is 2D | Z position of each cell |\r\n| `slices` | `adata.obs` | Optional | Slice/sample filter (falls back to `orig.ident`) |\r\n| `orig.ident` | `adata.obs` | Optional | Fallback slice/sample filter |\r\n| `germ_layer` | `adata.obs` | Optional | Germ-layer filter |\r\n| `x_flatten`, `y_flatten` | `adata.obs` | Optional | \"Show Flatten\" 2D projection |\r\n\r\nMissing optional fields simply disable the corresponding tab; the rest of the\r\nplugin keeps working.\r\n\r\n## Quick Start\r\n\r\n```python\r\nimport napari\r\nviewer = napari.Viewer()\r\n# Add spatial transcriptomics h5ad file via the napari plugin menu\r\n```\r\n\r\n## Update Log\r\n\r\n### [2.0.0] \u2014 2026-07-19\r\n- **Packaging**:\r\n  - Declare runtime dependencies in `pyproject.toml` (previously `pip install seu-3d` pulled in nothing)\r\n  - Restrict `packages.find` to `seu_3d*` so stray directories are never published\r\n  - Remove the unused, broken `weiwei/` source tree and the dead `_umap_selection` module\r\n  - Single-source the version from `seu_3d.__version__`\r\n- **Bug Fixes**:\r\n  - Fix slice filtering never applying (`obs['slice']` vs `obs['slices']` mismatch)\r\n  - Fix differential-expression tissue selection reading only the first character of the tissue name\r\n  - Fix annotation coordinate matching failing on floats (cKDTree nearest-neighbour matching) and guard empty selections\r\n  - Fix saving annotations before annotating raised `AttributeError`\r\n  - Fix NaN colors for genes with constant expression\r\n  - Deterministic tissue colors (removed random shuffle)\r\n  - Re-filtering and XY preview now reuse their napari layers instead of piling up new ones\r\n- **Performance**:\r\n  - Remove redundant full `AnnData.copy()` in filtering and surface generation; filtering now applies one combined mask (a single copy per click instead of four)\r\n  - Annotations accumulate in one persistent copy (no per-click dataset copy, and repeated annotations no longer reset earlier ones)\r\n  - Move h5ad reading, Moran's I, surface reconstruction and similar-gene search to worker threads (no more GUI freezing)\r\n  - Sparse-aware cosine similarity and column means (no full-matrix densification)\r\n- **UX**:\r\n  - Gene-expression views reuse a single `gene_expression` layer instead of stacking a new view per click\r\n  - Dock panel width is bounded and scrollable; AnnData info box is read-only and height-capped\r\n  - Documented the expected `obs`/`obsm` field names (see Data Format above)\r\n- **Code Quality**: remove duplicate/unused imports, unify gene-expression coloring into shared helpers\r\n- **Housekeeping**:\r\n  - Centralize 2D->3D coordinate stacking in `Embryo` (written back to `obsm`)\r\n  - Add MIT `LICENSE` and unit tests for `Embryo`\r\n\r\n### [1.1.17] \u2014 2026-05-30\r\n- First public release as a napari manifest plugin: h5ad loading, tissue/slice/germ-layer/XY filtering, 1-3 gene expression coloring, similar-gene search, Moran's I, differential expression, annotation, pyvista surface reconstruction\r\n\r\n### [1.1.6]\r\nFirst release with napari manifest support\r\n\r\n### [1.0.4]\r\nFix error that plugin could not show\r\n\r\n### [1.0.3]\r\nFix napari.yaml\r\n\r\n### [1.0.2]\r\nForgot to upload napari.yaml\r\n\r\n### [1.0.1]\r\nFirst release\r\n\r\n## Acknowledgements\r\n\r\n- [sc3D](https://github.com/GuignardLab/sc3D)\r\n- [napari-sc3D-viewer](https://github.com/GuignardLab/napari-sc3D-viewer)\r\n\r\n## License\r\n\r\nReleased under the [MIT License](LICENSE), like the upstream [sc3D](https://github.com/GuignardLab/sc3D) project it is derived from.\r\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -17,12 +21,16 @@
       "last_month": -1,
       "last_week": -1
     },
-    "dynamic": null,
+    "dynamic": [
+      "License-File"
+    ],
     "home_page": null,
     "keywords": null,
     "license": null,
-    "license_expression": null,
-    "license_files": null,
+    "license_expression": "MIT",
+    "license_files": [
+      "LICENSE"
+    ],
     "maintainer": null,
     "maintainer_email": null,
     "name": "seu-3d",
@@ -30,18 +38,35 @@
     "platform": null,
     "project_url": "https://pypi.org/project/seu-3d/",
     "project_urls": {
-      "Homepage": "https://github.com/DingAnZhong/SEU-3D"
+      "Homepage": "https://github.com/DingAnZhong/SEU-3D",
+      "Repository": "https://github.com/DingAnZhong/SEU-3D"
     },
-    "provides_extra": null,
-    "release_url": "https://pypi.org/project/seu-3d/1.1.17/",
-    "requires_dist": null,
+    "provides_extra": [
+      "surface"
+    ],
+    "release_url": "https://pypi.org/project/seu-3d/2.0.0/",
+    "requires_dist": [
+      "napari>=0.4.19",
+      "magicgui>=0.8",
+      "qtpy>=2.0",
+      "anndata>=0.8",
+      "numpy>=1.23",
+      "pandas>=1.5",
+      "scipy>=1.9",
+      "scikit-learn>=1.1",
+      "matplotlib>=3.6",
+      "colorcet>=3.0",
+      "scanpy>=1.9",
+      "squidpy>=1.2",
+      "pyvista>=0.38; extra == \"surface\""
+    ],
     "requires_python": ">=3.9",
     "summary": "3d spatial visualization napari plugin",
-    "version": "1.1.17",
+    "version": "2.0.0",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 37545347,
+  "last_serial": 39145715,
   "ownership": {
     "organization": null,
     "roles": [
@@ -1779,30 +1804,78 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "2.0.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "a2d05b815606e87bff2eed5039eae7ebe05bb648417fdfc98b254a81a1a86c7f"
+        },
+        "digests": {
+          "blake2b_256": "1ea899e77d1ecf821babdc4b67331bd3ea4e4534350ef2db84dba97ba607fc85",
+          "md5": "bd127f0c8f207fdf7bf9d92b8ac64eff",
+          "sha256": "2bbe7bbbd5b80372f63c176f672fdf46a8f4db8bd7d35511c33b35f8e831a190"
+        },
+        "downloads": -1,
+        "filename": "seu_3d-2.0.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "bd127f0c8f207fdf7bf9d92b8ac64eff",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 16528,
+        "upload_time": "2026-07-19T04:41:51",
+        "upload_time_iso_8601": "2026-07-19T04:41:51.302241Z",
+        "url": "https://files.pythonhosted.org/packages/1e/a8/99e77d1ecf821babdc4b67331bd3ea4e4534350ef2db84dba97ba607fc85/seu_3d-2.0.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "d5c90bf285f7199bbb6a7c23931ac6039bae43bc609d65cfa1a3d5bd66e1eedc",
+          "md5": "7389dffee1700978cad346ba3eda2023",
+          "sha256": "9a3620418003cda92e9388d718c9ad8038d8e30254f1e050f82a2e5104bbc819"
+        },
+        "downloads": -1,
+        "filename": "seu_3d-2.0.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "7389dffee1700978cad346ba3eda2023",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 18672,
+        "upload_time": "2026-07-19T04:41:52",
+        "upload_time_iso_8601": "2026-07-19T04:41:52.487256Z",
+        "url": "https://files.pythonhosted.org/packages/d5/c9/0bf285f7199bbb6a7c23931ac6039bae43bc609d65cfa1a3d5bd66e1eedc/seu_3d-2.0.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": null,
       "core-metadata": {
-        "sha256": "11b89831cc4900a7ea53ff95dc8dc177bd6cffb89d6f85767041426b8114fb0b"
+        "sha256": "a2d05b815606e87bff2eed5039eae7ebe05bb648417fdfc98b254a81a1a86c7f"
       },
       "digests": {
-        "blake2b_256": "e11f28db347a8ab8173a4e6fea3240dcebda0543ab0833de4bc0370214c95adf",
-        "md5": "91e35ad10bc9c1b2de602506b6a01797",
-        "sha256": "8f45d6cb942496dd983e2f9c1f04bf5a34db475c06ce0201c18b2dad7e6c4860"
+        "blake2b_256": "1ea899e77d1ecf821babdc4b67331bd3ea4e4534350ef2db84dba97ba607fc85",
+        "md5": "bd127f0c8f207fdf7bf9d92b8ac64eff",
+        "sha256": "2bbe7bbbd5b80372f63c176f672fdf46a8f4db8bd7d35511c33b35f8e831a190"
       },
       "downloads": -1,
-      "filename": "seu_3d-1.1.17-py3-none-any.whl",
+      "filename": "seu_3d-2.0.0-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "91e35ad10bc9c1b2de602506b6a01797",
+      "md5_digest": "bd127f0c8f207fdf7bf9d92b8ac64eff",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.9",
-      "size": 16509,
-      "upload_time": "2026-05-30T04:31:22",
-      "upload_time_iso_8601": "2026-05-30T04:31:22.295411Z",
-      "url": "https://files.pythonhosted.org/packages/e1/1f/28db347a8ab8173a4e6fea3240dcebda0543ab0833de4bc0370214c95adf/seu_3d-1.1.17-py3-none-any.whl",
+      "size": 16528,
+      "upload_time": "2026-07-19T04:41:51",
+      "upload_time_iso_8601": "2026-07-19T04:41:51.302241Z",
+      "url": "https://files.pythonhosted.org/packages/1e/a8/99e77d1ecf821babdc4b67331bd3ea4e4534350ef2db84dba97ba607fc85/seu_3d-2.0.0-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
@@ -1810,21 +1883,21 @@
       "comment_text": null,
       "core-metadata": false,
       "digests": {
-        "blake2b_256": "f0acd37b863cd9b7843ce6250af456ec43ed4de4db4555a9186882c2026c2f34",
-        "md5": "57f74569601117c56b0d8e3d6cab3804",
-        "sha256": "d6387e849f18b8e445e3388637377b2e6705e83023b794fef8f47f4e3c7d27ef"
+        "blake2b_256": "d5c90bf285f7199bbb6a7c23931ac6039bae43bc609d65cfa1a3d5bd66e1eedc",
+        "md5": "7389dffee1700978cad346ba3eda2023",
+        "sha256": "9a3620418003cda92e9388d718c9ad8038d8e30254f1e050f82a2e5104bbc819"
       },
       "downloads": -1,
-      "filename": "seu_3d-1.1.17.tar.gz",
+      "filename": "seu_3d-2.0.0.tar.gz",
       "has_sig": false,
-      "md5_digest": "57f74569601117c56b0d8e3d6cab3804",
+      "md5_digest": "7389dffee1700978cad346ba3eda2023",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.9",
-      "size": 15344,
-      "upload_time": "2026-05-30T04:31:23",
-      "upload_time_iso_8601": "2026-05-30T04:31:23.763206Z",
-      "url": "https://files.pythonhosted.org/packages/f0/ac/d37b863cd9b7843ce6250af456ec43ed4de4db4555a9186882c2026c2f34/seu_3d-1.1.17.tar.gz",
+      "size": 18672,
+      "upload_time": "2026-07-19T04:41:52",
+      "upload_time_iso_8601": "2026-07-19T04:41:52.487256Z",
+      "url": "https://files.pythonhosted.org/packages/d5/c9/0bf285f7199bbb6a7c23931ac6039bae43bc609d65cfa1a3d5bd66e1eedc/seu_3d-2.0.0.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
