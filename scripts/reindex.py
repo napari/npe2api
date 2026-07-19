@@ -13,8 +13,9 @@ import os
 import re
 import sys
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, TypedDict
+from typing import Any
 from urllib import error, request
 
 from packaging.utils import canonicalize_name
@@ -33,7 +34,8 @@ from collections import defaultdict
 PluginName = str
 
 
-class SummaryDict(TypedDict):
+@dataclass
+class SummaryDict:
     """Structure of dicts in index.json."""
 
     normalized_name: str
