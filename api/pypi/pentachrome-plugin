@@ -1,0 +1,848 @@
+{
+  "info": {
+    "author": "Dimitrios Tsilis",
+    "author_email": null,
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 4 - Beta",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "License :: OSI Approved :: MIT License",
+      "Operating System :: Microsoft :: Windows",
+      "Programming Language :: Python :: 3.10"
+    ],
+    "description": "# pentachrome-plugin\r\n\r\nNapari plugin for the Pentachrome histology pipeline. The public plugin exposes a\r\nsingle clinician-facing widget, **Guided Analysis**, that walks through the whole\r\nworkflow in one pane:\r\n\r\n1. **Extract** \u2014 pull tissue-region TIFFs out of Olympus `.vsi` files.\r\n2. **Detect** \u2014 run the trained nnUNet Epithelium / MultiStructure models on those\r\n   images and load colorized masks back into the viewer.\r\n3. **Measure** \u2014 per-region statistics (thickness, composition, cell densities),\r\n   with CSV export.\r\n\r\nEach phase also exists as a separate advanced widget (`VsiExtractorWidget`,\r\n`NnUnetInferenceWidget`, `AnalysisWidget`) used during development. These are **not**\r\nregistered in the public menu, see [From source (development)](#from-source-development).\r\n\r\nSource and issues: https://github.com/dtsilis7/Pentrachrome-Pipeline\r\n\r\n**Requirements:** Windows, Python 3.10, napari >= 0.4.18, and the nnUNet model\r\nweights. VSI reading uses `bioio-bioformats` (a plugin dependency) which\r\nauto-downloads a JDK on first use \u2014 **no Java install, no javabridge**. Only the\r\nmodel weights are installed separately (see below).\r\n\r\n## Installation (Windows, PowerShell)\r\n\r\nA working install has **three parts**, in this order:\r\n\r\n1. A conda environment (Python 3.10) with NumPy<2\r\n2. The plugin itself (pulls in the JDK-free `bioio-bioformats` VSI reader)\r\n3. The nnUNet model weights (downloaded separately)\r\n\r\n> \u26a0\ufe0f **`pip install pentachrome-plugin` gives you the UI *and* VSI extraction, but\r\n> inference still needs the model weights** (Step 3) in the *same* env. Installing\r\n> through napari's plugin manager only does the pip part.\r\n\r\n### Step 1 \u2014 environment\r\n\r\nCreate a Python 3.10 env pinned to `numpy<2` (the `bioio-bioformats` VSI reader is\r\npinned <2, and nnU-Net / the imaging stack share the 1.x ABI).\r\n\r\n```powershell\r\nconda create -n pentachrome python=3.10 \"numpy<2\" -y\r\nconda activate pentachrome\r\n```\r\n\r\n**No JDK or javabridge to install.** VSI reading goes through `bioio-bioformats`\r\n(pulled in by Step 2), which provisions the Bio-Formats JVM via scyjava + cjdk and\r\n**auto-downloads a JDK the first time you extract** (cached afterward).\r\n\r\n### Step 2 \u2014 the plugin\r\n\r\n```powershell\r\npip install pentachrome-plugin   # also installs the bioio-bioformats VSI reader\r\npip install nnunetv2             # required for the Detect step\r\n```\r\n\r\nYou can also install the plugin through napari's **Plugins -> Install/Uninstall\r\nPlugins** dialog (search \"pentachrome\"), but that only covers this step, you still\r\nneed Step 1 and Step 3 in the same environment.\r\n\r\n**Already installed?** To pull a newer release into the same env, upgrade just the\r\nplugin (leaves PyTorch, nnU-Net, and weights untouched); restart napari afterwards:\r\n\r\n```powershell\r\npip install --upgrade pentachrome-plugin\r\npip show pentachrome-plugin        # check the \"Version:\" line\r\n```\r\n\r\n### Step 3 \u2014 model weights\r\n\r\nDownload the nnUNet weights and point the widget at them \u2014 see\r\n[Model weights](#model-weights) below.\r\n\r\n### Step 4 \u2014 GPU (CUDA) acceleration (optional, NVIDIA only)\r\n\r\n> \u26a0\ufe0f **`pip install nnunetv2` installs the CPU-only PyTorch wheel.** On a machine\r\n> with an NVIDIA GPU, the Guided Analysis **Check GPU** button will still report\r\n> *\"No CUDA GPU available to PyTorch\"* and inference runs on the (much slower) CPU,\r\n> because the default PyTorch wheel from PyPI (`torch ...+cpu`) contains no CUDA at\r\n> all. Installing the NVIDIA CUDA toolkit system-wide does **not** fix this \u2014 the\r\n> PyTorch wheel bundles its own CUDA runtime.\r\n\r\nTo use the GPU, reinstall PyTorch from the matching CUDA index **after** nnU-Net,\r\nso the CUDA wheel wins:\r\n\r\n```powershell\r\nconda activate pentachrome\r\n# Do this AFTER `pip install nnunetv2` \u2014 otherwise nnU-Net drags the +cpu wheel back in.\r\npip install --force-reinstall torch --index-url https://download.pytorch.org/whl/cu124\r\n```\r\n\r\nPick the CUDA line your **driver** supports (run `nvidia-smi`; the top-right\r\n\"CUDA Version\" is the max your driver allows \u2014 a newer driver runs older wheels):\r\n\r\n| GPU generation | Use index |\r\n| --- | --- |\r\n| Most RTX 20/30/40-series | `.../whl/cu124` (or `cu121`) |\r\n| **RTX 50-series (Blackwell, e.g. 5060 Ti)** | `.../whl/cu128` \u2014 needs PyTorch \u2265 2.7; earlier CUDA wheels have no kernels for these cards |\r\n| Older driver that can't do 12.x | `.../whl/cu118` |\r\n\r\nVerify (in the same env):\r\n\r\n```powershell\r\npython -c \"import torch; print(torch.__version__, torch.version.cuda, torch.cuda.is_available())\"\r\n```\r\n\r\nYou want a version ending in `+cuXXX` (not `+cpu`), a CUDA number, and `True`.\r\nThen **Check GPU** in the widget turns green. If you ever reinstall or upgrade\r\n`nnunetv2`, redo this step \u2014 it can pull the `+cpu` wheel back in.\r\n\r\n> On managed/locked-down Windows machines, inference is launched through the env's\r\n> `python.exe` (not the generated `nnUNetv2_predict.exe`), so AppLocker / group-policy\r\n> `.exe` restrictions don't block it (fixed in 0.7.1).\r\n\r\n### Verify\r\n\r\n```powershell\r\npython -m napari\r\n```\r\n\r\nIn napari, open **Plugins -> Guided Analysis** \u2014 the widget should load and show\r\nits Extract / Analyze / Statistics steps.\r\n\r\n### From source (development)\r\n\r\nFor working on the plugin itself, do Step 1 above, then install editable from a\r\ncheckout instead of from PyPI (`cd` into the plugin directory first, or pass the\r\nabsolute path):\r\n\r\n```powershell\r\nconda activate pentachrome\r\ncd \"...\\pentachrome_plugin\"\r\npip install -e .\r\n```\r\n\r\nThe three phase widgets are de-registered from the public menu. To open them\r\nstandalone during development, run the repo's `dev_widgets.py` \u2014 it docks the\r\nExtractor / Inference / Statistics widgets as tabs:\r\n\r\n```powershell\r\npython dev_widgets.py\r\n```\r\n\r\n## Launch\r\n\r\n```powershell\r\nconda activate pentachrome   # or whichever env you installed into\r\npython -m napari\r\n```\r\n\r\nIn napari: **Plugins -> Guided Analysis**.\r\n\r\n> The per-phase sections below (nnUNet Inference, Mask Statistics, etc.) describe\r\n> the underlying widgets, which the Guided Analysis pane drives end-to-end. Their\r\n> **Plugins -> ...** menu references apply only to the dev widgets opened via\r\n> `dev_widgets.py`; end users reach the same functionality through Guided Analysis.\r\n\r\n## Model weights\r\n\r\nThe nnUNet weights (~900 MB) aren't bundled in the PyPI package. Download\r\n[`nnunet_results.zip`]\r\nfrom the [releases page](https://github.com/dtsilis7/Pentrachrome-Pipeline/releases/tag/weights-v1),\r\nunzip it, and point the inference widget's **nnUNet results** field at the\r\nextracted folder (the one containing `Dataset001_Epithelium` and\r\n`Dataset002_MultiStructure`).\r\n\r\n## nnUNet Inference (Phase 2)\r\n\r\nRequires `nnunetv2` installed in the same environment (the `nnUNetv2_predict` CLI must be on PATH) \u2014 this is covered by Step 2 of [Installation](#installation-windows-powershell) above.\r\n\r\nWorkflow:\r\n\r\n1. Load TIFFs into napari (e.g. via Phase 1's auto-load checkbox, or drag-and-drop).\r\n2. Open **Plugins -> nnUNet Inference**.\r\n3. Select one or more image layers in the list.\r\n4. Tick **Epithelium**, **MultiStructure**, or both.\r\n5. Set **Output folder** (where raw + colorized masks go) and **nnUNet results** (folder containing `Dataset001_Epithelium` and `Dataset002_MultiStructure`). The results path auto-fills if `nnUNet_Training/nnUNet_results/results` is found.\r\n6. Pick **Device** (`cpu` or `cuda`) and click **Analyze**.\r\n\r\n### Speed vs quality (important on CPU)\r\n\r\nnnUNet inference on a laptop CPU is slow because every image goes through *folds \u00d7 mirror augmentations \u00d7 sliding-window patches* forward passes. With defaults that can be 20+ passes per image. The widget exposes three knobs in the **Speed / quality** group:\r\n\r\n| Knob | Default | What it does |\r\n| --- | --- | --- |\r\n| Epithelium folds | `Fold 0 only` | Use 1 of the 5 trained folds for Dataset001. All 5 ensembled is best quality but ~5x slower. Dataset002 only has fold 0 trained, so it's always 1 fold. |\r\n| Disable test-time mirroring | on | Passes `--disable_tta`. Skips the 4 mirror augmentations the model normally averages over. ~4x faster, small accuracy hit. |\r\n| Sliding-window step | `0.5` | Passes `-step_size`. Larger = fewer overlapping patches = faster but rougher tile borders. Try `0.7` for a middle ground. |\r\n\r\nWith all three defaults on a CPU laptop, one ROI tile should take a few minutes instead of 30+. Switch to `All 5 folds` + TTA on once you've moved to a GPU box.\r\n\r\n### Continuing from the extractor\r\n\r\nThe two widgets are linked through two small bridges, so you can run **Extract -> Analyze** in a single napari session without re-picking files:\r\n\r\n- When the extractor auto-loads a TIFF as a viewer layer, it stashes the on-disk path on `layer.metadata['source_tiff']`. The inference widget reads that during staging and **copies the original file** into `_staging_input/` rather than re-saving the in-memory array, important for 15k x 15k tiles.\r\n- When an extraction completes, the inference widget's **\"Use last extractor output\"** button pre-fills the output folder to `<extractor_output_root>/_inference`, so masks land next to the per-VSI subfolders the extractor created.\r\n\r\nBoth bridges are in-process only (see `_session.py`); they reset when napari closes.\r\n\r\nOutputs land in:\r\n\r\n```\r\n<output_folder>/\r\n  _staging_input/            # nnUNet-named (_0000.tif) copies of the selected layers\r\n  epithelium_raw/            # binary masks from Dataset001\r\n  epithelium_colored/        # RGB colorized masks (red epithelium)\r\n  multistructure_raw/        # 6-class masks from Dataset002\r\n  multistructure_colored/    # RGB colorized masks (Elastin/Collagen/Nuclei/Mucins/Membrane/Goblets)\r\n```\r\n\r\nColorized masks are added to the viewer as RGB image layers when the run finishes.\r\n\r\n### nnUNet inference architecture\r\n\r\nSame subprocess pattern as Phase 1. The widget never imports torch or nnUNetv2 directly; it spawns `_inference_worker.py` which:\r\n\r\n- sets `nnUNet_results` to the configured results dir,\r\n- calls `nnUNetv2_predict` once per enabled model (folds 0-4 for Epithelium, fold 0 for MultiStructure, matching `run_inference.py`),\r\n- colorizes the resulting integer masks with the palettes from `colorize_masks.py` / `compare_grid.py`,\r\n- streams JSON-line events on stdout for the widget's progress bar and log.\r\n\r\n## How it works\r\n\r\n- The widget itself never touches the JVM. When you click **Extract ROIs**, it spawns `_vsi_worker_bioio.py` as a separate Python process.\r\n- That worker starts the Bio-Formats JVM through `bioio-bioformats` (scyjava + cjdk \u2014 no user JDK), loops over the VSI files using `TileMaskStitcher` (`vsi_handler/tile_mask_stitcher_bioio.py`, which drives `loci.formats.ImageReader` directly via `vsi_handler/_bioio_reader.py`), writes numbered TIFFs into `<output_root>/<vsi_basename>/`, and emits JSON-line progress events on stdout.\r\n- The widget streams those events on a background thread and updates the progress bar / log without blocking the UI.\r\n- When the worker exits, the JVM dies with it. The next extraction batch starts a fresh JVM in a fresh process - this avoids the \"JVM cannot be restarted\" pitfall during a long napari session.\r\n\r\n## Defaults\r\n\r\nThe parameter defaults mirror `Processing_VSI_Files.py`:\r\n\r\n| Parameter | Default |\r\n| --- | --- |\r\n| Series | 6 |\r\n| Tile width / height | 15000 |\r\n| Threshold | 50 |\r\n| Min ROI area | 150000 |\r\n| Merge margin | 1000 |\r\n| Extra crop margin | 100 |\r\n\r\n## Layout\r\n\r\n```\r\npentachrome_plugin/\r\n  pyproject.toml\r\n  README.md\r\n  src/pentachrome_plugin/\r\n    __init__.py\r\n    napari.yaml             # napari manifest\r\n    _session.py             # in-process cross-widget state (extractor -> inference -> analysis)\r\n    _widget.py              # VsiExtractorWidget (Phase 1)\r\n    _vsi_worker_bioio.py    # VSI subprocess entrypoint (bioio-bioformats)\r\n    vsi_handler/            # bioio VSI reader (_bioio_reader.py) + tile/mask stitcher\r\n    _inference_widget.py    # NnUnetInferenceWidget (Phase 2)\r\n    _inference_worker.py    # nnUNet subprocess entrypoint\r\n    _analysis_widget.py     # AnalysisWidget (Phase 3, in-process)\r\n```\r\n\r\nPhase 3 (Mask Statistics) lives alongside these and registers through `napari.yaml`.\r\n\r\n## Mask Statistics (Phase 3)\r\n\r\nPure in-process; no subprocess needed (no JVM, no torch). Reuses\r\n`EpithelialAnalysis/Analyzers/` (`Descriptors.py`, `Thickness.py`), so the\r\nsame metrics that fed the original `region_summary.csv` show up in the\r\nwidget.\r\n\r\nWorkflow:\r\n\r\n1. Run Phase 2 first so `epithelium_raw/` and `multistructure_raw/` exist.\r\n2. Open **Plugins -> Mask Statistics**.\r\n3. Select one or more image layers in the list (their names must match the\r\n   mask filenames in `epithelium_raw/` / `multistructure_raw/`; if the\r\n   inference widget staged them, that's already true).\r\n4. Click **Use last inference output** (or browse).\r\n5. Tweak **Pixel size**, **Region dilation**, **Min epithelium area** if\r\n   needed (defaults match `Main.py`).\r\n6. Click **Analyze**.\r\n\r\nFor each detected epithelial region the widget reports:\r\n\r\n| Column | What it is |\r\n| --- | --- |\r\n| Area (mm^2) | Region area after the 50 um dilation |\r\n| Thickness mean/std (um) | Medial-axis thickness of (membrane within eroded region) U goblets U nuclei |\r\n| Elastin / Collagen / Other % | Fraction of stained structure pixels, same definition as `compute_structure_percentages` |\r\n| Elastin/Collagen | Ratio of elastin to collagen structure pixels (`n/a` when the region has no collagen). In the sub-epithelial band this reads as the elastic-vs-fibrotic character of the remodelled layer; a falling ratio tracks airway-remodelling severity in the COPD literature. *(Added in 0.7.3.)* |\r\n| Mucin % | Mucin pixels as a fraction of the epithelium area (not of total structure pixels) |\r\n| Nuclei / mm^2 and Goblets / mm^2 | Density per mm^2 of epithelium, goblet hyperplasia is a classic COPD readout |\r\n| Nuclei (n), Goblets (n) | Raw counts inside the region |\r\n\r\nA bold **(all regions)** row appended per image gives area-weighted means\r\nof the percentages / thickness and totals for the counts. **Export CSV...**\r\nsaves the whole table (per-region rows + aggregate rows).\r\n\r\nThe exported CSV carries one extra column that the on-screen table deliberately\r\nhides: **`log2(E/C)`**, the base-2 log of the Elastin/Collagen ratio (0 = balanced,\r\n+1 = elastin twice collagen, \u22121 = the reverse). It's symmetric and so averages and\r\nstatistically tests correctly across regions/patients, where the raw ratio \u2014 bounded\r\nat 0, unbounded above \u2014 is skewed. It's kept out of the viewer because it's a stats\r\naid, not an at-a-glance number, and it's a pure function of the raw column so nothing\r\nis lost. *(Added in 0.7.3.)*\r\n\r\nThe elastin organization score (`ElastinAnalyzer.determine_organized_region`)\r\nfrom `Main.py` is intentionally not yet exposed, it's much heavier (skan +\r\nshapely + ROI polygons) and will land as a separate toggle.\r\n\r\n### Class isolation\r\n\r\nA \"Class isolation\" group at the top of the widget lets you view a single\r\nclass (or a combination) without rerunning anything:\r\n\r\n1. Pick a source layer (the **original** TIFF, not a colorized mask).\r\n2. Tick one or more of **Elastin**, **Collagen**, **Nuclei**, **Mucins**,\r\n   **Cell Membrane**, **Goblets**, **Epithelium**.\r\n3. Click one of:\r\n   - **Show as mask** \u2014 adds a new layer that's white everywhere except the\r\n     ticked classes, colored with the same palette as the inference widget.\r\n   - **Show on original** \u2014 adds a copy of the original image with all\r\n     pixels outside the ticked classes turned white. Useful for sanity-\r\n     checking the segmentation against the stain.\r\n4. **Clear isolated layers** removes everything this panel added in one go.\r\n\r\nMasks are read on demand from the inference output folder; the original\r\nlayer's pixels are taken from the viewer.\r\n\r\n## License\r\n\r\nThis project is licensed under the MIT License, see the [LICENSE](LICENSE) file for details.\r\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": "napari, histology, nnunet, bioformats, segmentation",
+    "license": "MIT License\r\n        \r\n        Copyright (c) 2026 Dimitrios Tsilis\r\n        \r\n        Permission is hereby granted, free of charge, to any person obtaining a copy\r\n        of this software and associated documentation files (the \"Software\"), to deal\r\n        in the Software without restriction, including without limitation the rights\r\n        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\r\n        copies of the Software, and to permit persons to whom the Software is\r\n        furnished to do so, subject to the following conditions:\r\n        \r\n        The above copyright notice and this permission notice shall be included in all\r\n        copies or substantial portions of the Software.\r\n        \r\n        THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\r\n        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\r\n        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\r\n        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\r\n        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\r\n        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\r\n        SOFTWARE.",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "pentachrome-plugin",
+    "package_url": "https://pypi.org/project/pentachrome-plugin/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/pentachrome-plugin/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/dtsilis7/Pentrachrome-Pipeline/issues",
+      "Changelog": "https://github.com/dtsilis7/Pentrachrome-Pipeline/blob/main/NapariInterface/pentachrome_plugin/CHANGELOG.md",
+      "Homepage": "https://github.com/dtsilis7/Pentrachrome-Pipeline"
+    },
+    "provides_extra": null,
+    "release_url": "https://pypi.org/project/pentachrome-plugin/0.9.0/",
+    "requires_dist": [
+      "napari[all]>=0.4.18",
+      "qtpy",
+      "tifffile",
+      "numpy<2",
+      "opencv-python",
+      "scipy",
+      "scikit-image",
+      "skan",
+      "imagecodecs",
+      "bioio-bioformats<2",
+      "matplotlib",
+      "shapely",
+      "pandas"
+    ],
+    "requires_python": ">=3.10",
+    "summary": "Napari plugin for the Pentachrome histology pipeline: VSI extraction, nnUNet inference, statistics.",
+    "version": "0.9.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 39335825,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "dtsilis7"
+      }
+    ]
+  },
+  "releases": {
+    "0.4.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "a981ff55780dc9b3c8c1259be4cff9fb317c731581f198cd0e1d05e061646ff2"
+        },
+        "digests": {
+          "blake2b_256": "5c682fa82ceae773d945cf5f540de3ac6abf73acc0ee6feb704e42ae17a2d340",
+          "md5": "0c46a163fbbf9c8189e36b9053dbb5ca",
+          "sha256": "e2bef16c703cbec7668409c76ba62e53612f06f8ffc8a78a35d19bc9369a6b37"
+        },
+        "downloads": -1,
+        "filename": "pentachrome_plugin-0.4.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "0c46a163fbbf9c8189e36b9053dbb5ca",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 54833,
+        "upload_time": "2026-06-26T11:17:20",
+        "upload_time_iso_8601": "2026-06-26T11:17:20.209803Z",
+        "url": "https://files.pythonhosted.org/packages/5c/68/2fa82ceae773d945cf5f540de3ac6abf73acc0ee6feb704e42ae17a2d340/pentachrome_plugin-0.4.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "4d038d32182b4f024d66f6951a19c495df5833e7551f8b393e74fb2579315965",
+          "md5": "872c05e034850170f2e9fabb7689099e",
+          "sha256": "1a9ab3c8427212097cba1dc57ccb1bb33e5fa1fb887200540713a5a13c97a0b4"
+        },
+        "downloads": -1,
+        "filename": "pentachrome_plugin-0.4.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "872c05e034850170f2e9fabb7689099e",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 53835,
+        "upload_time": "2026-06-26T11:17:21",
+        "upload_time_iso_8601": "2026-06-26T11:17:21.895451Z",
+        "url": "https://files.pythonhosted.org/packages/4d/03/8d32182b4f024d66f6951a19c495df5833e7551f8b393e74fb2579315965/pentachrome_plugin-0.4.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.4.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "6e95a7f27781f9166fce3fd86bb64564fb09dd47d7c8ee2aed6b666cf044e239"
+        },
+        "digests": {
+          "blake2b_256": "c23f9e41d33c7460c69413d7fcb29ae8c8d4a047014dbb8039c4827c808e1bb6",
+          "md5": "c84956b99af8c610c87a4d28f04808d4",
+          "sha256": "f1029ef09c7eda6c09a28a9b166eba41ddf58209c3a574a1cd27f02031616f49"
+        },
+        "downloads": -1,
+        "filename": "pentachrome_plugin-0.4.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "c84956b99af8c610c87a4d28f04808d4",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 55567,
+        "upload_time": "2026-06-26T12:08:10",
+        "upload_time_iso_8601": "2026-06-26T12:08:10.951050Z",
+        "url": "https://files.pythonhosted.org/packages/c2/3f/9e41d33c7460c69413d7fcb29ae8c8d4a047014dbb8039c4827c808e1bb6/pentachrome_plugin-0.4.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "48a75afc3e9a3b813ad13b8f27ce8a1a0536e982e5b0abd2ebeba1f1cf318f29",
+          "md5": "af9e0781d571d41d48e6a50807107248",
+          "sha256": "afdeac0b5537973ac9a0682ed7571b2c2e42f56f2df7baf411bbbb10cc1e2892"
+        },
+        "downloads": -1,
+        "filename": "pentachrome_plugin-0.4.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "af9e0781d571d41d48e6a50807107248",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 54801,
+        "upload_time": "2026-06-26T12:08:12",
+        "upload_time_iso_8601": "2026-06-26T12:08:12.128887Z",
+        "url": "https://files.pythonhosted.org/packages/48/a7/5afc3e9a3b813ad13b8f27ce8a1a0536e982e5b0abd2ebeba1f1cf318f29/pentachrome_plugin-0.4.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.4.2": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "15436bce51d3f5772ae75449413e9b07d93fac6d1091bc1721de71f44a86d1b6"
+        },
+        "digests": {
+          "blake2b_256": "fd05ce6db6d4be2acd4f3c2bb9ac220cbea478115f25b4d6c560dcaaaa5b122b",
+          "md5": "2076c1e8b623e6b526efc5161f709441",
+          "sha256": "f90dbbda1da2f57cde7f2d137aaf9e55a5ccff55334f75635ff7fb6c0fa10b51"
+        },
+        "downloads": -1,
+        "filename": "pentachrome_plugin-0.4.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "2076c1e8b623e6b526efc5161f709441",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 55563,
+        "upload_time": "2026-06-26T12:13:47",
+        "upload_time_iso_8601": "2026-06-26T12:13:47.595318Z",
+        "url": "https://files.pythonhosted.org/packages/fd/05/ce6db6d4be2acd4f3c2bb9ac220cbea478115f25b4d6c560dcaaaa5b122b/pentachrome_plugin-0.4.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "93ba70771b220adb84041977d23c067f554f236485da7234e61d2b46b025be2a",
+          "md5": "069db2339008ee1dbf4615c839f2b9b7",
+          "sha256": "8c6e747d9885933f432baa57eef47af9196ea5d09d20c3c239241b32c0de800b"
+        },
+        "downloads": -1,
+        "filename": "pentachrome_plugin-0.4.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "069db2339008ee1dbf4615c839f2b9b7",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 54802,
+        "upload_time": "2026-06-26T12:13:48",
+        "upload_time_iso_8601": "2026-06-26T12:13:48.808855Z",
+        "url": "https://files.pythonhosted.org/packages/93/ba/70771b220adb84041977d23c067f554f236485da7234e61d2b46b025be2a/pentachrome_plugin-0.4.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.4.3": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "049efc947268a86e4b3ff1a6eaa915b79cb220a707061cfdfe5703f7bc19f3ea"
+        },
+        "digests": {
+          "blake2b_256": "18fb008bd293a077971a30bc721b1f4d5e91a046924e65f0477ebb7751269ac4",
+          "md5": "8e0841173bae0fcbf4f818c86d6df064",
+          "sha256": "a62ed50992e7e44fe774b3abae3c6724910f16904a1dc627263f73c385cadfef"
+        },
+        "downloads": -1,
+        "filename": "pentachrome_plugin-0.4.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "8e0841173bae0fcbf4f818c86d6df064",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 76523,
+        "upload_time": "2026-06-26T13:07:18",
+        "upload_time_iso_8601": "2026-06-26T13:07:18.501126Z",
+        "url": "https://files.pythonhosted.org/packages/18/fb/008bd293a077971a30bc721b1f4d5e91a046924e65f0477ebb7751269ac4/pentachrome_plugin-0.4.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "e12e73180cf57117c2901fcf946362af1b3aee3cc215a10de4fbc8c0125c9499",
+          "md5": "d19c896a4079b755f36386e5ac81de69",
+          "sha256": "1b33128e93da20fd88ef460155756955685ee298503db8bee5c97bfbced74658"
+        },
+        "downloads": -1,
+        "filename": "pentachrome_plugin-0.4.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d19c896a4079b755f36386e5ac81de69",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 73676,
+        "upload_time": "2026-06-26T13:07:19",
+        "upload_time_iso_8601": "2026-06-26T13:07:19.521519Z",
+        "url": "https://files.pythonhosted.org/packages/e1/2e/73180cf57117c2901fcf946362af1b3aee3cc215a10de4fbc8c0125c9499/pentachrome_plugin-0.4.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.4.4": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "56335de7e9f0f535533cb0432b9584033f69e57263d44d5ee7b85f676da89c9c"
+        },
+        "digests": {
+          "blake2b_256": "eabeb982584bb544db33a51cc42050ac840ccd0d17eab91ea12097d1c648c713",
+          "md5": "4bd0f9656fcec4a66f6caeb69bc0e8a6",
+          "sha256": "fa55ccef2121be5be2253665372c7cabf973fae0326af39237cf555543620815"
+        },
+        "downloads": -1,
+        "filename": "pentachrome_plugin-0.4.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "4bd0f9656fcec4a66f6caeb69bc0e8a6",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 77364,
+        "upload_time": "2026-06-29T09:20:12",
+        "upload_time_iso_8601": "2026-06-29T09:20:12.569537Z",
+        "url": "https://files.pythonhosted.org/packages/ea/be/b982584bb544db33a51cc42050ac840ccd0d17eab91ea12097d1c648c713/pentachrome_plugin-0.4.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "7b773ea418c2df3faed0f65e1ddcda0fb6218d814e15b91c1f8b961c7ac68c70",
+          "md5": "567a012aaca2b51f12b6781f5e4a2de0",
+          "sha256": "eff458461fd3545d08ffd30a587b788661b5c651a7a3b46ed310dbe6c02af2a2"
+        },
+        "downloads": -1,
+        "filename": "pentachrome_plugin-0.4.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "567a012aaca2b51f12b6781f5e4a2de0",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 75419,
+        "upload_time": "2026-06-29T09:20:13",
+        "upload_time_iso_8601": "2026-06-29T09:20:13.692843Z",
+        "url": "https://files.pythonhosted.org/packages/7b/77/3ea418c2df3faed0f65e1ddcda0fb6218d814e15b91c1f8b961c7ac68c70/pentachrome_plugin-0.4.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.4.5": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "939f2cd0bc3e4b4270823938647a2728e9c63df4e2727e6e601d6e7428fba517"
+        },
+        "digests": {
+          "blake2b_256": "a916f39db95d80d2d670729cb923076582b4b5039b54090fbeb0205a62c8762e",
+          "md5": "efb6f7e8059bb1a3e33148dca7deb282",
+          "sha256": "6c3657b08338e69a2c0d9cf7083e438defefaa364418a8275a0584a67af27aa9"
+        },
+        "downloads": -1,
+        "filename": "pentachrome_plugin-0.4.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "efb6f7e8059bb1a3e33148dca7deb282",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 77570,
+        "upload_time": "2026-06-29T13:43:14",
+        "upload_time_iso_8601": "2026-06-29T13:43:14.347293Z",
+        "url": "https://files.pythonhosted.org/packages/a9/16/f39db95d80d2d670729cb923076582b4b5039b54090fbeb0205a62c8762e/pentachrome_plugin-0.4.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "46e96017def2dd3206ace6bf3ac44365cd58234d3e0075c8a39ecb8f0fa3ebd2",
+          "md5": "f8ae3b11d433b8030e6ddbb24b112fcd",
+          "sha256": "56f78a100aa5b048632588280b7fb13b4a68f973c70b4de21bbfede6f3b00a7d"
+        },
+        "downloads": -1,
+        "filename": "pentachrome_plugin-0.4.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "f8ae3b11d433b8030e6ddbb24b112fcd",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 75646,
+        "upload_time": "2026-06-29T13:43:15",
+        "upload_time_iso_8601": "2026-06-29T13:43:15.566172Z",
+        "url": "https://files.pythonhosted.org/packages/46/e9/6017def2dd3206ace6bf3ac44365cd58234d3e0075c8a39ecb8f0fa3ebd2/pentachrome_plugin-0.4.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.4.6": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "b37d5a0e41d7782ad809d0d3c52dc02d450d10483feb7a9da974bbbc9642e709"
+        },
+        "digests": {
+          "blake2b_256": "5ae7c2e5531b6c8735f998a518393ff6e189a0c9164dab7319682141a109f3b8",
+          "md5": "b965af48c082c7d94d99f993a67abc2a",
+          "sha256": "7ec2e9a9276714a938d7d83dad834e355716c7f81e90dbd8560269bc93df1f54"
+        },
+        "downloads": -1,
+        "filename": "pentachrome_plugin-0.4.6-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "b965af48c082c7d94d99f993a67abc2a",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 77903,
+        "upload_time": "2026-06-30T08:38:54",
+        "upload_time_iso_8601": "2026-06-30T08:38:54.258674Z",
+        "url": "https://files.pythonhosted.org/packages/5a/e7/c2e5531b6c8735f998a518393ff6e189a0c9164dab7319682141a109f3b8/pentachrome_plugin-0.4.6-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "9e0385da4f03fa64b5de463376a8b1518ea12ea3fcd3e2a3210eddbe3d6c3db7",
+          "md5": "04b4819523fa6ee2990101dd54dbd0c7",
+          "sha256": "010e464235391af5e3fef094b877947b527218c95b00c702e5ef7ac3039651b9"
+        },
+        "downloads": -1,
+        "filename": "pentachrome_plugin-0.4.6.tar.gz",
+        "has_sig": false,
+        "md5_digest": "04b4819523fa6ee2990101dd54dbd0c7",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 75958,
+        "upload_time": "2026-06-30T08:38:55",
+        "upload_time_iso_8601": "2026-06-30T08:38:55.484153Z",
+        "url": "https://files.pythonhosted.org/packages/9e/03/85da4f03fa64b5de463376a8b1518ea12ea3fcd3e2a3210eddbe3d6c3db7/pentachrome_plugin-0.4.6.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.5.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "015eaf6e4e477f3f033103773872e16c05ef3d0e663b66aa231a2f002d15daeb"
+        },
+        "digests": {
+          "blake2b_256": "6296843a57c6fd70f31705607a4d4fd5b7fd32d75d8b22bf481265c92ccd3d08",
+          "md5": "ca39ad9528da11b001dd7c03340d551d",
+          "sha256": "7eef568c8065d02922651148621e829e05b23c1fcddd6d99a44ffcd329b52edb"
+        },
+        "downloads": -1,
+        "filename": "pentachrome_plugin-0.5.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "ca39ad9528da11b001dd7c03340d551d",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 82504,
+        "upload_time": "2026-07-02T13:43:15",
+        "upload_time_iso_8601": "2026-07-02T13:43:15.412588Z",
+        "url": "https://files.pythonhosted.org/packages/62/96/843a57c6fd70f31705607a4d4fd5b7fd32d75d8b22bf481265c92ccd3d08/pentachrome_plugin-0.5.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "1a72e8ca9f8ef4cf034302eb02679b0e9e459c3a20c3d8e2523d316f4f8f08f1",
+          "md5": "7e9edb5aa6b11fe265d1e009efbede53",
+          "sha256": "1300118f4f240e483a4e1da3c42d5efb8918c8302323242dd33e7a9a87a34663"
+        },
+        "downloads": -1,
+        "filename": "pentachrome_plugin-0.5.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "7e9edb5aa6b11fe265d1e009efbede53",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 80378,
+        "upload_time": "2026-07-02T13:43:16",
+        "upload_time_iso_8601": "2026-07-02T13:43:16.788563Z",
+        "url": "https://files.pythonhosted.org/packages/1a/72/e8ca9f8ef4cf034302eb02679b0e9e459c3a20c3d8e2523d316f4f8f08f1/pentachrome_plugin-0.5.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.6.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "874a1abb77a7b51e0b95216ad129d1d60ffb2addf56fc53356bddf48a3347765"
+        },
+        "digests": {
+          "blake2b_256": "13e01b88ce87847641a4edb464259d2089cbc48081364cd9aaae42c75ade2186",
+          "md5": "d562d8660bc20fb7bf34e5e8d401361f",
+          "sha256": "d4a20ed0aeb2416271375d36b2deee3b2969b91f49bec37102d1383900e5b3c8"
+        },
+        "downloads": -1,
+        "filename": "pentachrome_plugin-0.6.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "d562d8660bc20fb7bf34e5e8d401361f",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 86395,
+        "upload_time": "2026-07-06T08:05:42",
+        "upload_time_iso_8601": "2026-07-06T08:05:42.910219Z",
+        "url": "https://files.pythonhosted.org/packages/13/e0/1b88ce87847641a4edb464259d2089cbc48081364cd9aaae42c75ade2186/pentachrome_plugin-0.6.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "ba621f11cd4c37e9e6bb977479b36175fa9e900337e5a7df4edfbfd71a1938e5",
+          "md5": "8c01d01de10345473dff8a1a2807fbec",
+          "sha256": "a45d65d4e2d89b0c4507602c8c1d06645ade937c0bdb7523cee182c3364bf7ee"
+        },
+        "downloads": -1,
+        "filename": "pentachrome_plugin-0.6.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "8c01d01de10345473dff8a1a2807fbec",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 84394,
+        "upload_time": "2026-07-06T08:05:43",
+        "upload_time_iso_8601": "2026-07-06T08:05:43.985544Z",
+        "url": "https://files.pythonhosted.org/packages/ba/62/1f11cd4c37e9e6bb977479b36175fa9e900337e5a7df4edfbfd71a1938e5/pentachrome_plugin-0.6.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.7.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "818dbfa2f27606ad08f30eccc3bd075014d1946e736a9e7ffaaf46613536d5bf"
+        },
+        "digests": {
+          "blake2b_256": "ffa72214fe4dad38eb5adf548bbedc67d5a0b497bd11fe2632ece51335d40263",
+          "md5": "45071fe64a7bd843f4839939a6d543a9",
+          "sha256": "9f140e46d088a77a8711f197c2bd002e22492f4d2b525becae6ebe20abb5c477"
+        },
+        "downloads": -1,
+        "filename": "pentachrome_plugin-0.7.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "45071fe64a7bd843f4839939a6d543a9",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 87889,
+        "upload_time": "2026-07-08T09:40:28",
+        "upload_time_iso_8601": "2026-07-08T09:40:28.321717Z",
+        "url": "https://files.pythonhosted.org/packages/ff/a7/2214fe4dad38eb5adf548bbedc67d5a0b497bd11fe2632ece51335d40263/pentachrome_plugin-0.7.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "ea5ef058893d85b07e8d3aea9de106a810039c4f55d2c77381970c2184cb74f5",
+          "md5": "c187cbbf85cf3e89f12eac9bb2752501",
+          "sha256": "20fa4763534de5496e383523159c4ec31a0b535ecf1c3c84c4c5580f8245dcd6"
+        },
+        "downloads": -1,
+        "filename": "pentachrome_plugin-0.7.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "c187cbbf85cf3e89f12eac9bb2752501",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 85840,
+        "upload_time": "2026-07-08T09:40:29",
+        "upload_time_iso_8601": "2026-07-08T09:40:29.561252Z",
+        "url": "https://files.pythonhosted.org/packages/ea/5e/f058893d85b07e8d3aea9de106a810039c4f55d2c77381970c2184cb74f5/pentachrome_plugin-0.7.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.7.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "69f1af5941d3b94bfe74bd500a1a12ef5616ad4664364dc29bea58c00d5a2b61"
+        },
+        "digests": {
+          "blake2b_256": "0c0640aee2afff22082a3e2076dc3c84d7d2bf1712375a7732905cf2502a3c3e",
+          "md5": "be85274dffef7791dfc046f1e92cb777",
+          "sha256": "dd2f8cd3794566c749340dd2bdb3df9208695db2174e01781a6eadee56957295"
+        },
+        "downloads": -1,
+        "filename": "pentachrome_plugin-0.7.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "be85274dffef7791dfc046f1e92cb777",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 88989,
+        "upload_time": "2026-07-13T12:33:33",
+        "upload_time_iso_8601": "2026-07-13T12:33:33.902332Z",
+        "url": "https://files.pythonhosted.org/packages/0c/06/40aee2afff22082a3e2076dc3c84d7d2bf1712375a7732905cf2502a3c3e/pentachrome_plugin-0.7.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "25b281803dd809514850bc3dbd27721b6c0a4518227c9b1a8896616b322a480a",
+          "md5": "d4106c2e65fe7286a4c0434d868e46eb",
+          "sha256": "52ee2dd47ad72913d598b20ec174dbb9c8c0d99dfa12d10d695e868860822928"
+        },
+        "downloads": -1,
+        "filename": "pentachrome_plugin-0.7.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d4106c2e65fe7286a4c0434d868e46eb",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 87980,
+        "upload_time": "2026-07-13T12:33:35",
+        "upload_time_iso_8601": "2026-07-13T12:33:35.128128Z",
+        "url": "https://files.pythonhosted.org/packages/25/b2/81803dd809514850bc3dbd27721b6c0a4518227c9b1a8896616b322a480a/pentachrome_plugin-0.7.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.7.2": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "afc72f012f95a099842eae888dd4598a8e8e0c6815274169025f33bedbeaab45"
+        },
+        "digests": {
+          "blake2b_256": "9580ba8e1c7d2d485416aed638528a730017edcff02f42608febdac6f2f3609e",
+          "md5": "08debf77663dd2083dfd49292604e329",
+          "sha256": "08715e0ee5742a2fb43095c6ceb519aceaaa445e538caaeaf931c7b593415f28"
+        },
+        "downloads": -1,
+        "filename": "pentachrome_plugin-0.7.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "08debf77663dd2083dfd49292604e329",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 90117,
+        "upload_time": "2026-07-15T08:35:30",
+        "upload_time_iso_8601": "2026-07-15T08:35:30.425848Z",
+        "url": "https://files.pythonhosted.org/packages/95/80/ba8e1c7d2d485416aed638528a730017edcff02f42608febdac6f2f3609e/pentachrome_plugin-0.7.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "a946b04d23f58023fc3f244aeabf9d01d089e20a1efaf10d62e55317b84ae86f",
+          "md5": "91a758f8bbeea689b8c6aada2b002ad8",
+          "sha256": "8d941bd7f09c72f0f5f7b151cadebc760a7825614f5faa02ba7b5a0d2902d89f"
+        },
+        "downloads": -1,
+        "filename": "pentachrome_plugin-0.7.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "91a758f8bbeea689b8c6aada2b002ad8",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 89105,
+        "upload_time": "2026-07-15T08:35:31",
+        "upload_time_iso_8601": "2026-07-15T08:35:31.479082Z",
+        "url": "https://files.pythonhosted.org/packages/a9/46/b04d23f58023fc3f244aeabf9d01d089e20a1efaf10d62e55317b84ae86f/pentachrome_plugin-0.7.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.7.3": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "7eb3b900d7d294e26b8413add2c035028fa5483e2af12d6d5a1f19f459727880"
+        },
+        "digests": {
+          "blake2b_256": "bf7de1ce2d260fda30575515c659476ee47341cde74712bcae289509b7c53a5e",
+          "md5": "656273e96a016ac1d1ef0e0db3290081",
+          "sha256": "0f90a6d4b8814404d5c959b0300b44d57da5e32e1eee8d483a0927984300c873"
+        },
+        "downloads": -1,
+        "filename": "pentachrome_plugin-0.7.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "656273e96a016ac1d1ef0e0db3290081",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 92521,
+        "upload_time": "2026-07-16T10:23:44",
+        "upload_time_iso_8601": "2026-07-16T10:23:44.913980Z",
+        "url": "https://files.pythonhosted.org/packages/bf/7d/e1ce2d260fda30575515c659476ee47341cde74712bcae289509b7c53a5e/pentachrome_plugin-0.7.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "7a4d1c17f1124ebb1c723ef5815997cc23fe16c3b257be3883186f4a039483d6",
+          "md5": "8fb2f9bdd389a223a88e179e89e3eec7",
+          "sha256": "c28cf4bbb6b935167fb9532e86718f4ce52166fce87c81cee9f861fa63955c9c"
+        },
+        "downloads": -1,
+        "filename": "pentachrome_plugin-0.7.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "8fb2f9bdd389a223a88e179e89e3eec7",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 91993,
+        "upload_time": "2026-07-16T10:23:46",
+        "upload_time_iso_8601": "2026-07-16T10:23:46.140123Z",
+        "url": "https://files.pythonhosted.org/packages/7a/4d/1c17f1124ebb1c723ef5815997cc23fe16c3b257be3883186f4a039483d6/pentachrome_plugin-0.7.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.8.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "310d3bf3310fe6cfa413fbe9a7259bbbf593e180811683e28897bcd133398250"
+        },
+        "digests": {
+          "blake2b_256": "02e0465d4d9a266672810a2adb3d2b8734a432d45080b141fa7fd5476ee666ff",
+          "md5": "6cce13ac14be9cb5e52edf256e8bb142",
+          "sha256": "ae9e395af803e100a8318f2cd843751df5ddfde4077797b2218923a16a2ed9f9"
+        },
+        "downloads": -1,
+        "filename": "pentachrome_plugin-0.8.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "6cce13ac14be9cb5e52edf256e8bb142",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 98135,
+        "upload_time": "2026-07-20T12:41:14",
+        "upload_time_iso_8601": "2026-07-20T12:41:14.926950Z",
+        "url": "https://files.pythonhosted.org/packages/02/e0/465d4d9a266672810a2adb3d2b8734a432d45080b141fa7fd5476ee666ff/pentachrome_plugin-0.8.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "73d5a981f06b12190b39352e5689254febeaedcccfc9d17a5e228e149b04cc58",
+          "md5": "5a340d020d3ba80935681052c11f53fb",
+          "sha256": "8d7e1a19d0df9156e1fd05b2c9c477080bc118a80abcabcbea42c86e03960f7b"
+        },
+        "downloads": -1,
+        "filename": "pentachrome_plugin-0.8.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "5a340d020d3ba80935681052c11f53fb",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 97528,
+        "upload_time": "2026-07-20T12:41:15",
+        "upload_time_iso_8601": "2026-07-20T12:41:15.965092Z",
+        "url": "https://files.pythonhosted.org/packages/73/d5/a981f06b12190b39352e5689254febeaedcccfc9d17a5e228e149b04cc58/pentachrome_plugin-0.8.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.9.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "b15e8158150bf552d9b1f741eb15f5fd99bbe3a3be5c04b95dd95eaf89c47fcc"
+        },
+        "digests": {
+          "blake2b_256": "65b0ed308243112b7b217a917d6f922cb8991c1ed5ce906684d257c5db1c89d9",
+          "md5": "b91abfe27097e68697e32b15b3497ebd",
+          "sha256": "234c33c930aba9dfe7287c551f5fb89d0118063fea371e3f722423d0ba496551"
+        },
+        "downloads": -1,
+        "filename": "pentachrome_plugin-0.9.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "b91abfe27097e68697e32b15b3497ebd",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 106150,
+        "upload_time": "2026-07-24T14:32:52",
+        "upload_time_iso_8601": "2026-07-24T14:32:52.915861Z",
+        "url": "https://files.pythonhosted.org/packages/65/b0/ed308243112b7b217a917d6f922cb8991c1ed5ce906684d257c5db1c89d9/pentachrome_plugin-0.9.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "edc2bf948e4f8591d1506ae3d0ef46a0fc2e03a4dbea9a76fa3d266a69d16229",
+          "md5": "2b419e83e788ca32f038f257bbe7871e",
+          "sha256": "feab628d248c873f85f0406ff8a69802b6bceff7a1e0828117803e4319c04eca"
+        },
+        "downloads": -1,
+        "filename": "pentachrome_plugin-0.9.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "2b419e83e788ca32f038f257bbe7871e",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 105275,
+        "upload_time": "2026-07-24T14:32:53",
+        "upload_time_iso_8601": "2026-07-24T14:32:53.959488Z",
+        "url": "https://files.pythonhosted.org/packages/ed/c2/bf948e4f8591d1506ae3d0ef46a0fc2e03a4dbea9a76fa3d266a69d16229/pentachrome_plugin-0.9.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "b15e8158150bf552d9b1f741eb15f5fd99bbe3a3be5c04b95dd95eaf89c47fcc"
+      },
+      "digests": {
+        "blake2b_256": "65b0ed308243112b7b217a917d6f922cb8991c1ed5ce906684d257c5db1c89d9",
+        "md5": "b91abfe27097e68697e32b15b3497ebd",
+        "sha256": "234c33c930aba9dfe7287c551f5fb89d0118063fea371e3f722423d0ba496551"
+      },
+      "downloads": -1,
+      "filename": "pentachrome_plugin-0.9.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "b91abfe27097e68697e32b15b3497ebd",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.10",
+      "size": 106150,
+      "upload_time": "2026-07-24T14:32:52",
+      "upload_time_iso_8601": "2026-07-24T14:32:52.915861Z",
+      "url": "https://files.pythonhosted.org/packages/65/b0/ed308243112b7b217a917d6f922cb8991c1ed5ce906684d257c5db1c89d9/pentachrome_plugin-0.9.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "edc2bf948e4f8591d1506ae3d0ef46a0fc2e03a4dbea9a76fa3d266a69d16229",
+        "md5": "2b419e83e788ca32f038f257bbe7871e",
+        "sha256": "feab628d248c873f85f0406ff8a69802b6bceff7a1e0828117803e4319c04eca"
+      },
+      "downloads": -1,
+      "filename": "pentachrome_plugin-0.9.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "2b419e83e788ca32f038f257bbe7871e",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.10",
+      "size": 105275,
+      "upload_time": "2026-07-24T14:32:53",
+      "upload_time_iso_8601": "2026-07-24T14:32:53.959488Z",
+      "url": "https://files.pythonhosted.org/packages/ed/c2/bf948e4f8591d1506ae3d0ef46a0fc2e03a4dbea9a76fa3d266a69d16229/pentachrome_plugin-0.9.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

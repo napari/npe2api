@@ -1,0 +1,471 @@
+{
+  "info": {
+    "author": "Tien Doan",
+    "author_email": null,
+    "bugtrack_url": null,
+    "classifiers": [
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Scientific/Engineering :: Image Recognition"
+    ],
+    "description": "# napari-microplate\n\n[![PyPI](https://img.shields.io/pypi/v/napari-microplate.svg)](https://pypi.org/project/napari-microplate)\n[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)\n[![napari hub](https://img.shields.io/badge/napari-plugin-microplate-green.svg)](https://napari-hub.org)\n\nA [napari](https://napari.org) plugin for end-to-end analysis of microbiology\n**microplate images**: align the plate, detect every well, and classify each\nwell as **Growth / NoGrowth / NoAgar**.\n\nThe plugin runs a three-stage pipeline directly in the napari viewer and\nrenders the result as overlay layers you can inspect interactively.\n\n```\nraw microplate image\n   \u2502\n   \u251c\u2500\u2500\u25ba Stage 1 \u2014 Align plate       (EfficientNet-B3 corner regression, grayscale)\n   \u2502       4-corner detection \u2192 perspective warp \u2192 canonical plate\n   \u251c\u2500\u2500\u25ba Stage 2 \u2014 Detect wells      (YOLOv8n, single-channel grayscale, ch=1)\n   \u2502       bounding box per well\n   \u2514\u2500\u2500\u25ba Stage 3 \u2014 Classify wells    (Random Forest)\n           Growth / NoGrowth / NoAgar\n```\n\n## Installation\n\n```bash\npip install napari-microplate\n```\n\nThis installs the plugin and all its pure-Python dependencies, **including\nPyTorch (CPU build)**. On first run the model weights (~700 MB total) are\ndownloaded automatically from the HuggingFace Hub and cached under\n`~/.cache/napari_microplate/`.\n\n### GPU acceleration (optional, recommended)\n\nThe CPU PyTorch build works but Stage 1 + Stage 2 are noticeably faster on GPU.\nTo use a CUDA GPU, install a CUDA-enabled PyTorch **before** or **after** the\nplugin:\n\n```bash\npip install torch torchvision --index-url https://download.pytorch.org/whl/cu126\n```\n\nThe plugin auto-detects CUDA via `torch.cuda.is_available()`.\n\n## Usage\n\n1. Launch napari:\n\n   ```bash\n   napari\n   ```\n\n2. Open a raw microplate image (`File \u2192 Open file(s)` or drag-and-drop).\n\n3. Start the plugin: **`Plugins \u2192 Microplate Pipeline`**.\n\n4. In the dock widget:\n   - pick the **Image layer** holding your microplate image,\n   - (optional) tick **Save PNG** and choose a **Save dir**,\n   - click **Run Pipeline**.\n\nTwo new layers are added to the viewer:\n\n| Layer | Type | Content |\n|-------|------|---------|\n| `aligned_plate` | Image (gray) | Plate after Stage 1 perspective warp |\n| `wells` | Shapes (rectangles) | One box per well, colored by predicted class |\n\nWell counts (`Growth / NoGrowth / NoAgar`) are shown in the napari status bar.\n\n## Configuration\n\n| Environment variable | Purpose | Default |\n|----------------------|---------|---------|\n| `MICROPLATE_HF_REPO` | HuggingFace repo id for the weights | `tiendoan274/napari-microplate-weights` |\n| `MICROPLATE_WEIGHTS_DIR` | Local folder of pre-downloaded weights (skip download) | *unset* |\n\nTo run fully offline, download the three weight files into a folder and set\n`MICROPLATE_WEIGHTS_DIR` to that folder:\n\n```\n$MICROPLATE_WEIGHTS_DIR/\n  stage1_efficientnet_b3.pt\n  stage2_yolov8n_well.pt\n  stage3_random_forest.joblib\n```\n\n## Programmatic use (without the GUI)\n\n```python\nfrom napari_microplate._pipeline import MicroplatePipeline\n\npipe = MicroplatePipeline()          # loads weights lazily on first run\nresult = pipe.run(\"plate.png\")       # path to a raw microplate image\n\nprint(result[\"boxes\"])               # [(x1,y1,x2,y2,conf), ...]\nprint(result[\"classes\"])             # [0, 1, 2, ...]  (0=Growth,1=NoGrowth,2=NoAgar)\n```\n\n## License\n\nCopyright (C) 2026 Tien Doan. Distributed under the\n**GNU Affero General Public License v3.0 or later (AGPL-3.0+)** \u2014 see\n[LICENSE](LICENSE).\n\nThis package vendors a modified copy of [Ultralytics 8.3.2](https://github.com/ultralytics/ultralytics)\n(AGPL-3.0) under `napari_microplate/_vendor/` to support single-channel\ngrayscale well detection. See [NOTICE](NOTICE) for details.\n\n## Citation\n\nIf you use this plugin in published research, please cite the accompanying paper\n(see `paper/` in the source repository).\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": "napari, microplate, YOLO, EfficientNet, biology, image-analysis",
+    "license": null,
+    "license_expression": "AGPL-3.0-or-later",
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-microplate",
+    "package_url": "https://pypi.org/project/napari-microplate/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-microplate/",
+    "project_urls": {
+      "Homepage": "https://github.com/TienDoan274/napari-microplate",
+      "Issues": "https://github.com/TienDoan274/napari-microplate/issues",
+      "Repository": "https://github.com/TienDoan274/napari-microplate"
+    },
+    "provides_extra": null,
+    "release_url": "https://pypi.org/project/napari-microplate/0.1.6/",
+    "requires_dist": [
+      "napari[pyqt6]>=0.4.18",
+      "magicgui>=0.7",
+      "huggingface_hub>=0.20",
+      "numpy",
+      "opencv-python",
+      "matplotlib",
+      "tqdm",
+      "Pillow",
+      "PyYAML",
+      "requests",
+      "psutil",
+      "scipy",
+      "shapely",
+      "torch",
+      "torchvision",
+      "timm",
+      "joblib",
+      "scikit-learn"
+    ],
+    "requires_python": ">=3.9",
+    "summary": "napari plugin \u2014 full microplate image pipeline (align plate \u2192 detect wells \u2192 classify wells)",
+    "version": "0.1.6",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 39205004,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "tiendoan274"
+      }
+    ]
+  },
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "71aa68ada2c0870864070ff8cba3e15cee03fffaa48d4a89b578f08a3e1d8d2a"
+        },
+        "digests": {
+          "blake2b_256": "8f4c31857eefde425104053bce6890950d2270d36384bd0b4afc5dc23e4ca99f",
+          "md5": "0e7d1d851fc9a564df7723184793458e",
+          "sha256": "c6c92820d89e5f82234ae28e0f78e010c7bae974ee57e4dda7e01cc3a2c3f16d"
+        },
+        "downloads": -1,
+        "filename": "napari_microplate-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "0e7d1d851fc9a564df7723184793458e",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 689235,
+        "upload_time": "2026-07-17T12:44:34",
+        "upload_time_iso_8601": "2026-07-17T12:44:34.110379Z",
+        "url": "https://files.pythonhosted.org/packages/8f/4c/31857eefde425104053bce6890950d2270d36384bd0b4afc5dc23e4ca99f/napari_microplate-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "fdae54372a4c38cb34885890fc1dcd60532a656472287c2ed4c8da0f0f63b79b",
+          "md5": "848bbc8bc11a8edc83937d7472e0788d",
+          "sha256": "ac4ea7e8c8080bfabeac65e409269cb15bb20409049c1e7cac0f12844a8eeeb2"
+        },
+        "downloads": -1,
+        "filename": "napari_microplate-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "848bbc8bc11a8edc83937d7472e0788d",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 546251,
+        "upload_time": "2026-07-17T12:44:35",
+        "upload_time_iso_8601": "2026-07-17T12:44:35.673397Z",
+        "url": "https://files.pythonhosted.org/packages/fd/ae/54372a4c38cb34885890fc1dcd60532a656472287c2ed4c8da0f0f63b79b/napari_microplate-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "197d832a5109e42f11fbd44da4275475c72a699a1eb346db825a695a1046e3f7"
+        },
+        "digests": {
+          "blake2b_256": "d1e2507465ef4ef48f1528781439b34d6fbf40671b4a5ff03e2bb6c3ca6b61e8",
+          "md5": "9531a0528af008225c611bbdf5c52c0c",
+          "sha256": "c836ec62fb42f32e69dbb48f1d71b98290e3b2f1d94262669cc4f939e1fcaf61"
+        },
+        "downloads": -1,
+        "filename": "napari_microplate-0.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "9531a0528af008225c611bbdf5c52c0c",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 689226,
+        "upload_time": "2026-07-17T12:59:01",
+        "upload_time_iso_8601": "2026-07-17T12:59:01.074669Z",
+        "url": "https://files.pythonhosted.org/packages/d1/e2/507465ef4ef48f1528781439b34d6fbf40671b4a5ff03e2bb6c3ca6b61e8/napari_microplate-0.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "e59f9885da879bc2964ca4f95ac5dd3fdd5d82acfc451d4b8bbae158fdc563d4",
+          "md5": "ec6fda9f9ca057240c38e1dae12038f5",
+          "sha256": "04726fefd3b241047d0722b05aebe3f621fc88c9085dfefe853bc3ea7f18f923"
+        },
+        "downloads": -1,
+        "filename": "napari_microplate-0.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "ec6fda9f9ca057240c38e1dae12038f5",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 546273,
+        "upload_time": "2026-07-17T12:59:02",
+        "upload_time_iso_8601": "2026-07-17T12:59:02.654911Z",
+        "url": "https://files.pythonhosted.org/packages/e5/9f/9885da879bc2964ca4f95ac5dd3fdd5d82acfc451d4b8bbae158fdc563d4/napari_microplate-0.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.2": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "536abbec295bc35af0830901257ac3726d8f8050ac6d8c0d0010096f59a4b3b6"
+        },
+        "digests": {
+          "blake2b_256": "902c175a7a962d0271e8d3fa7e0599ac183605c591d3962c259f5c0462e4626c",
+          "md5": "9bb08b867696f5020bfb5cb81621ffd0",
+          "sha256": "d4462cc9c7b23caabfab737004bbd3a5e55b16f0328cbd9c6b28372430ddeb4e"
+        },
+        "downloads": -1,
+        "filename": "napari_microplate-0.1.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "9bb08b867696f5020bfb5cb81621ffd0",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 689233,
+        "upload_time": "2026-07-18T02:12:03",
+        "upload_time_iso_8601": "2026-07-18T02:12:03.721929Z",
+        "url": "https://files.pythonhosted.org/packages/90/2c/175a7a962d0271e8d3fa7e0599ac183605c591d3962c259f5c0462e4626c/napari_microplate-0.1.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "e5b0044b31de928940b0a4dcd22c949aeb750d543375f8b39693e570b183973e",
+          "md5": "aa147851d7fa2c3c703a16ddea5478c3",
+          "sha256": "26b8138d2a036b2fdb9fcbc758f89158f79108198aafd5aa1c7e398f168854a8"
+        },
+        "downloads": -1,
+        "filename": "napari_microplate-0.1.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "aa147851d7fa2c3c703a16ddea5478c3",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 546384,
+        "upload_time": "2026-07-18T02:12:05",
+        "upload_time_iso_8601": "2026-07-18T02:12:05.382872Z",
+        "url": "https://files.pythonhosted.org/packages/e5/b0/044b31de928940b0a4dcd22c949aeb750d543375f8b39693e570b183973e/napari_microplate-0.1.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.3": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "37c33afa5f3903f40211ee86b65a0849d0962dbeef16da565d1b03481148dd0b"
+        },
+        "digests": {
+          "blake2b_256": "a321c20d1be1f29eb0c98119b561275b758af0f46d024e8aa4338418caf4a974",
+          "md5": "e1809fa2aeefdbcb30dc96c1ec979b43",
+          "sha256": "f0e95e6195d53da2fcda104ec12c4f4cd84accea2e3f050708138c5372253824"
+        },
+        "downloads": -1,
+        "filename": "napari_microplate-0.1.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "e1809fa2aeefdbcb30dc96c1ec979b43",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 689237,
+        "upload_time": "2026-07-18T02:23:25",
+        "upload_time_iso_8601": "2026-07-18T02:23:25.790067Z",
+        "url": "https://files.pythonhosted.org/packages/a3/21/c20d1be1f29eb0c98119b561275b758af0f46d024e8aa4338418caf4a974/napari_microplate-0.1.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "f0a688193941326ae8833318c1b334609a9cd840cf992e25b8e2b12f2f5e46ee",
+          "md5": "5f8881bc5e6085e9817c1977d6055e6d",
+          "sha256": "bcaf8347695d2df276d9fb009019b0e357670bd890fe8eecac3a556ded4eafc7"
+        },
+        "downloads": -1,
+        "filename": "napari_microplate-0.1.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "5f8881bc5e6085e9817c1977d6055e6d",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 546352,
+        "upload_time": "2026-07-18T02:23:27",
+        "upload_time_iso_8601": "2026-07-18T02:23:27.252137Z",
+        "url": "https://files.pythonhosted.org/packages/f0/a6/88193941326ae8833318c1b334609a9cd840cf992e25b8e2b12f2f5e46ee/napari_microplate-0.1.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.4": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "ad4804e631d20f342d25f9e26e79ff7fcfb8c3528af9ad3b49ae80460e70b5b2"
+        },
+        "digests": {
+          "blake2b_256": "1d20191088adcfc2a308c302fb766b3a9904c9ef8199c4e6301928a56cd9badc",
+          "md5": "a49e22f12f6058959cc29039b74e7df1",
+          "sha256": "06022189a2a3bccfc412927bc6157ed239716f6dc4c31acf5831ac231360c3ed"
+        },
+        "downloads": -1,
+        "filename": "napari_microplate-0.1.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "a49e22f12f6058959cc29039b74e7df1",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 689243,
+        "upload_time": "2026-07-18T02:35:31",
+        "upload_time_iso_8601": "2026-07-18T02:35:31.867096Z",
+        "url": "https://files.pythonhosted.org/packages/1d/20/191088adcfc2a308c302fb766b3a9904c9ef8199c4e6301928a56cd9badc/napari_microplate-0.1.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "396eccc6b407341e11d5ae4e420d1cbeb0df57a060175de433b29b9b3b9881e2",
+          "md5": "b2843b291fcd415bb2853890e906ecc4",
+          "sha256": "d117be1699233fcff408bd9f243c0a72bd6b2592383f36094a42dbb6a0c3a4bc"
+        },
+        "downloads": -1,
+        "filename": "napari_microplate-0.1.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "b2843b291fcd415bb2853890e906ecc4",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 546327,
+        "upload_time": "2026-07-18T02:35:33",
+        "upload_time_iso_8601": "2026-07-18T02:35:33.450085Z",
+        "url": "https://files.pythonhosted.org/packages/39/6e/ccc6b407341e11d5ae4e420d1cbeb0df57a060175de433b29b9b3b9881e2/napari_microplate-0.1.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.5": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "eb104a47be43db299a386f7d236de7a356187cf4173f6f6c494ddf6709bc6e14"
+        },
+        "digests": {
+          "blake2b_256": "d1b78ed5fdc87c8e60d20a3664bde61ac74d638bd1bfeedf6b70650546c3a878",
+          "md5": "eed2808fe1dbaa403d6865c68b6b9e36",
+          "sha256": "1bca5578f2d1009c531eb3312534622f41f4b6ddf38a009a70fb196bf98a4606"
+        },
+        "downloads": -1,
+        "filename": "napari_microplate-0.1.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "eed2808fe1dbaa403d6865c68b6b9e36",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 689971,
+        "upload_time": "2026-07-21T02:37:15",
+        "upload_time_iso_8601": "2026-07-21T02:37:15.176323Z",
+        "url": "https://files.pythonhosted.org/packages/d1/b7/8ed5fdc87c8e60d20a3664bde61ac74d638bd1bfeedf6b70650546c3a878/napari_microplate-0.1.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "78337680c78a965497600caf7f3da2e8515aec56f509c37cab64efeedc71183f",
+          "md5": "1955c1dd49157c4f324103b9744c3ba1",
+          "sha256": "52bccd6e8507ee7b34c845b13678d12e0dd52d02600c570a585881d1cbb3c4f3"
+        },
+        "downloads": -1,
+        "filename": "napari_microplate-0.1.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "1955c1dd49157c4f324103b9744c3ba1",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 546912,
+        "upload_time": "2026-07-21T02:37:17",
+        "upload_time_iso_8601": "2026-07-21T02:37:17.081640Z",
+        "url": "https://files.pythonhosted.org/packages/78/33/7680c78a965497600caf7f3da2e8515aec56f509c37cab64efeedc71183f/napari_microplate-0.1.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.6": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "a65dc369f145f454f18a3349d38ed563f4666ca6ca892355efc9b19a356487b5"
+        },
+        "digests": {
+          "blake2b_256": "9955751d42a54b6145dc7e0c39c1fa7530b89a1d65883ffe3d351eb87bd530e0",
+          "md5": "3bb3f019029775bbb7958fa789aa0cbc",
+          "sha256": "2e00ef2328a3e397f3e6270166bc5f5d24028f66da51dcdc37f1edfeb89663c5"
+        },
+        "downloads": -1,
+        "filename": "napari_microplate-0.1.6-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "3bb3f019029775bbb7958fa789aa0cbc",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 690075,
+        "upload_time": "2026-07-21T02:51:51",
+        "upload_time_iso_8601": "2026-07-21T02:51:51.219995Z",
+        "url": "https://files.pythonhosted.org/packages/99/55/751d42a54b6145dc7e0c39c1fa7530b89a1d65883ffe3d351eb87bd530e0/napari_microplate-0.1.6-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "ff0d2b78e019069c26146d8593ddaf5bea55823f5623d4c543574c888c1a99d1",
+          "md5": "f89353211b39e24c91dd3721780e477c",
+          "sha256": "75720f80876ae7f9d4ee02f0b76f448545796d5253aaf356e301ec1e89be797e"
+        },
+        "downloads": -1,
+        "filename": "napari_microplate-0.1.6.tar.gz",
+        "has_sig": false,
+        "md5_digest": "f89353211b39e24c91dd3721780e477c",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 547029,
+        "upload_time": "2026-07-21T02:51:52",
+        "upload_time_iso_8601": "2026-07-21T02:51:52.967823Z",
+        "url": "https://files.pythonhosted.org/packages/ff/0d/2b78e019069c26146d8593ddaf5bea55823f5623d4c543574c888c1a99d1/napari_microplate-0.1.6.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "a65dc369f145f454f18a3349d38ed563f4666ca6ca892355efc9b19a356487b5"
+      },
+      "digests": {
+        "blake2b_256": "9955751d42a54b6145dc7e0c39c1fa7530b89a1d65883ffe3d351eb87bd530e0",
+        "md5": "3bb3f019029775bbb7958fa789aa0cbc",
+        "sha256": "2e00ef2328a3e397f3e6270166bc5f5d24028f66da51dcdc37f1edfeb89663c5"
+      },
+      "downloads": -1,
+      "filename": "napari_microplate-0.1.6-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "3bb3f019029775bbb7958fa789aa0cbc",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.9",
+      "size": 690075,
+      "upload_time": "2026-07-21T02:51:51",
+      "upload_time_iso_8601": "2026-07-21T02:51:51.219995Z",
+      "url": "https://files.pythonhosted.org/packages/99/55/751d42a54b6145dc7e0c39c1fa7530b89a1d65883ffe3d351eb87bd530e0/napari_microplate-0.1.6-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "ff0d2b78e019069c26146d8593ddaf5bea55823f5623d4c543574c888c1a99d1",
+        "md5": "f89353211b39e24c91dd3721780e477c",
+        "sha256": "75720f80876ae7f9d4ee02f0b76f448545796d5253aaf356e301ec1e89be797e"
+      },
+      "downloads": -1,
+      "filename": "napari_microplate-0.1.6.tar.gz",
+      "has_sig": false,
+      "md5_digest": "f89353211b39e24c91dd3721780e477c",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.9",
+      "size": 547029,
+      "upload_time": "2026-07-21T02:51:52",
+      "upload_time_iso_8601": "2026-07-21T02:51:52.967823Z",
+      "url": "https://files.pythonhosted.org/packages/ff/0d/2b78e019069c26146d8593ddaf5bea55823f5623d4c543574c888c1a99d1/napari_microplate-0.1.6.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

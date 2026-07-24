@@ -1,0 +1,930 @@
+{
+  "info": {
+    "author": "Rensu P. Theart",
+    "author_email": null,
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 3 - Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.12",
+      "Topic :: Scientific/Engineering :: Bio-Informatics",
+      "Topic :: Scientific/Engineering :: Image Processing",
+      "Topic :: Scientific/Engineering :: Visualization"
+    ],
+    "description": "<p align=\"center\">\r\n  <picture>\r\n    <source media=\"(prefers-color-scheme: dark)\" srcset=\"docs/assets/branding/vipp-logo-dark.svg\">\r\n    <img src=\"docs/assets/branding/vipp-logo.svg\" alt=\"VIPP\" width=\"420\">\r\n  </picture>\r\n</p>\r\n\r\n# VIPP \u2014 Visual Image Processing Platform\r\n\r\n**Visual workflows for reproducible bioimage analysis.**\r\n\r\n[![CI](https://github.com/rensutheart/napari-vipp/actions/workflows/ci.yml/badge.svg)](https://github.com/rensutheart/napari-vipp/actions/workflows/ci.yml)\r\n[![PyPI](https://img.shields.io/pypi/v/napari-vipp.svg)](https://pypi.org/project/napari-vipp/)\r\n[![Python](https://img.shields.io/pypi/pyversions/napari-vipp.svg)](https://pypi.org/project/napari-vipp/)\r\n[![License](https://img.shields.io/pypi/l/napari-vipp.svg)](LICENSE)\r\n\r\n`napari-vipp` is the napari-native implementation of **VIPP, the Visual Image\r\nProcessing Platform**. Build typed node graphs, inspect intermediate images and\r\ntables, tune parameters, save workflows, and repeat the same operations without\r\nhiding axis or physical-scale metadata.\r\n\r\n> **Alpha software:** expect breaking workflow and parameter changes. Validate\r\n> outputs on representative data before scientific interpretation or\r\n> publication.\r\n\r\nVIPP's implemented safeguards include stable source revisions, physical-grid\r\nchecks, exact unsampled diagnostics, detached viewer layers, atomic artifacts,\r\nand batch publication only after source reverification. See the\r\n[scientific integrity boundaries](docs/architecture.md#scientific-integrity-boundaries)\r\nand the contributor [scientific behavior requirements](CONTRIBUTING.md#scientific-behavior-requirements).\r\n\r\n## Install And Open\r\n\r\nVIPP requires Python 3.12 or newer. If napari is not already installed, install\r\nit with a Qt backend at the same time:\r\n\r\n```bash\r\npython -m pip install \"napari[pyqt6]\"\r\npython -m pip install --pre napari-vipp\r\nvipp\r\n```\r\n\r\nThe `--pre` flag is required while VIPP is published as an alpha release. It is\r\nkept on the VIPP command so napari itself can continue to resolve to a stable\r\nrelease.\r\n\r\nIn napari, open:\r\n\r\n```text\r\nPlugins > VIPP Workflow (napari-vipp)\r\n```\r\n\r\nUse `Open example...` for a runnable workflow with synthetic data. A good first\r\nchoice is `Red-Channel Label Cleanup`; select nodes from left to right to review\r\ntheir parameters, thumbnails, metadata, and outputs. To explore collection\r\nprocessing, open `Deterministic Batch & Provenance`; VIPP prepares a small\r\nself-contained working copy and opens it already configured and previewed.\r\n\r\n![VIPP example workflow chooser](docs/assets/user-guide/vipp-example-chooser.png)\r\n\r\n## What It Supports\r\n\r\n| Area | Current alpha capabilities |\r\n| --- | --- |\r\n| Graph authoring | Searchable node palette, typed ports, dynamic outputs, cycle prevention, undo/redo, graph notes, named tunnels, auto-layout, and saved positions. |\r\n| Images and metadata | Semantic T/C/Z/Y/X axes, scale/units/origin, channel and acquisition metadata, source identity, and operation history. |\r\n| Image processing | Intensity transforms, filters, background correction, thresholding, watershed, binary/label morphology, channels, axes, masks, and composites. |\r\n| Measurements | Object and intensity tables, calibrated morphology, 3D mesh morphology, skeleton/network analysis, colocalization, object association, and table composition. |\r\n| Restoration | Born-Wolf PSF generation, measured-PSF preparation, and manual/cached 2D or 3D Richardson-Lucy and RL-TV deconvolution. |\r\n| Reuse and automation | Workflow JSON, generated headless Python, explicit batch outputs, reviewed collection plans, representative navigation, retained batch results, and workflow/config/manifest artifacts. |\r\n| I/O | OME-TIFF, ImageJ TIFF, TIFF, local OME-Zarr 0.4/0.5, NPY/NPZ, common 2D raster formats, and optional microscope readers. |\r\n\r\nMost graph operations are still eager. Large z-stacks and OME-Zarr datasets\r\ntherefore need deliberate cache, preview, and output choices; see the\r\n[cache and memory guide](docs/cache-and-memory.md).\r\n\r\n## Optional Microscope Readers\r\n\r\nInstall only the reader family you need, then restart napari:\r\n\r\n| Format family | Install command |\r\n| --- | --- |\r\n| Nikon ND2 | `python -m pip install --pre \"napari-vipp[nd2]\"` |\r\n| Zeiss CZI | `python -m pip install --pre \"napari-vipp[czi]\"` |\r\n| Mixed microscope formats | `python -m pip install --pre \"napari-vipp[microscope]\"` |\r\n| BioIO/Bio-Formats fallback | `python -m pip install --pre \"napari-vipp[bioformats]\"` |\r\n\r\nThese routes are an experimental foundation: axes and common metadata are\r\nnormalized where the source reader exposes them, but format-specific coverage\r\nstill needs validation against a broader corpus of real acquisition files.\r\n\r\n## Workflow Basics\r\n\r\n1. Add or select an `Image Source` for a napari layer, file, or bundled sample.\r\n2. Add nodes from the palette and connect compatible output and input ports.\r\n3. Select a node to tune parameters and inspect its output metadata.\r\n4. Click `Calculate` for manual/cached nodes such as measurements and\r\n   deconvolution.\r\n5. Pin important image outputs into napari for full-resolution comparison.\r\n6. Save the graph with `Save workflow...`.\r\n7. Add `Batch Output` nodes before `Batch workspace...` when exact saved outputs\r\n   matter.\r\n8. Optionally click `Preview batch` to inspect the complete plan and use the\r\n   representative slider or a preview-table row without running or saving the\r\n   full batch. Preview is not required: `Run batch` performs its own preflight.\r\n9. Run the collection from the retained workspace with one click, where\r\n   item-level progress, final statuses, validation, and the\r\n   `vipp_batch_manifest.json` path remain available for inspection.\r\n10. To validate the complete batch path without your own files, choose\r\n   `Open example...` -> `Deterministic Batch & Provenance` -> `Open batch\r\n   demo...`. Choose where to save its small working copy, review the populated\r\n   graph, move through all three paired fields with the representative slider,\r\n   review the three-item/nine-output batch preview, then click `Run demo batch`. VIPP\r\n   checks the finished outputs and provenance against exact ground truth\r\n   automatically.\r\n\r\nWorkflow JSON stores the graph and optional VIPP UI state, not cached pixels or\r\ntables. When Batch workspace is active, Save workflow can optionally attach its\r\nversioned config so the same workspace reopens from that one JSON file; local\r\npaths are included, but source pixels are not. `Export Python...` embeds a\r\nvalidated immutable workflow and executes it\r\nthrough the same headless pipeline engine as VIPP, including normalized\r\n`ImageState` propagation. See the [user guide](docs/user-guide.md) for source\r\nbinding, runtime-version, and command-line details.\r\n\r\n## Documentation\r\n\r\n- [Published VIPP documentation](https://rensutheart.github.io/vipp-mkdocs/)\r\n- [Categorized 0.12 release notes](CHANGELOG.md#0120a3---2026-07-20)\r\n- [Documentation index](docs/README.md)\r\n- [User guide](docs/user-guide.md)\r\n- [Image import and export](docs/io-user-guide.md)\r\n- [Example workflow index](examples/README.md)\r\n- [Measurement workflows](docs/measurement-workflows.md)\r\n- [Operator tips](docs/operator-tips.md)\r\n- [Developer notes](docs/developer-notes.md)\r\n- [Current planning and roadmap](docs/planning.md)\r\n\r\n## Development\r\n\r\nCreate a local environment and install the development dependencies:\r\n\r\n```powershell\r\npython -m venv .venv\r\n.venv\\Scripts\\Activate.ps1\r\npython -m pip install -e \".[dev]\"\r\n```\r\n\r\nRun the required checks:\r\n\r\n```bash\r\npython -m npe2 validate src/napari_vipp/napari.yaml\r\npython -m ruff check .\r\npython -m pytest\r\n```\r\n\r\nLaunch a development instance from the repository with `./vipp`; it uses the\r\nproject's `.venv-macos` environment directly, so shell activation is not\r\nrequired. The installed `vipp` command and `python -m napari_vipp` are also\r\nsupported. To open the synthetic sample with a pipeline run already completed, use\r\n`python scripts/launch_vipp_sample.py`. The\r\n[architecture reference](docs/architecture.md) explains the graph, metadata,\r\nexecution, persistence, and UI boundaries.\r\n\r\nContributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before\r\nopening a pull request, use [SUPPORT.md](SUPPORT.md) for help and issue-reporting\r\nguidance, and report suspected vulnerabilities privately through\r\n[SECURITY.md](SECURITY.md). All project interactions follow the\r\n[Code of Conduct](CODE_OF_CONDUCT.md).\r\n\r\n## 0.12 Alpha Highlights\r\n\r\n`0.12.0a3` is the current alpha. It builds on the 0.12 architecture and\r\nreproducibility baseline with:\r\n\r\n- direct batch execution with a fresh plan-only preflight while representative\r\n  preview remains optional;\r\n- an amber, user-confirmed `output` destination suggestion for new collection\r\n  bindings;\r\n- fast no-read/no-calculation handling when every resolved `Skip` output exists,\r\n  plus more resilient atomic artifact handling on Windows and synced folders;\r\n- optional workflow JSON attachment of the validated Batch workspace settings,\r\n  restored without scanning or calculating a representative; and\r\n- one clearly separated main-toolbar Batch workspace entry, with Load before\r\n  Save consistently across workflow and batch controls.\r\n\r\nThe 0.12 foundation also provides:\r\n\r\n- workflow schema version 3 records explicit axis, channel, grid, and operation\r\n  choices instead of restoring ambiguous scientific defaults;\r\n- verified file and live-layer revisions, physical-grid checks, detached viewer\r\n  layers, and atomic artifacts reject stale or silently repaired inputs;\r\n- generated Python and collection batching now use the same validated headless\r\n  executor as the interactive graph;\r\n- the retained batch workspace adds reviewed plans, representative navigation,\r\n  explicit outputs, per-item provenance, collision policies, progress, final\r\n  statuses, manifests, and deterministic validation;\r\n- exact diagnostics, background workers, and platform-specific memory reporting\r\n  improve responsiveness without changing the population being measured;\r\n- Richardson-Lucy TV controls now explain parameter effects and provide\r\n  practical linear or geometric slider windows without limiting exact spinner\r\n  entry; and\r\n- the former monolithic widget has been decomposed into focused Qt-free core and\r\n  UI service modules with dependency-direction tests.\r\n\r\nBreaking alpha changes are intentional where preserving an older implicit\r\nbehavior would weaken scientific validity. See the categorized\r\n[0.12 release notes](CHANGELOG.md#0120a3---2026-07-20), the\r\n[upgrade and workflow contract](docs/user-guide.md#save-workflow-json), and\r\n[planning.md](docs/planning.md) for later milestones. Semantic-axis collection\r\niteration, HCS traversal, scalable OME-Zarr previews, and broader scientific\r\nvalidation remain future work.\r\n\r\n## Citation, Acknowledgement, And License\r\n\r\nIf VIPP contributes to your work, acknowledge `napari-vipp` and link to the\r\n[project repository](https://github.com/rensutheart/napari-vipp). Citation\r\nmetadata is available in [CITATION.cff](CITATION.cff); a DOI or manuscript\r\ncitation can be added when available.\r\n\r\nnapari-vipp is distributed under the BSD 3-Clause License. See\r\n[LICENSE](LICENSE) for the full terms.\r\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": "bioimage analysis, fluorescence microscopy, image processing, napari, node graph, visual programming",
+    "license": null,
+    "license_expression": "BSD-3-Clause",
+    "license_files": [
+      "LICENSE",
+      "NOTICE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-vipp",
+    "package_url": "https://pypi.org/project/napari-vipp/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-vipp/",
+    "project_urls": {
+      "Discussions": "https://github.com/rensutheart/napari-vipp/discussions",
+      "Documentation": "https://rensutheart.github.io/vipp-mkdocs/",
+      "Homepage": "https://github.com/rensutheart/napari-vipp",
+      "Issues": "https://github.com/rensutheart/napari-vipp/issues",
+      "Repository": "https://github.com/rensutheart/napari-vipp"
+    },
+    "provides_extra": [
+      "czi",
+      "dev",
+      "bioformats",
+      "microscope",
+      "nd2"
+    ],
+    "release_url": "https://pypi.org/project/napari-vipp/0.12.0a3/",
+    "requires_dist": [
+      "dask[array]>=2025.2",
+      "fsspec>=2024.2",
+      "imageio>=2.31",
+      "numpy>=1.24",
+      "ome-types>=0.6",
+      "ome-zarr>=0.17",
+      "pillow>=10",
+      "qtpy>=2.4",
+      "scikit-image>=0.21",
+      "scipy>=1.10",
+      "tifffile>=2023.8",
+      "zarr>=3.0",
+      "bioio>=3.4; extra == \"czi\"",
+      "bioio-czi; extra == \"czi\"",
+      "czifile[all]>=2026.6.12; python_version >= \"3.12\" and extra == \"czi\"",
+      "build>=1.2; extra == \"dev\"",
+      "napari[pyqt6]>=0.6; extra == \"dev\"",
+      "npe2>=0.8; extra == \"dev\"",
+      "pytest>=8; extra == \"dev\"",
+      "pytest-qt>=4.4; extra == \"dev\"",
+      "ruff>=0.12; extra == \"dev\"",
+      "bioio>=3.4; extra == \"bioformats\"",
+      "bioio-bioformats; extra == \"bioformats\"",
+      "bioio-czi; extra == \"bioformats\"",
+      "bioio-lif; extra == \"bioformats\"",
+      "bioio>=3.4; extra == \"microscope\"",
+      "bioio-bioformats; extra == \"microscope\"",
+      "bioio-czi; extra == \"microscope\"",
+      "bioio-lif; extra == \"microscope\"",
+      "czifile[all]>=2026.6.12; python_version >= \"3.12\" and extra == \"microscope\"",
+      "liffile[all]>=2026.4.11; python_version >= \"3.12\" and extra == \"microscope\"",
+      "nd2>=0.11; extra == \"microscope\"",
+      "oiffile[all]>=2026.2.8; python_version >= \"3.11\" and extra == \"microscope\"",
+      "oirfile[all]>=2026.4.25; python_version >= \"3.12\" and extra == \"microscope\"",
+      "nd2>=0.11; extra == \"nd2\""
+    ],
+    "requires_python": ">=3.12",
+    "summary": "Visual workflows for reproducible bioimage analysis",
+    "version": "0.12.0a3",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 39186434,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "rensutheart"
+      }
+    ]
+  },
+  "releases": {
+    "0.10.0a1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "096e9eb371e768daa609f7e70cfba5aac8cb542567b2258eb73466b55e700bd9"
+        },
+        "digests": {
+          "blake2b_256": "8b4b600d1ff779763351a9cc3479e3fa4749afb553e57804d6811adb36de76a6",
+          "md5": "ead2224303653dd2bfcc74a142731d4a",
+          "sha256": "bcfacbb7610da577573b1821d3fa6095387cc65a9d6781889704dd0cdcd570db"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.10.0a1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "ead2224303653dd2bfcc74a142731d4a",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 275981,
+        "upload_time": "2026-07-07T20:07:49",
+        "upload_time_iso_8601": "2026-07-07T20:07:49.135930Z",
+        "url": "https://files.pythonhosted.org/packages/8b/4b/600d1ff779763351a9cc3479e3fa4749afb553e57804d6811adb36de76a6/napari_vipp-0.10.0a1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "8841830c503f1ab4ef4fcfc93426211b34b4847d9cfcc4f4c62d2f8a8f693104",
+          "md5": "b0eb0938bf92ff41179b59e03dbd7311",
+          "sha256": "c711361dc90c7b2cfd015c739bdb5ab39017c81e86b97ad885af8aa325387d3f"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.10.0a1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "b0eb0938bf92ff41179b59e03dbd7311",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 274997,
+        "upload_time": "2026-07-07T20:07:51",
+        "upload_time_iso_8601": "2026-07-07T20:07:51.961652Z",
+        "url": "https://files.pythonhosted.org/packages/88/41/830c503f1ab4ef4fcfc93426211b34b4847d9cfcc4f4c62d2f8a8f693104/napari_vipp-0.10.0a1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.11.0a1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "fb9f0c11edede2385972ab987f7fe4e7b7d1149cd8c0ffc4c440e7d4c2e4e27b"
+        },
+        "digests": {
+          "blake2b_256": "d5556c0d4854aab3cb0e40669ab08e3b903d0f5636d142a475ab91c255857ace",
+          "md5": "3383a89dac66c7e18ca0f501f2dfe524",
+          "sha256": "fd740d4ae513b1b6e29958cc07704a1f2174d542be11a168079dcda5e57d13c2"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.11.0a1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "3383a89dac66c7e18ca0f501f2dfe524",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 321083,
+        "upload_time": "2026-07-09T19:05:23",
+        "upload_time_iso_8601": "2026-07-09T19:05:23.315989Z",
+        "url": "https://files.pythonhosted.org/packages/d5/55/6c0d4854aab3cb0e40669ab08e3b903d0f5636d142a475ab91c255857ace/napari_vipp-0.11.0a1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "37d119da8a8ff8ee398e6de6976ef0edcc011d767fb1c89031f5077960c5147c",
+          "md5": "67d40c35ca8d30c174072f34a8e47cd2",
+          "sha256": "e745c8972abec58db1a5164f0325cbab5468f0f54fcc410bcb65a770cb144de0"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.11.0a1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "67d40c35ca8d30c174072f34a8e47cd2",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 311532,
+        "upload_time": "2026-07-09T19:05:28",
+        "upload_time_iso_8601": "2026-07-09T19:05:28.994348Z",
+        "url": "https://files.pythonhosted.org/packages/37/d1/19da8a8ff8ee398e6de6976ef0edcc011d767fb1c89031f5077960c5147c/napari_vipp-0.11.0a1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.11.0a2": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "5b02ddae6b4beabb502834399c62937119706bbaff64246ffb38a75d933484e6"
+        },
+        "digests": {
+          "blake2b_256": "7c814b3084213e03538a4a89dd90d4f26ea9db60d4a167947bc45aa97c5e5566",
+          "md5": "1f9ecd56a4249eea1924cdce6614be95",
+          "sha256": "5d4e7e102bf75fedc03ba44a29846c1e58cee9b11cd8ba762494882230302229"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.11.0a2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "1f9ecd56a4249eea1924cdce6614be95",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.12",
+        "size": 316391,
+        "upload_time": "2026-07-11T09:01:56",
+        "upload_time_iso_8601": "2026-07-11T09:01:56.301850Z",
+        "url": "https://files.pythonhosted.org/packages/7c/81/4b3084213e03538a4a89dd90d4f26ea9db60d4a167947bc45aa97c5e5566/napari_vipp-0.11.0a2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "ad7668d5f852531e5e329385d2a7815a89db14b37725d638c10ac04cdf716ad1",
+          "md5": "e698d249c4444b134ba672a65541067a",
+          "sha256": "97e2ee4c1fb038f0121b4c40925a2b40e3ccc4d15c91e14b9ff5653d86b209bf"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.11.0a2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e698d249c4444b134ba672a65541067a",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.12",
+        "size": 749702,
+        "upload_time": "2026-07-11T09:01:57",
+        "upload_time_iso_8601": "2026-07-11T09:01:57.887706Z",
+        "url": "https://files.pythonhosted.org/packages/ad/76/68d5f852531e5e329385d2a7815a89db14b37725d638c10ac04cdf716ad1/napari_vipp-0.11.0a2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.11.0a3": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "37be10a9b1473b048dc7159fe830cbfd475b01bb2c899691ec1a6ac359450e5c"
+        },
+        "digests": {
+          "blake2b_256": "3c4842d0241a547721e0347813e8a5ed9f47a841c2440a8d469c8a8d26df20dd",
+          "md5": "5078783ff6811cf525ab60e44a6cfe51",
+          "sha256": "08f3b98b667b522c784bea2462568a1762c757f3d08725b5778df0f92bfcbbf2"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.11.0a3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "5078783ff6811cf525ab60e44a6cfe51",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.12",
+        "size": 341193,
+        "upload_time": "2026-07-12T08:35:25",
+        "upload_time_iso_8601": "2026-07-12T08:35:25.105896Z",
+        "url": "https://files.pythonhosted.org/packages/3c/48/42d0241a547721e0347813e8a5ed9f47a841c2440a8d469c8a8d26df20dd/napari_vipp-0.11.0a3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "8fcf109c467ef4dd7b535a6ade1d8972bfacda017eeba658fe6fcf9230aa59a1",
+          "md5": "22d971c3a370a444d08c2bfbfc0e7ac5",
+          "sha256": "4446090a941af222754afd7a131a64de3c4a5be4eae3abefaae0a4d12c8a82c8"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.11.0a3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "22d971c3a370a444d08c2bfbfc0e7ac5",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.12",
+        "size": 783008,
+        "upload_time": "2026-07-12T08:35:26",
+        "upload_time_iso_8601": "2026-07-12T08:35:26.885682Z",
+        "url": "https://files.pythonhosted.org/packages/8f/cf/109c467ef4dd7b535a6ade1d8972bfacda017eeba658fe6fcf9230aa59a1/napari_vipp-0.11.0a3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.12.0a1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "44eb6ab4e4320fc321c73b276bc3e908cd92c2c40cc53ef0ff22899e79600dcf"
+        },
+        "digests": {
+          "blake2b_256": "83829f756b98216335608c8d7ec4d81eaaaeb9231d1b72ac58ad89cb314fc2d3",
+          "md5": "4ef76fc5e14a7873373b6dd9df50878d",
+          "sha256": "5c956c0e695c562043419edd0a187aae55337d4240ada2c5b2307088352e9278"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.12.0a1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "4ef76fc5e14a7873373b6dd9df50878d",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.12",
+        "size": 455142,
+        "upload_time": "2026-07-14T19:32:17",
+        "upload_time_iso_8601": "2026-07-14T19:32:17.064053Z",
+        "url": "https://files.pythonhosted.org/packages/83/82/9f756b98216335608c8d7ec4d81eaaaeb9231d1b72ac58ad89cb314fc2d3/napari_vipp-0.12.0a1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "2a4e53c81ce526d6da59973f2834d4f8e0cfa529c7147a8ea97b1f0979aff757",
+          "md5": "479353268b0c3d39b2107f486e83dbf1",
+          "sha256": "1345bfa7a8290d98b049fd9b56ae080b1233547c09be8f8ce2da4adc8afa10c1"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.12.0a1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "479353268b0c3d39b2107f486e83dbf1",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.12",
+        "size": 989329,
+        "upload_time": "2026-07-14T19:32:19",
+        "upload_time_iso_8601": "2026-07-14T19:32:19.655604Z",
+        "url": "https://files.pythonhosted.org/packages/2a/4e/53c81ce526d6da59973f2834d4f8e0cfa529c7147a8ea97b1f0979aff757/napari_vipp-0.12.0a1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.12.0a2": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "2995c5394c95083eb1be3398c7a7f51d899ea8b1a9342d88c4ca9fd9f8936ef9"
+        },
+        "digests": {
+          "blake2b_256": "807a481b83c9c9bb68945138fe85613fc037ea5033f371950d8466d95e7c66fe",
+          "md5": "0be4aaa744ed382add8db794f2ac87b0",
+          "sha256": "782e5078169fc97fd59e0bd978e2c0e74191613d6c094949543911f590794fa7"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.12.0a2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "0be4aaa744ed382add8db794f2ac87b0",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.12",
+        "size": 488371,
+        "upload_time": "2026-07-16T14:46:08",
+        "upload_time_iso_8601": "2026-07-16T14:46:08.710219Z",
+        "url": "https://files.pythonhosted.org/packages/80/7a/481b83c9c9bb68945138fe85613fc037ea5033f371950d8466d95e7c66fe/napari_vipp-0.12.0a2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "262ab6e81ce58cba80caf31ba2dbce97b81d98e40cd7c1f4a1a05dde9f97db19",
+          "md5": "2a3d02106fa04a9ef99c6b12112a8fba",
+          "sha256": "5ff954c9190a107c2f9e4aff3ddfa4005a146c12c0dec5ac95c82cb887df217c"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.12.0a2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "2a3d02106fa04a9ef99c6b12112a8fba",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.12",
+        "size": 1051475,
+        "upload_time": "2026-07-16T14:46:10",
+        "upload_time_iso_8601": "2026-07-16T14:46:10.659941Z",
+        "url": "https://files.pythonhosted.org/packages/26/2a/b6e81ce58cba80caf31ba2dbce97b81d98e40cd7c1f4a1a05dde9f97db19/napari_vipp-0.12.0a2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.12.0a3": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "84e7c608e69ab49c08169f289884c978360a4eb4d02c75846afa10254d1a6f79"
+        },
+        "digests": {
+          "blake2b_256": "3d11230f73d32b41961308cbe64ec7ab074afc722d6131f7c78158b45f45fdbc",
+          "md5": "b7bdebbda2af67f39d0e34be94ab76ce",
+          "sha256": "6230726a27f3e8fb874141d2b6596ad4275bb748bdb7689010a47211919028fc"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.12.0a3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "b7bdebbda2af67f39d0e34be94ab76ce",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.12",
+        "size": 491734,
+        "upload_time": "2026-07-20T14:55:38",
+        "upload_time_iso_8601": "2026-07-20T14:55:38.224815Z",
+        "url": "https://files.pythonhosted.org/packages/3d/11/230f73d32b41961308cbe64ec7ab074afc722d6131f7c78158b45f45fdbc/napari_vipp-0.12.0a3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "f5c0a754e5e52f1af726ffd33d90b3f6b5f9b9b3b23bc88af5b91f6760285bda",
+          "md5": "4f80935edb1ac4b3c00ddd84b32073b4",
+          "sha256": "417f5f0392fe0736bd9cb5072c695af81e722486cd8251832295a723e00849cb"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.12.0a3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "4f80935edb1ac4b3c00ddd84b32073b4",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.12",
+        "size": 1057031,
+        "upload_time": "2026-07-20T14:55:41",
+        "upload_time_iso_8601": "2026-07-20T14:55:41.490535Z",
+        "url": "https://files.pythonhosted.org/packages/f5/c0/a754e5e52f1af726ffd33d90b3f6b5f9b9b3b23bc88af5b91f6760285bda/napari_vipp-0.12.0a3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.7.0a1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "cc7f2a3e55de553b06fac3e8faba03e8b0bd105e2b094cf83b85a332cb4cd03d"
+        },
+        "digests": {
+          "blake2b_256": "5f94db094724a7d5ba25f7fb9d94e07dc8babdaab44673799b96d04a1009af43",
+          "md5": "a991e043261fcbf7da36b78dfa5c8e23",
+          "sha256": "fdada94ef88bec2b5fb1e0be810b1872be654f8421c71dc5621ea91e63225b46"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.7.0a1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "a991e043261fcbf7da36b78dfa5c8e23",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 172148,
+        "upload_time": "2026-06-25T07:44:25",
+        "upload_time_iso_8601": "2026-06-25T07:44:25.495796Z",
+        "url": "https://files.pythonhosted.org/packages/5f/94/db094724a7d5ba25f7fb9d94e07dc8babdaab44673799b96d04a1009af43/napari_vipp-0.7.0a1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "d72fb3ab77c4c244c868d39518c384ad782e2698196df5bcc6d6811e49cfc595",
+          "md5": "b2919d72cbcefce75ea3d22bd2f3c3d4",
+          "sha256": "29b1fcb1272e2053bd2c32b69250e0220d06fe5f3901d18648f52f47ef05402e"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.7.0a1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "b2919d72cbcefce75ea3d22bd2f3c3d4",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 170934,
+        "upload_time": "2026-06-25T07:44:26",
+        "upload_time_iso_8601": "2026-06-25T07:44:26.928395Z",
+        "url": "https://files.pythonhosted.org/packages/d7/2f/b3ab77c4c244c868d39518c384ad782e2698196df5bcc6d6811e49cfc595/napari_vipp-0.7.0a1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.7.1a1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "1509211cf168b65d2b486c614a7671c8db5e3906323a930da061189d630024dd"
+        },
+        "digests": {
+          "blake2b_256": "188e694fc6f18a4cf545274c3295a961abd666fc9451fe05383f282da0c47746",
+          "md5": "6487696a00a970c5398d2d6ba2d4870f",
+          "sha256": "89b57549f3f54254fd90a4e17fcf07072c19429f98589416cb9be4dea65aa3ce"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.7.1a1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "6487696a00a970c5398d2d6ba2d4870f",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 173412,
+        "upload_time": "2026-06-25T10:53:29",
+        "upload_time_iso_8601": "2026-06-25T10:53:29.636327Z",
+        "url": "https://files.pythonhosted.org/packages/18/8e/694fc6f18a4cf545274c3295a961abd666fc9451fe05383f282da0c47746/napari_vipp-0.7.1a1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "dabd03cfee5f3de41e6bb31ae68bcf1a7a3be2c889bb91e0f68319f15dfc52b5",
+          "md5": "e2759a5b6df3e679db80aa3be308f5cc",
+          "sha256": "56a95f359491368db832856cce6311a54a5885feab3286ca890f52c7474ca076"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.7.1a1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e2759a5b6df3e679db80aa3be308f5cc",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 172149,
+        "upload_time": "2026-06-25T10:53:30",
+        "upload_time_iso_8601": "2026-06-25T10:53:30.882319Z",
+        "url": "https://files.pythonhosted.org/packages/da/bd/03cfee5f3de41e6bb31ae68bcf1a7a3be2c889bb91e0f68319f15dfc52b5/napari_vipp-0.7.1a1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.7.2a1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "5e99d77c58430804be15ff1a356ad1f28e9062127f16e44f69cbe63521f72d78"
+        },
+        "digests": {
+          "blake2b_256": "8c694cbdd4bf8350d1e77442abc4aa336b27b81c377adfeebf65536caec35480",
+          "md5": "8d25aff07ab4dd3dea452829838cf070",
+          "sha256": "eab45aff78387496128854dd0c12ab3cc8a557155a75313d9d657d9794253606"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.7.2a1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "8d25aff07ab4dd3dea452829838cf070",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 176397,
+        "upload_time": "2026-06-26T07:27:30",
+        "upload_time_iso_8601": "2026-06-26T07:27:30.357650Z",
+        "url": "https://files.pythonhosted.org/packages/8c/69/4cbdd4bf8350d1e77442abc4aa336b27b81c377adfeebf65536caec35480/napari_vipp-0.7.2a1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "bf1c193689da3b26f9ea2f32bdbadf5f52b0e2c6f57408f68eec16e2c54fee20",
+          "md5": "904bb517cf17cb803b9807b2b1c5405d",
+          "sha256": "21f99be175bbfe00332e51ced32b5adc0750cfa8093c13789fc9bfc8e8be1079"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.7.2a1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "904bb517cf17cb803b9807b2b1c5405d",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 175307,
+        "upload_time": "2026-06-26T07:27:31",
+        "upload_time_iso_8601": "2026-06-26T07:27:31.647111Z",
+        "url": "https://files.pythonhosted.org/packages/bf/1c/193689da3b26f9ea2f32bdbadf5f52b0e2c6f57408f68eec16e2c54fee20/napari_vipp-0.7.2a1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.8.0a1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "3247d9f506d6cd95d3d6de30389dd7ae242a4620dcda57a6df4b78145beb0e40"
+        },
+        "digests": {
+          "blake2b_256": "44ce0a34161225eda03d9be73ad602daeb5ed8f4fa76151d965c716161afd77c",
+          "md5": "29623c56ee610dc22f8f5b7e2041a4b7",
+          "sha256": "5a081a559dd30c8dff8e0b5a01c937ba0c087eaa33363289668d259b23075bdc"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.8.0a1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "29623c56ee610dc22f8f5b7e2041a4b7",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 183630,
+        "upload_time": "2026-06-29T14:39:44",
+        "upload_time_iso_8601": "2026-06-29T14:39:44.322261Z",
+        "url": "https://files.pythonhosted.org/packages/44/ce/0a34161225eda03d9be73ad602daeb5ed8f4fa76151d965c716161afd77c/napari_vipp-0.8.0a1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "1aee14e84deb2a7139ba6f15405951423392824ab32d4337579bbd65a987d177",
+          "md5": "13bea214a818b4c97479fc999068c6b6",
+          "sha256": "139b0e1ea5321a291ad48620aea75e18cc0e7ad582cae20dfabca39a9989741e"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.8.0a1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "13bea214a818b4c97479fc999068c6b6",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 182393,
+        "upload_time": "2026-06-29T14:39:45",
+        "upload_time_iso_8601": "2026-06-29T14:39:45.848193Z",
+        "url": "https://files.pythonhosted.org/packages/1a/ee/14e84deb2a7139ba6f15405951423392824ab32d4337579bbd65a987d177/napari_vipp-0.8.0a1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.8.1a1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "d465d266051bc2333d6a3b6fde1bb37e3aa46f6e1dd46c5fc1d389761ebf22b3"
+        },
+        "digests": {
+          "blake2b_256": "0b043c511799c782a7ce3d082f6dac87132dcf5f56aeca38141b10d0cbe26693",
+          "md5": "8c352f6991ae7dec09488c4f864d63cd",
+          "sha256": "ca12670bc00e28a6416845c11723db4670e9f065e74faf4febd3585977eb91c6"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.8.1a1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "8c352f6991ae7dec09488c4f864d63cd",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 190126,
+        "upload_time": "2026-06-29T21:02:38",
+        "upload_time_iso_8601": "2026-06-29T21:02:38.853651Z",
+        "url": "https://files.pythonhosted.org/packages/0b/04/3c511799c782a7ce3d082f6dac87132dcf5f56aeca38141b10d0cbe26693/napari_vipp-0.8.1a1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "20dde7f439a5c6f3baebce176e2ca3a32acec63fa30513da3bea047660a15994",
+          "md5": "5aa73817d9808d1b58f8cfce68f08915",
+          "sha256": "9b8b860e81b3a8ebd8d949f9ce22bb24ecf866d0290d436f48f6dc06e1bb8cf3"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.8.1a1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "5aa73817d9808d1b58f8cfce68f08915",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 187257,
+        "upload_time": "2026-06-29T21:02:40",
+        "upload_time_iso_8601": "2026-06-29T21:02:40.489045Z",
+        "url": "https://files.pythonhosted.org/packages/20/dd/e7f439a5c6f3baebce176e2ca3a32acec63fa30513da3bea047660a15994/napari_vipp-0.8.1a1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.8.2a1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "4fd67263d8500413f1a633086b9a1e742417e15b48aa1291215a9a29fb554b6c"
+        },
+        "digests": {
+          "blake2b_256": "a802d7662255662e03de15b00e5f1ac1132889b3914d6493ad45584b7c090be1",
+          "md5": "c370560f624dc245b22776ff89427116",
+          "sha256": "5f61935b8d1430d6733d8dd923d18a1d919bb40c788df7d06a46a28fba34a336"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.8.2a1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "c370560f624dc245b22776ff89427116",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 191409,
+        "upload_time": "2026-06-30T18:24:02",
+        "upload_time_iso_8601": "2026-06-30T18:24:02.946169Z",
+        "url": "https://files.pythonhosted.org/packages/a8/02/d7662255662e03de15b00e5f1ac1132889b3914d6493ad45584b7c090be1/napari_vipp-0.8.2a1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "4a69d1f9b52b7275c4806c12b2c3bea35006b48a6307f2cfd68e1425ebaf2aa8",
+          "md5": "30e72516f5f5f85580a54c577070e550",
+          "sha256": "f15d1ab1fd3e0943e61b7c4efd3fb32248dddbbecd153fefcfa3d8c050aadc16"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.8.2a1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "30e72516f5f5f85580a54c577070e550",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 188531,
+        "upload_time": "2026-06-30T18:24:04",
+        "upload_time_iso_8601": "2026-06-30T18:24:04.654746Z",
+        "url": "https://files.pythonhosted.org/packages/4a/69/d1f9b52b7275c4806c12b2c3bea35006b48a6307f2cfd68e1425ebaf2aa8/napari_vipp-0.8.2a1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.8.2a2": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "9ed871932ce49b6acb7c154011659b8e98be5b9c8eb3f448cf06edc8b6844e5c"
+        },
+        "digests": {
+          "blake2b_256": "b84faca91f948aaa76fba09e33e4fabc123e7213915b3f07f640c0103024cc76",
+          "md5": "578508d096c120f1c3ac9742b9c7224c",
+          "sha256": "5fa626fd20851e9868f0b629eb73fa0bb9da6f106900b630082f1a544929c706"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.8.2a2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "578508d096c120f1c3ac9742b9c7224c",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 194116,
+        "upload_time": "2026-06-30T20:10:02",
+        "upload_time_iso_8601": "2026-06-30T20:10:02.401479Z",
+        "url": "https://files.pythonhosted.org/packages/b8/4f/aca91f948aaa76fba09e33e4fabc123e7213915b3f07f640c0103024cc76/napari_vipp-0.8.2a2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "bf461ea56deb850eb2497448675f3e105dfdab389ea110743fb9e2e43de0e51b",
+          "md5": "679a37a6a27ac03b860fc10a553006c7",
+          "sha256": "f02fbf03d20fec8d91f335bf3f28714b85797909873a454fd994b9c05c20ae05"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.8.2a2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "679a37a6a27ac03b860fc10a553006c7",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 190875,
+        "upload_time": "2026-06-30T20:10:03",
+        "upload_time_iso_8601": "2026-06-30T20:10:03.973050Z",
+        "url": "https://files.pythonhosted.org/packages/bf/46/1ea56deb850eb2497448675f3e105dfdab389ea110743fb9e2e43de0e51b/napari_vipp-0.8.2a2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.8.3a1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "3bb0ecac16092e714a1e2a12f5d990778c71eac795ff02abb1cb2f8ae2495887"
+        },
+        "digests": {
+          "blake2b_256": "3a6cdf858d560328e844e9e0a749603ee7da588426eedd855784441ee0aa5718",
+          "md5": "0bb036cbcbf64d7db10ace89bdfa379d",
+          "sha256": "14cc965a9ef19194dfaff5d0a3ed599d8226777fb5aab58cf3613b9f1b640088"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.8.3a1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "0bb036cbcbf64d7db10ace89bdfa379d",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 221134,
+        "upload_time": "2026-07-02T17:59:42",
+        "upload_time_iso_8601": "2026-07-02T17:59:42.308424Z",
+        "url": "https://files.pythonhosted.org/packages/3a/6c/df858d560328e844e9e0a749603ee7da588426eedd855784441ee0aa5718/napari_vipp-0.8.3a1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "6596dcc1de669b122b642909999fc8f6dda04ec1c039ede19a5cf09191996345",
+          "md5": "c985f636750e64823f9c53372563379f",
+          "sha256": "87f8b10e575d407ede685c6969454b6049ccc03d4aec91bd1913107a89c2a894"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.8.3a1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "c985f636750e64823f9c53372563379f",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 218844,
+        "upload_time": "2026-07-02T17:59:43",
+        "upload_time_iso_8601": "2026-07-02T17:59:43.980782Z",
+        "url": "https://files.pythonhosted.org/packages/65/96/dcc1de669b122b642909999fc8f6dda04ec1c039ede19a5cf09191996345/napari_vipp-0.8.3a1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.9.0a1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "6cf7d2d1a8b4147440a6dde00c5c61d287b3b946086a4e287e563b1b367bc9c4"
+        },
+        "digests": {
+          "blake2b_256": "1029cd1c2d896ab9ca4c6c7a7ef37876910467e5464e603d069b274a9bd4b1d7",
+          "md5": "b84e639ee377fe91f88689ba7bc49c16",
+          "sha256": "c0458abf2023566569d498b4958d81be5212b9e93f88205c1ab725e4d362703b"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.9.0a1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "b84e639ee377fe91f88689ba7bc49c16",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 246727,
+        "upload_time": "2026-07-05T19:15:19",
+        "upload_time_iso_8601": "2026-07-05T19:15:19.803650Z",
+        "url": "https://files.pythonhosted.org/packages/10/29/cd1c2d896ab9ca4c6c7a7ef37876910467e5464e603d069b274a9bd4b1d7/napari_vipp-0.9.0a1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "a54a25062895567ed28f9ab283f356dc8acbbdebeffb93a230b8a7a07d99c082",
+          "md5": "5f1b6fc3c7612fa4f4ace7c956255854",
+          "sha256": "87230b3e7babff0373f1f320599aff43703bc24237a0488da9b948f4b8fb073a"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.9.0a1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "5f1b6fc3c7612fa4f4ace7c956255854",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 246275,
+        "upload_time": "2026-07-05T19:15:21",
+        "upload_time_iso_8601": "2026-07-05T19:15:21.426768Z",
+        "url": "https://files.pythonhosted.org/packages/a5/4a/25062895567ed28f9ab283f356dc8acbbdebeffb93a230b8a7a07d99c082/napari_vipp-0.9.0a1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "84e7c608e69ab49c08169f289884c978360a4eb4d02c75846afa10254d1a6f79"
+      },
+      "digests": {
+        "blake2b_256": "3d11230f73d32b41961308cbe64ec7ab074afc722d6131f7c78158b45f45fdbc",
+        "md5": "b7bdebbda2af67f39d0e34be94ab76ce",
+        "sha256": "6230726a27f3e8fb874141d2b6596ad4275bb748bdb7689010a47211919028fc"
+      },
+      "downloads": -1,
+      "filename": "napari_vipp-0.12.0a3-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "b7bdebbda2af67f39d0e34be94ab76ce",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.12",
+      "size": 491734,
+      "upload_time": "2026-07-20T14:55:38",
+      "upload_time_iso_8601": "2026-07-20T14:55:38.224815Z",
+      "url": "https://files.pythonhosted.org/packages/3d/11/230f73d32b41961308cbe64ec7ab074afc722d6131f7c78158b45f45fdbc/napari_vipp-0.12.0a3-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "f5c0a754e5e52f1af726ffd33d90b3f6b5f9b9b3b23bc88af5b91f6760285bda",
+        "md5": "4f80935edb1ac4b3c00ddd84b32073b4",
+        "sha256": "417f5f0392fe0736bd9cb5072c695af81e722486cd8251832295a723e00849cb"
+      },
+      "downloads": -1,
+      "filename": "napari_vipp-0.12.0a3.tar.gz",
+      "has_sig": false,
+      "md5_digest": "4f80935edb1ac4b3c00ddd84b32073b4",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.12",
+      "size": 1057031,
+      "upload_time": "2026-07-20T14:55:41",
+      "upload_time_iso_8601": "2026-07-20T14:55:41.490535Z",
+      "url": "https://files.pythonhosted.org/packages/f5/c0/a754e5e52f1af726ffd33d90b3f6b5f9b9b3b23bc88af5b91f6760285bda/napari_vipp-0.12.0a3.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

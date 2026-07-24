@@ -1,0 +1,660 @@
+{
+  "info": {
+    "author": null,
+    "author_email": "Volker Baecker <volker.baecker@mri.cnrs.fr>, Cl\u00e9ment Benedetti <clement.benedetti@mri.cnrs.fr>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 4 - Beta",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: MIT License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Software Development :: Libraries :: Python Modules"
+    ],
+    "description": "# auto-options-python\n\nMange command options in python and create QWidgets for them.\n\n## Introduction\n\n<figure>\n  <img src=\"https://github.com/user-attachments/assets/ea23f8a5-81d7-4524-90d0-9d5a4daaea63\" alt=\"A simple options dialog\" style=\"width:250\", align='center'>\n  <figcaption>Fig. 1.1 - A simple dialog created with autooptions</figcaption>\n</figure>\n\nAutooptions allows to create options for operations in napari, in a simple way. Autooptions automatically saves and\nloads non transient options. It can create a dialog from the options, in which the user can change the values of the\noptions. It updates combo-boxes containing layers of a given type when layers of that type are added or removed in\nnapari. The user can provide callbacks that are called when the value of an option changes.\n\nThe option types currently supported are:\n\n- Image\n- FFT (specific to 3D-toolbox)\n- Labels\n- Points\n- Int\n- Float\n- Choice\n- String\n- Boolean\n\nThe layer types (FFT, Labels, Points and Image) and Choice will be represented via combo-boxes in the dialog. Boolean\nis using a checkbox and the others are using input fields.\n\nThe code to create the options-dialog in .1.1 is:\n\n```python\n import napari\n from autooptions.options import Options\n from autooptions.widget import OptionsWidget\n\n viewer = napari.Viewer()\n options = Options(\"3D Toolbox\", \"Convolution\")\n options.addImage()\n options.addImage(name=\"kernel\")\n options.addChoice(\"mode\", choices=[\"same\", \"valid\", \"full\"])\n options.addChoice(\"method\", choices=[\"auto\", \"direct\", \"fft\"])\n options.load()\n widget = OptionsWidget(viewer, options, layout_type=\"vertical\")\n widget.addApplyButton(None)\n viewer.window.add_dock_widget(widget, name=options.optionsName)\n```\n\n## Accessing the values of options\n\nYou can access the user input of the widgets via the options name:\n\n```python\n    print(options.value(\"image\"))\n    print(options.value(\"method\"))\n```\nThe shortcut ``getImageLayer``, allows to directly retrieve the layer selected in the widget, without retrieving the name first and then the layer.\n\n```python\nkernelLayer = widget.getImageLayer(\"kernel\")\n```\n\n## Callbacks\n\nYou can register callbacks for options and for buttons. The callback of an option is called when the user input for the option changed. For the predifined buttons ``apply`` and ``ok`` the values are automatically copied from the widget into the option, before the user registered callback is called.\n\n```python\n options = Options(\"3D Toolbox\", \"Convolution\")\n options.addImage(callback, callback=self.onInputImageChanged)\n self.widget = OptionsWidget(self.viewer, self.options, client=self)\n widget.addApplyButton(self.handleApplyButtonPressed)\n```\n\n## Accessing widgets\n\nYou can access a widget, for example to check that only valid values can be entered:\n\n```python\n    def onInputChanged(self, value):\n        if not value.isnumeric():\n            self.widget.widgets[\"size xy\"][1].setText(str(self.options.value(\"size xy\")))\n```\n\n## Optional options\n\nYou can create optional options :) These are displayed with a checkbox to activate/deactivate them. When deactivated the option will be ignored. This allows to avoid the usage of special values in options that indicate for example that the user doesn't want to enter a value for the option in which case a default or on the fly calculated value is used. \n\n```python\noptions = Options(\"Filament Toolbox\", \"measure_labels\")\noptions.addLabels()\noptions.addImage(optional=[True, False])\n```\n``[True, False]`` indicates that the option is optional and by default deactivated. The value of a deactivated option will be ``None``. \n\n<figure>\n  <img src=\"https://github.com/user-attachments/assets/cd4cdbf3-a626-4c37-b1b5-76481c21cf61\" alt=\"An optional option\" style=\"width:250\", align='center'>\n  <figcaption>Fig. 1.2 - The image option is optional</figcaption>\n</figure>\n\n## Layouts\n\nCurrently the ``vertical`` and the ``grid`` layout are supportet. If no layout is specified the grid layout is used. See Fig.1.1 for a vertical layout. \n\n<figure>\n  <img src=\"https://github.com/user-attachments/assets/7abfa93c-0d02-4bdf-a0fa-ae975bfcbb81\" alt=\"grid layout style=\"width:250\", align='center'>\n  <figcaption>Fig. 1.3 - The same option's dialog as in Fig. 1.1, but with a grid layout.</figcaption>\n</figure>\n\n```python\nimport napari\nfrom autooptions.options import Options\nfrom autooptions.widget import OptionsWidget\n\nviewer = napari.Viewer()\noptions = Options(\"3D Toolbox\", \"Convolution\")\noptions.addImage()\noptions.addImage(name=\"kernel\")\noptions.addChoice(\"mode\", choices=[\"same\", \"valid\", \"full\"])\noptions.addChoice(\"method\", choices=[\"auto\", \"direct\", \"fft\"])\noptions.load()\nwidget = OptionsWidget(viewer, options, layout_type=\"grid\")\nwidget.addApplyButton(None)\nviewer.window.add_dock_widget(widget, name=options.optionsName)\n```\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": "MIT License\n        \n        Copyright (c) 2025 Montpellier Ressources Imagerie\n        \n        Permission is hereby granted, free of charge, to any person obtaining a copy\n        of this software and associated documentation files (the \"Software\"), to deal\n        in the Software without restriction, including without limitation the rights\n        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n        copies of the Software, and to permit persons to whom the Software is\n        furnished to do so, subject to the following conditions:\n        \n        The above copyright notice and this permission notice shall be included in all\n        copies or substantial portions of the Software.\n        \n        THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n        SOFTWARE.\n        ",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "auto-options-python",
+    "package_url": "https://pypi.org/project/auto-options-python/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/auto-options-python/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/MontpellierRessourcesImagerie/auto-options-python/issues",
+      "Documentation": "https://montpellierressourcesimagerie.github.io/auto-options-python/",
+      "Source Code": "https://github.com/MontpellierRessourcesImagerie/auto-options-python",
+      "User Support": "https://github.com/MontpellierRessourcesImagerie/auto-options-python/issues"
+    },
+    "provides_extra": null,
+    "release_url": "https://pypi.org/project/auto-options-python/1.1.4/",
+    "requires_dist": [
+      "appdirs",
+      "qtpy",
+      "napari",
+      "pyperclip",
+      "matplotlib"
+    ],
+    "requires_python": ">=3.10",
+    "summary": "Manage command options in Python and create QWidgets for them.",
+    "version": "1.1.4",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 39209564,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "c-h-benedetti"
+      },
+      {
+        "role": "Owner",
+        "user": "volker-baecker"
+      }
+    ]
+  },
+  "releases": {
+    "0.1.4": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "a286edf0a6c5d858998760f8c5108cb71c8112574ae2a2d26e03cad8cb1b312e"
+        },
+        "digests": {
+          "blake2b_256": "9848ae865a7514681e1f673298117de7a39f7c62f7524bf3c0417cd04735c061",
+          "md5": "263a539f50f9f0c408f66b36658ce7ee",
+          "sha256": "5eb99aef2ebdd32c1361daa2d31dd7ea034aae56d7d011444eb20cb3c6319a5f"
+        },
+        "downloads": -1,
+        "filename": "auto_options_python-0.1.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "263a539f50f9f0c408f66b36658ce7ee",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 20150,
+        "upload_time": "2026-04-03T10:36:31",
+        "upload_time_iso_8601": "2026-04-03T10:36:31.459019Z",
+        "url": "https://files.pythonhosted.org/packages/98/48/ae865a7514681e1f673298117de7a39f7c62f7524bf3c0417cd04735c061/auto_options_python-0.1.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "769493037ff7daeb75fda011c6bb20d81df7e3307c02ca5a8d40cc73153cf26f",
+          "md5": "1814905bc13072b0356f6e8aad312136",
+          "sha256": "9fa6de9ddacd7b81f4c3dc3e2618920c8f466b7fbee1dc8f3b5bafffa7578fab"
+        },
+        "downloads": -1,
+        "filename": "auto_options_python-0.1.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "1814905bc13072b0356f6e8aad312136",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 24658,
+        "upload_time": "2026-04-03T10:36:32",
+        "upload_time_iso_8601": "2026-04-03T10:36:32.633933Z",
+        "url": "https://files.pythonhosted.org/packages/76/94/93037ff7daeb75fda011c6bb20d81df7e3307c02ca5a8d40cc73153cf26f/auto_options_python-0.1.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.5": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "d374d74b7760fc8885e89c6b61cc2a3061d4aaa85ec7c9e756737807e2244786"
+        },
+        "digests": {
+          "blake2b_256": "790a138cdcac6a601c279f747f07fb87a43603643ebbaf30910f9bdd1f6ae28e",
+          "md5": "dac78c7ac45ed055d7d349aa4d4dfd13",
+          "sha256": "02a18acdc8aed747acb31971c18bc97c27954ab79919ec8cb8f99e2350947494"
+        },
+        "downloads": -1,
+        "filename": "auto_options_python-0.1.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "dac78c7ac45ed055d7d349aa4d4dfd13",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 20196,
+        "upload_time": "2026-04-03T16:30:53",
+        "upload_time_iso_8601": "2026-04-03T16:30:53.636162Z",
+        "url": "https://files.pythonhosted.org/packages/79/0a/138cdcac6a601c279f747f07fb87a43603643ebbaf30910f9bdd1f6ae28e/auto_options_python-0.1.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "40c6fdac80cd5cce80495f5fb873b66867c9d6a48fa57b152f152489ad9eb4fc",
+          "md5": "d593858512c3f128ade43376a0f3eac6",
+          "sha256": "a83aaa4886b78cb3583c18b75754e8efac219370ea8eb7a7feb0b4c38cd9516a"
+        },
+        "downloads": -1,
+        "filename": "auto_options_python-0.1.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d593858512c3f128ade43376a0f3eac6",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 24699,
+        "upload_time": "2026-04-03T16:30:54",
+        "upload_time_iso_8601": "2026-04-03T16:30:54.495367Z",
+        "url": "https://files.pythonhosted.org/packages/40/c6/fdac80cd5cce80495f5fb873b66867c9d6a48fa57b152f152489ad9eb4fc/auto_options_python-0.1.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.6": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "d21322d11e28c00e1a6e3f5475c68ccaf397980580f55a62bc28c8134f716573"
+        },
+        "digests": {
+          "blake2b_256": "5d8b97ac5fdb1ba78a2c05ab6026b0667935e66be7e131d188ffa7bdb97a9652",
+          "md5": "74ce76163345346f5cb5b9125912ea88",
+          "sha256": "3a1f1dbdd9d47a84034ba8540c16f05da894bc4d2adb406470c47c158d3e1149"
+        },
+        "downloads": -1,
+        "filename": "auto_options_python-0.1.6-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "74ce76163345346f5cb5b9125912ea88",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 20344,
+        "upload_time": "2026-04-21T15:07:00",
+        "upload_time_iso_8601": "2026-04-21T15:07:00.314310Z",
+        "url": "https://files.pythonhosted.org/packages/5d/8b/97ac5fdb1ba78a2c05ab6026b0667935e66be7e131d188ffa7bdb97a9652/auto_options_python-0.1.6-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "7121e09935dd972b5e16dd122f94cec759b05d0378fd89f84110f4c24d7b7686",
+          "md5": "6be2cf1083351f9e6e8a1e92fca3844c",
+          "sha256": "4accca176ce7a6231ce5b77369b48dcd037e41dccff88d0e3db493a846ffdd73"
+        },
+        "downloads": -1,
+        "filename": "auto_options_python-0.1.6.tar.gz",
+        "has_sig": false,
+        "md5_digest": "6be2cf1083351f9e6e8a1e92fca3844c",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 24846,
+        "upload_time": "2026-04-21T15:07:01",
+        "upload_time_iso_8601": "2026-04-21T15:07:01.223804Z",
+        "url": "https://files.pythonhosted.org/packages/71/21/e09935dd972b5e16dd122f94cec759b05d0378fd89f84110f4c24d7b7686/auto_options_python-0.1.6.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.7": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "9958bde73d9da8d71f1efa763565d0c905d3e4d9afebcf85c74908f8a4d4e802"
+        },
+        "digests": {
+          "blake2b_256": "d03687ee547c282c247ad8d043d652e4ddd429f4ade74e5e5769f29c50d70d6e",
+          "md5": "0ad926c77b141dde46d59d940fbb3a38",
+          "sha256": "7d2096baded0f1e1cf21b6bfe7fc592fed2c2bf21c4498232b83d34b4c97ec73"
+        },
+        "downloads": -1,
+        "filename": "auto_options_python-0.1.7-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "0ad926c77b141dde46d59d940fbb3a38",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 25536,
+        "upload_time": "2026-04-29T12:50:51",
+        "upload_time_iso_8601": "2026-04-29T12:50:51.273336Z",
+        "url": "https://files.pythonhosted.org/packages/d0/36/87ee547c282c247ad8d043d652e4ddd429f4ade74e5e5769f29c50d70d6e/auto_options_python-0.1.7-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "660cbc9715120ceec631dd625736b0b3365ae2bc440d0f2fa23107dd5e7d516e",
+          "md5": "24b8eccf82a809788f08895da21e53d7",
+          "sha256": "57246cbff3e40a1aac1eea85cdd9528b4356cf025e0e2d031ee4ddf4ed43c6f5"
+        },
+        "downloads": -1,
+        "filename": "auto_options_python-0.1.7.tar.gz",
+        "has_sig": false,
+        "md5_digest": "24b8eccf82a809788f08895da21e53d7",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 28290,
+        "upload_time": "2026-04-29T12:50:52",
+        "upload_time_iso_8601": "2026-04-29T12:50:52.212020Z",
+        "url": "https://files.pythonhosted.org/packages/66/0c/bc9715120ceec631dd625736b0b3365ae2bc440d0f2fa23107dd5e7d516e/auto_options_python-0.1.7.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.8": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "694c3ae8e5e3c4768694ae7644408b5bbfafe05b688fd53b441a2aa6f4de58c1"
+        },
+        "digests": {
+          "blake2b_256": "07def545ae170a1e2cbd2ca540c5c0362e935aa9714edc2c14d9e17957d3768b",
+          "md5": "cd5c8c8733bdebfa511f130ac124f6f8",
+          "sha256": "0e4ad09f10b3aeeb88723da6805d0880a51ed37bb4f3f121b971ef6722afc458"
+        },
+        "downloads": -1,
+        "filename": "auto_options_python-1.0.8-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "cd5c8c8733bdebfa511f130ac124f6f8",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 25601,
+        "upload_time": "2026-05-12T13:55:52",
+        "upload_time_iso_8601": "2026-05-12T13:55:52.416679Z",
+        "url": "https://files.pythonhosted.org/packages/07/de/f545ae170a1e2cbd2ca540c5c0362e935aa9714edc2c14d9e17957d3768b/auto_options_python-1.0.8-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "318a989c8aa202164770cb8d122319100cf75af134d5a00e567985d673bcdbc3",
+          "md5": "a23c94bb80f1ae5174f0b82b95d4153c",
+          "sha256": "ff1280bf66d07692678eb745e68ace12cb23dc1ca6876ac3b76543f40edc872e"
+        },
+        "downloads": -1,
+        "filename": "auto_options_python-1.0.8.tar.gz",
+        "has_sig": false,
+        "md5_digest": "a23c94bb80f1ae5174f0b82b95d4153c",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 28323,
+        "upload_time": "2026-05-12T13:55:53",
+        "upload_time_iso_8601": "2026-05-12T13:55:53.361967Z",
+        "url": "https://files.pythonhosted.org/packages/31/8a/989c8aa202164770cb8d122319100cf75af134d5a00e567985d673bcdbc3/auto_options_python-1.0.8.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.9": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "fb7f8a61e6048f5ade301106ad6ccd12ceb498040e760ccdfb7e3fec8f8c8846"
+        },
+        "digests": {
+          "blake2b_256": "2bfa7c3ccef8006fe75ad3b81dfba146a217e1688009aff79da09bbd19f34d44",
+          "md5": "01c3c69cb9936512e1508f780397e747",
+          "sha256": "b3b53fd94fd303f337834cad60616e3e457f9f332d2e49d10c0c1629eca2d698"
+        },
+        "downloads": -1,
+        "filename": "auto_options_python-1.0.9-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "01c3c69cb9936512e1508f780397e747",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 25639,
+        "upload_time": "2026-05-15T09:27:15",
+        "upload_time_iso_8601": "2026-05-15T09:27:15.229190Z",
+        "url": "https://files.pythonhosted.org/packages/2b/fa/7c3ccef8006fe75ad3b81dfba146a217e1688009aff79da09bbd19f34d44/auto_options_python-1.0.9-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "34be88509c5c01296cb5d0218c0b849cbf2b4e71aa31fbd27e775b2db4540042",
+          "md5": "6c2a07bcc8d725735747f8fd53501329",
+          "sha256": "3372ab2a58996745142487b36e6debc7a13b0a4f5f00d7d4bc8288466eeee646"
+        },
+        "downloads": -1,
+        "filename": "auto_options_python-1.0.9.tar.gz",
+        "has_sig": false,
+        "md5_digest": "6c2a07bcc8d725735747f8fd53501329",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 28364,
+        "upload_time": "2026-05-15T09:27:16",
+        "upload_time_iso_8601": "2026-05-15T09:27:16.587503Z",
+        "url": "https://files.pythonhosted.org/packages/34/be/88509c5c01296cb5d0218c0b849cbf2b4e71aa31fbd27e775b2db4540042/auto_options_python-1.0.9.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.1.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "f618c7dc3d0181aa9c093294707f1895ce2594fd064d121582f67e15d8db1caf"
+        },
+        "digests": {
+          "blake2b_256": "fdfb1ae5fc9bdb075aa5db172e4e98ce972572d89bce9f1302c1342dba849949",
+          "md5": "b76248d65cdd53e87a9552892a3288a9",
+          "sha256": "d73bae4382bfd39bd086c0fd0683311709de9fdfdf43a99facaf938457bec908"
+        },
+        "downloads": -1,
+        "filename": "auto_options_python-1.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "b76248d65cdd53e87a9552892a3288a9",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 25639,
+        "upload_time": "2026-05-15T09:42:56",
+        "upload_time_iso_8601": "2026-05-15T09:42:56.137645Z",
+        "url": "https://files.pythonhosted.org/packages/fd/fb/1ae5fc9bdb075aa5db172e4e98ce972572d89bce9f1302c1342dba849949/auto_options_python-1.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "80af212e290ed437ae9b5b4bcc21668ee78393ecb44fd431975e211357749558",
+          "md5": "20c1f36f82e2c780aeecd92891a98bec",
+          "sha256": "fc7245856ecee03dd3524d9f23f20f67d74e4be2867a6c99a1edef80b490ab43"
+        },
+        "downloads": -1,
+        "filename": "auto_options_python-1.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "20c1f36f82e2c780aeecd92891a98bec",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 28349,
+        "upload_time": "2026-05-15T09:42:57",
+        "upload_time_iso_8601": "2026-05-15T09:42:57.321933Z",
+        "url": "https://files.pythonhosted.org/packages/80/af/212e290ed437ae9b5b4bcc21668ee78393ecb44fd431975e211357749558/auto_options_python-1.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.1.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "9bb304ab8ad26a0a183116baed588f533116f245d44b4f4913c97adc04b169db"
+        },
+        "digests": {
+          "blake2b_256": "4c596c373cfad33e917c7c7781651f109b2a41777a70e25ee5aeeb6f499d6714",
+          "md5": "b51c0483992cedc2f7e87b584f8d220d",
+          "sha256": "0cec794dcc0ba7ed215e6ba1101365bd548af81097761e2b95b42ddc983dc2ee"
+        },
+        "downloads": -1,
+        "filename": "auto_options_python-1.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "b51c0483992cedc2f7e87b584f8d220d",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 25640,
+        "upload_time": "2026-05-17T21:18:13",
+        "upload_time_iso_8601": "2026-05-17T21:18:13.393692Z",
+        "url": "https://files.pythonhosted.org/packages/4c/59/6c373cfad33e917c7c7781651f109b2a41777a70e25ee5aeeb6f499d6714/auto_options_python-1.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "5784a1dd8d58b2dd0d1ce1ffda8a19cc25ab12bec88320eb99d55803d3b73653",
+          "md5": "2c7ebfdf37e53f2dc4acd268073d0022",
+          "sha256": "1709eed4c32562678955e95bcfea08eac8c545a79b78db8bf6879310a9354edc"
+        },
+        "downloads": -1,
+        "filename": "auto_options_python-1.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "2c7ebfdf37e53f2dc4acd268073d0022",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 28360,
+        "upload_time": "2026-05-17T21:18:14",
+        "upload_time_iso_8601": "2026-05-17T21:18:14.286394Z",
+        "url": "https://files.pythonhosted.org/packages/57/84/a1dd8d58b2dd0d1ce1ffda8a19cc25ab12bec88320eb99d55803d3b73653/auto_options_python-1.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.1.2": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "899bd26a01e432219661be2c7e3b9a8ee36497fb6f568b5e4512c3d01dd49edb"
+        },
+        "digests": {
+          "blake2b_256": "6168821b6e0f57c298b03c8c3ae308c10b1bf03921c12600488d4d02a3e39850",
+          "md5": "f5e562dc4ba29af0eff774c1236f3c84",
+          "sha256": "f201fa58c3e68a1d08355ee13aeda78790870ea84573c5cdcae3577c846d1152"
+        },
+        "downloads": -1,
+        "filename": "auto_options_python-1.1.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "f5e562dc4ba29af0eff774c1236f3c84",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 27311,
+        "upload_time": "2026-05-22T15:26:45",
+        "upload_time_iso_8601": "2026-05-22T15:26:45.010983Z",
+        "url": "https://files.pythonhosted.org/packages/61/68/821b6e0f57c298b03c8c3ae308c10b1bf03921c12600488d4d02a3e39850/auto_options_python-1.1.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "f9fbb732306c6c27f012681587873bf7f4a389187cae52d84f9f222cfa630abd",
+          "md5": "8a8c69514c75d75379bae770124466f8",
+          "sha256": "e1752c0cc37676921e968776d6ff5f308b6fcf6f69dc2e3506082c2bcc7762cc"
+        },
+        "downloads": -1,
+        "filename": "auto_options_python-1.1.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "8a8c69514c75d75379bae770124466f8",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 31074,
+        "upload_time": "2026-05-22T15:26:46",
+        "upload_time_iso_8601": "2026-05-22T15:26:46.862037Z",
+        "url": "https://files.pythonhosted.org/packages/f9/fb/b732306c6c27f012681587873bf7f4a389187cae52d84f9f222cfa630abd/auto_options_python-1.1.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.1.3": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "873fbec043b02d1d3214fdb7b2c032627b6007bede84beaf5da4132f3b0fdd4e"
+        },
+        "digests": {
+          "blake2b_256": "8397703f096f27d0e12f415638d3c8fb9db017d613c4804cbbc4fbd656b2b9c3",
+          "md5": "47db89f67473e7954f1578e47aaef1f1",
+          "sha256": "39ed7dd847ce100ccfcbaef7f969946c8599177fb65aabe87054fc4b62a6d480"
+        },
+        "downloads": -1,
+        "filename": "auto_options_python-1.1.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "47db89f67473e7954f1578e47aaef1f1",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 27450,
+        "upload_time": "2026-05-23T23:30:01",
+        "upload_time_iso_8601": "2026-05-23T23:30:01.637116Z",
+        "url": "https://files.pythonhosted.org/packages/83/97/703f096f27d0e12f415638d3c8fb9db017d613c4804cbbc4fbd656b2b9c3/auto_options_python-1.1.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "b768fa45e66c5bed07220b81ba404d333ec975560cb5a9797112071a35d4b764",
+          "md5": "c853f586a740deecb28754c58adf56d3",
+          "sha256": "305180331923d76c3f5b5bd8e922a7ddc658ff8f31090ff6bc9d9997e0ac8afd"
+        },
+        "downloads": -1,
+        "filename": "auto_options_python-1.1.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "c853f586a740deecb28754c58adf56d3",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 31211,
+        "upload_time": "2026-05-23T23:30:02",
+        "upload_time_iso_8601": "2026-05-23T23:30:02.914287Z",
+        "url": "https://files.pythonhosted.org/packages/b7/68/fa45e66c5bed07220b81ba404d333ec975560cb5a9797112071a35d4b764/auto_options_python-1.1.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.1.4": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "013a3cace6b33cb5365d3f32632b97e3f82646ff7882f3c9281af9c648e452ad"
+        },
+        "digests": {
+          "blake2b_256": "f3dd77ac64a9b3a6348b837362e9c274891e1fe414a02f9130190824be46f084",
+          "md5": "db1cacccb14361bfa2887763c6d3d871",
+          "sha256": "81fb2ca293022d8457cf744c9d0c281e8ed0095abf4eb8f034ec9f95acf4f974"
+        },
+        "downloads": -1,
+        "filename": "auto_options_python-1.1.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "db1cacccb14361bfa2887763c6d3d871",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 27638,
+        "upload_time": "2026-06-05T15:08:11",
+        "upload_time_iso_8601": "2026-06-05T15:08:11.674820Z",
+        "url": "https://files.pythonhosted.org/packages/f3/dd/77ac64a9b3a6348b837362e9c274891e1fe414a02f9130190824be46f084/auto_options_python-1.1.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "50fcef3d0b4db5c2cc8c62ba9f121cd28785119efef1895db3134d38b06f3077",
+          "md5": "a30e59349cfd8980b3236876388a4098",
+          "sha256": "6032bb37874ff0576e3168aeef69ce8e7df3e8d75e78c823fb8913b80333bf4f"
+        },
+        "downloads": -1,
+        "filename": "auto_options_python-1.1.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "a30e59349cfd8980b3236876388a4098",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 31428,
+        "upload_time": "2026-06-05T15:08:12",
+        "upload_time_iso_8601": "2026-06-05T15:08:12.777343Z",
+        "url": "https://files.pythonhosted.org/packages/50/fc/ef3d0b4db5c2cc8c62ba9f121cd28785119efef1895db3134d38b06f3077/auto_options_python-1.1.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "013a3cace6b33cb5365d3f32632b97e3f82646ff7882f3c9281af9c648e452ad"
+      },
+      "digests": {
+        "blake2b_256": "f3dd77ac64a9b3a6348b837362e9c274891e1fe414a02f9130190824be46f084",
+        "md5": "db1cacccb14361bfa2887763c6d3d871",
+        "sha256": "81fb2ca293022d8457cf744c9d0c281e8ed0095abf4eb8f034ec9f95acf4f974"
+      },
+      "downloads": -1,
+      "filename": "auto_options_python-1.1.4-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "db1cacccb14361bfa2887763c6d3d871",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.10",
+      "size": 27638,
+      "upload_time": "2026-06-05T15:08:11",
+      "upload_time_iso_8601": "2026-06-05T15:08:11.674820Z",
+      "url": "https://files.pythonhosted.org/packages/f3/dd/77ac64a9b3a6348b837362e9c274891e1fe414a02f9130190824be46f084/auto_options_python-1.1.4-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "50fcef3d0b4db5c2cc8c62ba9f121cd28785119efef1895db3134d38b06f3077",
+        "md5": "a30e59349cfd8980b3236876388a4098",
+        "sha256": "6032bb37874ff0576e3168aeef69ce8e7df3e8d75e78c823fb8913b80333bf4f"
+      },
+      "downloads": -1,
+      "filename": "auto_options_python-1.1.4.tar.gz",
+      "has_sig": false,
+      "md5_digest": "a30e59349cfd8980b3236876388a4098",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.10",
+      "size": 31428,
+      "upload_time": "2026-06-05T15:08:12",
+      "upload_time_iso_8601": "2026-06-05T15:08:12.777343Z",
+      "url": "https://files.pythonhosted.org/packages/50/fc/ef3d0b4db5c2cc8c62ba9f121cd28785119efef1895db3134d38b06f3077/auto_options_python-1.1.4.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

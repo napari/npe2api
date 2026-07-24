@@ -1,0 +1,100 @@
+{
+  "name": "napari-microplate",
+  "display_name": "Microplate Pipeline",
+  "visibility": "public",
+  "icon": null,
+  "categories": [],
+  "schema_version": "0.2.1",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-microplate.make_qwidget",
+        "title": "Make Microplate Pipeline widget",
+        "python_name": "napari_microplate._dock:MicroplateWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "napari-microplate.make_qwidget",
+        "display_name": "Microplate Pipeline",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "napari-microplate",
+    "version": "0.1.6",
+    "dynamic": [
+      "license-file"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "napari plugin — full microplate image pipeline (align plate → detect wells → classify wells)",
+    "description": "# napari-microplate\n\n[![PyPI](https://img.shields.io/pypi/v/napari-microplate.svg)](https://pypi.org/project/napari-microplate)\n[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)\n[![napari hub](https://img.shields.io/badge/napari-plugin-microplate-green.svg)](https://napari-hub.org)\n\nA [napari](https://napari.org) plugin for end-to-end analysis of microbiology\n**microplate images**: align the plate, detect every well, and classify each\nwell as **Growth / NoGrowth / NoAgar**.\n\nThe plugin runs a three-stage pipeline directly in the napari viewer and\nrenders the result as overlay layers you can inspect interactively.\n\n```\nraw microplate image\n   │\n   ├──► Stage 1 — Align plate       (EfficientNet-B3 corner regression, grayscale)\n   │       4-corner detection → perspective warp → canonical plate\n   ├──► Stage 2 — Detect wells      (YOLOv8n, single-channel grayscale, ch=1)\n   │       bounding box per well\n   └──► Stage 3 — Classify wells    (Random Forest)\n           Growth / NoGrowth / NoAgar\n```\n\n## Installation\n\n```bash\npip install napari-microplate\n```\n\nThis installs the plugin and all its pure-Python dependencies, **including\nPyTorch (CPU build)**. On first run the model weights (~700 MB total) are\ndownloaded automatically from the HuggingFace Hub and cached under\n`~/.cache/napari_microplate/`.\n\n### GPU acceleration (optional, recommended)\n\nThe CPU PyTorch build works but Stage 1 + Stage 2 are noticeably faster on GPU.\nTo use a CUDA GPU, install a CUDA-enabled PyTorch **before** or **after** the\nplugin:\n\n```bash\npip install torch torchvision --index-url https://download.pytorch.org/whl/cu126\n```\n\nThe plugin auto-detects CUDA via `torch.cuda.is_available()`.\n\n## Usage\n\n1. Launch napari:\n\n   ```bash\n   napari\n   ```\n\n2. Open a raw microplate image (`File → Open file(s)` or drag-and-drop).\n\n3. Start the plugin: **`Plugins → Microplate Pipeline`**.\n\n4. In the dock widget:\n   - pick the **Image layer** holding your microplate image,\n   - (optional) tick **Save PNG** and choose a **Save dir**,\n   - click **Run Pipeline**.\n\nTwo new layers are added to the viewer:\n\n| Layer | Type | Content |\n|-------|------|---------|\n| `aligned_plate` | Image (gray) | Plate after Stage 1 perspective warp |\n| `wells` | Shapes (rectangles) | One box per well, colored by predicted class |\n\nWell counts (`Growth / NoGrowth / NoAgar`) are shown in the napari status bar.\n\n## Configuration\n\n| Environment variable | Purpose | Default |\n|----------------------|---------|---------|\n| `MICROPLATE_HF_REPO` | HuggingFace repo id for the weights | `tiendoan274/napari-microplate-weights` |\n| `MICROPLATE_WEIGHTS_DIR` | Local folder of pre-downloaded weights (skip download) | *unset* |\n\nTo run fully offline, download the three weight files into a folder and set\n`MICROPLATE_WEIGHTS_DIR` to that folder:\n\n```\n$MICROPLATE_WEIGHTS_DIR/\n  stage1_efficientnet_b3.pt\n  stage2_yolov8n_well.pt\n  stage3_random_forest.joblib\n```\n\n## Programmatic use (without the GUI)\n\n```python\nfrom napari_microplate._pipeline import MicroplatePipeline\n\npipe = MicroplatePipeline()          # loads weights lazily on first run\nresult = pipe.run(\"plate.png\")       # path to a raw microplate image\n\nprint(result[\"boxes\"])               # [(x1,y1,x2,y2,conf), ...]\nprint(result[\"classes\"])             # [0, 1, 2, ...]  (0=Growth,1=NoGrowth,2=NoAgar)\n```\n\n## License\n\nCopyright (C) 2026 Tien Doan. Distributed under the\n**GNU Affero General Public License v3.0 or later (AGPL-3.0+)** — see\n[LICENSE](LICENSE).\n\nThis package vendors a modified copy of [Ultralytics 8.3.2](https://github.com/ultralytics/ultralytics)\n(AGPL-3.0) under `napari_microplate/_vendor/` to support single-channel\ngrayscale well detection. See [NOTICE](NOTICE) for details.\n\n## Citation\n\nIf you use this plugin in published research, please cite the accompanying paper\n(see `paper/` in the source repository).\n",
+    "description_content_type": "text/markdown",
+    "keywords": "napari,microplate,YOLO,EfficientNet,biology,image-analysis",
+    "home_page": null,
+    "download_url": null,
+    "author": "Tien Doan",
+    "author_email": null,
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": null,
+    "classifier": [
+      "Framework :: napari",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.9",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Operating System :: OS Independent",
+      "Intended Audience :: Science/Research",
+      "Topic :: Scientific/Engineering :: Image Recognition"
+    ],
+    "requires_dist": [
+      "napari[pyqt6]>=0.4.18",
+      "magicgui>=0.7",
+      "huggingface_hub>=0.20",
+      "numpy",
+      "opencv-python",
+      "matplotlib",
+      "tqdm",
+      "Pillow",
+      "PyYAML",
+      "requests",
+      "psutil",
+      "scipy",
+      "shapely",
+      "torch",
+      "torchvision",
+      "timm",
+      "joblib",
+      "scikit-learn"
+    ],
+    "requires_python": ">=3.9",
+    "requires_external": null,
+    "project_url": [
+      "Homepage, https://github.com/TienDoan274/napari-microplate",
+      "Repository, https://github.com/TienDoan274/napari-microplate",
+      "Issues, https://github.com/TienDoan274/napari-microplate/issues"
+    ],
+    "provides_extra": null,
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}

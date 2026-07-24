@@ -1,0 +1,419 @@
+{
+  "info": {
+    "author": "Jesko Wagner",
+    "author_email": "35219306+jeskowagner@users.noreply.github.com",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "<p align=\"center\">\n  <!-- TODO: replace with final logo -->\n  <img src=\"https://raw.githubusercontent.com/DBI-INFRA/napari-colocalization/main/docs/img/logo.png\" alt=\"napari-colocalization logo\" width=\"160\"/>\n</p>\n\n# napari-colocalization\n\n[![License MIT](https://img.shields.io/pypi/l/napari-colocalization.svg?color=green)](https://github.com/DBI-INFRA/napari-colocalization/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-colocalization.svg?color=green)](https://pypi.org/project/napari-colocalization)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-colocalization.svg?color=green)](https://python.org)\n[![tests](https://github.com/DBI-INFRA/napari-colocalization/workflows/tests/badge.svg)](https://github.com/DBI-INFRA/napari-colocalization/actions)\n[![codecov](https://codecov.io/gh/DBI-INFRA/napari-colocalization/branch/main/graph/badge.svg)](https://codecov.io/gh/DBI-INFRA/napari-colocalization)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-colocalization)](https://napari-hub.org/plugins/napari-colocalization)\n[![npe2](https://img.shields.io/badge/plugin-npe2-blue?link=https://napari.org/stable/plugins/index.html)](https://napari.org/stable/plugins/index.html)\n\n> \u26a0\ufe0f **Under construction - pre-alpha.** APIs, UI, and outputs may change\n> without notice. Not recommended for production analysis yet; use at your\n> own risk and please report rough edges via the\n> [issue tracker](https://github.com/DBI-INFRA/napari-colocalization/issues).\n\nInteractive intensity-colocalization analysis for [napari](https://napari.org).\nPick two channels (or one multi-channel image), optionally restrict the\nanalysis to a region drawn as shapes or labels, choose your metric, and get a\nresults table plus an intensity-vs-intensity density plot.\n\n<p align=\"center\">\n  <img src=\"https://raw.githubusercontent.com/DBI-INFRA/napari-colocalization/main/docs/img/widget_overview.png\" alt=\"napari-colocalization widget\" width=\"780\"/>\n</p>\n\n## Features\n\n- **Five colocalization metrics**, spanning both families: three of\n  *correlation* \u2014 Pearson (PCC), Spearman rank (SRCC) and Li's Intensity\n  Correlation Quotient (ICQ) \u2014 and two of *co-occurrence* \u2014 Manders'\n  overlap coefficient with split coefficients (r, k1, k2) and Manders'\n  thresholded coefficients tM1/tM2.\n- **Pairwise or all-to-all** mode: analyse two grayscale layers, or every\n  channel pair within a single multi-channel layer.\n- **2D and 3D** support natively (no time-series for now).\n- **Region-restricted analysis** via a Shapes or Labels layer - each non-zero\n  region is reported on its own row.\n- **Manders thresholds**: choose **Costes auto** (orthogonal-regression\n  bisection, matched to Fiji Coloc 2), a per-channel **auto-threshold**\n  (Otsu, Li, Triangle, Yen, Mean, IsoData \u2192 thresholded tM1/tM2), or **Manual**.\n- **Per-Z-slice mode**: analyse each plane of a stack separately (one row\n  per slice), \u00e0 la JACoP B's \"consider Z slices separately\".\n- **Interactive results**: in-widget table, density plot of the selected row,\n  multi-row selection that highlights all matching shapes/labels in the viewer,\n  and an optional **fixed-axes** cytofluorogram for comparable plots.\n- **Diagnostics tab**: single-pair diagnostic plots - Costes randomization\n  significance test (observed PCC vs a scrambled null, with p-value/z-score),\n  Van Steensel cross-correlation function (CCF), and Li intensity correlation\n  analysis (ICA).\n- **Object-based tab**: compare segmented objects (from Labels layers or by\n  thresholding) - centre-particle coincidence and object overlap per object,\n  with centroid Points and nearest-neighbour Vectors drawn into the viewer.\n- **Outputs to the viewer**: add the colocalized-pixel mask (selected row) as\n  a Labels layer, or a block-scrambled example as an Image layer.\n- **CSV export** of the current table, plus **figure export** of the\n  density plot (PNG / PDF / SVG / TIFF, configurable size and DPI).\n\n## Installation\n\n```bash\npip install napari-colocalization\n```\n\nIf napari isn't already installed, install both at once:\n\n```bash\npip install \"napari-colocalization[all]\"\n```\n\nFor the latest development version:\n\n```bash\npip install git+https://github.com/DBI-INFRA/napari-colocalization.git\n```\n\n## Quick start\n\n1. Launch napari.\n2. Load sample data: **File \u2192 Open Sample \u2192 napari-colocalization \u2192\n   Colocalization sample (2D)**. A 3D synthetic sample and **CBS006RBM**\n   (a two-channel benchmark image from the\n   [Colocalization Benchmark Source](https://colocalization-benchmark.com))\n   are also provided.\n\n   <p align=\"center\">\n     <img src=\"https://raw.githubusercontent.com/DBI-INFRA/napari-colocalization/main/docs/img/quickstart_sample.png\" alt=\"Open Sample menu\" width=\"520\"/>\n   </p>\n\n3. Open the widget: **Plugins \u2192 Colocalization Analysis**. Two image layers\n   `channel_a` and `channel_b` are auto-selected for pairwise mode.\n\n4. Click **Run**. The results table populates with a single row (the whole\n   image), and the density plot below shows the intensity pairs with the\n   metric values overlaid.\n\n<p align=\"center\">\n  <img src=\"https://raw.githubusercontent.com/DBI-INFRA/napari-colocalization/main/docs/img/widget_overview.png\" alt=\"napari-colocalization widget\" width=\"780\"/>\n</p>\n\n5. *(Optional)* Add a Shapes layer, draw a few rectangles or polygons, set\n   **Region** to *Shapes* and pick the layer. Re-run - the table now has one\n   row per shape, and clicking a row highlights the matching shape in the\n   viewer.\n\n<p align=\"center\">\n  <img src=\"https://raw.githubusercontent.com/DBI-INFRA/napari-colocalization/main/docs/img/widget_shapes.png\" alt=\"napari-colocalization widget\" width=\"780\"/>\n</p>\n\nSee [docs/usage.md](docs/usage.md) for the full walkthrough.\n\n## Diagnostics\n\nThe **Diagnostics** tab runs single-pair diagnostic plots that go beyond a\nsingle number per region: the **Costes randomization** significance test (the\nobserved PCC against a block-scrambled null, with a p-value and z-score), the\n**Van Steensel** cross-correlation function, and **Li's intensity correlation\nanalysis**.\n\n<p align=\"center\">\n  <img src=\"https://raw.githubusercontent.com/DBI-INFRA/napari-colocalization/main/docs/img/widget_diagnostics.png\" alt=\"Diagnostics tab - Costes randomization\" width=\"780\"/>\n</p>\n\n## Object-based analysis\n\nThe **Object-based** tab compares segmented *objects* between the two channels:\n**centre-particle coincidence** (does an object's centroid fall inside an\nobject of the other channel?) and **object overlap**, with one row per object.\nObjects come from existing Labels layers or by thresholding, and the detected\ncentroids and nearest-neighbour links are drawn back into the viewer as Points\nand Vectors.\n\n<p align=\"center\">\n  <img src=\"https://raw.githubusercontent.com/DBI-INFRA/napari-colocalization/main/docs/img/widget_objects.png\" alt=\"Object-based tab - coincidence and overlap\" width=\"780\"/>\n</p>\n\n## Documentation\n\n- **[Usage guide](docs/usage.md)** - every control in the widget, in order.\n- **[Metrics](docs/metrics.md)** - what PCC, SRCC, ICQ, the overlap\n  coefficient and Manders (tM1/tM2) mean, co-occurrence versus correlation,\n  and how the Costes auto-threshold works.\n- **[Python API](docs/api.md)** - calling the pure-compute layer\n  (`pearson`, `spearman`, `li_icq`, `manders`, `overlap`,\n  `costes_threshold`, `costes_regression`, `analyse_pairwise`,\n  `analyse_all_to_all`) from scripts or notebooks.\n\n## Related projects\n\n- [Coloc 2](https://imagej.net/plugins/coloc-2) - the reference ImageJ\n  colocalization plugin; this plugin follows it in spirit, and the Costes\n  auto-threshold here is matched to its implementation.\n- [JACoP](https://imagej.net/plugins/jacop) - \"Just Another Colocalization\n  Plugin\" (Bolte & Cordeli\u00e8res, 2006); the inspiration for the diagnostics\n  (Van Steensel CCF, Li ICA, Costes randomization) and the object-based\n  analysis.\n- [ijp-jacop-b](https://github.com/BIOP/ijp-jacop-b) - the BIOP fork of JACoP;\n  inspired the per-channel auto-thresholds, per-Z-slice mode and the\n  layers written back to the viewer.\n- [scikit-image colocalization metrics](https://scikit-image.org/docs/stable/auto_examples/applications/plot_colocalization_metrics.html):\n  the underlying implementations of PCC and Manders.\n\n## Contributing\n\nContributions are welcome. Run the test suite with:\n\n```bash\npip install -e . --group dev\npython -m pytest tests/ -v\n```\n\nPre-commit hooks (ruff lint + format, napari-plugin-checks) ship with the\nrepo:\n\n```bash\npre-commit install\npre-commit run --all-files\n```\n\nPlease keep test coverage at or above the current level when submitting a PR.\n\n## License\n\nDistributed under the terms of the [MIT](http://opensource.org/licenses/MIT)\nlicence; `napari-colocalization` is free and open-source software.\n\n## Issues\n\nFound a bug or have a feature request? Please\n[open an issue](https://github.com/DBI-INFRA/napari-colocalization/issues).\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": null,
+    "license_expression": "MIT",
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-colocalization",
+    "package_url": "https://pypi.org/project/napari-colocalization/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-colocalization/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/dbi-infra/napari-colocalization/issues",
+      "Documentation": "https://github.com/dbi-infra/napari-colocalization#README.md",
+      "Source Code": "https://github.com/dbi-infra/napari-colocalization",
+      "User Support": "https://github.com/dbi-infra/napari-colocalization/issues"
+    },
+    "provides_extra": [
+      "all"
+    ],
+    "release_url": "https://pypi.org/project/napari-colocalization/0.1.8/",
+    "requires_dist": [
+      "numpy",
+      "magicgui",
+      "qtpy",
+      "scikit-image",
+      "scipy",
+      "matplotlib",
+      "napari[all]; extra == \"all\""
+    ],
+    "requires_python": ">=3.10",
+    "summary": "Colocalization analysis of multi-channel images",
+    "version": "0.1.8",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 38990438,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "jeskowagner"
+      }
+    ]
+  },
+  "releases": {
+    "0.1.3": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "7f5620de9be04078783e5cb914b343f3e2000befe2e7e33e94715e5e32dfd378"
+        },
+        "digests": {
+          "blake2b_256": "c421202ca97db7cb1d5a429fcf1228806d8ac21b8e74d36f69e06b6de34f774b",
+          "md5": "0ed6117ca2f889af11b94c370edb6840",
+          "sha256": "9f33c174d10a2c3d65d310ddb134fe995036af4b4464816af28ae40ca29e7e3a"
+        },
+        "downloads": -1,
+        "filename": "napari_colocalization-0.1.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "0ed6117ca2f889af11b94c370edb6840",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 22704,
+        "upload_time": "2026-04-30T13:25:38",
+        "upload_time_iso_8601": "2026-04-30T13:25:38.759475Z",
+        "url": "https://files.pythonhosted.org/packages/c4/21/202ca97db7cb1d5a429fcf1228806d8ac21b8e74d36f69e06b6de34f774b/napari_colocalization-0.1.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "00aa2949ea7c313cee782d07334d9fa5f5bc1cf786f0a2fcd7c70c1cd83a83dd",
+          "md5": "375f88906b7c164951cc181badc591fc",
+          "sha256": "1d0616b5d562626eee8295d60309074ad86568662d64e84e1c4e78309a1d0802"
+        },
+        "downloads": -1,
+        "filename": "napari_colocalization-0.1.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "375f88906b7c164951cc181badc591fc",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 3699490,
+        "upload_time": "2026-04-30T13:25:40",
+        "upload_time_iso_8601": "2026-04-30T13:25:40.102535Z",
+        "url": "https://files.pythonhosted.org/packages/00/aa/2949ea7c313cee782d07334d9fa5f5bc1cf786f0a2fcd7c70c1cd83a83dd/napari_colocalization-0.1.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.4": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "be15270a0cf7f81d41055123c67fafa174b6d36ffc069be3d08b36fd071cf590"
+        },
+        "digests": {
+          "blake2b_256": "4f3c47d236bd3521e3fdb63af3549551b7294f0aa195b52263b0472bc0a08c1b",
+          "md5": "4c5116cde8ca2aad01cd412c71712e52",
+          "sha256": "9da076252020ad88767d316efd80b1fe3fd460ef2897f2aee9f97b3eceb3c0f6"
+        },
+        "downloads": -1,
+        "filename": "napari_colocalization-0.1.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "4c5116cde8ca2aad01cd412c71712e52",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 25597,
+        "upload_time": "2026-05-05T08:38:55",
+        "upload_time_iso_8601": "2026-05-05T08:38:55.512957Z",
+        "url": "https://files.pythonhosted.org/packages/4f/3c/47d236bd3521e3fdb63af3549551b7294f0aa195b52263b0472bc0a08c1b/napari_colocalization-0.1.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "387d0de39fd19c0e30989bd0243546c02107bca2de9038ff6950aade2a0fbb58",
+          "md5": "f800a5ce54b06ac1656ada337ee2e091",
+          "sha256": "1648afc958b5a41018ce2ad284fe3bb160775a4a7a53415bad9b7dd86cf94cc8"
+        },
+        "downloads": -1,
+        "filename": "napari_colocalization-0.1.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "f800a5ce54b06ac1656ada337ee2e091",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 2495597,
+        "upload_time": "2026-05-05T08:38:57",
+        "upload_time_iso_8601": "2026-05-05T08:38:57.038949Z",
+        "url": "https://files.pythonhosted.org/packages/38/7d/0de39fd19c0e30989bd0243546c02107bca2de9038ff6950aade2a0fbb58/napari_colocalization-0.1.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.5": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "848ca99894b971984948fb5b4623fef17fdd7c019b9f5830677862efa1c1477b"
+        },
+        "digests": {
+          "blake2b_256": "3c8dfba00395b4accbdf658b37d185e0e0f9e5ebffc8624bce944f35c390948c",
+          "md5": "88e51964d3423e48b062e64ad458379f",
+          "sha256": "d5f4900e2e9499272d055c186b2af674d3e59fa608d056233088f3b1f592b187"
+        },
+        "downloads": -1,
+        "filename": "napari_colocalization-0.1.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "88e51964d3423e48b062e64ad458379f",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 25594,
+        "upload_time": "2026-05-11T13:17:25",
+        "upload_time_iso_8601": "2026-05-11T13:17:25.914414Z",
+        "url": "https://files.pythonhosted.org/packages/3c/8d/fba00395b4accbdf658b37d185e0e0f9e5ebffc8624bce944f35c390948c/napari_colocalization-0.1.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "4831dfcdf21fe288cc01b710259bfbaafe31eccb23cea4fdc9d88050e5f7b807",
+          "md5": "9f17e477ef0ab9bb60c6791f67e4ff86",
+          "sha256": "82a5c66ae7179614947485730b51452db49e067fdd81d00ad2d942909470f898"
+        },
+        "downloads": -1,
+        "filename": "napari_colocalization-0.1.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "9f17e477ef0ab9bb60c6791f67e4ff86",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 2495566,
+        "upload_time": "2026-05-11T13:17:27",
+        "upload_time_iso_8601": "2026-05-11T13:17:27.396451Z",
+        "url": "https://files.pythonhosted.org/packages/48/31/dfcdf21fe288cc01b710259bfbaafe31eccb23cea4fdc9d88050e5f7b807/napari_colocalization-0.1.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.6": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "a29bc119294d16bbd3794150c3949eaf94e3bafd5d19615b4b36048c9a296c1b"
+        },
+        "digests": {
+          "blake2b_256": "31440359b4b6e2a659edcbe86087056095003c8aa6c522f897e5dffce7a57633",
+          "md5": "e5ef983827134e4b3a8ea06cffe47885",
+          "sha256": "3e0980f995bb109c31187a487626f49370b28532f143b76b0af58d35a84f46d2"
+        },
+        "downloads": -1,
+        "filename": "napari_colocalization-0.1.6-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "e5ef983827134e4b3a8ea06cffe47885",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 26316,
+        "upload_time": "2026-06-17T13:12:36",
+        "upload_time_iso_8601": "2026-06-17T13:12:36.538202Z",
+        "url": "https://files.pythonhosted.org/packages/31/44/0359b4b6e2a659edcbe86087056095003c8aa6c522f897e5dffce7a57633/napari_colocalization-0.1.6-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "a5c2a2d2bcce330a7fd39fb96bd99518ef310a96805835b48b1ea77a51d97273",
+          "md5": "2911d7c71627bf3db309ec0e5aee229c",
+          "sha256": "bf01e55e5efd6c2bacd461a3686d515d8e817be805bd740f5a3d5599398f2acc"
+        },
+        "downloads": -1,
+        "filename": "napari_colocalization-0.1.6.tar.gz",
+        "has_sig": false,
+        "md5_digest": "2911d7c71627bf3db309ec0e5aee229c",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 3179440,
+        "upload_time": "2026-06-17T13:12:37",
+        "upload_time_iso_8601": "2026-06-17T13:12:37.777268Z",
+        "url": "https://files.pythonhosted.org/packages/a5/c2/a2d2bcce330a7fd39fb96bd99518ef310a96805835b48b1ea77a51d97273/napari_colocalization-0.1.6.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.7": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "cb0b60ac8bc38bec5fd96eefb4103385a1a15decfc9a4e4b0d3605d92dbd7a48"
+        },
+        "digests": {
+          "blake2b_256": "b29b597ff47e63e846d2dd9f2cedff01c6e2d8b20c70d8f3e3a8b7a719f356d0",
+          "md5": "657b00a7dfcec528b0b070a5cb26ca42",
+          "sha256": "9addb68031358a44a970887df3b851559cd4d7aa07ad4da786a27a26ed82e79e"
+        },
+        "downloads": -1,
+        "filename": "napari_colocalization-0.1.7-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "657b00a7dfcec528b0b070a5cb26ca42",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 47487,
+        "upload_time": "2026-07-02T14:43:34",
+        "upload_time_iso_8601": "2026-07-02T14:43:34.385776Z",
+        "url": "https://files.pythonhosted.org/packages/b2/9b/597ff47e63e846d2dd9f2cedff01c6e2d8b20c70d8f3e3a8b7a719f356d0/napari_colocalization-0.1.7-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "d82d8397df72eca7f6925c9ad88e56aca30a1f0f067851fa258016c1962b3c53",
+          "md5": "86d238e0c8260ea653d40f95384ea7e0",
+          "sha256": "99ade3a0a5c346d55305151bb8090878a5a6e4d678aa5152fe780f3d2a5faef3"
+        },
+        "downloads": -1,
+        "filename": "napari_colocalization-0.1.7.tar.gz",
+        "has_sig": false,
+        "md5_digest": "86d238e0c8260ea653d40f95384ea7e0",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 2898149,
+        "upload_time": "2026-07-02T14:43:35",
+        "upload_time_iso_8601": "2026-07-02T14:43:35.761414Z",
+        "url": "https://files.pythonhosted.org/packages/d8/2d/8397df72eca7f6925c9ad88e56aca30a1f0f067851fa258016c1962b3c53/napari_colocalization-0.1.7.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.8": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "5619327ce0de00a7759b28160a2d471308982a07e779f3f9047b926e1553c19e"
+        },
+        "digests": {
+          "blake2b_256": "243a58ef2ed6620cd03286b31acddd2f930a252f64dd66777409e24547b149c3",
+          "md5": "e24083611f180297b1d043293d47f3c0",
+          "sha256": "7446db81a26ef1a4b73c6e0f17749e5f4b178436d1405336f279a399fce8bc7c"
+        },
+        "downloads": -1,
+        "filename": "napari_colocalization-0.1.8-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "e24083611f180297b1d043293d47f3c0",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 47491,
+        "upload_time": "2026-07-14T14:55:09",
+        "upload_time_iso_8601": "2026-07-14T14:55:09.992860Z",
+        "url": "https://files.pythonhosted.org/packages/24/3a/58ef2ed6620cd03286b31acddd2f930a252f64dd66777409e24547b149c3/napari_colocalization-0.1.8-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "fb051f10b6a65648c4f8dcd0a1dfcca1bd0070021e8f477b4be6cdb9d0ddf1a1",
+          "md5": "5f1fdad484d2a0999623d50abcf14382",
+          "sha256": "ac9d05dc591bf52d22667756cc102d918a0442165d024191fae4e5dcaf89df97"
+        },
+        "downloads": -1,
+        "filename": "napari_colocalization-0.1.8.tar.gz",
+        "has_sig": false,
+        "md5_digest": "5f1fdad484d2a0999623d50abcf14382",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 2898160,
+        "upload_time": "2026-07-14T14:55:11",
+        "upload_time_iso_8601": "2026-07-14T14:55:11.218716Z",
+        "url": "https://files.pythonhosted.org/packages/fb/05/1f10b6a65648c4f8dcd0a1dfcca1bd0070021e8f477b4be6cdb9d0ddf1a1/napari_colocalization-0.1.8.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "5619327ce0de00a7759b28160a2d471308982a07e779f3f9047b926e1553c19e"
+      },
+      "digests": {
+        "blake2b_256": "243a58ef2ed6620cd03286b31acddd2f930a252f64dd66777409e24547b149c3",
+        "md5": "e24083611f180297b1d043293d47f3c0",
+        "sha256": "7446db81a26ef1a4b73c6e0f17749e5f4b178436d1405336f279a399fce8bc7c"
+      },
+      "downloads": -1,
+      "filename": "napari_colocalization-0.1.8-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "e24083611f180297b1d043293d47f3c0",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.10",
+      "size": 47491,
+      "upload_time": "2026-07-14T14:55:09",
+      "upload_time_iso_8601": "2026-07-14T14:55:09.992860Z",
+      "url": "https://files.pythonhosted.org/packages/24/3a/58ef2ed6620cd03286b31acddd2f930a252f64dd66777409e24547b149c3/napari_colocalization-0.1.8-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "fb051f10b6a65648c4f8dcd0a1dfcca1bd0070021e8f477b4be6cdb9d0ddf1a1",
+        "md5": "5f1fdad484d2a0999623d50abcf14382",
+        "sha256": "ac9d05dc591bf52d22667756cc102d918a0442165d024191fae4e5dcaf89df97"
+      },
+      "downloads": -1,
+      "filename": "napari_colocalization-0.1.8.tar.gz",
+      "has_sig": false,
+      "md5_digest": "5f1fdad484d2a0999623d50abcf14382",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.10",
+      "size": 2898160,
+      "upload_time": "2026-07-14T14:55:11",
+      "upload_time_iso_8601": "2026-07-14T14:55:11.218716Z",
+      "url": "https://files.pythonhosted.org/packages/fb/05/1f10b6a65648c4f8dcd0a1dfcca1bd0070021e8f477b4be6cdb9d0ddf1a1/napari_colocalization-0.1.8.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
