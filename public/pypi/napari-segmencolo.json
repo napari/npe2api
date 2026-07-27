@@ -1,0 +1,229 @@
+{
+  "info": {
+    "author": null,
+    "author_email": "Lena PROUX <lena.proux@gmail.com>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Programming Language :: Python :: 3.14",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-segmencolo\r\n\r\n[![License BSD-3](https://img.shields.io/pypi/l/napari-segmencolo.svg?color=green)](https://github.com/lenaproux-cyber/napari-segmencolo/raw/main/LICENSE)\r\n[![PyPI](https://img.shields.io/pypi/v/napari-segmencolo.svg?color=green)](https://pypi.org/project/napari-segmencolo)\r\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-segmencolo.svg?color=green)](https://python.org)\r\n[![tests](https://github.com/lenaproux-cyber/napari-segmencolo/workflows/tests/badge.svg)](https://github.com/lenaproux-cyber/napari-segmencolo/actions)\r\n[![codecov](https://codecov.io/gh/lenaproux-cyber/napari-segmencolo/branch/main/graph/badge.svg)](https://codecov.io/gh/lenaproux-cyber/napari-segmencolo)\r\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-segmencolo)](https://napari-hub.org/plugins/napari-segmencolo)\r\n[![npe2](https://img.shields.io/badge/plugin-npe2-blue?link=https://napari.org/stable/plugins/index.html)](https://napari.org/stable/plugins/index.html)\r\n[![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-purple.json)](https://github.com/copier-org/copier)\r\n\r\nA napari plugin for AI-based image segmentation, with multichannel\r\ncolocalization filtering, classification, and export (TIFF / Excel).\r\n\r\n> Developed during an internship in fluorescence imaging, with the help of AI, for image segmentation and analysis.\r\n\r\n----------------------------------\r\n\r\nThis [napari] plugin was generated with [copier] using the [napari-plugin-template].\r\n\r\n## Features\r\n\r\n| Tab | What it does |\r\n|---|---|\r\n| \u2460 Segmentation | StarDist \u00b7 Cellpose \u00b7 Ilastik-style pixel classification \u2014 2D & 3D |\r\n| \u2461 Colocalization | KEEP/EXCLUDE filtering by fluorescence channel |\r\n| \u2462 Classification | KMeans (unsupervised) or RandomForest (semi-supervised), with nameable classes |\r\n| \u2463 Export | TIFF + object counts (Excel) |\r\n| \u2464 Batch | Process a whole folder of CZI files automatically \u2192 Excel summary |\r\n\r\nWorks in 2D and on z-stacks (via MIP projection or slice-by-slice merging).\r\n\r\n## Installation\r\n\r\nYou can install `napari-segmencolo` via [pip]:\r\n\r\n```bash\r\npip install napari-segmencolo\r\n```\r\n\r\nTo install together with napari and a Qt backend:\r\n\r\n```bash\r\npip install \"napari-segmencolo[all]\"\r\n```\r\n\r\nFor development (from a local clone):\r\n\r\n```bash\r\npip install -e \".[all]\"\r\n```\r\n\r\n## Quick start\r\n\r\n### 1. Segmentation\r\n\r\n1. Open your image in napari (File > Open, or drag and drop).\r\n2. In the plugin, **\u2460 Segmentation** tab:\r\n   - Select the layer to segment (e.g. DAPI for nuclei).\r\n   - Choose **StarDist** (recommended for round nuclei).\r\n   - Pick a **Z handling** mode \u2014 **2D projection (MIP)** is recommended for\r\n     counting (every nucleus counted once).\r\n   - Optional: draw a rectangle with the Shapes tool, then tick **ROI**.\r\n   - Click **\u25b6 Run segmentation**.\r\n\r\n### 2. Colocalization filtering\r\n\r\nExample: *keep only the green nuclei that do NOT colocalize with the red channel.*\r\n\r\n1. **\u2461 Colocalization** tab \u2192 **Add a rule**.\r\n2. Select the red channel, mode **EXCLUDE**, threshold = 500, overlap = 0.3.\r\n3. Click **\u2714 Apply filtering**.\r\n\r\nA new `Filtered_labels` layer appears in napari.\r\n\r\n### 3. Classification (e.g. healthy vs apoptotic nuclei)\r\n\r\n1. **\u2462 Classification** tab: pick the **labels layer** and a **reference channel**.\r\n2. Set the **number of classes** and **name them** (e.g. \"Positive\", \"Negative\").\r\n3. **KMeans**: classes are formed automatically from intensity + morphology.\r\n   **RandomForest**: annotate a few labels by hand (label 3 \u2192 class 1, \u2026), then classify.\r\n\r\nThe class names are reused as **column headers** in the Excel export.\r\n\r\n### 4. Export / counts\r\n\r\n1. **\u2463 Export** tab, select the labels layer to export.\r\n2. Enter the voxel size (\u00b5m) matching your acquisition.\r\n3. Click **\ud83d\udcbe Export as TIFF** (then in Imaris: File > Open > select the .tif).\r\n4. Click **\ud83d\udcca Export counts (Excel)** to save object counts (total + per class).\r\n\r\nTo convert to Surfaces in Imaris:\r\n`Edit > Surfaces > Add New Surfaces > Detect from Channel`.\r\n\r\n### 5. Batch processing\r\n\r\n1. **\u2464 Batch** tab \u2192 **Browse\u2026** to pick a folder of `.czi` files.\r\n2. Channel names are read from the first file \u2192 choose the **nuclei** and\r\n   **marker** channels by name.\r\n3. Set the segmentation parameters and (optionally) KMeans classification.\r\n4. Click **\u25b6 Run batch \u2192 Excel** to produce a summary table (one row per image).\r\n   Tick *Show each image + segmentation in napari* to verify results visually.\r\n\r\n## File architecture\r\n\r\n```\r\nsrc/napari_segmencolo/\r\n\u251c\u2500\u2500 __init__.py          # Package entry point (OpenMP workaround, exposes the widget)\r\n\u251c\u2500\u2500 napari.yaml          # napari manifest (declares the widget)\r\n\u251c\u2500\u2500 _widget.py           # Main GUI (the 5 tabs) and orchestration\r\n\u251c\u2500\u2500 segmentation.py      # StarDist, Cellpose, Ilastik-style + Z-plane merging\r\n\u251c\u2500\u2500 colocalization.py    # Multichannel colocalization filtering\r\n\u251c\u2500\u2500 classification.py    # Feature extraction + KMeans / RandomForest\r\n\u251c\u2500\u2500 stats.py             # Object counting + Excel export\r\n\u251c\u2500\u2500 czi_io.py            # Direct CZI reading (channel names + MIP)\r\n\u2514\u2500\u2500 export_imaris.py     # TIFF export\r\n\r\ntests/\r\n\u2514\u2500\u2500 test_colocalization.py\r\n```\r\n\r\n## Main dependencies\r\n\r\n- `napari`, `qtpy` \u2014 viewer and GUI\r\n- `stardist`, `cellpose` \u2014 deep-learning segmentation\r\n- `scikit-image`, `scikit-learn` \u2014 image processing and classification\r\n- `pandas`, `numpy` \u2014 data and arrays\r\n- `tifffile` \u2014 TIFF export\r\n- `openpyxl` \u2014 Excel export\r\n- `pylibCZIrw` \u2014 CZI reading (batch mode)\r\n\r\nThe Ilastik-style mode is implemented in-house (scikit-image + scikit-learn);\r\nit does **not** require an Ilastik installation. It is inspired by\r\n[ilastik](https://www.ilastik.org) (Berg et al., 2019, GPL-2.0), but contains\r\n**no ilastik code** and does not depend on it \u2014 so ilastik's GPL license does not\r\napply, and this plugin stays BSD-3.\r\n\r\n## Author\r\n\r\n**Lena PROUX** \u2014 Imaging internship.\r\nPlugin developed during the internship, with the help of AI, for image\r\nsegmentation and analysis.\r\n\r\n## Credits and citations\r\n\r\nThis plugin builds on several open-source libraries. It **does not redistribute\r\ntheir source code** \u2014 they are used as standard Python dependencies, installed\r\nvia `pip`, which every license below permits.\r\n\r\n### Software used\r\n\r\n| Library | Role in the plugin | License |\r\n|---|---|---|\r\n| [napari](https://napari.org) | Image viewer & plugin framework | BSD-3-Clause |\r\n| [StarDist](https://github.com/stardist/stardist) | Nucleus segmentation | BSD-3-Clause |\r\n| [Cellpose](https://cellpose.readthedocs.io) | Cell / nucleus segmentation | BSD-3-Clause |\r\n| [scikit-image](https://scikit-image.org) | Image processing & object features | BSD-3-Clause |\r\n| [scikit-learn](https://scikit-learn.org) | KMeans, RandomForest | BSD-3-Clause |\r\n| [pandas](https://pandas.pydata.org) / [NumPy](https://numpy.org) | Tables & arrays | BSD-3-Clause |\r\n| [tifffile](https://github.com/cgohlke/tifffile) | TIFF export | BSD-3-Clause |\r\n| [openpyxl](https://openpyxl.readthedocs.io) | Excel export | MIT |\r\n| [qtpy](https://github.com/spyder-ide/qtpy) | Qt binding abstraction | MIT |\r\n| [pylibCZIrw](https://github.com/ZEISS/pylibczirw) | CZI file reading (batch) | **LGPL-3.0** |\r\n\r\n> **Note on pylibCZIrw (LGPL-3.0):** it is used as an unmodified, separately\r\n> installed dependency (no source code is copied into this plugin). The LGPL\r\n> permits this use within a BSD-licensed project; users remain free to replace\r\n> or upgrade the library independently.\r\n\r\n### Please cite (for scientific use)\r\n\r\nIf you use the segmentation models in published work, please cite the original\r\npapers \u2014 this is requested by their authors and is independent of the software\r\nlicense:\r\n\r\n- **StarDist** \u2014 Schmidt, U., Weigert, M., Broaddus, C., & Myers, G. (2018).\r\n  *Cell Detection with Star-Convex Polygons.* MICCAI 2018.\r\n  https://doi.org/10.1007/978-3-030-00934-2_30\r\n- **Cellpose** \u2014 Stringer, C., Wang, T., Michaelos, M., & Pachitariu, M. (2021).\r\n  *Cellpose: a generalist algorithm for cellular segmentation.* Nature Methods, 18, 100\u2013106.\r\n  https://doi.org/10.1038/s41592-020-01018-x\r\n- **napari** \u2014 napari contributors (2019). *napari: a multi-dimensional image viewer for Python.*\r\n  https://doi.org/10.5281/zenodo.3555620\r\n- **ilastik** (inspiration for the Ilastik-style mode) \u2014 Berg, S., Kutra, D.,\r\n  Kroeger, T., et al. (2019). *ilastik: interactive machine learning for\r\n  (bio)image analysis.* Nature Methods, 16, 1226\u20131232.\r\n  https://doi.org/10.1038/s41592-019-0582-9\r\n\r\n### Pretrained models\r\n\r\nThe StarDist and Cellpose **pretrained models** (`2D_versatile_fluo`, `cyto3`, \u2026)\r\nmay carry their own usage terms. They are suitable for academic research; verify\r\ntheir conditions before any commercial use.\r\n\r\n## Contributing\r\n\r\nContributions are very welcome. Tests can be run with [tox]; please ensure the\r\ncoverage at least stays the same before you submit a pull request.\r\n\r\n## License\r\n\r\nDistributed under the terms of the [BSD-3] license,\r\n\"napari-segmencolo\" is free and open source software.\r\n\r\n## Issues\r\n\r\nIf you encounter any problems, please [file an issue] along with a detailed description.\r\n\r\n[napari]: https://github.com/napari/napari\r\n[copier]: https://copier.readthedocs.io/en/stable/\r\n[MIT]: http://opensource.org/licenses/MIT\r\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\r\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\r\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\r\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\r\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\r\n[napari-plugin-template]: https://github.com/napari/napari-plugin-template\r\n[file an issue]: https://github.com/lenaproux-cyber/napari-segmencolo/issues\r\n[tox]: https://tox.readthedocs.io/en/latest/\r\n[pip]: https://pypi.org/project/pip/\r\n[PyPI]: https://pypi.org/\r\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": null,
+    "license_expression": "BSD-3-Clause",
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-segmencolo",
+    "package_url": "https://pypi.org/project/napari-segmencolo/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-segmencolo/",
+    "project_urls": null,
+    "provides_extra": [
+      "all"
+    ],
+    "release_url": "https://pypi.org/project/napari-segmencolo/0.1.1/",
+    "requires_dist": [
+      "numpy",
+      "magicgui",
+      "qtpy",
+      "scikit-image",
+      "napari",
+      "stardist",
+      "cellpose",
+      "scikit-learn",
+      "pandas",
+      "tifffile",
+      "openpyxl",
+      "pylibCZIrw",
+      "napari[all]; extra == \"all\""
+    ],
+    "requires_python": ">=3.10",
+    "summary": "performs image segmentation by leveraging the colocalization of multiple fluorescence channels",
+    "version": "0.1.1",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 39411558,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "lena.proux"
+      }
+    ]
+  },
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "20cd3febf2af77146240fadb386248f13e5b176444857b2480a130bb21f1f814"
+        },
+        "digests": {
+          "blake2b_256": "22ebfbe00808f802fe3887a670f670e831fe2529664dab67af25c5d357918d4a",
+          "md5": "a13cff3083739675db8e8464432dd007",
+          "sha256": "275fcf0192592d7a57a7eae2710556bdb71f917477f39245b0a0c01b32e5b329"
+        },
+        "downloads": -1,
+        "filename": "napari_segmencolo-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "a13cff3083739675db8e8464432dd007",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 55033,
+        "upload_time": "2026-07-27T09:37:59",
+        "upload_time_iso_8601": "2026-07-27T09:37:59.716939Z",
+        "url": "https://files.pythonhosted.org/packages/22/eb/fbe00808f802fe3887a670f670e831fe2529664dab67af25c5d357918d4a/napari_segmencolo-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "a4157be85380b22594c4055220e56d90729f9a25c8809db2e3c26ec0b3f84370",
+          "md5": "82d58eb6f937aa909a0038d9d149a87f",
+          "sha256": "e059999984aa22b2eca2de627d00edfaabc6a2761a9632786b28b6aef535d47c"
+        },
+        "downloads": -1,
+        "filename": "napari_segmencolo-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "82d58eb6f937aa909a0038d9d149a87f",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 63062,
+        "upload_time": "2026-07-27T09:38:01",
+        "upload_time_iso_8601": "2026-07-27T09:38:01.463197Z",
+        "url": "https://files.pythonhosted.org/packages/a4/15/7be85380b22594c4055220e56d90729f9a25c8809db2e3c26ec0b3f84370/napari_segmencolo-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "dfc399b1aba2006a6735fc7ccaca94985514a802b7ae013ecbbf2dc6824f399d"
+        },
+        "digests": {
+          "blake2b_256": "9d00eaf3ce8192dbe9589b20616b4f60a14c9685b155a1f8e1256b21915b8e82",
+          "md5": "25a5244899f5a083c01f9674e85dbc24",
+          "sha256": "8bbf4e787d5e395739811e47141b6138eb33d246ca6c96fcbee02f09996d5c94"
+        },
+        "downloads": -1,
+        "filename": "napari_segmencolo-0.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "25a5244899f5a083c01f9674e85dbc24",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 55158,
+        "upload_time": "2026-07-27T10:34:37",
+        "upload_time_iso_8601": "2026-07-27T10:34:37.667537Z",
+        "url": "https://files.pythonhosted.org/packages/9d/00/eaf3ce8192dbe9589b20616b4f60a14c9685b155a1f8e1256b21915b8e82/napari_segmencolo-0.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "15e2b5afcfe85942ea70feb338dd623f0a9251251d1f68af14b4b570ea3ca8ab",
+          "md5": "8df6bc2300ba0264f36de1a5196bc84d",
+          "sha256": "5ab4ca40d84844475c4a38529243d8152092c04780addd4b77ad5d3e07796629"
+        },
+        "downloads": -1,
+        "filename": "napari_segmencolo-0.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "8df6bc2300ba0264f36de1a5196bc84d",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 63372,
+        "upload_time": "2026-07-27T10:34:38",
+        "upload_time_iso_8601": "2026-07-27T10:34:38.660165Z",
+        "url": "https://files.pythonhosted.org/packages/15/e2/b5afcfe85942ea70feb338dd623f0a9251251d1f68af14b4b570ea3ca8ab/napari_segmencolo-0.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "dfc399b1aba2006a6735fc7ccaca94985514a802b7ae013ecbbf2dc6824f399d"
+      },
+      "digests": {
+        "blake2b_256": "9d00eaf3ce8192dbe9589b20616b4f60a14c9685b155a1f8e1256b21915b8e82",
+        "md5": "25a5244899f5a083c01f9674e85dbc24",
+        "sha256": "8bbf4e787d5e395739811e47141b6138eb33d246ca6c96fcbee02f09996d5c94"
+      },
+      "downloads": -1,
+      "filename": "napari_segmencolo-0.1.1-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "25a5244899f5a083c01f9674e85dbc24",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.10",
+      "size": 55158,
+      "upload_time": "2026-07-27T10:34:37",
+      "upload_time_iso_8601": "2026-07-27T10:34:37.667537Z",
+      "url": "https://files.pythonhosted.org/packages/9d/00/eaf3ce8192dbe9589b20616b4f60a14c9685b155a1f8e1256b21915b8e82/napari_segmencolo-0.1.1-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "15e2b5afcfe85942ea70feb338dd623f0a9251251d1f68af14b4b570ea3ca8ab",
+        "md5": "8df6bc2300ba0264f36de1a5196bc84d",
+        "sha256": "5ab4ca40d84844475c4a38529243d8152092c04780addd4b77ad5d3e07796629"
+      },
+      "downloads": -1,
+      "filename": "napari_segmencolo-0.1.1.tar.gz",
+      "has_sig": false,
+      "md5_digest": "8df6bc2300ba0264f36de1a5196bc84d",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.10",
+      "size": 63372,
+      "upload_time": "2026-07-27T10:34:38",
+      "upload_time_iso_8601": "2026-07-27T10:34:38.660165Z",
+      "url": "https://files.pythonhosted.org/packages/15/e2/b5afcfe85942ea70feb338dd623f0a9251251d1f68af14b4b570ea3ca8ab/napari_segmencolo-0.1.1.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
