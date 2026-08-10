@@ -1,0 +1,197 @@
+{
+  "info": {
+    "author": "Harvey Davis",
+    "author_email": "Finbar Argus <finbar.argus@auckland.ac.nz>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 3 - Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Scientific/Engineering :: Bio-Informatics",
+      "Topic :: Scientific/Engineering :: Image Processing",
+      "Topic :: Scientific/Engineering :: Medical Science Apps.",
+      "Topic :: Scientific/Engineering :: Visualization"
+    ],
+    "description": "# HaemoLynx\n\nConverts raw microscopy images of the microvasculature into computational haemodynamics models for hypothesis testing, experimental design, and more.\n\n## Run it in napari\n\nThe panel is the quickest way to use HaemoLynx: it builds a settings form from\nthe schema, checks the settings before anything runs, and runs the pipeline in a\nbackground thread while each stage's results appear in the viewer.\n\n```bash\npip install \"napari[all]\" --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple HaemoLynx==0.1.0\nnapari                             # Plugins -> HaemoLynx -> Pipeline settings\n```\n\nOnce we have a pypi project and its not a test then do this\n\n```bash\npip install \"HaemoLynx[napari]\"    # needs Python 3.11+ (napari's floor, not ours)\nnapari                             # Plugins -> HaemoLynx -> Pipeline settings\n\n```\n\n\nThat extra brings a Qt binding (PyQt6) with it, so the panel opens on a fresh\nenvironment. If you already run napari with a binding of your own, install\n`HaemoLynx[napari-plugin]` instead and keep it.\n\nThen: **drag an image in, open the panel, press Run pipeline.** The layer you\nhave selected is picked up automatically, so on a segmented TIFF there is\nnothing else to set.\n\n### The panel: configuring a run\n\nOne tab per pipeline stage, in the order they execute -- Input, Skeletonise,\nGraph, Boundaries, Diameters, Haemodynamics, Solve, Export -- so a run is\nconfigured the way it runs rather than the way the config file is laid out.\n\nEvery row comes from `haemolynx.pipeline.default_schema()`, so a setting\ndeclared there appears with its help text, range and choices, and greys out with\na reason when the setting it depends on is off. There is no second list of\nsettings to keep in step; a test fails if a setting reaches no tab or more than\none.\n\n**Load config** and **Save config** read and write the same YAML the examples\nuse, so a run set up here can be repeated from the command line and back.\n\n### Running on the image already open in napari\n\nOpen an image, then open the panel: the selected layer is picked up\nautomatically, and the row at the top lets you choose a different one.\n\n- A layer **read from a TIFF or HDF5** points the run at that file, so the same\n  bytes and metadata are used -- no copy is made.\n- A layer **built in the viewer** (a threshold, a crop) has no file behind it,\n  so its array is written next to the run's outputs and read back. The panel\n  says which of the two happened.\n- If the layer has a **scale**, it becomes the voxel size. napari scales per\n  array axis `(z, y, x)` and the setting is image metadata order `(x, y, z)`,\n  so the two are reversed on the way in.\n\n### Watching a run\n\nEach stage puts its work in the viewer as it finishes -- the volume and\nskeleton, then the vessel network, the boundary nodes, the pericytes -- so a run\nis something to watch rather than a wait for files. Two progress bars show which\nstage is running and how far through it is.\n\nVessels are drawn as a Vectors layer, which is roughly ten times faster to draw\nthan paths at the size of a real run; the per-vessel numbers ride on a hidden\nPoints layer at each vessel's midpoint, so hovering still identifies one.\n\n**Show each topology step** additionally redraws the network after each of graph\nbuilding's eleven repair steps, which is worth switching on when skeletonisation\nis behaving oddly and not otherwise.\n\nA second run updates its own layers in place, so anything you hid stays hidden,\nand a layer of your own that happens to share a name is never touched.\n**Clear layers** removes everything the plugin added and nothing else.\n\n### Choosing what the colours mean\n\nThat is done in napari's **layer controls, on the left**, with the layer\nselected -- the panel on the right is for the pipeline only.\n\n- **edge feature:** (vessels) and **node feature:** (nodes and boundary nodes)\n  choose the quantity: flow, pressure, branch order, resistance, length,\n  diameter, boundary role, and everything else the run produced. A quantity is\n  listed from the start and fills in when the stage that computes it runs.\n- **colour range:** shows the scale as a colour bar and lets you set its ends.\n  **Fit all** spans the smallest and largest value; **Fit 1-99%** ignores the\n  extreme 1% at each end, which is the useful one for flow -- a handful of\n  vessels carry orders of magnitude more than the rest, and against the full\n  range everything else is one colour.\n- **Show colour bar in the viewer** draws that scale in the canvas, beside the\n  data it describes.\n\nPicking a new quantity fits the range to it automatically. Vessels start\ncoloured by flow once a run has solved, nodes by pressure.\n\n### Other things worth knowing\n\nThe menu also carries **Run a saved config**, which runs a `.yaml` as it stands\nwithout opening the form.\n\nRunning the panel does not open plots outside napari: the settings that make\nplotly open a web browser mid-run start switched off, and are ordinary rows you\ncan tick back on.\n\nThe panel's own tests build real Qt widgets, so they need napari and a display.\nThey are marked `gui`, skipped without one, and CI runs them on 3.11 under\nxvfb:\n\n```bash\npytest -m gui           # with \"HaemoLynx[napari]\" installed\n```\n\nThe library itself never imports napari; the extra is optional, and the panel is\nonly loaded when you open it.\n\n## Develop Mode Install\n\nPython 3.9 or newer.\n\n```bash\ngit clone https://github.com/physiomelinks/HaemoLynx.git\ncd HaemoLynx\npython -m venv .venv\nsource .venv/bin/activate\npip install -e .\n```\n\nTo work on HaemoLynx itself, take the development extras as well:\n\n```bash\npip install -e \".[dev]\"\n```\n\n`pyproject.toml` is the single source of truth for dependencies. Add the\n`notebook` extra (`pip install \"HaemoLynx[notebook]\"`, or\n`pip install -e \".[dev,notebook]\"` from a checkout) to get the Jupyter kernel\nfor the tutorial notebook.\n\n## tutorial if you want to work in a jupyter notebook (unadvised)\n\n**[tutorials/pipeline_tutorial.ipynb](tutorials/pipeline_tutorial.ipynb)** runs\nevery stage of the pipeline one cell at a time, with a plot after each, and\nexplains what each stage is for. It is the fastest way to see what HaemoLynx\ndoes.\n\nOpen it and run all cells \u2014 that is the whole setup:\n\n```bash\npip install \"HaemoLynx[notebook]\"\njupyter notebook tutorials/pipeline_tutorial.ipynb\n```\n\nThe first cell installs HaemoLynx if the kernel does not already have it, and\nthe notebook builds its own small vessel volume when no segmented image is to\nhand, so it needs no data download and no clone. From a checkout it picks up\nthe cropped nerve mask in `tests/data/` and the pipeline's own\n`examples/resistance_pipeline_config.yaml` instead.\n\n## Running the examples\n\nEvery example is driven by a YAML config file. Run one with no arguments and it\nuses that file as it stands:\n\n```bash\npython examples/simple_network_haemodynamics.py     # a hand-built 8-vessel network\npython examples/resistance_network_pipeline.py      # the full image-to-model pipeline\npython examples/brain_network_pipeline.py           # the pipeline, then a pericyte dilation sweep\n```\n\n| Example | Config file | What it does |\n|---|---|---|\n| `simple_network_haemodynamics.py` | `examples/simple_network_config.yaml` | Builds a small network in code, solves flow through it, writes VTK. No image needed \u2014 the quickest way to see the haemodynamics API. |\n| `resistance_network_pipeline.py` | `examples/resistance_pipeline_config.yaml` | Segmentation \u2192 skeletonisation \u2192 graph \u2192 boundaries \u2192 diameters \u2192 solve \u2192 export, from a real image. |\n| `brain_network_pipeline.py` | `examples/brain_pipeline_config.yaml` | The same pipeline, then sweeps pericyte dilation against inlet pressure and plots the curves. |\n\n### The pipeline, one stage at a time\n\n`resistance_network_pipeline.py` is deliberately short: the stages live in\n`haemolynx.pipeline` and the example just calls them in order, so you can read a\nrun's shape without opening the library.\n\n```python\ninputs     = segment(settings)                                       # ilastik, or pass a mask through\nvolume     = skeletonise(settings, inputs)                           # load, resolve voxel size, skeletonise\nnetwork    = build_network(settings, volume, SCHEMA)                 # skeleton + vessel masks -> graph\nboundaries = assign_boundaries(settings, network)                    # inlets, outlets, vessel boundaries\ndiameters  = assign_diameters(settings, network, boundaries, SCHEMA) # branch orders, diameter per edge\nmodel      = build_haemodynamic_model(settings, diameters)           # resistance and conductance per edge\nsolution   = solve(settings, model, boundaries)                      # pressures, flows, equivalent resistance\nexport_results(settings, network, model, solution)                   # VTK, statistics, plots\n```\n\nCall them individually if you want to intervene mid-run \u2014 that is exactly what\n`brain_network_pipeline.py` does before running its sweep.\n\n## Changing settings\n\n**Edit the config file.** It is the source of truth for a run, and it documents\nitself: every setting arrives with its meaning, unit, allowed values and any\nprerequisite as a comment.\n\n```yaml\n# ------------------------------------------------------------------------\n# Boundary assignment\n# ------------------------------------------------------------------------\nboundary_assignment:\n  # Choose the method for selecting input boundary nodes  [one of: coordinates, all_degree_1, volume, edge_percent, degree_1_from_starting]\n  starting_node_selection_method: edge_percent\n\n# ------------------------------------------------------------------------\n# Solver and output\n# ------------------------------------------------------------------------\nsolver_and_output:\n  # Apply this pressure boundary condition at the inlet nodes  [Pa; range 0.0..]\n  input_p_bc: 4500.0\n```\n\n**Or override one value for a single run.** Every setting has a command-line\nflag of the same name, generated from the schema:\n\n```bash\npython examples/resistance_network_pipeline.py --input-path /data/my_mask.tiff\npython examples/simple_network_haemodynamics.py --inlet-pressure-pa 8000\n```\n\n**Or point at a different config file entirely:**\n\n```bash\npython examples/resistance_network_pipeline.py --config my_experiment.yaml\n```\n\n### Useful flags\n\nAvailable on every example:\n\n```bash\n--list-settings              # print every setting and its value for this run, then exit\n--save-config my_run.yaml    # write the settings this run would use, then exit\n--config FILE                # run from a different config file\n--<setting-name> VALUE       # override one setting\n```\n\nThe pipeline examples add:\n\n```bash\n--list-presets               # named override sets: quick_debug, publication, statistics_only, ...\n--preset quick_debug         # apply one on top of the config file\n--check-only                 # run the preflight checks and exit without running anything\n```\n\n`--check-only` is worth using before a long run: it validates paths, toggles and\ntheir dependencies, and exits non-zero if anything would fail partway through.\n\n```\n=== Preflight Checklist ===\n[OK] Main input image: tests/data/seven_vessel_noisy_3d.tif\n[OK] Input axis order: zyx (canonical; no transpose)\n[OK] Statistics mode: fast\nPreflight passed.\n```\n\n### Bad settings are caught before anything runs\n\nValues are checked against the schema when the config loads, so a typo or an\nout-of-range number fails immediately rather than halfway through a long run:\n\n```\n2 configuration problems:\n  - Unknown setting 'inptu_path'. Did you mean: input_path?\n  - Setting 'small_vessel_mask_min_overlap_fraction' is 5.0, above its maximum 1.0.\n```\n\n### Adding a setting\n\nSettings are declared once, as a schema, and that declaration generates the\nconfig file, the command-line flags and the validation. The pipeline's own\nsettings live in the package, in `haemolynx.pipeline.schema`; an example that\nadds settings of its own declares those beside it (`examples/*_schema.py`) on\ntop of the pipeline's. After editing a schema, regenerate the config files:\n\n```bash\npython examples/regenerate_configs.py\n```\n\nThis keeps the values already in your config files and adds any new settings\nwith their documentation.\n\n## Without a repository checkout\n\nThe pipeline is configured entirely from its schema, and the schema ships with\nthe package \u2014 so `pip install imagelynx` is enough to write yourself a config\nfile and run from it, with no copy of this repository involved:\n\n```python\nfrom haemolynx.pipeline import default_schema, resolve_settings, run_pipeline_stages\nfrom haemolynx.pipeline import write_default_config\n\nwrite_default_config(\"my_config.yaml\")   # every setting, commented, at its default\n# edit my_config.yaml, then:\nsettings = resolve_settings(schema=default_schema(), config_path=\"my_config.yaml\")\ngraph = run_pipeline_stages(settings, default_schema())\n```\n\n`default_schema().describe()` is plain JSON \u2014 the same declaration a GUI can\nrender a settings form from.\n\nPath defaults in the generated config are relative, so they resolve against the\ndirectory you run in (`images/`, `outputs/`, `plots/`). The examples in this\nrepository pin their own paths under `examples/` in their config files.\n\n## Tutorial\n\n[The tutorial notebook](tutorials/pipeline_tutorial.ipynb) walks through the\nsame pipeline stage by stage with plots at each step (see\n[Start here](#start-here-the-tutorial-notebook) for how to open it). Edit the\nnotebook, not the generated `pipeline_tutorial.py`; regenerate that with:\n\n```bash\npytest tests/integration/test_pipeline_tutorial.py\n```\n\n## Allowable input mask formats\n\n`tif`, `h5`\n\n## Testing\n\nFrom the repository root:\n\n```bash\npytest -s               # everything\npytest -m \"not slow\"    # skip the slow integration tests\n```\n\n### Does this branch change the numbers?\n\n`scripts/compare_branches.py` runs the resistance network pipeline twice on the\nsame dataset with the same settings \u2014 once on your checkout, once on a\nreference ref in a temporary `git worktree` \u2014 and reports every way the two\nruns differ:\n\n```bash\npython scripts/compare_branches.py                       # against main\npython scripts/compare_branches.py --ref devel           # against another ref\npython scripts/compare_branches.py --image /data/x.tif   # another dataset\npython scripts/compare_branches.py --setting min_stub_length=5.0\n```\n\nIt writes `COMPARISON.md` and an `index.html` \u2014 every plot from both runs, side\nby side \u2014 into `comparison_outputs/` (gitignored). The report covers graph\nmetrics, **the first graph-building stage whose output diverges** (which is\nwhat localises a regression), edge attributes, the statistics CSVs, the VTK\nexports, and runtime.\n\nThis is **not** part of the test suite and never runs in CI: it takes roughly\n15 minutes per side and defaults to `examples/images/Nerve_capillaries.tif`, a\n328 MB image that is not in the repository. To check the tool itself works \u2014\nabout a minute, on the committed test fixture:\n\n```bash\npython scripts/compare_branches.py --self-check --smoke\n```\n\nThat compares `HEAD` against `HEAD` and exits non-zero if anything differs.\nThe reporting logic has fast unit tests of its own in\n`tests/test_branch_comparison.py`, which do run in CI.\n\nA few things to know before trusting a report:\n\n* If either side fails, the tool says which one and why, and prints no tables \u2014\n  a partial comparison is never presented as a complete one.\n* Branches take their settings differently (older entry points have a hundred\n  or so keyword arguments and read some settings from module constants). Each\n  side is inspected and adapted; a setting that defines the comparison and\n  cannot be applied stops that side rather than silently running a different\n  configuration, and a setting a branch simply does not have is listed in the\n  report as a caveat.\n* The boundary boxes are in physical (z, y, x) **micrometres**, not voxel\n  indices.\n\n## Releasing\n\n`.github/workflows/release.yml` builds, checks and publishes. Two ways in,\ndeliberately different in how easy they are:\n\n| | How | Where | Repeatable |\n|---|---|---|---|\n| Rehearsal | Actions \u2192 Release \u2192 **Run workflow** | TestPyPI | yes |\n| Real | push a tag `v0.2.0` | PyPI | **no** |\n\nBoth build the wheel and sdist, run `twine check` on them, and then install\nwhat was built into an empty environment on 3.9 and 3.12 and use it from a\ndirectory that is not the repository \u2014 so a packaging mistake is caught before\nthe upload rather than by whoever installs it next. A tagged run additionally\nrefuses to publish if the tag and the version in `pyproject.toml` disagree.\n\nUploading uses **Trusted Publishing**: GitHub proves who it is with a\nshort-lived token, so no API token is stored anywhere. It is configured once\nper index, under *Manage project \u2192 Publishing*, with owner `physiomelinks`,\nrepository `HaemoLynx`, workflow `release.yml`, and environment `testpypi` or\n`pypi` to match. Without it the upload fails with `invalid-publisher`.\n\nTo use an API token instead, add it as a repository secret and give the publish\nstep `with: password: ${{ secrets.PYPI_API_TOKEN }}`.\n\n**A version number is spent once.** Neither index lets a version be re-uploaded,\neven after deleting it, so bump `version` in `pyproject.toml` for each attempt.\nTestPyPI already holds `0.1.0`; the rehearsal job passes `skip-existing` so\nrepeating it is harmless, and the PyPI job deliberately does not.\n\nInstalling from TestPyPI needs a fallback for the dependencies, which only exist\non the real index:\n\n```bash\npip install --index-url https://test.pypi.org/simple/ \\\n            --extra-index-url https://pypi.org/simple HaemoLynx\n```\n\n## Licence\n\nHaemoLynx is released under the [Apache License 2.0](LICENSE).\nCopyright 2026 Finbar Argus and Harvey Davis.\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": "vascular, microvasculature, haemodynamics, microscopy, skeletonization, graph, network-analysis",
+    "license": null,
+    "license_expression": "Apache-2.0",
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "HaemoLynx",
+    "package_url": "https://pypi.org/project/HaemoLynx/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/HaemoLynx/",
+    "project_urls": {
+      "Homepage": "https://github.com/physiomelinks/HaemoLynx",
+      "Issues": "https://github.com/physiomelinks/HaemoLynx/issues",
+      "Repository": "https://github.com/physiomelinks/HaemoLynx"
+    },
+    "provides_extra": [
+      "dev",
+      "notebook",
+      "napari",
+      "napari-plugin"
+    ],
+    "release_url": "https://pypi.org/project/HaemoLynx/0.1.0/",
+    "requires_dist": [
+      "numpy>=1.23",
+      "tifffile>=2022.8.12",
+      "matplotlib>=3.6",
+      "networkx>=2.8",
+      "scikit-image>=0.24",
+      "scipy>=1.9",
+      "pandas>=2.0.2",
+      "plotly>=5.10",
+      "h5py>=3.7",
+      "skan>=0.11.1",
+      "pyvista>=0.45",
+      "pyyaml>=6.0",
+      "pytest; extra == \"dev\"",
+      "nbconvert; extra == \"dev\"",
+      "nbformat; extra == \"dev\"",
+      "npe2>=0.8; python_version >= \"3.10\" and extra == \"dev\"",
+      "ipykernel; extra == \"notebook\"",
+      "napari[pyqt6]>=0.8; extra == \"napari\"",
+      "magicgui>=0.7; extra == \"napari\"",
+      "npe2>=0.8; extra == \"napari\"",
+      "napari>=0.8; extra == \"napari-plugin\"",
+      "magicgui>=0.7; extra == \"napari-plugin\"",
+      "npe2>=0.8; extra == \"napari-plugin\""
+    ],
+    "requires_python": ">=3.9",
+    "summary": "Vascular network analysis from 3D microscopy",
+    "version": "0.1.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 39867742,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "FinbarArgus"
+      }
+    ]
+  },
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "70e83927c0ea92c708d0c724307cc3d7f5c53cdf9db63506a688f81ef72a494a"
+        },
+        "digests": {
+          "blake2b_256": "662598396ef4da154c506fafd2819ade3c01580cbbb3f0b12d16677801aa1c8a",
+          "md5": "20c80fd26b8a9f5bb0cf92551b6a1815",
+          "sha256": "91d0b1df051971b382059ae3c78225d44f68f1df796d513403f1d5a08b94f923"
+        },
+        "downloads": -1,
+        "filename": "haemolynx-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "20c80fd26b8a9f5bb0cf92551b6a1815",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 227687,
+        "upload_time": "2026-08-10T07:46:29",
+        "upload_time_iso_8601": "2026-08-10T07:46:29.939043Z",
+        "url": "https://files.pythonhosted.org/packages/66/25/98396ef4da154c506fafd2819ade3c01580cbbb3f0b12d16677801aa1c8a/haemolynx-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "a677a93c4b23fe65daa523cf0dfe7bd88e4f376e26f78dad70ab48293e08e050",
+          "md5": "9bc4e837cd8f5c0465573ff504ca1ca7",
+          "sha256": "9014c3a8410c5ab947706491a4bd6d6282bac81b59faa9855bbc002aa36587a0"
+        },
+        "downloads": -1,
+        "filename": "haemolynx-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "9bc4e837cd8f5c0465573ff504ca1ca7",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 351124,
+        "upload_time": "2026-08-10T07:46:31",
+        "upload_time_iso_8601": "2026-08-10T07:46:31.620793Z",
+        "url": "https://files.pythonhosted.org/packages/a6/77/a93c4b23fe65daa523cf0dfe7bd88e4f376e26f78dad70ab48293e08e050/haemolynx-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "70e83927c0ea92c708d0c724307cc3d7f5c53cdf9db63506a688f81ef72a494a"
+      },
+      "digests": {
+        "blake2b_256": "662598396ef4da154c506fafd2819ade3c01580cbbb3f0b12d16677801aa1c8a",
+        "md5": "20c80fd26b8a9f5bb0cf92551b6a1815",
+        "sha256": "91d0b1df051971b382059ae3c78225d44f68f1df796d513403f1d5a08b94f923"
+      },
+      "downloads": -1,
+      "filename": "haemolynx-0.1.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "20c80fd26b8a9f5bb0cf92551b6a1815",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.9",
+      "size": 227687,
+      "upload_time": "2026-08-10T07:46:29",
+      "upload_time_iso_8601": "2026-08-10T07:46:29.939043Z",
+      "url": "https://files.pythonhosted.org/packages/66/25/98396ef4da154c506fafd2819ade3c01580cbbb3f0b12d16677801aa1c8a/haemolynx-0.1.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "a677a93c4b23fe65daa523cf0dfe7bd88e4f376e26f78dad70ab48293e08e050",
+        "md5": "9bc4e837cd8f5c0465573ff504ca1ca7",
+        "sha256": "9014c3a8410c5ab947706491a4bd6d6282bac81b59faa9855bbc002aa36587a0"
+      },
+      "downloads": -1,
+      "filename": "haemolynx-0.1.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "9bc4e837cd8f5c0465573ff504ca1ca7",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.9",
+      "size": 351124,
+      "upload_time": "2026-08-10T07:46:31",
+      "upload_time_iso_8601": "2026-08-10T07:46:31.620793Z",
+      "url": "https://files.pythonhosted.org/packages/a6/77/a93c4b23fe65daa523cf0dfe7bd88e4f376e26f78dad70ab48293e08e050/haemolynx-0.1.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
