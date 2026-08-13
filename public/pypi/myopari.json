@@ -18,7 +18,7 @@
       "Programming Language :: Python :: 3.9",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "# myopari\n\nmyopari is a napari plugin for cardiac MRI segmentation and report generation.\nIt provides an interactive widget to:\n\n- select a 2D or 3D image layer,\n- run ONNX-based segmentation,\n- compute basic volumetric metrics,\n- optionally enrich the report with an LLM rewrite,\n- save a markdown report.\n\n## Main Features\n\n- Napari dock widget for interactive segmentation\n- Built-in segmentation models:\n\t- `TIRAMISU_ACDC`\n\t- `TIRAMISU_EMIDEC`\n- Works with both 2D images and 3D volumes\n- Optional myocardium-only segmentation mode\n- Markdown report generation with:\n\t- per-class volumes (mL)\n\t- myocardium mass estimate (g)\n\t- optional external patient info files (`.cfg`, `.txt`, `.md`)\n- Optional LLM-based report rewriting (via `llama-cpp-python`)\n\n\n## Installation with pip\n\n```bash\npip install myopari\n```\n\n## Quick Start in napari\n\n1. Launch napari.\n2. Load a cardiac image (2D or 3D).\n3. Open the widget:\n\t - `Plugins -> myopari -> myopari`\n4. In the widget:\n\t - Click `Select image layer`\n\t - Choose `Edge device`\n\t - Choose `Segmentation model`\n\t - (Optional) Enable `Myocardium only`\n\t - Click `Segment`\n5. A labels layer is added with a name like:\n\t - `segmentation_<input_layer_name>_<count>`\n\n## Report Workflow\n\nAfter segmentation:\n\n1. (Optional) Click `Choose patient info files` and pick `.cfg`, `.txt`, or `.md` files.\n2. (Optional) Enable `Use LLM for report`.\n3. Click `Create report`.\n4. Click `Save report to .md` to export.\n\nNotes:\n\n- The report includes per-label volumes in mL and myocardium mass estimate.\n- If a logo asset exists in `Resources`, it is embedded in the report and copied next to the saved markdown file.\n\n\n## Troubleshooting\n\n- Segmentation runtime/provider issues:\n\t- Check installed ONNX Runtime package (`onnxruntime` vs `onnxruntime-gpu`)\n\t- Ensure CUDA and driver versions match your `onnxruntime-gpu` build\n- LLM report generation fails:\n\t- Install `llama-cpp-python`\n\t- Ensure internet access for first model download\n\t- Disable `Use LLM for report` to keep standard report generation\n\n## License\n\nMIT. See `LICENSE`.\n",
+    "description": "[![License MIT](https://img.shields.io/pypi/l/myopari.svg?color=green)](https://github.com/minhnhattrinh312/myopari/blob/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/myopari.svg?color=green)](https://pypi.org/project/myopari)\n[![Python Version](https://img.shields.io/pypi/pyversions/myopari.svg?color=green)](https://python.org)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/myopari)](https://napari-hub.org/plugins/myopari)\n\n# \ud83e\udec0 myopari\n\n**myopari: An Open-Source Edge AI Framework for Automated Quantitative Cardiac MRI Analysis.**\n\n## \ud83d\udc93 Introduction\n\nmyopari is a [napari](https://napari.org/) plugin for cardiac MRI segmentation and quantitative report generation. It brings ONNX-based AI inference to edge devices through an interactive interface that works with both 2D images and 3D volumes.\n\n### \u2728 Main features\n\n- \ud83e\udde0 Built-in `TIRAMISU_ACDC` and `TIRAMISU_EMIDEC` segmentation models\n- \ud83d\udda5\ufe0f Local, edge-friendly ONNX inference\n- \ud83e\udec0 Optional myocardium-only segmentation\n- \ud83d\udcca Per-class volume measurements and myocardium mass estimates\n- \ud83d\udcc4 Markdown report generation with optional patient information\n- \ud83e\udd16 Optional LLM-assisted report rewriting with `llama-cpp-python`\n\n### \ud83c\udfaf Model segmentation outputs\n\nThe output label groups for each model are defined as below:\n\n| Model | Segmentation output | Label value(s) |\n| --- | --- | --- |\n| `TIRAMISU_ACDC` | Right ventricle | `1` |\n| `TIRAMISU_ACDC` | Myocardium | `2` |\n| `TIRAMISU_ACDC` | Left ventricle | `3` |\n| `TIRAMISU_EMIDEC` | Cavity | `1` |\n| `TIRAMISU_EMIDEC` | Myocardium | `2`, `3`, `4` |\n| `TIRAMISU_EMIDEC` | Infarction | `3`, `4` |\n| `TIRAMISU_EMIDEC` | No-reflow | `4` |\n\nSome EMIDEC groups intentionally overlap: infarction and no-reflow are included in the broader myocardium group for quantitative reporting.\n\n## \ud83d\ude80 Usage\n\n1. Launch napari.\n2. Load a cardiac MRI image or volume.\n3. Open `Plugins \u2192 myopari \u2192 myopari`.\n4. Click **Select image layer** and choose the image to analyze.\n5. Select the edge device and segmentation model.\n6. Optionally enable **Myocardium only**.\n7. Click **Segment**. The result appears as a new labels layer named `segmentation_<input_layer_name>_<count>`.\n\n### \ud83d\udcdd Create a report\n\nAfter segmentation:\n\n1. Optionally click **Choose patient info files** and select `.cfg`, `.txt`, or `.md` files.\n2. Optionally enable **Use LLM for report**.\n3. Click **Create report**.\n4. Click **Save report to .md** to export the result.\n\nThe report includes per-label volumes in mL and an estimated myocardium mass. If a logo is available in `Resources`, it is embedded in the report and copied beside the saved Markdown file.\n\n## \u2328\ufe0f Installation Guide (Command Line)\n\nThe commands below create a dedicated Conda environment, install napari, automatically select the appropriate CPU or CUDA wheel for `llama-cpp-python`, and install myopari:\n\n```bash\nconda create -y -n myopari python=3.13\nconda activate myopari\npip install \"napari[all]==0.7.1\"\n\n# Check your CUDA version. If nvidia-smi is unavailable, use the CPU command.\n# CPU:\npip install llama-cpp-python \\\n    --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu\n# CUDA (replace cu124 with your CUDA wheel tag, for example cu118 or cu121):\npip install llama-cpp-python \\\n    --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu132\npip install myopari\n\nnapari\n```\n\nAfter napari opens, select `Plugins \u2192 myopari \u2192 myopari`.\n\n## \ud83e\udde9 Installation Guide *(No Code \u2014 Highly Recommended)*\n\nThis is the easiest installation method; no terminal or programming experience is required. \ud83c\udf89\n\n1. Download and install the official napari bundled app:\n   - \ud83e\ude9f [Windows installer](https://github.com/napari/napari/releases/download/v0.7.1/napari-0.7.1-Windows-x86_64.exe)\n   - \ud83d\udc27 [Linux installer](https://github.com/napari/napari/releases/download/v0.7.1/napari-0.7.1-Linux-x86_64.sh)\n   - \ud83d\udcd8 [Official bundled-app guide](https://napari.org/0.7.1/tutorials/fundamentals/installation_bundle_conda.html)\n2. Before installing myopari, install `llama-cpp-python` using the installer for your operating system:\n   - \ud83e\ude9f **Windows:** Download [install_llama2napari_windows.bat](https://github.com/minhnhattrinh312/myopari/releases/download/v0.1.4/install_llama2napari_windows.bat), double-click it, and follow the prompts.\n   - \ud83d\udc27 **Linux:** Download [install_llama2napari_linux.sh](https://github.com/minhnhattrinh312/myopari/releases/download/v0.1.4/install_llama2napari_linux.sh), run it by bash, and follow the prompts.\n3. Open napari after the `llama-cpp-python` installation finishes.\n4. Go to `Plugins \u2192 Install/Uninstall Plugins`.\n5. Search for **myopari**.\n6. Click **Install** and restart napari when installation finishes.\n7. Open the plugin from `Plugins \u2192 myopari \u2192 myopari`. \u2705\n\nThe plugin is also listed on the [napari hub](https://napari-hub.org/plugins/myopari).\n\n## \ud83d\udee0\ufe0f Troubleshooting\n\n- **Segmentation runtime/provider issues:** Check whether `onnxruntime` or `onnxruntime-gpu` is installed. For GPU inference, ensure that the CUDA and driver versions match the installed ONNX Runtime build.\n- **LLM report generation fails:** Install `llama-cpp-python` in napari's environment and ensure internet access is available for the first model download. Disable **Use LLM for report** to continue with standard report generation.\n- **Plugin is missing after installation:** Restart napari and check `Plugins \u2192 Install/Uninstall Plugins` to confirm that myopari is installed and enabled.\n\n## \ud83d\udcdc License\n\nmyopari is open-source software licensed under the [MIT License](LICENSE).\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -52,22 +52,21 @@
     "project_url": "https://pypi.org/project/myopari/",
     "project_urls": null,
     "provides_extra": null,
-    "release_url": "https://pypi.org/project/myopari/0.1.3/",
+    "release_url": "https://pypi.org/project/myopari/0.1.4/",
     "requires_dist": [
       "napari",
       "scikit-image",
-      "onnxruntime-gpu",
+      "onnxruntime-gpu[cuda,cudnn]",
       "huggingface-hub",
-      "llama-cpp-python",
       "napari-itk-io"
     ],
     "requires_python": ">=3.9",
     "summary": "User-Friendly AI Software for Automated Quantitative CMR Reporting on Low-Cost, Energy-Efficient Devices",
-    "version": "0.1.3",
+    "version": "0.1.4",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 39491448,
+  "last_serial": 39994296,
   "ownership": {
     "organization": null,
     "roles": [
@@ -173,30 +172,78 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.1.4": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "59a2fe8b193b454079b1bdd383187b9054a0028bed8cc4c4a55b6c8631021f0f"
+        },
+        "digests": {
+          "blake2b_256": "fcdbad4ca9de1f854e222557ce674ded2a2b3744960a61f9789dc36f7241f518",
+          "md5": "6413800b1581303f3a937a14b0520d81",
+          "sha256": "4cd5b7cd21b4bb5bd619d072d65ed72f2c3feb1065248fb906a07e60c8bae8ff"
+        },
+        "downloads": -1,
+        "filename": "myopari-0.1.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "6413800b1581303f3a937a14b0520d81",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 10445795,
+        "upload_time": "2026-08-13T16:49:50",
+        "upload_time_iso_8601": "2026-08-13T16:49:50.810513Z",
+        "url": "https://files.pythonhosted.org/packages/fc/db/ad4ca9de1f854e222557ce674ded2a2b3744960a61f9789dc36f7241f518/myopari-0.1.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "32d88ac7782113fc1616ed8d546087c6a3acb5ed1f67272a3e9a2c683f604a2c",
+          "md5": "49060c476307393af2029a03ed2e6d32",
+          "sha256": "37e0f561cd9a9018fd1c0c7cc9714c71407d5f96b97d6b730e9aa1b0253d87b1"
+        },
+        "downloads": -1,
+        "filename": "myopari-0.1.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "49060c476307393af2029a03ed2e6d32",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 10446959,
+        "upload_time": "2026-08-13T16:49:53",
+        "upload_time_iso_8601": "2026-08-13T16:49:53.151408Z",
+        "url": "https://files.pythonhosted.org/packages/32/d8/8ac7782113fc1616ed8d546087c6a3acb5ed1f67272a3e9a2c683f604a2c/myopari-0.1.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": null,
       "core-metadata": {
-        "sha256": "1fc202fbc9d05c1e6a7f4033fff8d16cb31ddfd47b76ebbc0c301bea6cc00edd"
+        "sha256": "59a2fe8b193b454079b1bdd383187b9054a0028bed8cc4c4a55b6c8631021f0f"
       },
       "digests": {
-        "blake2b_256": "ab9efd4e36e447625ff0c091b881e9f0034775ee5d8a221a6b4a896d5230a7c5",
-        "md5": "f2a50aa486b0680d7e3447ac1a306aff",
-        "sha256": "f5b0c5930fd2d4162850b920fca951335775b4532566eca6c603ac555f5f50e8"
+        "blake2b_256": "fcdbad4ca9de1f854e222557ce674ded2a2b3744960a61f9789dc36f7241f518",
+        "md5": "6413800b1581303f3a937a14b0520d81",
+        "sha256": "4cd5b7cd21b4bb5bd619d072d65ed72f2c3feb1065248fb906a07e60c8bae8ff"
       },
       "downloads": -1,
-      "filename": "myopari-0.1.3-py3-none-any.whl",
+      "filename": "myopari-0.1.4-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "f2a50aa486b0680d7e3447ac1a306aff",
+      "md5_digest": "6413800b1581303f3a937a14b0520d81",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.9",
-      "size": 10444132,
-      "upload_time": "2026-07-29T14:53:33",
-      "upload_time_iso_8601": "2026-07-29T14:53:33.846958Z",
-      "url": "https://files.pythonhosted.org/packages/ab/9e/fd4e36e447625ff0c091b881e9f0034775ee5d8a221a6b4a896d5230a7c5/myopari-0.1.3-py3-none-any.whl",
+      "size": 10445795,
+      "upload_time": "2026-08-13T16:49:50",
+      "upload_time_iso_8601": "2026-08-13T16:49:50.810513Z",
+      "url": "https://files.pythonhosted.org/packages/fc/db/ad4ca9de1f854e222557ce674ded2a2b3744960a61f9789dc36f7241f518/myopari-0.1.4-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
@@ -204,21 +251,21 @@
       "comment_text": null,
       "core-metadata": false,
       "digests": {
-        "blake2b_256": "7bc100ee2ee3b9b77037229095517edbdaee893058f6f82d9449ef8c2e50b551",
-        "md5": "1cd414d9c08ed5885aa32ee26e2440c5",
-        "sha256": "202c4b767995aead9eb1f732459d69584b73a6f61fb4f4f7bfbef222af8fbad2"
+        "blake2b_256": "32d88ac7782113fc1616ed8d546087c6a3acb5ed1f67272a3e9a2c683f604a2c",
+        "md5": "49060c476307393af2029a03ed2e6d32",
+        "sha256": "37e0f561cd9a9018fd1c0c7cc9714c71407d5f96b97d6b730e9aa1b0253d87b1"
       },
       "downloads": -1,
-      "filename": "myopari-0.1.3.tar.gz",
+      "filename": "myopari-0.1.4.tar.gz",
       "has_sig": false,
-      "md5_digest": "1cd414d9c08ed5885aa32ee26e2440c5",
+      "md5_digest": "49060c476307393af2029a03ed2e6d32",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.9",
-      "size": 10443837,
-      "upload_time": "2026-07-29T14:53:36",
-      "upload_time_iso_8601": "2026-07-29T14:53:36.554031Z",
-      "url": "https://files.pythonhosted.org/packages/7b/c1/00ee2ee3b9b77037229095517edbdaee893058f6f82d9449ef8c2e50b551/myopari-0.1.3.tar.gz",
+      "size": 10446959,
+      "upload_time": "2026-08-13T16:49:53",
+      "upload_time_iso_8601": "2026-08-13T16:49:53.151408Z",
+      "url": "https://files.pythonhosted.org/packages/32/d8/8ac7782113fc1616ed8d546087c6a3acb5ed1f67272a3e9a2c683f604a2c/myopari-0.1.4.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
