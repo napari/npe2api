@@ -17,7 +17,7 @@
       "Programming Language :: Python :: 3.13",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "# FOCUS-3D\r\n\r\n[![License BSD-3](https://img.shields.io/pypi/l/cellseg.svg?color=green)](https://github.com/Qinghua24/cellseg/raw/main/LICENSE)\r\n[![PyPI](https://img.shields.io/pypi/v/cellseg.svg?color=green)](https://pypi.org/project/cellseg)\r\n[![Python Version](https://img.shields.io/pypi/pyversions/cellseg.svg?color=green)](https://python.org)\r\n[![tests](https://github.com/Qinghua24/cellseg/workflows/tests/badge.svg)](https://github.com/Qinghua24/cellseg/actions)\r\n[![codecov](https://codecov.io/gh/Qinghua24/cellseg/branch/main/graph/badge.svg)](https://codecov.io/gh/Qinghua24/cellseg)\r\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/cellseg)](https://napari-hub.org/plugins/cellseg)\r\n[![npe2](https://img.shields.io/badge/plugin-npe2-blue?link=https://napari.org/stable/plugins/index.html)](https://napari.org/stable/plugins/index.html)\r\n\r\nFOCUS-3D provides a user-friendly napari plugin for interactive 3D cell segmentation, manual curation, model fine-tuning, and analysis. Users can run automatic 3D segmentation with pretrained FOCUS-3D models, manually correct segmentation errors, perform one-click segmentation, prepare curated patches for human-in-the-loop fine-tuning, reconstruct selected 3D cell instances, and compute quantitative statistics within the same napari workflow. Our website is [https://www.quiclab.org.cn/focus-3d](https://www.quiclab.org.cn/focus-3d).\r\n\r\n<img width=\"800\" height=\"434\" alt=\"image\" src=\"https://github.com/user-attachments/assets/2a9ccc08-3109-4b73-bcae-0514bcec2a86\" />\r\n\r\n## Installation\r\n\r\n#### 1. Create a new environment\r\n\r\n```bash\r\nconda create -n focus3d python=3.10 -y\r\nconda activate focus3d\r\n```\r\n\r\n#### 2. Install torch\r\nFor CUDA 12.x, replace cu12x with your specific CUDA-compatible PyTorch build. For example, for CUDA 12.6:\r\n\r\n```bash\r\npip install torch torchvision --index-url https://download.pytorch.org/whl/cu126\r\n```\r\nPlease check the official PyTorch installation guide if you need another CUDA version.\r\n\r\n#### 3. Install FOCUS-3D\r\n\r\n```bash\r\npip install -U \"focus-3d[gui]\"\r\n```\r\n\r\n#### 4. Install detectron2 (only for Linux model fine-tuning)\r\nFor Linux, FOCUS-3D requires Detectron2 for segmentation model fine-tuning. Please install Detectron2 according to the official guide:\r\n\r\nhttps://detectron2.readthedocs.io/en/latest/tutorials/install.html\r\n\r\nFor most Linux environments, the official source installation command is:\r\n\r\n```bash\r\npython -m pip install 'git+https://github.com/facebookresearch/detectron2.git'\r\n```\r\n\r\n#### 5. Launch napari\r\n\r\n```bash\r\npython -m napari\r\n```\r\n\r\n## Recommended Workflow\r\n\r\nThe following workflow is designed for first-time users. \r\n\r\n### Step 1 \u2014 Load and inspect the image\r\n1. In napari, open `Plugins -> 3D Segmentation (FOCUS-3D)`.\r\n2. Load a raw 3D microscopy image:\r\n   - use `File -> Open Folder` for a `.zarr` dataset, which is recommended for large volumes;\r\n   - use `File -> Open File(s)` for `.tif` or `.tiff` images.\r\n3. Open the `Basic` tab and use `Display Settings` when the raw image is difficult to inspect:\r\n   - move the `Minimum` and `Maximum` sliders to adjust contrast;\r\n   - click `Auto` for percentile-based contrast adjustment;\r\n   - The display settings affect visualization only; they do not modify the raw image values used for segmentation.\r\n\r\n### Step 2 \u2014 Run automatic 3D segmentation\r\n\r\n1. Open the `Segmentation` tab.\r\n2. In `Run Segmentation`, set the parameters that are most likely to vary between datasets:\r\n   - **Z Ratio** \u2014 the physical Z-to-XY spacing ratio. Use `1.0` for isotropic data.\r\n   - **Output Path** \u2014 the directory used for the current segmentation result.\r\n   - **Checkpoint** \u2014 the pretrained or fine-tuned checkpoint.\r\n   - **Cell radius (pixel)** \u2014 the approximate cell radius in the XY plane.\r\n   - **Background intensity** \u2014 patches or cells with grayscale values less than this value will be removed.\r\n   - **Min size (3D)** and **Max size (3D)** \u2014 remove implausibly small or large instances.\r\n3. Use `Advanced` only when you need to change the GPU, configuration file, normalization percentiles, patch stride, batch size, or stitching thresholds. See the [complete menu reference](docs/MENU_REFERENCE.md#run-segmentation) for parameter definitions and defaults.\r\n4. Click `Run 3D Segmentation`.\r\n\r\nAfter inference, FOCUS-3D loads an editable label layer into napari. The inference outputs are saved to the specified output path in both TIFF and Zarr formats.\r\n\r\n### Step 3 \u2014 Inspect and curate the segmentation\r\n\r\n1. Return to the `Basic` tab.\r\n\r\n2. Click `Enter Curation Mode`, then click a cell label to select it.\r\n\r\n3. Correct common errors:\r\n\r\n   * use `Add to Label` to recover missing regions;\r\n   * use `Subtract from Label` to remove incorrect regions;\r\n   * use `Add New Label` for a missed cell;\r\n   * use `Delete Current Z` for a slice-specific error;\r\n   * use `Delete All Z` to remove an incorrect 3D instance;\r\n   * use `Delete Inside ROI (All Z)` to remove multiple labels in a selected region.\r\n\r\n   For detailed instructions on ROI drawing, label-editing operations, and keyboard shortcuts, see [Manual Curation](docs/MENU_REFERENCE.md#manual-curation).\r\n\r\n4. For labels stored in Zarr format, edits are written directly to the underlying Zarr data, so no separate save step is required. Labels loaded from TIFF are edited in memory and must be saved manually from the `Save` panel after curation.\r\n\r\n### Step 4 \u2014 Use one-click local refinement when needed\r\n\r\nManual drawing is not always the fastest way to correct a difficult cell.\r\n\r\n1. Keep both the raw image and segmentation label layer loaded.\r\n2. Open `Segmentation -> One-click segmentation`.\r\n3. Click `Enter Inactive Mode` to load the local refinement model and activate interactive refinement.\r\n4. Click the target cell in the viewer and inspect the updated label.\r\n5. Click `Exit Inactive Mode` after finishing.\r\n\r\n\r\n### Step 5 \u2014 Analyze the segmentation results\r\n\r\nOpen the `Analysis` tab after the segmentation has been checked.\r\n\r\n#### Reconstruct one selected cell\r\n\r\n1. Select a non-background cell in the label layer.\r\n2. Set the appropriate `Z Ratio`.\r\n3. Click `Reconstruct Selected Label`.\r\n4. Save the reconstructed mesh as `.npz` when needed.\r\n\r\n#### Inspect the full volume in 3D\r\n\r\n1. Set the physical `Z Ratio`.\r\n2. Click `Switch to 3D View`.\r\n3. Rotate and inspect the image and labels.\r\n4. Click `Switch to 2D View` to return to slice navigation.\r\n\r\n#### Run morphometry analysis\r\n\r\n1. Set the physical voxel size in Z, Y, and X.\r\n2. Choose an output folder.\r\n3. Run one or more tasks:\r\n   - `Basic Information` for cell morphology and optional intensity measurements;\r\n   - `Neighborhood Analysis` for centroid-based local organization;\r\n   - `Contact Graph Analysis` for face-touching cell relationships;\r\n   - `Clustering` for feature-based cell grouping.\r\n4. Use `Show feature` to map supported results back to the napari label volume.\r\n\r\n### Step 6 \u2014 Prepare curated patches and fine-tune the model\r\n\r\nFine-tuning is a two-stage workflow: curate training patches in napari, then run the training notebook.\r\n\r\n#### A. Export curated patches from napari\r\n\r\n1. Keep the raw image and corrected label volume loaded.\r\n2. Open `Segmentation -> Finetune with Current Labels`.\r\n3. Click `Calculate Valid Patches`.\r\n4. Inspect the patch boxes and choose a `Patch ID`.\r\n5. Set the patch `Save Path`.\r\n6. Click `Curate Selected Patch`.\r\n7. In the new patch viewer, correct the labels with the `Basic` curation tools.\r\n8. In `Save Curated Patch`, click `Save`.\r\n\r\nEach saved sample is written as a paired TIFF image and label:\r\n\r\n```text\r\n<save_path>/\r\n\u251c\u2500\u2500 imagesTr/\r\n\u2502   \u251c\u2500\u2500 patch_0001.tif\r\n\u2502   \u2514\u2500\u2500 ...\r\n\u2514\u2500\u2500 labelsTr/\r\n    \u251c\u2500\u2500 patch_0001.tif\r\n    \u2514\u2500\u2500 ...\r\n```\r\n\r\nUse `Clear Patch Boxes` when you want to remove the patch overlays and return to normal curation.\r\n\r\n#### B. Run fine-tuning from the notebook\r\n\r\n1. Expand the collapsed `Fine-tune` instruction inside the same panel.\r\n2. Open:\r\n\r\n```text\r\nnotebooks/02_finetune.ipynb\r\n```\r\n\r\n3. Configure the notebook to use the curated patch directory.\r\n4. Run fine-tuning and obtain a new checkpoint.\r\n5. Return to `Segmentation -> Run Segmentation`.\r\n6. Select the new checkpoint in the `Checkpoint` field and run segmentation again.\r\n\r\nThe napari panel prepares and exports training data, but it does not launch model training directly.\r\n\r\n## Detailed Interface Reference\r\n\r\nThe complete descriptions of all controls are maintained in:\r\n\r\n- [Basic tab](docs/MENU_REFERENCE.md#basic-tab)\r\n- [Segmentation tab](docs/MENU_REFERENCE.md#segmentation-tab)\r\n- [Analysis tab](docs/MENU_REFERENCE.md#analysis-tab)\r\n- [Keyboard shortcuts](docs/MENU_REFERENCE.md#keyboard-shortcuts)\r\n- [Output files and folders](docs/MENU_REFERENCE.md#output-files-and-folders)\r\n\r\n\r\n## Issues\r\n\r\nIf you encounter a problem, please [file an issue](https://github.com/Qinghua24/cellseg/issues) with a detailed description, relevant logs, and a minimal example when possible. You may also contact `zhangqh24@mails.tsinghua.edu.cn`.\r\n\r\n## Citing\r\n\r\nPlease contact us before the paper is published.\r\n\r\n",
+    "description": "# FOCUS-3D\r\n\r\n[![License BSD-3](https://img.shields.io/pypi/l/cellseg.svg?color=green)](https://github.com/Qinghua24/cellseg/raw/main/LICENSE)\r\n[![PyPI](https://img.shields.io/pypi/v/cellseg.svg?color=green)](https://pypi.org/project/cellseg)\r\n[![Python Version](https://img.shields.io/pypi/pyversions/cellseg.svg?color=green)](https://python.org)\r\n[![tests](https://github.com/Qinghua24/cellseg/workflows/tests/badge.svg)](https://github.com/Qinghua24/cellseg/actions)\r\n[![codecov](https://codecov.io/gh/Qinghua24/cellseg/branch/main/graph/badge.svg)](https://codecov.io/gh/Qinghua24/cellseg)\r\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/cellseg)](https://napari-hub.org/plugins/cellseg)\r\n[![npe2](https://img.shields.io/badge/plugin-npe2-blue?link=https://napari.org/stable/plugins/index.html)](https://napari.org/stable/plugins/index.html)\r\n\r\nFOCUS-3D provides a user-friendly napari plugin for interactive 3D cell segmentation, manual curation, model fine-tuning, and analysis. Users can run automatic 3D segmentation with pretrained FOCUS-3D models, manually correct segmentation errors, perform one-click segmentation, prepare curated patches for human-in-the-loop fine-tuning, reconstruct selected 3D cell instances, and compute quantitative statistics within the same napari workflow. Our website is [https://www.quiclab.org.cn/focus-3d](https://www.quiclab.org.cn/focus-3d).\r\n\r\n<img width=\"800\" height=\"434\" alt=\"image\" src=\"https://github.com/user-attachments/assets/2a9ccc08-3109-4b73-bcae-0514bcec2a86\" />\r\n\r\n## Installation\r\n\r\n#### 1. Create a new environment\r\n\r\n```bash\r\nconda create -n focus3d python=3.10 -y\r\nconda activate focus3d\r\n```\r\n\r\n#### 2. Install torch\r\nFor CUDA 12.x, replace cu12x with your specific CUDA-compatible PyTorch build. For example, for CUDA 12.6:\r\n\r\n```bash\r\npip install torch torchvision --index-url https://download.pytorch.org/whl/cu126\r\n```\r\nPlease check the official PyTorch installation guide if you need another CUDA version.\r\n\r\n#### 3. Install FOCUS-3D\r\n\r\n```bash\r\npip install -U \"focus-3d[gui]\"\r\n```\r\n\r\n#### 4. Install detectron2 (only for Linux model fine-tuning)\r\nFor Linux, FOCUS-3D requires Detectron2 for segmentation model fine-tuning. Please install Detectron2 according to the official guide:\r\n\r\nhttps://detectron2.readthedocs.io/en/latest/tutorials/install.html\r\n\r\nFor most Linux environments, the official source installation command is:\r\n\r\n```bash\r\npython -m pip install 'git+https://github.com/facebookresearch/detectron2.git'\r\n```\r\n\r\n#### 5. Download pretrained model\r\nUsers can download the pretrained model for 3D segmentation: https://huggingface.co/Qinghua-thu/FOCUS-3D/.\r\n\r\n\r\n#### 6. Launch napari\r\n\r\n```bash\r\npython -m napari\r\n```\r\n\r\n## Recommended Workflow\r\n\r\n### Step 1 \u2014 Load and inspect the image\r\n1. In napari, open `Plugins -> 3D Segmentation (FOCUS-3D)`.\r\n2. Load a raw 3D microscopy image:\r\n   - use `File -> Open Folder` for a `.zarr` dataset, which is recommended for large volumes;\r\n   - use `File -> Open File(s)` for `.tif` or `.tiff` images.\r\n3. Open the `Basic` tab and use `Display Settings` when the raw image is difficult to inspect:\r\n   - move the `Minimum` and `Maximum` sliders to adjust contrast;\r\n   - click `Auto` for percentile-based contrast adjustment;\r\n\r\n### Step 2 \u2014 Run automatic 3D segmentation\r\n1. Open the `Segmentation` tab.\r\n2. In `Run Segmentation`, set the parameters that are most likely to vary between datasets:\r\n   - **Z Ratio** \u2014 the physical Z-to-XY spacing ratio. Use `1.0` for isotropic data.\r\n   - **Output Path** \u2014 the directory used for the segmentation result.\r\n   - **Checkpoint** \u2014 the pretrained or fine-tuned checkpoint.\r\n   - **Cell radius (pixel)** \u2014 the approximate cell radius in the XY plane.\r\n   - **Background intensity** \u2014 patches or cells with grayscale values less than this value will be removed.\r\n   - **Min size (3D)** and **Max size (3D)** \u2014 remove small or large instances.\r\n3. Use `Advanced` only when you need to change the GPU, configuration file, normalization percentiles, patch stride, batch size, or stitching thresholds. See the [complete menu reference](docs/MENU_REFERENCE.md#run-segmentation) for parameter definitions and defaults.\r\n4. Click `Run 3D Segmentation`.\r\n\r\nAfter inference, FOCUS-3D loads a label layer into napari. The inference outputs are saved to the specified output path in both TIFF and Zarr formats.\r\n\r\n### Step 3 \u2014 Inspect and curate the segmentation\r\n\r\n1. Return to the `Basic` tab.\r\n\r\n2. Click `Enter Curation Mode`, then click a cell label to select it.\r\n\r\n3. Correct common errors:\r\n\r\n   * use `Add to Label` to recover missing regions;\r\n   * use `Subtract from Label` to remove incorrect regions;\r\n   * use `Add New Label` for a missed cell;\r\n   * use `Delete Current Z` for a slice-specific error;\r\n   * use `Delete All Z` to remove an incorrect 3D instance;\r\n   * use `Delete Inside ROI (All Z)` to remove multiple labels in a selected region.\r\n\r\n   For detailed instructions on label-editing operations and keyboard shortcuts, see [Manual Curation](docs/MENU_REFERENCE.md#manual-curation).\r\n\r\n4. For labels stored in Zarr format, edits are written directly to the underlying Zarr data, so no separate save step is required. Labels loaded from TIFF are edited in memory and must be saved manually from the `Save` panel after curation.\r\n\r\n### Step 4 \u2014 Use one-click segmentation when needed\r\n\r\nOne-click segmentation can accelerate the curation.\r\n\r\n1. Keep both the raw image and segmentation label layer loaded.\r\n2. Open `Segmentation -> One-click segmentation`.\r\n3. Click `Enter Inactive Mode` to load the local refinement model and activate interactive refinement.\r\n4. Click the target cell in the viewer and inspect the updated label.\r\n5. Click `Exit Inactive Mode` after finishing.\r\n\r\n\r\n### Step 5 \u2014 Analyze the segmentation results\r\n\r\nOpen the `Analysis` tab after the segmentation has been checked.\r\n\r\n#### Reconstruct one selected cell\r\n\r\n1. Select a non-background cell in the label layer.\r\n2. Set the `Z Ratio`.\r\n3. Click `Reconstruct Selected Label`.\r\n4. Save the reconstructed mesh as `.npz` when needed.\r\n\r\n#### Inspect the full volume in 3D\r\n\r\n1. Set the physical `Z Ratio`.\r\n2. Click `Switch to 3D View`.\r\n3. Rotate and inspect the image and labels.\r\n4. Click `Switch to 2D View` to return to slice navigation.\r\n\r\n#### Run morphometry analysis\r\n\r\n1. Set the physical voxel size in Z, Y, and X.\r\n2. Choose an output folder.\r\n3. Run one or more tasks:\r\n   - `Basic Information` for cell morphology and optional intensity measurements;\r\n   - `Neighborhood Analysis` for centroid-based local organization;\r\n   - `Contact Graph Analysis` for face-touching cell relationships;\r\n   - `Clustering` for feature-based cell grouping.\r\n4. Use `Show feature` to map supported results back to the napari label volume.\r\n\r\n### Step 6 \u2014 Prepare curated patches and fine-tune the model\r\n\r\nFine-tuning is a two-stage workflow: curate training patches in napari, then run the training notebook.\r\n\r\n#### A. Export curated patches from napari\r\n\r\n1. Keep the raw image and corrected label volume loaded.\r\n2. Open `Segmentation -> Finetune with Current Labels`.\r\n3. Click `Calculate Valid Patches`.\r\n4. Inspect the patch boxes and choose a `Patch ID`.\r\n5. Set the patch `Save Path`.\r\n6. Click `Curate Selected Patch`.\r\n7. In the new patch viewer, correct the labels with the `Basic` curation tools.\r\n8. In `Save Curated Patch`, click `Save`.\r\n\r\nEach saved sample is written as a paired TIFF image and label:\r\n\r\n```text\r\n<save_path>/\r\n\u251c\u2500\u2500 imagesTr/\r\n\u2502   \u251c\u2500\u2500 patch_0001.tif\r\n\u2502   \u2514\u2500\u2500 ...\r\n\u2514\u2500\u2500 labelsTr/\r\n    \u251c\u2500\u2500 patch_0001.tif\r\n    \u2514\u2500\u2500 ...\r\n```\r\n\r\nUse `Clear Patch Boxes` when you want to remove the patch overlays and return to normal curation.\r\n\r\n#### B. Run fine-tuning from the notebook\r\n\r\n1. Expand the collapsed `Fine-tune` instruction inside the same panel.\r\n2. Open:\r\n\r\n```text\r\nnotebooks/02_finetune.ipynb\r\n```\r\n\r\n3. Configure the notebook to use the curated patch directory.\r\n4. Run fine-tuning and obtain a new checkpoint.\r\n5. Return to `Segmentation -> Run Segmentation`.\r\n6. Select the new checkpoint in the `Checkpoint` field and run segmentation again.\r\n\r\nThe napari panel prepares and exports training data, but it does not launch model training directly.\r\n\r\n## Detailed Interface Reference\r\n\r\nThe complete descriptions of all controls are maintained in:\r\n\r\n- [Basic tab](docs/MENU_REFERENCE.md#basic-tab)\r\n- [Segmentation tab](docs/MENU_REFERENCE.md#segmentation-tab)\r\n- [Analysis tab](docs/MENU_REFERENCE.md#analysis-tab)\r\n- [Keyboard shortcuts](docs/MENU_REFERENCE.md#keyboard-shortcuts)\r\n- [Output files and folders](docs/MENU_REFERENCE.md#output-files-and-folders)\r\n\r\n\r\n## Issues\r\n\r\nIf you encounter a problem, please [file an issue](https://github.com/Qinghua24/cellseg/issues) with a detailed description, relevant logs, and a minimal example when possible. You can also contact `zhangqh24@mails.tsinghua.edu.cn`.\r\n\r\n## Citing\r\n\r\nPlease contact us before the paper is published.\r\n\r\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -46,7 +46,7 @@
     "provides_extra": [
       "gui"
     ],
-    "release_url": "https://pypi.org/project/focus-3d/0.1.16/",
+    "release_url": "https://pypi.org/project/focus-3d/0.1.17/",
     "requires_dist": [
       "numpy",
       "magicgui",
@@ -72,11 +72,11 @@
     ],
     "requires_python": ">=3.10",
     "summary": "FOCUS-3D: a user-friendly napari plugin for interactive 3D cell segmentation, curation, and analysis",
-    "version": "0.1.16",
+    "version": "0.1.17",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 39940473,
+  "last_serial": 40070234,
   "ownership": {
     "organization": null,
     "roles": [
@@ -87,28 +87,28 @@
     ]
   },
   "releases": {
-    "0.1.15": [
+    "0.1.17": [
       {
         "comment_text": null,
         "core-metadata": {
-          "sha256": "f497c8070f8ba90bf0a235d96de58d6657580b632185c77c595cbf4b50c44f7c"
+          "sha256": "499e05ba61808854d47ee41cf4910836804f50f1a4df9055b8e24034a4fc54aa"
         },
         "digests": {
-          "blake2b_256": "7af3e9a6fd900fdf3245e13067d368908296c42d49fce78eac652831c135e7ba",
-          "md5": "5a7c01f8b738a767d6ae67a46d8448b4",
-          "sha256": "4d5f3969426c16b2ebd9cceede5eb8d7a2b5346c28033c99f4f9c0fb899f5473"
+          "blake2b_256": "39bec153ca8cc47e025ad3ecd8e00c2322a896d2c46448a3a5e17611c37dccc9",
+          "md5": "65a1239eeca5e2d84aea1990277bedb9",
+          "sha256": "1bcd1282904bd260f1f7fb9594074f02832081df7c91c6aaac4fbbb38ae15624"
         },
         "downloads": -1,
-        "filename": "focus_3d-0.1.15-py3-none-any.whl",
+        "filename": "focus_3d-0.1.17-py3-none-any.whl",
         "has_sig": false,
-        "md5_digest": "5a7c01f8b738a767d6ae67a46d8448b4",
+        "md5_digest": "65a1239eeca5e2d84aea1990277bedb9",
         "packagetype": "bdist_wheel",
         "python_version": "py3",
         "requires_python": ">=3.10",
-        "size": 322913,
-        "upload_time": "2026-08-09T11:18:48",
-        "upload_time_iso_8601": "2026-08-09T11:18:48.280116Z",
-        "url": "https://files.pythonhosted.org/packages/7a/f3/e9a6fd900fdf3245e13067d368908296c42d49fce78eac652831c135e7ba/focus_3d-0.1.15-py3-none-any.whl",
+        "size": 318777,
+        "upload_time": "2026-08-16T07:37:15",
+        "upload_time_iso_8601": "2026-08-16T07:37:15.661455Z",
+        "url": "https://files.pythonhosted.org/packages/39/be/c153ca8cc47e025ad3ecd8e00c2322a896d2c46448a3a5e17611c37dccc9/focus_3d-0.1.17-py3-none-any.whl",
         "yanked": false,
         "yanked_reason": null
       },
@@ -116,69 +116,21 @@
         "comment_text": null,
         "core-metadata": false,
         "digests": {
-          "blake2b_256": "2c74585c38db3bbeca1c8c1857206b89a2a5ff8da8b165e040d5136790d3e50c",
-          "md5": "24bd3865f98c1544d40715f3d5a81e5b",
-          "sha256": "44b4e8242e165ed0c2857cabcc18c43821f557389eadcd4d7503cb0f957dbe59"
+          "blake2b_256": "002398c6fb575516ad6645ec09b6bacf128c6e8fafb59e7c14aa399cc542fd21",
+          "md5": "8cee70668d1092b2a2134e4c610aec9d",
+          "sha256": "7cd637d6540b4144f80359bd7c3d6f54d9c53c5803ee4647f478d36e06be8777"
         },
         "downloads": -1,
-        "filename": "focus_3d-0.1.15.tar.gz",
+        "filename": "focus_3d-0.1.17.tar.gz",
         "has_sig": false,
-        "md5_digest": "24bd3865f98c1544d40715f3d5a81e5b",
+        "md5_digest": "8cee70668d1092b2a2134e4c610aec9d",
         "packagetype": "sdist",
         "python_version": "source",
         "requires_python": ">=3.10",
-        "size": 268627,
-        "upload_time": "2026-08-09T11:18:52",
-        "upload_time_iso_8601": "2026-08-09T11:18:52.276696Z",
-        "url": "https://files.pythonhosted.org/packages/2c/74/585c38db3bbeca1c8c1857206b89a2a5ff8da8b165e040d5136790d3e50c/focus_3d-0.1.15.tar.gz",
-        "yanked": false,
-        "yanked_reason": null
-      }
-    ],
-    "0.1.16": [
-      {
-        "comment_text": null,
-        "core-metadata": {
-          "sha256": "2aa51c70b1413285a968523b6b27d88c975d48eef02c99bc26b594d4b5e8ee26"
-        },
-        "digests": {
-          "blake2b_256": "05526470bcf1a5cd49ac4fc5d05dfa648205ff67b0e27c2b502f9dd0e5e32fae",
-          "md5": "c1b16091538350afdbf16a8cfc341fbc",
-          "sha256": "facea55f8bae6e95476fdaa96578380ce53a3d4836c2819d44eb5a6f10a49203"
-        },
-        "downloads": -1,
-        "filename": "focus_3d-0.1.16-py3-none-any.whl",
-        "has_sig": false,
-        "md5_digest": "c1b16091538350afdbf16a8cfc341fbc",
-        "packagetype": "bdist_wheel",
-        "python_version": "py3",
-        "requires_python": ">=3.10",
-        "size": 318907,
-        "upload_time": "2026-08-12T06:12:06",
-        "upload_time_iso_8601": "2026-08-12T06:12:06.913675Z",
-        "url": "https://files.pythonhosted.org/packages/05/52/6470bcf1a5cd49ac4fc5d05dfa648205ff67b0e27c2b502f9dd0e5e32fae/focus_3d-0.1.16-py3-none-any.whl",
-        "yanked": false,
-        "yanked_reason": null
-      },
-      {
-        "comment_text": null,
-        "core-metadata": false,
-        "digests": {
-          "blake2b_256": "99b430c66e2b966d37f11ba373893cfb225f57b850dfe68a7fbc10d3edf93bab",
-          "md5": "3e2a1e2e917884c84027d37d5bb73ac5",
-          "sha256": "f2b3e0d5d999277c52f742c984c5855bffb9d68e723b7626e44dd6d89dcfb21e"
-        },
-        "downloads": -1,
-        "filename": "focus_3d-0.1.16.tar.gz",
-        "has_sig": false,
-        "md5_digest": "3e2a1e2e917884c84027d37d5bb73ac5",
-        "packagetype": "sdist",
-        "python_version": "source",
-        "requires_python": ">=3.10",
-        "size": 262170,
-        "upload_time": "2026-08-12T06:12:08",
-        "upload_time_iso_8601": "2026-08-12T06:12:08.633624Z",
-        "url": "https://files.pythonhosted.org/packages/99/b4/30c66e2b966d37f11ba373893cfb225f57b850dfe68a7fbc10d3edf93bab/focus_3d-0.1.16.tar.gz",
+        "size": 262067,
+        "upload_time": "2026-08-16T07:37:17",
+        "upload_time_iso_8601": "2026-08-16T07:37:17.324275Z",
+        "url": "https://files.pythonhosted.org/packages/00/23/98c6fb575516ad6645ec09b6bacf128c6e8fafb59e7c14aa399cc542fd21/focus_3d-0.1.17.tar.gz",
         "yanked": false,
         "yanked_reason": null
       }
@@ -188,24 +140,24 @@
     {
       "comment_text": null,
       "core-metadata": {
-        "sha256": "2aa51c70b1413285a968523b6b27d88c975d48eef02c99bc26b594d4b5e8ee26"
+        "sha256": "499e05ba61808854d47ee41cf4910836804f50f1a4df9055b8e24034a4fc54aa"
       },
       "digests": {
-        "blake2b_256": "05526470bcf1a5cd49ac4fc5d05dfa648205ff67b0e27c2b502f9dd0e5e32fae",
-        "md5": "c1b16091538350afdbf16a8cfc341fbc",
-        "sha256": "facea55f8bae6e95476fdaa96578380ce53a3d4836c2819d44eb5a6f10a49203"
+        "blake2b_256": "39bec153ca8cc47e025ad3ecd8e00c2322a896d2c46448a3a5e17611c37dccc9",
+        "md5": "65a1239eeca5e2d84aea1990277bedb9",
+        "sha256": "1bcd1282904bd260f1f7fb9594074f02832081df7c91c6aaac4fbbb38ae15624"
       },
       "downloads": -1,
-      "filename": "focus_3d-0.1.16-py3-none-any.whl",
+      "filename": "focus_3d-0.1.17-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "c1b16091538350afdbf16a8cfc341fbc",
+      "md5_digest": "65a1239eeca5e2d84aea1990277bedb9",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.10",
-      "size": 318907,
-      "upload_time": "2026-08-12T06:12:06",
-      "upload_time_iso_8601": "2026-08-12T06:12:06.913675Z",
-      "url": "https://files.pythonhosted.org/packages/05/52/6470bcf1a5cd49ac4fc5d05dfa648205ff67b0e27c2b502f9dd0e5e32fae/focus_3d-0.1.16-py3-none-any.whl",
+      "size": 318777,
+      "upload_time": "2026-08-16T07:37:15",
+      "upload_time_iso_8601": "2026-08-16T07:37:15.661455Z",
+      "url": "https://files.pythonhosted.org/packages/39/be/c153ca8cc47e025ad3ecd8e00c2322a896d2c46448a3a5e17611c37dccc9/focus_3d-0.1.17-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
@@ -213,21 +165,21 @@
       "comment_text": null,
       "core-metadata": false,
       "digests": {
-        "blake2b_256": "99b430c66e2b966d37f11ba373893cfb225f57b850dfe68a7fbc10d3edf93bab",
-        "md5": "3e2a1e2e917884c84027d37d5bb73ac5",
-        "sha256": "f2b3e0d5d999277c52f742c984c5855bffb9d68e723b7626e44dd6d89dcfb21e"
+        "blake2b_256": "002398c6fb575516ad6645ec09b6bacf128c6e8fafb59e7c14aa399cc542fd21",
+        "md5": "8cee70668d1092b2a2134e4c610aec9d",
+        "sha256": "7cd637d6540b4144f80359bd7c3d6f54d9c53c5803ee4647f478d36e06be8777"
       },
       "downloads": -1,
-      "filename": "focus_3d-0.1.16.tar.gz",
+      "filename": "focus_3d-0.1.17.tar.gz",
       "has_sig": false,
-      "md5_digest": "3e2a1e2e917884c84027d37d5bb73ac5",
+      "md5_digest": "8cee70668d1092b2a2134e4c610aec9d",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.10",
-      "size": 262170,
-      "upload_time": "2026-08-12T06:12:08",
-      "upload_time_iso_8601": "2026-08-12T06:12:08.633624Z",
-      "url": "https://files.pythonhosted.org/packages/99/b4/30c66e2b966d37f11ba373893cfb225f57b850dfe68a7fbc10d3edf93bab/focus_3d-0.1.16.tar.gz",
+      "size": 262067,
+      "upload_time": "2026-08-16T07:37:17",
+      "upload_time_iso_8601": "2026-08-16T07:37:17.324275Z",
+      "url": "https://files.pythonhosted.org/packages/00/23/98c6fb575516ad6645ec09b6bacf128c6e8fafb59e7c14aa399cc542fd21/focus_3d-0.1.17.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
