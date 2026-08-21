@@ -18,7 +18,7 @@
       "Programming Language :: Python :: 3.13",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "- [napari-czitools](#napari-czitools)\n  - [Installation](#installation)\n  - [Supported Operating Systems](#supported-operating-systems)\n  - [Usage - Core Functionalities](#usage---core-functionalities)\n    - [Open Complete CZI Files](#open-complete-czi-files)\n    - [Open CZI Sample Data](#open-czi-sample-data)\n      - [CellDivision 5D Stack](#celldivision-5d-stack)\n      - [Neurons 3D Stack](#neurons-3d-stack)\n      - [AiryScan 3D Stack](#airyscan-3d-stack)\n      - [Wellplate Data](#wellplate-data)\n    - [Advanced CZI Reader (CziReadTools) plugin](#advanced-czi-reader-czireadtools-plugin)\n  - [Current Limitations](#current-limitations)\n    - [Future plans](#future-plans)\n  - [Contributing](#contributing)\n  - [License](#license)\n  - [Issues](#issues)\n- [Disclaimer](#disclaimer)\n\n# napari-czitools\n\n[![License MIT](https://img.shields.io/pypi/l/napari-czitools.svg?color=green)](https://github.com/sebi06/napari-czitools/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-czitools.svg?color=green)](https://pypi.org/project/napari-czitools)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-czitools.svg?color=green)](https://python.org)\n[![tests](https://github.com/sebi06/napari-czitools/workflows/tests/badge.svg)](https://github.com/sebi06/napari-czitools/actions)\n[![codecov](https://codecov.io/gh/sebi06/napari-czitools/branch/main/graph/badge.svg)](https://codecov.io/gh/sebi06/napari-czitools)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-czitools)](https://napari-hub.org/plugins/napari-czitools)\n[![npe2](https://img.shields.io/badge/plugin-npe2-blue?link=https://napari.org/stable/plugins/index.html)](https://napari.org/stable/plugins/index.html)\n[![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-purple.json)](https://github.com/copier-org/copier)\n\nPlugin to read CZI image file and metadata\n\n----------------------------------\n\nThis [napari] plugin was generated with [copier] using the [napari-plugin-template].\n\n![napari-czitools - Read CZI Metadata and load image Data](https://github.com/sebi06/napari-czitools/raw/main/readme_images/title_pic.png)\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/napari-plugin-template#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/stable/plugins/index.html\n-->\n\n## Installation\n\nYou can install `napari-czitools` via [pip]:\n\n    pip install napari-czitools\n\nTo install latest development version :\n\n    pip install git+https://github.com/sebi06/napari-czitools.git\n\n## Supported Operating Systems\n\nCurrently this only tested on:\n\n- Linux\n- Windows\n\nMacOS is not supported yet out of the box yet, but [czitools] uses [pylibCZIrw]. But it should be possible to install it manually: [MaxOS wheels for pylibCZIrw] (read and write CZI files on MacOS).\n\n## Usage - Core Functionalities\n\nThe plugin provides a reader for CZI files and allows to load the image data into [napari]. It also reads the metadata from the CZI file and displays it in the metadata panel of [napari].\n\n### Open Complete CZI Files\n\n- Open complete CZI Files and display the metadata in Napari using the [czitools] package\n\n![Open complete CZI file](./readme_images/file_open_mdtable_lls7.png)\n\n- Open different CZI Image sample data\n- if not found locally in current directory `../src/napari_czitools/sample_data` it will be opened from remote repository (might be slow)\n\n![Open sample data](https://github.com/sebi06/napari-czitools/raw/main/readme_images/open_sample1.png)\n\n### Open CZI Sample Data\n\n#### CellDivision 5D Stack\n\n![Sample Data - 5D Stack](https://github.com/sebi06/napari-czitools/raw/main/readme_images/open_sample_5D.png)\n\n#### Neurons 3D Stack\n\n![Sample Data - 3D Stack](https://github.com/sebi06/napari-czitools/raw/main/readme_images/open_sample_3D.png)\n\n#### AiryScan 3D Stack\n\n![Sample Data - AiryScan 3D Stack](https://github.com/sebi06/napari-czitools/raw/main/readme_images/open_sample_airyscan.png)\n\n#### Wellplate Data\n\n![Sample Data - Wellpate](https://github.com/sebi06/napari-czitools/raw/main/readme_images/open_sample_wellplate.png)\n\n### Advanced CZI Reader (CziReadTools) plugin\n\nSelect the plugin to show the UI in the right panel of the Napari UI via \"Plugins > Advanced CZI Reader (CziReadTools)\"\n\n1) Select the CZI file to read its metadata\n2) Once the metadata are read the display can be toggled between a **table** and a **tree view**\n3) The metadata will update the dimension range sliders (powered by [superqt]'s `QLabeledRangeSlider`) and enable reading the pixel data\n\n<img src=\"https://github.com/sebi06/napari-czitools/raw/main/readme_images/reader_adv1.png\" alt=\"Advanced CZI Reader - Plugin\" style=\"width:30%; height:auto;\">\n\n1) Metadata will be shown as a **table** or as a **tree view**\n2) The **Load Pixel Data** button will be enabled once the metadata is read\n3) The **Dimension Sliders** (using [superqt]'s dual-handle range slider) will be enabled and allow to select a range to be read for all available dimensions. Both handles can be set to the same value for single-slice selection (e.g. 3-3)\n\n<img src=\"https://github.com/sebi06/napari-czitools/raw/main/readme_images/reader_adv2.png\" alt=\"Advanced CZI Reader - Plugin\" style=\"width:80%; height:auto;\">\n\n- The dimension range sliders (from [superqt]) allow to define the size of a CZI subset to be read\n- This allows to read parts of a CZI image dataset\n- Important - when reading a subset the metadata will still reflects the size of the complete CZI\n\n![Advanced CZI Reader - Plugin](./readme_images/load_pixel1.png)\n\n- Example for reading a subset\n  - Timepoints (4-7): 4 slices or T=4\n  - Channels (0-0): 1 slice or CH=1\n  - Z-Plane (7-10): 4 slices or Z=4\n\n![Advanced CZI Reader - Plugin](./readme_images/load_pixel2.png)\n\n## Current Limitations\n\nThe plugin is still in its very early stage, therefor expect bugs and breaking changes\n\n- reading CZI with multiple scenes only works when the scenes have equal size\n- opening the sample CZI files will not display the CZI metadata right now\n\n### Future plans\n\n- allow reading individual scenes when scenes have different sizes\n- upgrade [pylibCZIrw] to allow use [bioio-czi] for even better reading\n- export of metadata table\n\nFeedback is always welcome!\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n### Running Tests\n\nInstall test dependencies first (recommended for full local coverage):\n\n```bash\npip install -e \".[testing]\"\n```\n\nThis installs `pytest-qt`, which provides the `qtbot` fixture used by\nnapari/Qt tests.\n\n**Windows/macOS:**\n```bash\npytest\n```\n\n**Linux (recommended - use tox):**\n```bash\ntox -e py312-linux\n```\n(Replace `py312` with your Python version: `py312` or `py313`)\n\n**Linux (direct pytest):**\n```bash\npytest -v --forked --color=yes\n```\n\nNote: The `--forked` flag is required on Linux to prevent CZI + Qt crashes by running each test in its own process. This flag is not available on Windows.\n\n### Recent Compatibility Notes\n\n- `czitools>=0.14.0` is supported.\n- `czitools==0.15.0` changed `read_tools.read_stacks` to return\n  `(array6d, dims, num_stacks, metadata)`.\n- The plugin now supports both 3-value and 4-value `read_stacks`\n  return signatures for backward compatibility.\n- Newer `czitools` may return scene data as a list of xarray stacks when lazy\n  reading is enabled. The plugin now handles both single-stack and scene-list\n  outputs when creating channel layers.\n- Channel extraction uses positional indexing to support channel coordinates\n  represented by names (for example `\"DAPI\"`, `\"EGFP\"`) instead of numeric\n  labels.\n- URL metadata tests can be affected by transient remote read failures (for\n  example GitHub/network hiccups). The test suite retries and skips these\n  network-dependent checks if remote headers cannot be read reliably.\n- The custom dual-handle `DoubleRangeSlider` has been replaced with wrappers\n  around [superqt]'s `QLabeledRangeSlider` and `QRangeSlider`, reducing\n  custom painting/mouse handling code and using a well-tested community\n  component. The public slider API (`low()`, `high()`, `setLow()`,\n  `setHigh()`, single-value mode) is unchanged.\n- A small internal patch (`_allow_handle_overlap`) is applied to every\n  superqt range slider so that both handles can sit on the same value,\n  enabling single-frame extraction (e.g. T=4-4 to read one timepoint).\n\n## License\n\nDistributed under the terms of the [MIT] license,\n\"napari-czitools\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n# Disclaimer\n\nThe software & scripts are free to use for everybody. The author undertakes no warranty concerning the use of this plugins and scripts. Use them on your own risk.\n\nBy using this plugin you agree to this disclaimer.\n\nVersion: 2025.08.20\n\n[napari]: https://github.com/napari/napari\n[copier]: https://copier.readthedocs.io/en/stable/\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[napari-plugin-template]: https://github.com/napari/napari-plugin-template\n[file an issue]: https://github.com/sebi06/napari-czitools/issues\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[czitools]: https://pypi.org/project/czitools/\n[pylibCZIrw]: https://pypi.org/project/pylibCZIrw/\n[MaxOS wheels for pylibCZIrw]: https://pypi.scm.io/#/package/pylibczirw\n[bioio-czi]: https://pypi.org/project/bioio-czi/\n[superqt]: https://pyapp-kit.github.io/superqt/\n",
+    "description": "- [napari-czitools](#napari-czitools)\n  - [Installation](#installation)\n  - [Supported Operating Systems](#supported-operating-systems)\n  - [Usage - Core Functionalities](#usage---core-functionalities)\n    - [Open Complete CZI Files](#open-complete-czi-files)\n    - [Open CZI Sample Data](#open-czi-sample-data)\n      - [CellDivision 5D Stack](#celldivision-5d-stack)\n      - [Neurons 3D Stack](#neurons-3d-stack)\n      - [AiryScan 3D Stack](#airyscan-3d-stack)\n      - [Wellplate Data](#wellplate-data)\n    - [Advanced CZI Reader (CziReadTools) plugin](#advanced-czi-reader-czireadtools-plugin)\n      - [Lazy Loading](#lazy-loading)\n  - [Current Limitations](#current-limitations)\n    - [Future plans](#future-plans)\n  - [Contributing](#contributing)\n    - [Running Tests](#running-tests)\n    - [Recent Compatibility Notes](#recent-compatibility-notes)\n  - [License](#license)\n  - [Issues](#issues)\n- [Disclaimer](#disclaimer)\n\n# napari-czitools\n\n[![License MIT](https://img.shields.io/pypi/l/napari-czitools.svg?color=green)](https://github.com/sebi06/napari-czitools/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-czitools.svg?color=green)](https://pypi.org/project/napari-czitools)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-czitools.svg?color=green)](https://python.org)\n[![tests](https://github.com/sebi06/napari-czitools/actions/workflows/test_and_deploy_pypi.yml/badge.svg)](https://github.com/sebi06/napari-czitools/actions/workflows/test_and_deploy_pypi.yml)\n[![codecov](https://codecov.io/gh/sebi06/napari-czitools/branch/main/graph/badge.svg)](https://codecov.io/gh/sebi06/napari-czitools)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-czitools)](https://napari-hub.org/plugins/napari-czitools)\n[![npe2](https://img.shields.io/badge/plugin-npe2-blue?link=https://napari.org/stable/plugins/index.html)](https://napari.org/stable/plugins/index.html)\n[![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-purple.json)](https://github.com/copier-org/copier)\n\nPlugin to read CZI image file and metadata\n\n----------------------------------\n\nThis [napari] plugin was generated with [copier] using the [napari-plugin-template].\n\n![napari-czitools - Read CZI Metadata and load image Data](https://github.com/sebi06/napari-czitools/raw/main/readme_images/title_pic.png)\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/napari-plugin-template#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/stable/plugins/index.html\n-->\n\n## Installation\n\nYou can install `napari-czitools` via [pip]:\n\n    pip install napari-czitools\n\nThe current release requires Python 3.12 or 3.13 and `czitools>=0.20.0`.\n\nTo install latest development version :\n\n    pip install git+https://github.com/sebi06/napari-czitools.git\n\n## Supported Operating Systems\n\nThe test suite runs on Python 3.12 and 3.13 for:\n\n- Linux\n- Windows\n- macOS\n\n## Usage - Core Functionalities\n\nThe plugin provides a reader for CZI files and allows to load the image data into [napari]. It also reads the metadata from the CZI file and displays it in the metadata panel of [napari].\n\n### Open Complete CZI Files\n\n- Open complete CZI Files and display the metadata in Napari using the [czitools] package\n\n![Open complete CZI file](https://github.com/sebi06/napari-czitools/raw/main/readme_images/file_open_mdtable_lls7.png)\n\n- Open different CZI Image sample data\n- if not found locally in current directory `../src/napari_czitools/sample_data` it will be opened from remote repository (might be slow)\n\n![Open sample data](https://github.com/sebi06/napari-czitools/raw/main/readme_images/open_sample1.png)\n\n### Open CZI Sample Data\n\n#### CellDivision 5D Stack\n\n![Sample Data - 5D Stack](https://github.com/sebi06/napari-czitools/raw/main/readme_images/open_sample_5D.png)\n\n#### Neurons 3D Stack\n\n![Sample Data - 3D Stack](https://github.com/sebi06/napari-czitools/raw/main/readme_images/open_sample_3D.png)\n\n#### AiryScan 3D Stack\n\n![Sample Data - AiryScan 3D Stack](https://github.com/sebi06/napari-czitools/raw/main/readme_images/open_sample_airyscan.png)\n\n#### Wellplate Data\n\n![Sample Data - Wellpate](https://github.com/sebi06/napari-czitools/raw/main/readme_images/open_sample_wellplate.png)\n\n### Advanced CZI Reader (CziReadTools) plugin\n\nSelect the plugin to show the UI in the right panel of the Napari UI via \"Plugins > Advanced CZI Reader (CziReadTools)\"\n\n1) Select the CZI file to read its metadata\n2) Once the metadata are read the display can be toggled between a **table** and a **tree view**\n3) The metadata will update the dimension range sliders (powered by [superqt]'s `QLabeledRangeSlider`) and enable reading the pixel data\n\n<img src=\"https://github.com/sebi06/napari-czitools/raw/main/readme_images/reader_adv1.png\" alt=\"Advanced CZI Reader - Plugin\" style=\"width:30%; height:auto;\">\n\n1) Metadata will be shown as a **table** or as a **tree view**\n2) The **Load Pixel Data** button will be enabled once the metadata is read\n3) The **Dimension Sliders** (using [superqt]'s dual-handle range slider) will be enabled and allow to select a range to be read for all available dimensions. Both handles can be set to the same value for single-slice selection (e.g. 3-3)\n\n<img src=\"https://github.com/sebi06/napari-czitools/raw/main/readme_images/reader_adv2.png\" alt=\"Advanced CZI Reader - Plugin\" style=\"width:80%; height:auto;\">\n\n- The dimension range sliders (from [superqt]) allow to define the size of a CZI subset to be read\n- This allows to read parts of a CZI image dataset\n- Important - when reading a subset the metadata will still reflects the size of the complete CZI\n\n![Advanced CZI Reader - Plugin](https://github.com/sebi06/napari-czitools/raw/main/readme_images/load_pixel1.png)\n\n- Example for reading a subset\n  - Timepoints (4-7): 4 slices or T=4\n  - Channels (0-0): 1 slice or CH=1\n  - Z-Plane (7-10): 4 slices or Z=4\n\n![Advanced CZI Reader - Plugin](https://github.com/sebi06/napari-czitools/raw/main/readme_images/load_pixel2.png)\n\n#### Lazy Loading\n\nThe **Lazy Loading** checkbox is enabled by default. It controls which\n`czitools` reader is used after **Load Pixel Data** is pressed:\n\n- **Enabled:** the plugin calls `read_tools.read_stacks` with the selected\n  scene, time, channel, and Z ranges. This scene-aware path can return one\n  xarray stack for equal-sized scenes or a list of stacks when scene shapes\n  differ. The plugin creates one napari image layer per channel and appends a\n  scene suffix to layer names when separate scene stacks are returned.\n- **Disabled:** the plugin calls `read_tools.read_6darray` and constructs one\n  regular array in `STCZYX(A)` order. This eager path requires selected scenes\n  to have compatible shapes.\n\nThe checkbox selects the stack-oriented reader, but the widget currently calls\nit with `use_dask=False`. Pixel data is therefore read while the load action is\nrunning before the layers are added to napari. In other words, the default UI\noption is scene-aware and memory-friendlier for differently shaped scenes, but\nit is not Dask-backed on-demand loading.\n\nTrue lazy pixel loading is available through the Python reader API by combining\n`use_lazy=True` with `use_dask=True`:\n\n```python\nfrom napari_czitools._reader import reader_function_adv\n\nreader_function_adv(\n    \"image.czi\",\n    use_lazy=True,\n    use_dask=True,\n)\n```\n\nIn this mode, `czitools` reads the CZI metadata and builds xarray objects backed\nby Dask task graphs first. The individual CZI pixel planes are not loaded at\nthat point. Napari receives the Dask-backed channel layers and triggers the\nrequired reads when image data is accessed or displayed. Disabling\n`use_lazy`, even with `use_dask=True`, still reads all pixels eagerly before\nwrapping the result in a Dask array.\n\n## Current Limitations\n\nThe plugin is still in its early stages; expect bugs and breaking changes.\n\n- opening the sample CZI files will not display the CZI metadata right now\n\n### Future plans\n\n- upgrade [pylibCZIrw] to allow use [bioio-czi] for even better reading\n- export of metadata table\n\nFeedback is always welcome!\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n### Running Tests\n\nInstall test dependencies first (recommended for full local coverage):\n\n    pip install -e \".[testing]\"\n\nThis installs `pytest-qt`, which provides the `qtbot` fixture used by\nnapari/Qt tests.\n\n**Windows/macOS:**\n\n    pytest\n\n**Linux (recommended - use tox):**\n\n    tox -e py312-linux\n\n(Replace `py312` with your Python version: `py312` or `py313`)\n\n**Linux (direct pytest):**\n\n    pytest -v --forked --color=yes\n\nNote: The `--forked` flag is required on Linux to prevent CZI + Qt crashes by running each test in its own process. This flag is not available on Windows.\n\n### Recent Compatibility Notes\n\n- `czitools>=0.20.0` is required.\n- `read_tools.read_stacks` returns\n  `(arrays_or_list, dims, num_stacks, metadata)`. The plugin handles both a\n  single stacked xarray object and a list containing one xarray stack per\n  scene.\n- Channel extraction uses positional indexing to support channel coordinates\n  represented by names (for example `\"DAPI\"`, `\"EGFP\"`) instead of numeric\n  labels.\n- URL metadata tests can be affected by transient remote read failures (for\n  example GitHub/network hiccups). The test suite retries and skips these\n  network-dependent checks if remote headers cannot be read reliably.\n- The custom dual-handle `DoubleRangeSlider` has been replaced with wrappers\n  around [superqt]'s `QLabeledRangeSlider` and `QRangeSlider`, reducing\n  custom painting/mouse handling code and using a well-tested community\n  component. The public slider API (`low()`, `high()`, `setLow()`,\n  `setHigh()`, single-value mode) is unchanged.\n- A small internal patch (`_allow_handle_overlap`) is applied to every\n  superqt range slider so that both handles can sit on the same value,\n  enabling single-frame extraction (e.g. T=4-4 to read one timepoint).\n\n## License\n\nDistributed under the terms of the [MIT] license,\n\"napari-czitools\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n# Disclaimer\n\nThe software & scripts are free to use for everybody. The author undertakes no warranty concerning the use of this plugins and scripts. Use them on your own risk.\n\nBy using this plugin you agree to this disclaimer.\n\n[napari]: https://github.com/napari/napari\n[copier]: https://copier.readthedocs.io/en/stable/\n[MIT]: http://opensource.org/licenses/MIT\n[napari-plugin-template]: https://github.com/napari/napari-plugin-template\n[file an issue]: https://github.com/sebi06/napari-czitools/issues\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[czitools]: https://pypi.org/project/czitools/\n[pylibCZIrw]: https://pypi.org/project/pylibCZIrw/\n[MaxOS wheels for pylibCZIrw]: https://pypi.scm.io/#/package/pylibczirw\n[bioio-czi]: https://pypi.org/project/bioio-czi/\n[superqt]: https://pyapp-kit.github.io/superqt/\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -52,7 +52,7 @@
     "provides_extra": [
       "testing"
     ],
-    "release_url": "https://pypi.org/project/napari-czitools/0.0.11/",
+    "release_url": "https://pypi.org/project/napari-czitools/0.12.0/",
     "requires_dist": [
       "numpy",
       "magicgui",
@@ -60,7 +60,7 @@
       "superqt",
       "scikit-image",
       "pyqtgraph",
-      "czitools>=0.16.0",
+      "czitools>=0.20.0",
       "tox; extra == \"testing\"",
       "pytest; extra == \"testing\"",
       "pytest-cov; extra == \"testing\"",
@@ -68,15 +68,15 @@
       "pytest-timeout; extra == \"testing\"",
       "pytest-forked; extra == \"testing\"",
       "napari; extra == \"testing\"",
-      "pyqt5; extra == \"testing\""
+      "pyqt6!=6.11.0,!=6.11.1,>=6.7; extra == \"testing\""
     ],
     "requires_python": "<3.14,>=3.12",
     "summary": "Plugin to read CZI image files and their metadata",
-    "version": "0.0.11",
+    "version": "0.12.0",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 35968361,
+  "last_serial": 40241450,
   "ownership": {
     "organization": null,
     "roles": [
@@ -592,30 +592,78 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.12.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "98b15379d8baf475504def0dc644f4b3039de48d66d33a6023756a79c4238a89"
+        },
+        "digests": {
+          "blake2b_256": "f510b5cb0fde2f785cc0a84e794ffc9e425d78953d7c29ff19beb71a00299cf9",
+          "md5": "2a2c76a27c51eaaefe2e6039fef81cd3",
+          "sha256": "d76d1add794509ac9e52df51ab89fca1010286338d75cc58cc5a4c7b38f5c4c2"
+        },
+        "downloads": -1,
+        "filename": "napari_czitools-0.12.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "2a2c76a27c51eaaefe2e6039fef81cd3",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.14,>=3.12",
+        "size": 59267,
+        "upload_time": "2026-08-21T10:04:30",
+        "upload_time_iso_8601": "2026-08-21T10:04:30.966141Z",
+        "url": "https://files.pythonhosted.org/packages/f5/10/b5cb0fde2f785cc0a84e794ffc9e425d78953d7c29ff19beb71a00299cf9/napari_czitools-0.12.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "a2918ba90fb4b2aca0cf08309a518f7337e845cf479dd19b68c693a89533e7b8",
+          "md5": "ea39fcffd8000a4c597a953519a56903",
+          "sha256": "d1fd61acdadb79dc011c56820e6495351615358451c88b7c5707bc6174bb7a3c"
+        },
+        "downloads": -1,
+        "filename": "napari_czitools-0.12.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "ea39fcffd8000a4c597a953519a56903",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.14,>=3.12",
+        "size": 10603694,
+        "upload_time": "2026-08-21T10:04:32",
+        "upload_time_iso_8601": "2026-08-21T10:04:32.748687Z",
+        "url": "https://files.pythonhosted.org/packages/a2/91/8ba90fb4b2aca0cf08309a518f7337e845cf479dd19b68c693a89533e7b8/napari_czitools-0.12.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": null,
       "core-metadata": {
-        "sha256": "9d11989b6e779a17c887628677eb01f1db0973934a753f2f6d33e963d1427373"
+        "sha256": "98b15379d8baf475504def0dc644f4b3039de48d66d33a6023756a79c4238a89"
       },
       "digests": {
-        "blake2b_256": "6ef6d1fc0a610bd611de5aee7dff1d614258ee6538eac9624228792483fed2df",
-        "md5": "f42e38f62e032ca07fed5f56e59074e1",
-        "sha256": "cdbf3e8228bc115827cb6d73a37311bd4e86cef74230346314ac83b63db4860c"
+        "blake2b_256": "f510b5cb0fde2f785cc0a84e794ffc9e425d78953d7c29ff19beb71a00299cf9",
+        "md5": "2a2c76a27c51eaaefe2e6039fef81cd3",
+        "sha256": "d76d1add794509ac9e52df51ab89fca1010286338d75cc58cc5a4c7b38f5c4c2"
       },
       "downloads": -1,
-      "filename": "napari_czitools-0.0.11-py3-none-any.whl",
+      "filename": "napari_czitools-0.12.0-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "f42e38f62e032ca07fed5f56e59074e1",
+      "md5_digest": "2a2c76a27c51eaaefe2e6039fef81cd3",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": "<3.14,>=3.12",
-      "size": 58372,
-      "upload_time": "2026-04-10T11:03:16",
-      "upload_time_iso_8601": "2026-04-10T11:03:16.648409Z",
-      "url": "https://files.pythonhosted.org/packages/6e/f6/d1fc0a610bd611de5aee7dff1d614258ee6538eac9624228792483fed2df/napari_czitools-0.0.11-py3-none-any.whl",
+      "size": 59267,
+      "upload_time": "2026-08-21T10:04:30",
+      "upload_time_iso_8601": "2026-08-21T10:04:30.966141Z",
+      "url": "https://files.pythonhosted.org/packages/f5/10/b5cb0fde2f785cc0a84e794ffc9e425d78953d7c29ff19beb71a00299cf9/napari_czitools-0.12.0-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
@@ -623,21 +671,21 @@
       "comment_text": null,
       "core-metadata": false,
       "digests": {
-        "blake2b_256": "2392345678fe957c1bfd71dec05ee0710994070c17d06cb22bac608c84cbda36",
-        "md5": "d5b88786726b9e991179ca3d99b261d9",
-        "sha256": "6a1f01850f41de9710d84e82bb7fc302bd2754e112321d2e42c33b4163c1500f"
+        "blake2b_256": "a2918ba90fb4b2aca0cf08309a518f7337e845cf479dd19b68c693a89533e7b8",
+        "md5": "ea39fcffd8000a4c597a953519a56903",
+        "sha256": "d1fd61acdadb79dc011c56820e6495351615358451c88b7c5707bc6174bb7a3c"
       },
       "downloads": -1,
-      "filename": "napari_czitools-0.0.11.tar.gz",
+      "filename": "napari_czitools-0.12.0.tar.gz",
       "has_sig": false,
-      "md5_digest": "d5b88786726b9e991179ca3d99b261d9",
+      "md5_digest": "ea39fcffd8000a4c597a953519a56903",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": "<3.14,>=3.12",
-      "size": 10602858,
-      "upload_time": "2026-04-10T11:03:17",
-      "upload_time_iso_8601": "2026-04-10T11:03:17.938968Z",
-      "url": "https://files.pythonhosted.org/packages/23/92/345678fe957c1bfd71dec05ee0710994070c17d06cb22bac608c84cbda36/napari_czitools-0.0.11.tar.gz",
+      "size": 10603694,
+      "upload_time": "2026-08-21T10:04:32",
+      "upload_time_iso_8601": "2026-08-21T10:04:32.748687Z",
+      "url": "https://files.pythonhosted.org/packages/a2/91/8ba90fb4b2aca0cf08309a518f7337e845cf479dd19b68c693a89533e7b8/napari_czitools-0.12.0.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
