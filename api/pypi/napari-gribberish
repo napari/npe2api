@@ -1,0 +1,176 @@
+{
+  "info": {
+    "author": "Ian Hunt-Isaak",
+    "author_email": "ian@earthmover.io",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Programming Language :: Python :: 3.14",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-gribberish\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-gribberish.svg?color=green)](https://github.com/ianhi/napari-gribberish/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-gribberish.svg?color=green)](https://pypi.org/project/napari-gribberish)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-gribberish.svg?color=green)](https://python.org)\n[![tests](https://github.com/ianhi/napari-gribberish/workflows/tests/badge.svg)](https://github.com/ianhi/napari-gribberish/actions)\n[![codecov](https://codecov.io/gh/ianhi/napari-gribberish/branch/main/graph/badge.svg)](https://codecov.io/gh/ianhi/napari-gribberish)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-gribberish)](https://napari-hub.org/plugins/napari-gribberish)\n[![npe2](https://img.shields.io/badge/plugin-npe2-blue?link=https://napari.org/stable/plugins/index.html)](https://napari.org/stable/plugins/index.html)\n\nOpen **GRIB** (GRIB1 / GRIB2) weather and ocean forecast files in [napari], powered by\nthe fast Rust-based [gribberish] decoder.\n\n![HRRR 2 m temperature over the continental US](docs/images/hero-hrrr-temperature.png)\n\n> *HRRR 2 m temperature over the continental US \u2014 the Rocky Mountains show up cold on the left.*\n\nEvery variable in a file becomes an image layer, and any non-spatial dimensions\n(forecast time, vertical level, ensemble member, \u2026) become interactive slider axes.\n\n## Features\n\n- \ud83d\udcc2 **Reader** \u2014 drag-and-drop or `File \u25b8 Open` any `.grib`, `.grib2`, `.grb`, or\n  `.grb2` file. Each variable loads as its own layer with units and long name\n  attached, and the horizontal grid mapped to layer `scale`/`translate` when the\n  coordinates are regular.\n- \ud83c\udf9b\ufe0f **Multi-dimensional navigation** \u2014 time / level / member dimensions become\n  napari sliders, so you can scrub or animate through a forecast.\n- \ud83e\udded **Smart colormaps** \u2014 sequential fields use `plasma`; directional fields\n  (wave/wind direction, 0\u2013360\u00b0) get a *cyclic* colormap so 0\u00b0 and 360\u00b0 match.\n- \ud83e\uddf0 **Variable selector widget** \u2014 choose exactly which variables to load and how\n  to display them (separate / blended / grid).\n- \ud83c\udf10 **Sample data** \u2014 stream a slice of NOAA HRRR straight from the public AWS\n  Open Data bucket, showcasing gribberish's remote + indexed reading.\n\n## Installation\n\n```bash\npip install \"napari-gribberish[all]\"   # includes napari + Qt\n```\n\nIf you already have napari installed:\n\n```bash\npip install napari-gribberish\n```\n\nLatest development version:\n\n```bash\npip install \"git+https://github.com/ianhi/napari-gribberish.git\"\n```\n\n> **Note:** requires napari \u2265 0.8 and Python \u2265 3.12.\n\n## Usage\n\n### Opening a file\n\nDrag a GRIB file onto the napari window, or use `File \u25b8 Open`. From Python:\n\n```python\nimport napari\n\nviewer = napari.Viewer()\nviewer.open(\"forecast.grib2\", plugin=\"napari-gribberish\")\nnapari.run()\n```\n\nTo avoid stacking many opaque layers on top of each other, the reader loads every\nvariable but reveals only the first \u2014 toggle the others with the \ud83d\udc41 icons in the\nlayer list.\n\n### Multi-dimensional data\n\nFiles with extra dimensions (here ERA5 with forecast time \u00d7 pressure level \u00d7\nensemble member) expose one slider per non-spatial axis. Drag them, or press \u25b6 to\nanimate.\n\n![ERA5 opened in napari with time, level and member sliders](docs/images/dimension-sliders-era5.png)\n\n### Variable selector widget\n\n`Plugins \u25b8 GRIB variable selector` opens a dock where you pick a file, select which\nvariables to load, and choose a display mode:\n\n- **separate** \u2014 one layer per variable, only the first visible (best for unrelated fields)\n- **blend** \u2014 all selected variables visible with additive blending (overlay a few fields)\n- **grid** \u2014 all selected variables side by side for comparison\n\n![The GRIB variable selector dock widget](docs/images/variable-selector-widget.png)\n\nGrid mode is handy for comparing related fields at a glance \u2014 note the wave-direction\npanel (bottom-left) automatically uses a cyclic colormap:\n\n![Four wave variables compared side by side in grid mode](docs/images/grid-compare-wave.png)\n\n### Sample data\n\n`File \u25b8 Open Sample \u25b8 Gribberish \u25b8 HRRR surface (remote)` streams 2 m temperature and\n10 m wind gust from the public NOAA HRRR archive on AWS (requires network access).\n\n### Reading GRIB without napari\n\nThe plugin is a thin layer over gribberish's xarray backend, so the same files open\ndirectly with:\n\n```python\nimport xarray as xr\n\nds = xr.open_dataset(\"forecast.grib2\", engine=\"gribberish\", collapse_groups=True)\n```\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n```bash\nuv run pytest          # run the test suite\nuv run napari          # launch napari with the plugin installed\n```\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-gribberish\" is free and open source software.\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[gribberish]: https://github.com/mpiannucci/gribberish\n[GRIB]: https://en.wikipedia.org/wiki/GRIB\n[copier]: https://copier.readthedocs.io/en/stable/\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[napari-plugin-template]: https://github.com/napari/napari-plugin-template\n[file an issue]: https://github.com/ianhi/napari-gribberish/issues\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": null,
+    "license_expression": "BSD-3-Clause",
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-gribberish",
+    "package_url": "https://pypi.org/project/napari-gribberish/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-gribberish/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/ianhi/napari-gribberish/issues",
+      "Documentation": "https://github.com/ianhi/napari-gribberish#README.md",
+      "Source Code": "https://github.com/ianhi/napari-gribberish",
+      "User Support": "https://github.com/ianhi/napari-gribberish/issues"
+    },
+    "provides_extra": [
+      "all"
+    ],
+    "release_url": "https://pypi.org/project/napari-gribberish/0.1.0/",
+    "requires_dist": [
+      "numpy",
+      "magicgui",
+      "qtpy",
+      "gribberish[xarray]>=1.5",
+      "napari[all]; extra == \"all\""
+    ],
+    "requires_python": ">=3.12",
+    "summary": "Read GRIB (GRIB1/GRIB2) weather and ocean data into napari using gribberish",
+    "version": "0.1.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 38970123,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "ianhi"
+      }
+    ]
+  },
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "737c84729b26042e47034b3e837af7f1ff537e2ddb2f04d4e69cd02a31bff7a4"
+        },
+        "digests": {
+          "blake2b_256": "abfa71628920aa6ced3d41585edc2b62a0981197006916776054d92b2f619f23",
+          "md5": "3b61401030508cb4c9746c6e4ab5367a",
+          "sha256": "9a308ddeef0a976b6fcb42d6baa062f36f8ca8dea5ebb5c810f8fe63534eabdd"
+        },
+        "downloads": -1,
+        "filename": "napari_gribberish-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "3b61401030508cb4c9746c6e4ab5367a",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.12",
+        "size": 13488,
+        "upload_time": "2026-07-14T01:40:31",
+        "upload_time_iso_8601": "2026-07-14T01:40:31.158033Z",
+        "url": "https://files.pythonhosted.org/packages/ab/fa/71628920aa6ced3d41585edc2b62a0981197006916776054d92b2f619f23/napari_gribberish-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "4af8c3462569f63b8d2611e6bf1e89b827af698c7ceac68301ef00def4af3c85",
+          "md5": "0c2b5a1e6868cc826369fedefe642668",
+          "sha256": "f410af2df8e86e756f9e5a7e6109b7a91335d667c573595ceff30a7390cd7971"
+        },
+        "downloads": -1,
+        "filename": "napari_gribberish-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "0c2b5a1e6868cc826369fedefe642668",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.12",
+        "size": 1562469,
+        "upload_time": "2026-07-14T01:40:32",
+        "upload_time_iso_8601": "2026-07-14T01:40:32.254070Z",
+        "url": "https://files.pythonhosted.org/packages/4a/f8/c3462569f63b8d2611e6bf1e89b827af698c7ceac68301ef00def4af3c85/napari_gribberish-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "737c84729b26042e47034b3e837af7f1ff537e2ddb2f04d4e69cd02a31bff7a4"
+      },
+      "digests": {
+        "blake2b_256": "abfa71628920aa6ced3d41585edc2b62a0981197006916776054d92b2f619f23",
+        "md5": "3b61401030508cb4c9746c6e4ab5367a",
+        "sha256": "9a308ddeef0a976b6fcb42d6baa062f36f8ca8dea5ebb5c810f8fe63534eabdd"
+      },
+      "downloads": -1,
+      "filename": "napari_gribberish-0.1.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "3b61401030508cb4c9746c6e4ab5367a",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.12",
+      "size": 13488,
+      "upload_time": "2026-07-14T01:40:31",
+      "upload_time_iso_8601": "2026-07-14T01:40:31.158033Z",
+      "url": "https://files.pythonhosted.org/packages/ab/fa/71628920aa6ced3d41585edc2b62a0981197006916776054d92b2f619f23/napari_gribberish-0.1.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "4af8c3462569f63b8d2611e6bf1e89b827af698c7ceac68301ef00def4af3c85",
+        "md5": "0c2b5a1e6868cc826369fedefe642668",
+        "sha256": "f410af2df8e86e756f9e5a7e6109b7a91335d667c573595ceff30a7390cd7971"
+      },
+      "downloads": -1,
+      "filename": "napari_gribberish-0.1.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "0c2b5a1e6868cc826369fedefe642668",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.12",
+      "size": 1562469,
+      "upload_time": "2026-07-14T01:40:32",
+      "upload_time_iso_8601": "2026-07-14T01:40:32.254070Z",
+      "url": "https://files.pythonhosted.org/packages/4a/f8/c3462569f63b8d2611e6bf1e89b827af698c7ceac68301ef00def4af3c85/napari_gribberish-0.1.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

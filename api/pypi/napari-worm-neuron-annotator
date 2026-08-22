@@ -1,0 +1,280 @@
+{
+  "info": {
+    "author": "JH Wang",
+    "author_email": "wjh19937458882@mail.ustc.edu.cn",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Programming Language :: Python :: 3.14",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-worm-neuron-annotator\n\n`napari-worm-neuron-annotator` is a napari plugin for navigating and annotating\nread-only neuron bounding-box ROIs on 3D or 4D Image volumes.\n\nThe plugin keeps each data source in a separate role:\n\n- the Image layer supplies the spatial axes, world transform, and Z-navigation\n  context;\n- the ROI array supplies neuron identity and box geometry;\n- runtime `Vectors` and `Points` layers show boxes and optional text without\n  writing them into a dense mask;\n- an explicitly selected `Labels` layer can add a compatible mask overlay and\n  checked/unchecked alpha control.\n\nThe plugin does not modify Image, ROI, or optional Labels source data.\n\n> **Roadmap:** Plugin-managed Labels are planned for deprecation. The primary\n> workflow now uses Image + ROI-derived Vectors/Points, while an explicitly\n> selected Labels layer remains available for compatibility.\n> See [the deferred deprecation decision](#deferred-deprecation-of-plugin-managed-labels).\n\n## Features\n\n- Image + ROI operation without a Labels layer.\n- Read-only loading of `(T,N,K)` ROI NPY arrays.\n- Dynamic 2D bounding rectangles and 3D 12-edge wireframes.\n- Stable per-neuron box colors derived from zero-based ROI identity.\n- Checkable neuron list with a separate active neuron.\n- All/None controls and cumulative Q/W navigation.\n- Fixed canvas shortcuts for Z-slice and time-frame navigation.\n- Active-neuron highlighting and view centering.\n- Session-only whole-viewer rotation and screen-axis flip controls.\n- View-preserving Z-layer display synchronized across Image and ROI overlays.\n- Zero-based ROI annotation with optional Excel import/export.\n- Optional Labels overlay with independent checked/unchecked alpha and exact\n  RGB preservation.\n- Automatic restoration of the original Labels colormap and opacity when the\n  widget closes or switches to another Labels layer.\n\n## Installation\n\nInstall into an existing napari environment:\n\n```text\npip install napari-worm-neuron-annotator\n```\n\nFor a fresh environment, install napari with its default Qt 6 backend:\n\n```text\npip install \"napari-worm-neuron-annotator[all]\"\n```\n\nExcel support alone is available through:\n\n```text\npip install \"napari-worm-neuron-annotator[excel]\"\n```\n\nThe base plugin does not install or select a Qt binding. The napari\nenvironment owns the Qt backend; the convenience `all` extra delegates that\nchoice to napari.\n\nThis release targets Python 3.11\u20133.14 and napari 0.8.x. See the\n[napari 0.8 migration notes](docs/napari-0.8-migration.md) for the dependency\nand compatibility decisions.\n\n## Image + ROI workflow\n\n1. Open an Image layer with `(z,y,x)` or `(t,z,y,x)` axes.\n2. Open `Plugins > Worm Neuron Annotator`.\n3. Select the Image layer, then load the ROI NPY file.\n4. Click a neuron row to check and activate that ID.\n5. Use the checkbox column to add or remove IDs from the persistent set.\n6. Use Q and W to check and activate the previous or next valid ID without\n   clearing IDs already checked.\n7. Use **All** or **None** to check every ID or clear all checked/active IDs.\n\nWith the napari canvas focused, use G/H for the previous/next Z slice in 2D,\nJ/K for the previous/next time frame of a 4D Image, and Shift-J/Shift-K to\nmove backward/forward by 10 time frames. Navigation stops at the data bounds\nrather than wrapping. In an individual Z layer, G/H stays within that layer's\nhalf-open Z range.\n\nThe active row is bold and remains the current row. Unchecking the active ID\nclears the active state; unchecking another ID does not change the active\nneuron.\n\nThe ROI array defines the neuron list. You do not need a Labels layer for\nselection, box rendering, annotation, centering, time navigation, or Z-layer\ndisplay.\n\n## Worm orientation\n\nThe **Worm Orientation** panel rotates the complete viewer clockwise by 0\u00b0,\n90\u00b0, 180\u00b0, or 270\u00b0 and can flip the final screen horizontally or vertically.\nImage, ROI boxes, optional text, Labels, and Z-layer views stay aligned because\nthe controls change only napari's viewer axes and camera orientation. Source\narrays and layer transforms are not modified.\n\n**Reset** restores the viewer orientation captured for the current session.\nClosing the widget also restores that orientation. If you use napari's native\ntranspose or camera-orientation controls, the resulting view becomes the new\nsession baseline and the plugin controls return to their default state.\n\n## Optional Labels overlay\n\nSelect a Labels layer only when you need the mask overlay. Its shape, axes,\nscale, translation, and units must match the selected Image layer. The ROI\narray remains the identity source, and the Image layer remains the spatial\nauthority.\n\nThe **Labels Layer** panel controls checked and unchecked label alpha. The\ndefaults are `0.50` and `0.00`. Alpha changes preserve each label's RGB value,\nand the widget restores the original colormap and opacity when it closes or\nswitches to another Labels layer. The napari layer-list eye icon can hide the\nwhole mask.\n\n## Deferred deprecation of plugin-managed Labels\n\nThe current release keeps the optional Labels integration and the legacy\n`LabelManager` Python and command aliases for compatibility. The public widget\nname is `NeuronAnnotatorWidget`, and napari lists only that widget.\n\nA future compatibility migration may remove plugin-managed Labels after users\nhave had time to move their Image + ROI workflows. No removal version is set.\nSource Labels data remains read-only during the migration period.\n\n## Z-layer display\n\nThe compact **Z Layers** panel separates a 3D volume along Z so individual\ndepth ranges can be rendered without the other ranges obscuring them:\n\n1. Select a compatible Image layer.\n2. Inspect the current-time curve showing how many pixels in each Z slice are\n   strictly above the editable threshold (default `170`). Click the curve to\n   add or remove a cut, or enter explicit cuts such as `4,10`.\n3. Click **Split**.\n4. Use **Show** to select `All` or one generated layer.\n\nCuts use half-open Python ranges. For a volume with 18 Z slices, `4,10`\ncreates `[0,4)`, `[4,10)`, and `[10,18)`. A boundary slice belongs to the\nfollowing layer.\n\n**All** displays every generated Image layer using additive blending and all\ncurrently valid checked/active ROI overlays. **Layer k** displays only that\nImage range and the overlays whose box center Z belongs to the range. A box\nthat crosses a cut is shown whole in the one layer containing its center.\n\nWhen you explicitly bind compatible Labels, **Split** creates read-only view\nor lazy-slice proxies. **All** shows the complete source Labels and hides the\nproxies. **Layer k** hides the source and shows its matching proxy slice. The\nplugin never allocates a dense Labels copy.\n\nChecked and active neuron identities remain global. In an individual layer,\nQ/W navigates only neurons assigned to that layer; other neurons remain in\nthe list, are shown in gray, and keep operable checkboxes. Activating a gray\nrow does not move the view outside the selected Z layer.\n\nGenerated Image layers use slices of NumPy arrays, memory maps, or Dask\narrays rather than full-size zero-filled copies. Direct Zarr arrays should\nbe wrapped as Dask arrays before splitting. The Image source must have\n`(z,y,x)` or `(t,z,y,x)` axes, axis-aligned volume depiction, and no clipping\nplanes. Optional Labels must match its shape and spatial metadata. **Clear**\nremoves generated Image and Labels layers and restores the source visibility\ncaptured before splitting. Normal napari eye icons may still override\nvisibility until the next **Show** selection.\n\n### Launch the validated 20260304_w3_immobile dataset\n\nThe repository includes a ready-to-use launcher for the git-ignored local\ndataset at `data/20260304_w3_immobile_npy`:\n\n```text\npixi run launch-actual\n```\n\nIt memory-maps `volumes.npy` and `neuron_point_tuple.npy`, opens napari, docks\nthe navigator, and loads all 120 ROI identities. The launcher leaves its\n`LOAD_OPTIONAL_LABELS` validation toggle disabled by default. Enable it to\nmemory-map `neuron_mask.npy` and exercise the optional Labels integration.\n\n## ROI input format\n\nThe ROI loader accepts a numeric NumPy array with shape:\n\n```text\n(T, N, K), K >= 6\n```\n\nThe first six fields are:\n\n```text\nx_center, y_center, z_scaled, width, height, depth_scaled\n```\n\nAdditional fields are ignored. The neuron ID is the index on the `N` axis:\n\n```text\nneuron_id = 0 ... N - 1\nlabel_value = neuron_id + 1\nbackground label_value = 0\n```\n\nNaN, infinite values, non-positive sizes, and time points outside the source\narray are treated as missing observations. Missing neurons remain in the\ncheckable list so that their global identity is stable, but Q/W skips them at\nthe current time point.\n\n### Coordinate and time mapping\n\nThe plugin requires the selected Image layer to have one of these axis orders:\n\n```text\n(z, y, x)\n(t, z, y, x)\n```\n\n`z_divisor`, defaulting to 5, converts source z and depth coordinates:\n\n```text\nz_index = z_scaled / z_divisor\ndepth_in_slices = depth_scaled / z_divisor\n```\n\nFor a viewer that displays a cropped or strided time range:\n\n```text\nsource_t = volume_start + viewer_t * volume_stride\n```\n\nConfigure `volume_start` and `volume_stride` before loading the NPY.\n\nThe derived ROI overlay layers copy scale, translation, axis labels, and\nunits from the Image layer. Do not apply the z scale a second time in the ROI\ncoordinates. Optional Labels never supply ROI colors or spatial metadata.\n\n## 2D and 3D box display\n\nTwo managed Vectors layers are created after loading an ROI file:\n\n- `Neuron boxes \u2013 selected`: checked, currently valid boxes colored by their\n  stable `neuron_id` palette;\n- `Neuron box \u2013 active`: the active box with a thick yellow outline.\n\nInitially only the first valid neuron is checked and active. **All** includes\nall IDs in the selected layer, while **None** empties both box layers and the\noptional text overlay. Checked identities that are missing at the current time\nremain checked but are temporarily omitted from the geometry.\n\nEnable **Show selected box labels** to place one text label at the center of\neach currently rendered checked box. The text uses the annotation table's\n`biological` value when present and otherwise falls back to the zero-based\n`neuron_id`. The third `annotation` column is not used for box labels. The\noption is off by default. Use **Text color** to choose a session-only label\ncolor that contrasts with the current Image colormap.\n\nIn 2D mode, the plugin draws four rectangle edges only when the current z\nslice intersects the box's half-open z range.\n\nIn 3D mode, each box is represented by 12 vector edges. Overlapping boxes\nremain independent vector records with a `neuron_id` feature. They may overlap\nvisually, but one box does not erase the identity of another.\n\nVectors and the transparent Points text layer are derived display data. They\nare removed when the ROI is unloaded or the widget closes and are not saved\nas a separate annotation format.\n\n## Annotation\n\nThe `digital` column stores the zero-based ROI `neuron_id`.\n\nThe table follows the loaded ROI identities. Existing biological names and\nannotation text are preserved by identity when the ROI source changes.\nActivating a neuron selects its annotation row. Selecting a table row checks\nand activates the corresponding neuron without clearing other checked IDs.\nThe `biological` value is also displayed in the neuron list.\n\nThe complete navigator is vertically scrollable when the napari dock is\nshorter than its controls.\n\nExcel operations support `.xlsx` workbooks. Saving and loading do not apply an\nimplicit `+1` or `-1` conversion.\n\n## Development\n\nRun tests and lint from the repository root:\n\n```text\npixi run pytest -q\npixi run -e excel pytest -q\npixi run ruff check .\n```\n\nThe repository uses a `src` layout. Pure ROI parsing and geometry live in\n`src/napari_worm_neuron_annotator/_roi.py`; Qt and napari lifecycle behavior\nlive in `src/napari_worm_neuron_annotator/_widget.py`.\n\n## License\n\nDistributed under the BSD-3-Clause license.\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": null,
+    "license_expression": "BSD-3-Clause",
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-worm-neuron-annotator",
+    "package_url": "https://pypi.org/project/napari-worm-neuron-annotator/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-worm-neuron-annotator/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/Wenlab/napari-worm-neuron-annotator/issues",
+      "Documentation": "https://github.com/Wenlab/napari-worm-neuron-annotator#README.md",
+      "Source Code": "https://github.com/Wenlab/napari-worm-neuron-annotator",
+      "User Support": "https://github.com/Wenlab/napari-worm-neuron-annotator/issues"
+    },
+    "provides_extra": [
+      "all",
+      "excel",
+      "testing"
+    ],
+    "release_url": "https://pypi.org/project/napari-worm-neuron-annotator/0.3.5/",
+    "requires_dist": [
+      "napari<0.9,>=0.8",
+      "numpy",
+      "qtpy",
+      "napari[all]<0.9,>=0.8; extra == \"all\"",
+      "openpyxl>=3.1; extra == \"excel\"",
+      "tox; extra == \"testing\"",
+      "pytest; extra == \"testing\"",
+      "pytest-cov; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "napari[pyqt6]<0.9,>=0.8; extra == \"testing\""
+    ],
+    "requires_python": "<3.15,>=3.11",
+    "summary": "Navigate and annotate neuron box ROIs on image volumes in napari",
+    "version": "0.3.5",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 40165504,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "LLLLAAAA"
+      }
+    ]
+  },
+  "releases": {
+    "0.2.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "d77a1de43e2f5f9e1d617e4b557c37d9ced92d5dbdc325f8a77a671b0620b956"
+        },
+        "digests": {
+          "blake2b_256": "a7efacdfdfcfff9440b0a62263be3d048b56421e8889313f7a599a9c8fdfeb19",
+          "md5": "0bd1270acc81d15ecfe1abc7019a0d9e",
+          "sha256": "5d75adabf5b2c59ca28782114d67afa2e9747f0090b9cceea7684a6adbbe2625"
+        },
+        "downloads": -1,
+        "filename": "napari_worm_neuron_annotator-0.2.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "0bd1270acc81d15ecfe1abc7019a0d9e",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.15,>=3.11",
+        "size": 45625,
+        "upload_time": "2026-07-30T06:31:19",
+        "upload_time_iso_8601": "2026-07-30T06:31:19.828615Z",
+        "url": "https://files.pythonhosted.org/packages/a7/ef/acdfdfcfff9440b0a62263be3d048b56421e8889313f7a599a9c8fdfeb19/napari_worm_neuron_annotator-0.2.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "68f712f8f265bb6f11c681656f6c70dc5b36246081c11014a6f89fc000406f84",
+          "md5": "b337a4111d83916542622cd531e7ecc8",
+          "sha256": "5bd12f44131db2467c8e5ae62226c04281ef03178109fcdaf22c1a715d32b6cb"
+        },
+        "downloads": -1,
+        "filename": "napari_worm_neuron_annotator-0.2.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "b337a4111d83916542622cd531e7ecc8",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.15,>=3.11",
+        "size": 103180,
+        "upload_time": "2026-07-30T06:31:21",
+        "upload_time_iso_8601": "2026-07-30T06:31:21.166915Z",
+        "url": "https://files.pythonhosted.org/packages/68/f7/12f8f265bb6f11c681656f6c70dc5b36246081c11014a6f89fc000406f84/napari_worm_neuron_annotator-0.2.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "38d1708226f056fb5b77dad2e7310358b0810bcf8668f2ddb7df74e0e9297aae"
+        },
+        "digests": {
+          "blake2b_256": "7e7e77d33e5bf6deec2105067a389ab3ff600a9a3d442582cfa97b7b459af3ae",
+          "md5": "f2b39c5be0d420387e5dbd782835a4ff",
+          "sha256": "f6c858573ceede9b64d8ba01a23f6c4b58a71b8c427686efbcf218fdd0042471"
+        },
+        "downloads": -1,
+        "filename": "napari_worm_neuron_annotator-0.3.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "f2b39c5be0d420387e5dbd782835a4ff",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.15,>=3.11",
+        "size": 48997,
+        "upload_time": "2026-08-05T04:17:41",
+        "upload_time_iso_8601": "2026-08-05T04:17:41.365574Z",
+        "url": "https://files.pythonhosted.org/packages/7e/7e/77d33e5bf6deec2105067a389ab3ff600a9a3d442582cfa97b7b459af3ae/napari_worm_neuron_annotator-0.3.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "9339c76c27281028d72a3fcd36149e33497bf76c854cce6edf2f9c686581985b",
+          "md5": "9efd68438aeda60b8a9f40faf851b99d",
+          "sha256": "19582e4af27f5bb8ad81508fa2a538d26fa9755e9c816af520167e3801c660c1"
+        },
+        "downloads": -1,
+        "filename": "napari_worm_neuron_annotator-0.3.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "9efd68438aeda60b8a9f40faf851b99d",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.15,>=3.11",
+        "size": 134701,
+        "upload_time": "2026-08-05T04:17:43",
+        "upload_time_iso_8601": "2026-08-05T04:17:43.206336Z",
+        "url": "https://files.pythonhosted.org/packages/93/39/c76c27281028d72a3fcd36149e33497bf76c854cce6edf2f9c686581985b/napari_worm_neuron_annotator-0.3.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.5": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "944971d61298b64078a938a637f25e1ff1b08d16ecadfb185622a0c259e0e677"
+        },
+        "digests": {
+          "blake2b_256": "5ab2ef78c4d3cbbb8c86fb156a967c875460dd7cb3d8c99a7a644f00f4e6a87d",
+          "md5": "5db2bb98961ec523660ce59589ab3da6",
+          "sha256": "563a7cbfb5c9a717a7525f0ae84f329e3ce83832669d0f24ea7fc3277e9313fa"
+        },
+        "downloads": -1,
+        "filename": "napari_worm_neuron_annotator-0.3.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "5db2bb98961ec523660ce59589ab3da6",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.15,>=3.11",
+        "size": 55250,
+        "upload_time": "2026-08-19T07:16:29",
+        "upload_time_iso_8601": "2026-08-19T07:16:29.949979Z",
+        "url": "https://files.pythonhosted.org/packages/5a/b2/ef78c4d3cbbb8c86fb156a967c875460dd7cb3d8c99a7a644f00f4e6a87d/napari_worm_neuron_annotator-0.3.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "5d08ec252146c6d57dd6390871407d251a7e831f7dda0eb67a843ef482529fff",
+          "md5": "f90cdee646ee8e910beeb10e3ebf2639",
+          "sha256": "f915cad5bc43ba28dd71ed5918eb0c7bd3d39cc805e76f836b7ebc1d6f92c8ce"
+        },
+        "downloads": -1,
+        "filename": "napari_worm_neuron_annotator-0.3.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "f90cdee646ee8e910beeb10e3ebf2639",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.15,>=3.11",
+        "size": 140854,
+        "upload_time": "2026-08-19T07:16:31",
+        "upload_time_iso_8601": "2026-08-19T07:16:31.279396Z",
+        "url": "https://files.pythonhosted.org/packages/5d/08/ec252146c6d57dd6390871407d251a7e831f7dda0eb67a843ef482529fff/napari_worm_neuron_annotator-0.3.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "944971d61298b64078a938a637f25e1ff1b08d16ecadfb185622a0c259e0e677"
+      },
+      "digests": {
+        "blake2b_256": "5ab2ef78c4d3cbbb8c86fb156a967c875460dd7cb3d8c99a7a644f00f4e6a87d",
+        "md5": "5db2bb98961ec523660ce59589ab3da6",
+        "sha256": "563a7cbfb5c9a717a7525f0ae84f329e3ce83832669d0f24ea7fc3277e9313fa"
+      },
+      "downloads": -1,
+      "filename": "napari_worm_neuron_annotator-0.3.5-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "5db2bb98961ec523660ce59589ab3da6",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": "<3.15,>=3.11",
+      "size": 55250,
+      "upload_time": "2026-08-19T07:16:29",
+      "upload_time_iso_8601": "2026-08-19T07:16:29.949979Z",
+      "url": "https://files.pythonhosted.org/packages/5a/b2/ef78c4d3cbbb8c86fb156a967c875460dd7cb3d8c99a7a644f00f4e6a87d/napari_worm_neuron_annotator-0.3.5-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "5d08ec252146c6d57dd6390871407d251a7e831f7dda0eb67a843ef482529fff",
+        "md5": "f90cdee646ee8e910beeb10e3ebf2639",
+        "sha256": "f915cad5bc43ba28dd71ed5918eb0c7bd3d39cc805e76f836b7ebc1d6f92c8ce"
+      },
+      "downloads": -1,
+      "filename": "napari_worm_neuron_annotator-0.3.5.tar.gz",
+      "has_sig": false,
+      "md5_digest": "f90cdee646ee8e910beeb10e3ebf2639",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": "<3.15,>=3.11",
+      "size": 140854,
+      "upload_time": "2026-08-19T07:16:31",
+      "upload_time_iso_8601": "2026-08-19T07:16:31.279396Z",
+      "url": "https://files.pythonhosted.org/packages/5d/08/ec252146c6d57dd6390871407d251a7e831f7dda0eb67a843ef482529fff/napari_worm_neuron_annotator-0.3.5.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
