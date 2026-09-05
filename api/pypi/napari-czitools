@@ -1,0 +1,887 @@
+{
+  "info": {
+    "author": "Sebastian Rhode",
+    "author_email": "sebrhode@gmail.com",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 4 - Beta",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: MIT License",
+      "Operating System :: MacOS",
+      "Operating System :: Microsoft :: Windows",
+      "Operating System :: Unix",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-czitools\n\n- [napari-czitools](#napari-czitools)\n  - [Installation](#installation)\n  - [Supported Operating Systems](#supported-operating-systems)\n  - [Usage - Core Functionalities](#usage---core-functionalities)\n    - [Open Complete CZI Files](#open-complete-czi-files)\n    - [Open CZI Sample Data](#open-czi-sample-data)\n      - [CellDivision 5D Stack](#celldivision-5d-stack)\n      - [Neurons 3D Stack](#neurons-3d-stack)\n      - [AiryScan 3D Stack](#airyscan-3d-stack)\n      - [Wellplate Data](#wellplate-data)\n    - [Advanced CZI Reader (CziReadTools) plugin](#advanced-czi-reader-czireadtools-plugin)\n      - [General Usage](#general-usage)\n      - [After Metadata Loads](#after-metadata-loads)\n      - [Reading a subset](#reading-a-subset)\n      - [3D Preview Size](#3d-preview-size)\n      - [Lazy Loading](#lazy-loading)\n      - [Scene Tolerance](#scene-tolerance)\n      - [Gigapixel CZIs (whole-slide, large 2D scans)](#gigapixel-czis-whole-slide-large-2d-scans)\n      - [Advanced Python usage](#advanced-python-usage)\n  - [Current Limitations](#current-limitations)\n    - [Future plans](#future-plans)\n  - [Contributing](#contributing)\n    - [Running Tests](#running-tests)\n    - [Recent Compatibility Notes](#recent-compatibility-notes)\n  - [License](#license)\n  - [Issues](#issues)\n  - [Disclaimer](#disclaimer)\n\n[![License MIT](https://img.shields.io/pypi/l/napari-czitools.svg?color=green)](https://github.com/sebi06/napari-czitools/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-czitools.svg?color=green)](https://pypi.org/project/napari-czitools)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-czitools.svg?color=green)](https://python.org)\n[![tests](https://github.com/sebi06/napari-czitools/actions/workflows/test_and_deploy_pypi.yml/badge.svg)](https://github.com/sebi06/napari-czitools/actions/workflows/test_and_deploy_pypi.yml)\n[![codecov](https://codecov.io/gh/sebi06/napari-czitools/branch/main/graph/badge.svg)](https://codecov.io/gh/sebi06/napari-czitools)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-czitools)](https://napari-hub.org/plugins/napari-czitools)\n[![npe2](https://img.shields.io/badge/plugin-npe2-blue?link=https://napari.org/stable/plugins/index.html)](https://napari.org/stable/plugins/index.html)\n[![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-purple.json)](https://github.com/copier-org/copier)\n\nnapari plugin for reading CZI image data and metadata.\n\n----------------------------------\n\nThis [napari] plugin was generated with [copier] using the [napari-plugin-template].\n\n![napari-czitools - Read CZI Metadata and load image Data](https://github.com/sebi06/napari-czitools/raw/main/readme_images/title_pic.png)\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/napari-plugin-template#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/stable/plugins/index.html\n-->\n\n## Installation\n\nYou can install `napari-czitools` via [pip]:\n\n    pip install napari-czitools\n\nThe current release requires Python 3.12 or 3.13 and `czitools>=0.22.1`.\n\nTo install latest development version :\n\n    pip install git+https://github.com/sebi06/napari-czitools.git\n\n## Supported Operating Systems\n\nThe test suite runs on Python 3.12 and 3.13 for:\n\n- Linux\n- Windows\n- macOS\n\n## Usage - Core Functionalities\n\nThe plugin reads CZI image data into [napari] and displays the associated\nmetadata in a table or tree.\n\n### Open Complete CZI Files\n\n- Open complete CZI files and display their metadata in napari using [czitools].\n\n![Open complete CZI file](https://github.com/sebi06/napari-czitools/raw/main/readme_images/file_open_mdtable_lls7.png)\n\n- Open different CZI sample datasets.\n- If sample data are unavailable locally, they are downloaded from the remote\n  repository, which may take some time.\n\n![Open sample data](https://github.com/sebi06/napari-czitools/raw/main/readme_images/open_sample1.png)\n\n### Open CZI Sample Data\n\n#### CellDivision 5D Stack\n\n![Sample Data - 5D Stack](https://github.com/sebi06/napari-czitools/raw/main/readme_images/open_sample_5D.png)\n\n#### Neurons 3D Stack\n\n![Sample Data - 3D Stack](https://github.com/sebi06/napari-czitools/raw/main/readme_images/open_sample_3D.png)\n\n#### AiryScan 3D Stack\n\n![Sample Data - AiryScan 3D Stack](https://github.com/sebi06/napari-czitools/raw/main/readme_images/open_sample_airyscan.png)\n\n#### Wellplate Data\n\n![Sample Data - Wellplate](https://github.com/sebi06/napari-czitools/raw/main/readme_images/open_sample_wellplate.png)\n\n### Advanced CZI Reader (CziReadTools) plugin\n\n#### General Usage\n\nOpen **Plugins > Advanced CZI Reader (CziReadTools)**. The initial panel has\nfour main areas:\n\n1. Select a local CZI file. Drag and drop onto the file field is also supported.\n2. Inspect metadata as a table or tree. Tree view can optionally show value\n  types.\n3. Configure scene handling and the 3D preview, then load the selected pixels.\n4. Select scene, time, channel, and Z ranges. Dimensions with only one position\n  are hidden after metadata loads.\n\n<!-- markdownlint-disable-next-line MD033 -->\n<img src=\"https://github.com/sebi06/napari-czitools/raw/main/readme_images/reader_adv1.png\" alt=\"Advanced CZI Reader before selecting a file\" style=\"width:40%; height:auto;\">\n\n#### After Metadata Loads\n\nSelecting a valid CZI file reads metadata but does not load its pixel data. The\nmetadata view, **Load Pixel Data**, **3D preview size**, and applicable dimension\nsliders then become available. **Stack scenes** remains disabled unless the CZI\ncontains multiple scenes with different pixel dimensions.\n\nUse **Slider Type** to switch between a dual-handle range slider and separate\nminimum/maximum sliders. Setting both endpoints to the same value selects one\nposition, for example `T=3-3`.\n\n<!-- markdownlint-disable-next-line MD033 -->\n<img src=\"https://github.com/sebi06/napari-czitools/raw/main/readme_images/reader_adv2.png\" alt=\"Table and tree metadata views with both slider layouts\" style=\"width:85%; height:auto;\">\n\n#### Reading a subset\n\n- Use the dimension sliders to select the scene, time, channel, and Z positions\n  to load.\n- The displayed metadata continue to describe the complete CZI, not only the\n  selected subset.\n\n![Selecting a CZI subset](https://github.com/sebi06/napari-czitools/raw/main/readme_images/load_pixel1.png)\n\nFor example, selecting timepoints 4-7, channel 0-0, and Z-planes 7-10\nloads four timepoints, one channel, and four Z-planes.\n\n![Loaded CZI subset in napari](https://github.com/sebi06/napari-czitools/raw/main/readme_images/load_pixel2.png)\n\n#### 3D Preview Size\n\n**3D preview size** sets the target maximum width or height, in pixels, of the\ncoarsest pyramid level sent to napari. The default is **2048 px**, a conservative\nsize that fits the minimum broadly supported OpenGL 3D texture limit.\n\nThis setting does **not** crop the image, change the selected S/T/C/Z ranges, or\nreduce the resolution of the finest source level. If the coarsest pyramid level\nstored in the CZI is already at or below the selected size, nothing additional\nis generated. If it is larger, `czitools` lazily adds half-resolution levels\nuntil the longest Y/X edge fits the target.\n\n- Use a lower value to reduce GPU memory use and improve compatibility with\n  older GPUs. The first overview will contain less spatial detail.\n- Keep **2048 px** for portable 3D rendering in most cases.\n- Use a higher value only when more preview detail is useful and the GPU\n  supports larger textures. Higher values can use more GPU memory.\n\nThe value is saved between napari sessions and becomes editable after valid CZI\nmetadata loads. For small images, changing it often has no visible effect\nbecause the existing coarsest level already fits.\n\n![3D rendering with the 3D preview size control](https://github.com/sebi06/napari-czitools/raw/main/readme_images/3D_preview_size.png)\n\n#### Lazy Loading\n\nThe advanced reader always uses lazy multiscale loading after **Load Pixel\nData** is pressed. It requests Dask-backed xarray stacks for the selected\nscene, time, channel, and Z ranges, so pixel tiles are read only when napari\nneeds them. This avoids loading the complete selection into RAM, supports\ndifferently sized scenes, and enables efficient 3D previews.\n\nPython callers can still pass `use_lazy=False` to `CZIDataLoader` or\n`reader_function_adv` when they explicitly need the eager `read_6darray` path.\nThat path constructs one regular array in `STCZYX(A)` order, loads every\nselected plane into RAM, and requires compatible scene shapes.\n\n#### Scene Tolerance\n\nWhen a file is selected the plugin reads the bounding rectangle of every scene\nand computes the maximum pixel difference in width and height across all scenes.\nIf any difference is detected, a label appears next to the load controls:\n\n    Scene size diff \u2014 W: 72px  H: 9px\n\nand the **Stack scenes** checkbox becomes enabled. Checking it re-evaluates the\nmetadata with a tolerance equal to the computed maximum difference, which:\n\n![Scene Tolerance](https://github.com/sebi06/napari-czitools/raw/main/readme_images/scene_mismatch.png)\n\n1. **Unlocks the scene slider** so you can select any range of scenes.\n2. **Crops all scenes** to the smallest common W\u00d7H shape when pixel data is\n   loaded \u2014 no zero-padding is introduced.\n\nWhen the checkbox is unchecked (default), scenes must be pixel-identical to be\nstacked; files where scene sizes differ are limited to one scene at a time.\n\nThis is particularly useful for **HCS plate CZIs** where each scene is a\nmulti-tile mosaic covering one well: the per-well tile grids are assembled from\nstage coordinates independently, so the total pixel extent of each well can\ndiffer by tens of pixels even when the acquisition settings are identical.\n\n#### Gigapixel CZIs (whole-slide, large 2D scans)\n\nFor files whose individual 2D planes are larger than about 256 MB uncompressed\n(for example a `93,555 \u00d7 138,996` `uint16` plane \u2248 24 GB), `czitools`\nautomatically switches to spatial Y/X tiling: each Dask chunk becomes one\nROI-based read via `pylibCZIrw`, so napari only fetches the tiles that\nintersect the current viewport instead of full planes. Small planes keep the\nfaster whole-plane path.\n\nOn top of tiling, lazy mode also enables **multiscale rendering**. The plugin\ncalls `czitools.read_tools.read_stacks_multiscale` to detect the CZI's stored\npyramid levels (via `pylibCZIrw` subblock enumeration) and hands napari one\nlazy Dask array per level as `viewer.add_image(..., multiscale=True)`. This\nlets napari render the coarsest level immediately from a single GPU texture\nand stream finer tiles on zoom. If the coarsest stored level is still larger\nthan `DEFAULT_MAX_COARSE_EDGE` (2048 px), extra synthetic coarser levels are\nadded on the fly using libCZI's C++ resampler. The conservative default fits\nthe minimum broadly supported OpenGL 3D texture size; 2D texture limits are\noften much larger. Files without an on-disk pyramid are passed to napari as\nsingle-scale images when no additional level is needed.\n\nTo keep opening these files usable, the plugin also passes an explicit\n`contrast_limits` argument to `viewer.add_image` (derived from the CZI's\nembedded display settings). Without this, napari would auto-scan every chunk\nof the Dask array to determine the display range and materialize the entire\nplane in RAM before the first pixel is shown.\n\n#### Advanced Python usage\n\nThe Python reader API forwards the same lazy behaviour:\n\n  from napari_czitools._io import DEFAULT_MAX_COARSE_EDGE\n  from napari_czitools._reader import reader_function_adv\n\n  reader_function_adv(\n    \"image.czi\",\n    use_lazy=True,        # read pixel data only when requested\n    use_dask=True,        # required for on-demand reads\n    use_multiscale=True,  # napari renders coarse-level tiles first\n    max_coarse_edge=DEFAULT_MAX_COARSE_EDGE,\n  )\n\n`max_coarse_edge` is the Python equivalent of **3D preview size**. Keep the\ndefault for portable 3D rendering, lower it to reduce GPU memory use, or raise\nit when the GPU supports larger textures.\n\nWith `use_lazy=True`, `czitools` reads the CZI metadata and builds Dask task\ngraphs first \u2014 individual pixel planes are not loaded at that point. When\n`use_multiscale=True` (the default) the plugin also constructs a per-level\npyramid so napari can render gigapixel planes without materialising layer 0.\nDisabling `use_lazy`, even with `use_dask=True`, still reads all pixels\neagerly before wrapping the result in a Dask array.\n\n## Current Limitations\n\nThe sample-data commands add image layers directly and do not open the\nAdvanced CZI Reader metadata panel.\n\n### Future plans\n\n- Evaluate interoperability with [bioio-czi].\n- Add metadata-table export.\n\nFeedback is always welcome!\n\n## Contributing\n\nContributions are welcome. Tests can be run with [tox]; please ensure coverage\ndoes not decrease when submitting a pull request.\n\n### Running Tests\n\nInstall test dependencies first (recommended for full local coverage):\n\n    pip install -e \".[testing]\"\n\nThis installs `pytest-qt`, which provides the `qtbot` fixture used by\nnapari/Qt tests.\n\n**Windows/macOS:**\n\n    pytest\n\n**Linux (recommended - use tox):**\n\n    tox -e py312-linux\n\n(Replace `py312` with your Python version: `py312` or `py313`)\n\n**Linux (direct pytest):**\n\n    pytest -v --forked --color=yes\n\nNote: The `--forked` flag is required on Linux to prevent CZI + Qt crashes by running each test in its own process. This flag is not available on Windows.\n\n### Recent Compatibility Notes\n\n- `czitools>=0.22.1` is required.\n- `read_tools.read_stacks` returns\n  `(arrays_or_list, dims, num_stacks, metadata)`. The plugin handles both a\n  single stacked xarray object and a list containing one xarray stack per\n  scene.\n- Channel extraction uses positional indexing to support channel coordinates\n  represented by names (for example `\"DAPI\"`, `\"EGFP\"`) instead of numeric\n  labels.\n- URL metadata tests can be affected by transient remote read failures (for\n  example GitHub/network hiccups). The test suite retries and skips these\n  network-dependent checks if remote headers cannot be read reliably.\n- The custom dual-handle `DoubleRangeSlider` has been replaced with wrappers\n  around [superqt]'s `QLabeledRangeSlider` and `QRangeSlider`, reducing\n  custom painting/mouse handling code and using a well-tested community\n  component. The public slider API (`low()`, `high()`, `setLow()`,\n  `setHigh()`, single-value mode) is unchanged.\n- A small internal patch (`_allow_handle_overlap`) is applied to every\n  superqt range slider so that both handles can sit on the same value,\n  enabling single-frame extraction (e.g. T=4-4 to read one timepoint).\n\n## License\n\nDistributed under the terms of the [MIT] license, `napari-czitools` is free and\nopen-source software.\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n## Disclaimer\n\nThe software and scripts are free to use. The author provides no warranty for\ntheir use. Use them at your own risk.\n\nBy using this plugin you agree to this disclaimer.\n\n[napari]: https://github.com/napari/napari\n[copier]: https://copier.readthedocs.io/en/stable/\n[MIT]: http://opensource.org/licenses/MIT\n[napari-plugin-template]: https://github.com/napari/napari-plugin-template\n[file an issue]: https://github.com/sebi06/napari-czitools/issues\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[czitools]: https://pypi.org/project/czitools/\n[bioio-czi]: https://pypi.org/project/bioio-czi/\n[superqt]: https://pyapp-kit.github.io/superqt/\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": "The MIT License (MIT)\n        \n        Copyright (c) 2025 Sebastian Rhode\n        \n        Permission is hereby granted, free of charge, to any person obtaining a copy\n        of this software and associated documentation files (the \"Software\"), to deal\n        in the Software without restriction, including without limitation the rights\n        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n        copies of the Software, and to permit persons to whom the Software is\n        furnished to do so, subject to the following conditions:\n        \n        The above copyright notice and this permission notice shall be included in\n        all copies or substantial portions of the Software.\n        \n        THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\n        THE SOFTWARE.\n        ",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-czitools",
+    "package_url": "https://pypi.org/project/napari-czitools/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-czitools/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/sebi06/napari-czitools/issues",
+      "Documentation": "https://github.com/sebi06/napari-czitools#README.md",
+      "Source Code": "https://github.com/sebi06/napari-czitools",
+      "User Support": "https://github.com/sebi06/napari-czitools/issues"
+    },
+    "provides_extra": [
+      "testing"
+    ],
+    "release_url": "https://pypi.org/project/napari-czitools/0.12.4/",
+    "requires_dist": [
+      "numpy",
+      "magicgui",
+      "qtpy",
+      "superqt",
+      "scikit-image",
+      "pyqtgraph",
+      "czitools>=0.22.1",
+      "tox; extra == \"testing\"",
+      "pytest; extra == \"testing\"",
+      "pytest-cov; extra == \"testing\"",
+      "pytest-mock; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "pytest-timeout; extra == \"testing\"",
+      "pytest-forked; extra == \"testing\"",
+      "napari; extra == \"testing\"",
+      "pyqt6!=6.11.0,!=6.11.1,>=6.7; extra == \"testing\""
+    ],
+    "requires_python": "<3.14,>=3.12",
+    "summary": "Plugin to read CZI image files and their metadata",
+    "version": "0.12.4",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 40478901,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "sebi06"
+      }
+    ]
+  },
+  "releases": {
+    "0.0.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "558fa006f3791e0b6e21dcf4fcdc0004a7c8f74bc52e4589877bfdd09c827d65"
+        },
+        "digests": {
+          "blake2b_256": "c740ef3a212259f9d5ca63900c5da6ef404c4fd39bb191e3d1cc081964634cef",
+          "md5": "6bcd31d34c0633b8104f3cc34c349187",
+          "sha256": "0054fdd759eb9c19f2338c640d62c201871c49a55e8351bbcbc54eaf1a4eff54"
+        },
+        "downloads": -1,
+        "filename": "napari_czitools-0.0.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "6bcd31d34c0633b8104f3cc34c349187",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.10",
+        "size": 55423,
+        "upload_time": "2025-08-20T17:32:28",
+        "upload_time_iso_8601": "2025-08-20T17:32:28.947045Z",
+        "url": "https://files.pythonhosted.org/packages/c7/40/ef3a212259f9d5ca63900c5da6ef404c4fd39bb191e3d1cc081964634cef/napari_czitools-0.0.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.10": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "3ee2a9e6b12a169aef6b663fc3ab861fe6a45070e6f964b3d74d9e0979fa03df"
+        },
+        "digests": {
+          "blake2b_256": "46dcc8dc36dc094c71f86cace49de3c0266152659ce312ace0373eac7d5cc4b4",
+          "md5": "56e35c9bb3233d7ec2c6b5de6723e9d4",
+          "sha256": "3f2835bfac93c9066067a7d41288b55703ba8e55510ecce739f20199594e0df2"
+        },
+        "downloads": -1,
+        "filename": "napari_czitools-0.0.10-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "56e35c9bb3233d7ec2c6b5de6723e9d4",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.14,>=3.11",
+        "size": 58258,
+        "upload_time": "2026-03-29T13:36:07",
+        "upload_time_iso_8601": "2026-03-29T13:36:07.269437Z",
+        "url": "https://files.pythonhosted.org/packages/46/dc/c8dc36dc094c71f86cace49de3c0266152659ce312ace0373eac7d5cc4b4/napari_czitools-0.0.10-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "84ca7808fcbe56a6d12d6bd0fd38073d11b5c23f20eb3d6990958aecfebef146",
+          "md5": "44d3df1ea169084469db3c5e743a008b",
+          "sha256": "7a9ad9e1654463aaeefcc5243e2f65e1cadd46349e4b5f279ed0f4552998d54e"
+        },
+        "downloads": -1,
+        "filename": "napari_czitools-0.0.10.tar.gz",
+        "has_sig": false,
+        "md5_digest": "44d3df1ea169084469db3c5e743a008b",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.14,>=3.11",
+        "size": 10602453,
+        "upload_time": "2026-03-29T13:36:08",
+        "upload_time_iso_8601": "2026-03-29T13:36:08.835574Z",
+        "url": "https://files.pythonhosted.org/packages/84/ca/7808fcbe56a6d12d6bd0fd38073d11b5c23f20eb3d6990958aecfebef146/napari_czitools-0.0.10.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.11": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "9d11989b6e779a17c887628677eb01f1db0973934a753f2f6d33e963d1427373"
+        },
+        "digests": {
+          "blake2b_256": "6ef6d1fc0a610bd611de5aee7dff1d614258ee6538eac9624228792483fed2df",
+          "md5": "f42e38f62e032ca07fed5f56e59074e1",
+          "sha256": "cdbf3e8228bc115827cb6d73a37311bd4e86cef74230346314ac83b63db4860c"
+        },
+        "downloads": -1,
+        "filename": "napari_czitools-0.0.11-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "f42e38f62e032ca07fed5f56e59074e1",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.14,>=3.12",
+        "size": 58372,
+        "upload_time": "2026-04-10T11:03:16",
+        "upload_time_iso_8601": "2026-04-10T11:03:16.648409Z",
+        "url": "https://files.pythonhosted.org/packages/6e/f6/d1fc0a610bd611de5aee7dff1d614258ee6538eac9624228792483fed2df/napari_czitools-0.0.11-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "2392345678fe957c1bfd71dec05ee0710994070c17d06cb22bac608c84cbda36",
+          "md5": "d5b88786726b9e991179ca3d99b261d9",
+          "sha256": "6a1f01850f41de9710d84e82bb7fc302bd2754e112321d2e42c33b4163c1500f"
+        },
+        "downloads": -1,
+        "filename": "napari_czitools-0.0.11.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d5b88786726b9e991179ca3d99b261d9",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.14,>=3.12",
+        "size": 10602858,
+        "upload_time": "2026-04-10T11:03:17",
+        "upload_time_iso_8601": "2026-04-10T11:03:17.938968Z",
+        "url": "https://files.pythonhosted.org/packages/23/92/345678fe957c1bfd71dec05ee0710994070c17d06cb22bac608c84cbda36/napari_czitools-0.0.11.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.2": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "2bedcd17282219be932c2d621c21855d31edae7ce072c08cfc61507f2084be50"
+        },
+        "digests": {
+          "blake2b_256": "11d868c95b5154c035191a131354813162545585f18c9cfb9e52d69b92265b2f",
+          "md5": "22348997d6a2e65c6292686fde3ab521",
+          "sha256": "f53db62691805d3b243c40228566e34df65e630ab765fe365150aabf34dff5cd"
+        },
+        "downloads": -1,
+        "filename": "napari_czitools-0.0.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "22348997d6a2e65c6292686fde3ab521",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.10",
+        "size": 60013,
+        "upload_time": "2025-08-20T17:51:23",
+        "upload_time_iso_8601": "2025-08-20T17:51:23.485318Z",
+        "url": "https://files.pythonhosted.org/packages/11/d8/68c95b5154c035191a131354813162545585f18c9cfb9e52d69b92265b2f/napari_czitools-0.0.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "56bb4889071e57feae32fc264831dffb27b442b3737505049d3a2f7648254597",
+          "md5": "510173dfe539c065efdf08e68196719a",
+          "sha256": "13def0caf847632494ed7b6d5ce07c5b98fa87bf50f367180765e9f5400a5f74"
+        },
+        "downloads": -1,
+        "filename": "napari_czitools-0.0.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "510173dfe539c065efdf08e68196719a",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.10",
+        "size": 10589336,
+        "upload_time": "2025-08-20T17:51:25",
+        "upload_time_iso_8601": "2025-08-20T17:51:25.713228Z",
+        "url": "https://files.pythonhosted.org/packages/56/bb/4889071e57feae32fc264831dffb27b442b3737505049d3a2f7648254597/napari_czitools-0.0.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.3": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "c6a6b779c73f679044d4702605659e118762691d2fa2cc89a934645b641e4179"
+        },
+        "digests": {
+          "blake2b_256": "ccd47192772a8e6265ac7e0244386e17394f2d2c9729063231d1e8afcf0b6e3c",
+          "md5": "857bbea68845cd39c1bee2012f59b16e",
+          "sha256": "30aa5e1d83d82a988e286eb5a975f6fd76e455f42343c34747b46b5dfcf62d0f"
+        },
+        "downloads": -1,
+        "filename": "napari_czitools-0.0.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "857bbea68845cd39c1bee2012f59b16e",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.10",
+        "size": 60016,
+        "upload_time": "2025-08-20T18:06:27",
+        "upload_time_iso_8601": "2025-08-20T18:06:27.100856Z",
+        "url": "https://files.pythonhosted.org/packages/cc/d4/7192772a8e6265ac7e0244386e17394f2d2c9729063231d1e8afcf0b6e3c/napari_czitools-0.0.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "503e2d99749abccd8f6acac63eae04191770ca8022546022c5cdd006f54c140d",
+          "md5": "fcf587692f671e6c66858baf1fe70a97",
+          "sha256": "96beb3ed9b24c8af9b082ea12ed41b80fbfc7f85cace81da47c96d2a267718a7"
+        },
+        "downloads": -1,
+        "filename": "napari_czitools-0.0.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "fcf587692f671e6c66858baf1fe70a97",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.10",
+        "size": 10589383,
+        "upload_time": "2025-08-20T18:06:28",
+        "upload_time_iso_8601": "2025-08-20T18:06:28.742524Z",
+        "url": "https://files.pythonhosted.org/packages/50/3e/2d99749abccd8f6acac63eae04191770ca8022546022c5cdd006f54c140d/napari_czitools-0.0.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.4": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "4eb0f783cb2e638479e7a941e87dc1175d1289e565f72d4d6c8dd5c544362a5e"
+        },
+        "digests": {
+          "blake2b_256": "2befe53ae79ff8b1be466ec23745876d11259c3cbd723c2ac5d8b51077e3e5f4",
+          "md5": "dd2bcbe3181a90b8959c25f6a8625eee",
+          "sha256": "eec7f70a3c1f9d1356f56c091a577b365946a23a4d6f3f7b9cce908a3073ade8"
+        },
+        "downloads": -1,
+        "filename": "napari_czitools-0.0.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "dd2bcbe3181a90b8959c25f6a8625eee",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.10",
+        "size": 40325,
+        "upload_time": "2025-08-24T12:12:01",
+        "upload_time_iso_8601": "2025-08-24T12:12:01.830250Z",
+        "url": "https://files.pythonhosted.org/packages/2b/ef/e53ae79ff8b1be466ec23745876d11259c3cbd723c2ac5d8b51077e3e5f4/napari_czitools-0.0.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "afb417a9d11a4316762af8d0ae558e1ced31e59947e1191672c400fc4238774f",
+          "md5": "6175cfadea7fb20d10fdf32a7a431432",
+          "sha256": "d13cb7fdfc00e9e09d8ade89c4cd128e2cfc8c9e0b795af60e44474c07cbce1c"
+        },
+        "downloads": -1,
+        "filename": "napari_czitools-0.0.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "6175cfadea7fb20d10fdf32a7a431432",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.10",
+        "size": 10576865,
+        "upload_time": "2025-08-24T12:12:03",
+        "upload_time_iso_8601": "2025-08-24T12:12:03.628622Z",
+        "url": "https://files.pythonhosted.org/packages/af/b4/17a9d11a4316762af8d0ae558e1ced31e59947e1191672c400fc4238774f/napari_czitools-0.0.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.5": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "1d4fa25f0ca144575ad05f935f73430aabaffe8b1382d4ed74bb137c77464784"
+        },
+        "digests": {
+          "blake2b_256": "d5f1775b3fad9206013da0e9b285894bd26c5d9c9a68b3c86cbc209c3533e00c",
+          "md5": "f0787e8f655f05caef44c367be90b5fe",
+          "sha256": "b69b9e12a103545a9afcb73e31d163d884e45859f8db3c684fd1cc7b79a1c55d"
+        },
+        "downloads": -1,
+        "filename": "napari_czitools-0.0.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "f0787e8f655f05caef44c367be90b5fe",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.14,>=3.10",
+        "size": 56930,
+        "upload_time": "2025-11-13T10:05:08",
+        "upload_time_iso_8601": "2025-11-13T10:05:08.655630Z",
+        "url": "https://files.pythonhosted.org/packages/d5/f1/775b3fad9206013da0e9b285894bd26c5d9c9a68b3c86cbc209c3533e00c/napari_czitools-0.0.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "a1666e0c001743a946fe52e17d247bb26cbf530f409e73f87ab9afd9dc630f97",
+          "md5": "7f0ee07b4c319e4cb4e1f557258690e3",
+          "sha256": "2089d715cd91a5eb1343275dea33c13085b6c72c1d2eb5242ed33cc4ba6c3686"
+        },
+        "downloads": -1,
+        "filename": "napari_czitools-0.0.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "7f0ee07b4c319e4cb4e1f557258690e3",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.14,>=3.10",
+        "size": 10591676,
+        "upload_time": "2025-11-13T10:05:09",
+        "upload_time_iso_8601": "2025-11-13T10:05:09.939324Z",
+        "url": "https://files.pythonhosted.org/packages/a1/66/6e0c001743a946fe52e17d247bb26cbf530f409e73f87ab9afd9dc630f97/napari_czitools-0.0.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.6": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "73798cf8c2cff86615fd374c6eb7c342f7afddd019f629418e30848979469d88"
+        },
+        "digests": {
+          "blake2b_256": "d9e29cbc1a76fe28399cbff247cc005018f376666a790aa20baf67db13881f8b",
+          "md5": "43cc4d781e01070480f6638f7331d1ea",
+          "sha256": "9a0b0b8baaa44335d27ab8eef0464864bcf8aabff35005bc28e31530bf733311"
+        },
+        "downloads": -1,
+        "filename": "napari_czitools-0.0.6-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "43cc4d781e01070480f6638f7331d1ea",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.14,>=3.10",
+        "size": 59288,
+        "upload_time": "2025-12-01T20:05:55",
+        "upload_time_iso_8601": "2025-12-01T20:05:55.473983Z",
+        "url": "https://files.pythonhosted.org/packages/d9/e2/9cbc1a76fe28399cbff247cc005018f376666a790aa20baf67db13881f8b/napari_czitools-0.0.6-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "df1ee030243d2c60ce7414a686f2ad8463af8cd7c6198ba0543be54e2673d7b0",
+          "md5": "d4d25b30e5b5c848b4adac7dd026303b",
+          "sha256": "7b8b2ac539287d936f88a447ba0566c4740a8f8678fd704c452d6d1ce0962ff2"
+        },
+        "downloads": -1,
+        "filename": "napari_czitools-0.0.6.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d4d25b30e5b5c848b4adac7dd026303b",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.14,>=3.10",
+        "size": 10593613,
+        "upload_time": "2025-12-01T20:05:56",
+        "upload_time_iso_8601": "2025-12-01T20:05:56.761079Z",
+        "url": "https://files.pythonhosted.org/packages/df/1e/e030243d2c60ce7414a686f2ad8463af8cd7c6198ba0543be54e2673d7b0/napari_czitools-0.0.6.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.7": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "c43bcebe26e6f18205db11be2c9d8388914253165467718fb7b420952ba9d66d"
+        },
+        "digests": {
+          "blake2b_256": "5822fa1d1439ae8e46df8bad19574a785e9e1b925c85641192a22cf4a8ff7aa5",
+          "md5": "aebc98842f4d3621b7cbf6ebd70cdbdb",
+          "sha256": "a2dbaaa014906551518f86eedce319ad8721ee7abbbd6adbfe748aafe52f7c78"
+        },
+        "downloads": -1,
+        "filename": "napari_czitools-0.0.7-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "aebc98842f4d3621b7cbf6ebd70cdbdb",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.14,>=3.10",
+        "size": 59784,
+        "upload_time": "2025-12-12T19:32:16",
+        "upload_time_iso_8601": "2025-12-12T19:32:16.213484Z",
+        "url": "https://files.pythonhosted.org/packages/58/22/fa1d1439ae8e46df8bad19574a785e9e1b925c85641192a22cf4a8ff7aa5/napari_czitools-0.0.7-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "3e7fb12c776c27bd1f2ee3259584579c04d9994336b3395114055b28d8b8b9b4",
+          "md5": "28659a95ef8248d651513c302db23631",
+          "sha256": "1aa3e9c2ce22950795d97713b4bd71efc11e3c1685cf90abe3b601ace1907c26"
+        },
+        "downloads": -1,
+        "filename": "napari_czitools-0.0.7.tar.gz",
+        "has_sig": false,
+        "md5_digest": "28659a95ef8248d651513c302db23631",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.14,>=3.10",
+        "size": 10597694,
+        "upload_time": "2025-12-12T19:32:18",
+        "upload_time_iso_8601": "2025-12-12T19:32:18.028508Z",
+        "url": "https://files.pythonhosted.org/packages/3e/7f/b12c776c27bd1f2ee3259584579c04d9994336b3395114055b28d8b8b9b4/napari_czitools-0.0.7.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.8": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "22c724c5dd86eb7128ee24bd2906b7263db7e7fbb4c688e2a755631288ae4427"
+        },
+        "digests": {
+          "blake2b_256": "61b9160c6720088e6e3a49eda0255a483485d05114f2de87a23fdf20f9a9c237",
+          "md5": "0ad2636524ba9ac146f30ca3d93b204c",
+          "sha256": "6f17c80220e1846ceff05baa59001906fa08e00d3dca79b4d3c810f511594933"
+        },
+        "downloads": -1,
+        "filename": "napari_czitools-0.0.8-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "0ad2636524ba9ac146f30ca3d93b204c",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.14,>=3.10",
+        "size": 61228,
+        "upload_time": "2026-03-10T15:40:08",
+        "upload_time_iso_8601": "2026-03-10T15:40:08.288715Z",
+        "url": "https://files.pythonhosted.org/packages/61/b9/160c6720088e6e3a49eda0255a483485d05114f2de87a23fdf20f9a9c237/napari_czitools-0.0.8-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "038f5c4ad037ddb7b6b5dcd72155d0af2fd63c7c65a6bdc4f7137b422acd397f",
+          "md5": "5b10d908861f4fe98d14ff9ead51ff76",
+          "sha256": "d6b801bf01a6d2d0276a3461b45bbd0601bedaf6168a1ba2a48a37b496f61a7d"
+        },
+        "downloads": -1,
+        "filename": "napari_czitools-0.0.8.tar.gz",
+        "has_sig": false,
+        "md5_digest": "5b10d908861f4fe98d14ff9ead51ff76",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.14,>=3.10",
+        "size": 10602109,
+        "upload_time": "2026-03-10T15:40:09",
+        "upload_time_iso_8601": "2026-03-10T15:40:09.733037Z",
+        "url": "https://files.pythonhosted.org/packages/03/8f/5c4ad037ddb7b6b5dcd72155d0af2fd63c7c65a6bdc4f7137b422acd397f/napari_czitools-0.0.8.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.9": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "04a75c1f666c63f9488e9f36430ef2a578f1971f6b9c803a7c14db3a84e46be3"
+        },
+        "digests": {
+          "blake2b_256": "db9ed318f7cf72a05352f3d4f40e4b452f7e7ca78f64ded7fac77d84b5eaa6fa",
+          "md5": "7ad58818b0ea39aef2d14fea8ee8015c",
+          "sha256": "c003be8f7c53cacad5a58efa6258cc631e4d30f0f9cd11f36fe429acf9a9aff3"
+        },
+        "downloads": -1,
+        "filename": "napari_czitools-0.0.9-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "7ad58818b0ea39aef2d14fea8ee8015c",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.14,>=3.10",
+        "size": 61447,
+        "upload_time": "2026-03-12T12:30:55",
+        "upload_time_iso_8601": "2026-03-12T12:30:55.426798Z",
+        "url": "https://files.pythonhosted.org/packages/db/9e/d318f7cf72a05352f3d4f40e4b452f7e7ca78f64ded7fac77d84b5eaa6fa/napari_czitools-0.0.9-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "7e828941e99e2f5396fe3050e5260f108c560bdfcce3e63aa80f123534c59898",
+          "md5": "63e89b3186c3cfa00851b74b952f7a16",
+          "sha256": "805908b62920d75a35845c82e75120afa1df39f897699d2a19937c05ec7c0b78"
+        },
+        "downloads": -1,
+        "filename": "napari_czitools-0.0.9.tar.gz",
+        "has_sig": false,
+        "md5_digest": "63e89b3186c3cfa00851b74b952f7a16",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.14,>=3.10",
+        "size": 10603243,
+        "upload_time": "2026-03-12T12:30:57",
+        "upload_time_iso_8601": "2026-03-12T12:30:57.304236Z",
+        "url": "https://files.pythonhosted.org/packages/7e/82/8941e99e2f5396fe3050e5260f108c560bdfcce3e63aa80f123534c59898/napari_czitools-0.0.9.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.12.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "98b15379d8baf475504def0dc644f4b3039de48d66d33a6023756a79c4238a89"
+        },
+        "digests": {
+          "blake2b_256": "f510b5cb0fde2f785cc0a84e794ffc9e425d78953d7c29ff19beb71a00299cf9",
+          "md5": "2a2c76a27c51eaaefe2e6039fef81cd3",
+          "sha256": "d76d1add794509ac9e52df51ab89fca1010286338d75cc58cc5a4c7b38f5c4c2"
+        },
+        "downloads": -1,
+        "filename": "napari_czitools-0.12.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "2a2c76a27c51eaaefe2e6039fef81cd3",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.14,>=3.12",
+        "size": 59267,
+        "upload_time": "2026-08-21T10:04:30",
+        "upload_time_iso_8601": "2026-08-21T10:04:30.966141Z",
+        "url": "https://files.pythonhosted.org/packages/f5/10/b5cb0fde2f785cc0a84e794ffc9e425d78953d7c29ff19beb71a00299cf9/napari_czitools-0.12.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "a2918ba90fb4b2aca0cf08309a518f7337e845cf479dd19b68c693a89533e7b8",
+          "md5": "ea39fcffd8000a4c597a953519a56903",
+          "sha256": "d1fd61acdadb79dc011c56820e6495351615358451c88b7c5707bc6174bb7a3c"
+        },
+        "downloads": -1,
+        "filename": "napari_czitools-0.12.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "ea39fcffd8000a4c597a953519a56903",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.14,>=3.12",
+        "size": 10603694,
+        "upload_time": "2026-08-21T10:04:32",
+        "upload_time_iso_8601": "2026-08-21T10:04:32.748687Z",
+        "url": "https://files.pythonhosted.org/packages/a2/91/8ba90fb4b2aca0cf08309a518f7337e845cf479dd19b68c693a89533e7b8/napari_czitools-0.12.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.12.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "e172dd88b1b94e0dcd83124f0d71bfd8fee6577055113c5fe8bd80ce09a9a150"
+        },
+        "digests": {
+          "blake2b_256": "8fdc6714b9f0ce0b0491cc3bf35a3c87b0bae56055b339d4cbd997eced7a13d8",
+          "md5": "020bc05839baecd45300ec45550705aa",
+          "sha256": "b82fd6a9aab57bd2413f01f0730f1f046e5d9343dd1f6e02af83671ac2f8688d"
+        },
+        "downloads": -1,
+        "filename": "napari_czitools-0.12.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "020bc05839baecd45300ec45550705aa",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.14,>=3.12",
+        "size": 63029,
+        "upload_time": "2026-08-24T15:25:39",
+        "upload_time_iso_8601": "2026-08-24T15:25:39.397152Z",
+        "url": "https://files.pythonhosted.org/packages/8f/dc/6714b9f0ce0b0491cc3bf35a3c87b0bae56055b339d4cbd997eced7a13d8/napari_czitools-0.12.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "47830ef491eeaeb4da1cc6424e474f0e56fa3432afb04c2dfe11b1776da5a0dc",
+          "md5": "1799d15280a1951dacc22035b61cf5db",
+          "sha256": "0f4ea7eb410960570b7d4ef96837062d9899f6385e4a914440939b4c5f39d34d"
+        },
+        "downloads": -1,
+        "filename": "napari_czitools-0.12.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "1799d15280a1951dacc22035b61cf5db",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.14,>=3.12",
+        "size": 10612673,
+        "upload_time": "2026-08-24T15:25:40",
+        "upload_time_iso_8601": "2026-08-24T15:25:40.628761Z",
+        "url": "https://files.pythonhosted.org/packages/47/83/0ef491eeaeb4da1cc6424e474f0e56fa3432afb04c2dfe11b1776da5a0dc/napari_czitools-0.12.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.12.2": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "a2b9d7fbd0a175b0ad3f1ad8a72def19950778b856d61106560952aeaa60ed8f"
+        },
+        "digests": {
+          "blake2b_256": "429d84e83edf4c4d2e146fd0c5fe70a6c40771848d112112a3e3c4972f760f76",
+          "md5": "18dbc6792c6dfb5f0b3117153d303870",
+          "sha256": "8788125c931ec84ef34aa83d297edf2f85e9be59922c8750d92934cc5277e4d6"
+        },
+        "downloads": -1,
+        "filename": "napari_czitools-0.12.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "18dbc6792c6dfb5f0b3117153d303870",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.14,>=3.12",
+        "size": 66513,
+        "upload_time": "2026-08-27T15:23:44",
+        "upload_time_iso_8601": "2026-08-27T15:23:44.876465Z",
+        "url": "https://files.pythonhosted.org/packages/42/9d/84e83edf4c4d2e146fd0c5fe70a6c40771848d112112a3e3c4972f760f76/napari_czitools-0.12.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "286265bac2229d11d9b4856a372819a1ee2dc323dd18770b3e2cd630727dfe0e",
+          "md5": "ddb351f9d4ab3b254dccafda07659234",
+          "sha256": "ad9f36f8c21402d78e3a797f804d332e5c941a2d3caaa551473b9a0c8938af4e"
+        },
+        "downloads": -1,
+        "filename": "napari_czitools-0.12.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "ddb351f9d4ab3b254dccafda07659234",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.14,>=3.12",
+        "size": 10617594,
+        "upload_time": "2026-08-27T15:23:47",
+        "upload_time_iso_8601": "2026-08-27T15:23:47.060582Z",
+        "url": "https://files.pythonhosted.org/packages/28/62/65bac2229d11d9b4856a372819a1ee2dc323dd18770b3e2cd630727dfe0e/napari_czitools-0.12.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.12.3": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "9a305a1abe770f4fee84da7fb967729423a0b52cbb99f29e3286cd422105ff40"
+        },
+        "digests": {
+          "blake2b_256": "4094ba3766c086eddcf5c345051cd6ac9d01a4293ce26bdc1dec0a63c5561e00",
+          "md5": "274740a7fde399c2effc34190a56541e",
+          "sha256": "882ac2dba0f706d7eadd4d7fb856258a32d115a697c411d3435e6cff1ce0c610"
+        },
+        "downloads": -1,
+        "filename": "napari_czitools-0.12.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "274740a7fde399c2effc34190a56541e",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.14,>=3.12",
+        "size": 67200,
+        "upload_time": "2026-08-28T11:01:38",
+        "upload_time_iso_8601": "2026-08-28T11:01:38.119952Z",
+        "url": "https://files.pythonhosted.org/packages/40/94/ba3766c086eddcf5c345051cd6ac9d01a4293ce26bdc1dec0a63c5561e00/napari_czitools-0.12.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "3fbe7f9e10b579cffb6219cdd3b6919c14fb9dbaea5a9615c1b4a23fb55033b7",
+          "md5": "2714042fa37dfb8ce0a6273ca508f2ac",
+          "sha256": "11fd9b39e83cb7beda6890e162caf76406b6ca0673f7473e7b2332dddd708fc7"
+        },
+        "downloads": -1,
+        "filename": "napari_czitools-0.12.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "2714042fa37dfb8ce0a6273ca508f2ac",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.14,>=3.12",
+        "size": 13008839,
+        "upload_time": "2026-08-28T11:01:40",
+        "upload_time_iso_8601": "2026-08-28T11:01:40.091313Z",
+        "url": "https://files.pythonhosted.org/packages/3f/be/7f9e10b579cffb6219cdd3b6919c14fb9dbaea5a9615c1b4a23fb55033b7/napari_czitools-0.12.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.12.4": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "595db3a79c4283d769a9ca1d7ecb12017238d4f0ea8171271215685a02322aea"
+        },
+        "digests": {
+          "blake2b_256": "2dd1afc038a2ed02a269bb471e7fbf3c1e193b375d8d8dd6c0e3f91a7d5e9ae6",
+          "md5": "415dad669fec4bea6af883fc4da634a1",
+          "sha256": "e9409e4c69107b67d6c61b04fac96e711a820405ce0811b06007586606d3bff2"
+        },
+        "downloads": -1,
+        "filename": "napari_czitools-0.12.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "415dad669fec4bea6af883fc4da634a1",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.14,>=3.12",
+        "size": 67194,
+        "upload_time": "2026-08-28T11:17:14",
+        "upload_time_iso_8601": "2026-08-28T11:17:14.892534Z",
+        "url": "https://files.pythonhosted.org/packages/2d/d1/afc038a2ed02a269bb471e7fbf3c1e193b375d8d8dd6c0e3f91a7d5e9ae6/napari_czitools-0.12.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "d4bc34778c372271a4de4a29b1a4afa76be7e9ea5162383193f970c99f4dcc6a",
+          "md5": "29be29fa255c5c4cd892016eb3e7dd3c",
+          "sha256": "d476da5aff8bbacc31b0bfc3932ca21091dcd976f4c5f683fac066b018e99aef"
+        },
+        "downloads": -1,
+        "filename": "napari_czitools-0.12.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "29be29fa255c5c4cd892016eb3e7dd3c",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.14,>=3.12",
+        "size": 13009038,
+        "upload_time": "2026-08-28T11:17:16",
+        "upload_time_iso_8601": "2026-08-28T11:17:16.181587Z",
+        "url": "https://files.pythonhosted.org/packages/d4/bc/34778c372271a4de4a29b1a4afa76be7e9ea5162383193f970c99f4dcc6a/napari_czitools-0.12.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "595db3a79c4283d769a9ca1d7ecb12017238d4f0ea8171271215685a02322aea"
+      },
+      "digests": {
+        "blake2b_256": "2dd1afc038a2ed02a269bb471e7fbf3c1e193b375d8d8dd6c0e3f91a7d5e9ae6",
+        "md5": "415dad669fec4bea6af883fc4da634a1",
+        "sha256": "e9409e4c69107b67d6c61b04fac96e711a820405ce0811b06007586606d3bff2"
+      },
+      "downloads": -1,
+      "filename": "napari_czitools-0.12.4-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "415dad669fec4bea6af883fc4da634a1",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": "<3.14,>=3.12",
+      "size": 67194,
+      "upload_time": "2026-08-28T11:17:14",
+      "upload_time_iso_8601": "2026-08-28T11:17:14.892534Z",
+      "url": "https://files.pythonhosted.org/packages/2d/d1/afc038a2ed02a269bb471e7fbf3c1e193b375d8d8dd6c0e3f91a7d5e9ae6/napari_czitools-0.12.4-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "d4bc34778c372271a4de4a29b1a4afa76be7e9ea5162383193f970c99f4dcc6a",
+        "md5": "29be29fa255c5c4cd892016eb3e7dd3c",
+        "sha256": "d476da5aff8bbacc31b0bfc3932ca21091dcd976f4c5f683fac066b018e99aef"
+      },
+      "downloads": -1,
+      "filename": "napari_czitools-0.12.4.tar.gz",
+      "has_sig": false,
+      "md5_digest": "29be29fa255c5c4cd892016eb3e7dd3c",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": "<3.14,>=3.12",
+      "size": 13009038,
+      "upload_time": "2026-08-28T11:17:16",
+      "upload_time_iso_8601": "2026-08-28T11:17:16.181587Z",
+      "url": "https://files.pythonhosted.org/packages/d4/bc/34778c372271a4de4a29b1a4afa76be7e9ea5162383193f970c99f4dcc6a/napari_czitools-0.12.4.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

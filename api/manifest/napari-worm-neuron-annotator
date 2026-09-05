@@ -1,0 +1,112 @@
+{
+  "name": "napari-worm-neuron-annotator",
+  "display_name": "Worm Neuron Annotator",
+  "visibility": "public",
+  "icon": null,
+  "categories": [
+    "Utilities"
+  ],
+  "schema_version": "0.3.0",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-worm-neuron-annotator.NeuronAnnotatorWidget",
+        "title": "Worm Neuron Annotator",
+        "python_name": "napari_worm_neuron_annotator._widget:NeuronAnnotatorWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-worm-neuron-annotator.LabelManager",
+        "title": "Worm Neuron Annotator",
+        "python_name": "napari_worm_neuron_annotator._widget:LabelManager",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "napari-worm-neuron-annotator.NeuronAnnotatorWidget",
+        "display_name": "Worm Neuron Annotator",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configurations": {}
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "napari-worm-neuron-annotator",
+    "version": "0.4.2",
+    "dynamic": [
+      "license-file"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "Navigate and annotate neuron box ROIs on image volumes in napari",
+    "description": "# napari-worm-neuron-annotator\n\n`napari-worm-neuron-annotator` is a napari plugin for navigating and annotating\nread-only neuron bounding-box ROIs on 3D or 4D Image volumes.\n\nThe plugin keeps each data source in a separate role:\n\n- the Image layer supplies the spatial axes, world transform, and Z-navigation\n  context;\n- the ROI array supplies neuron identity and box geometry;\n- runtime `Vectors` and `Points` layers show boxes and optional text without\n  writing them into a dense mask.\n\nThe plugin does not modify Image or ROI source data. Ordinary napari `Labels`\nlayers may coexist in the viewer, but this plugin does not select, modify, or\nsynchronize them.\n\n## Features\n\n- Image + ROI operation independent of Labels layers.\n- Read-only loading of `(T,N,K)` ROI NPY arrays.\n- Dynamic 2D bounding rectangles and 3D 12-edge wireframes.\n- Stable per-neuron box colors derived from zero-based ROI identity.\n- Checkable neuron list with a separate active neuron.\n- Digital/biological multi-neuron search with explicit match selection.\n- All/None controls, cumulative Q/W navigation, and checked-only Shift+Q/W.\n- Optional Biological, Digital, or combined selected-box text.\n- Fixed canvas shortcuts for Z-slice and time-frame navigation.\n- Active-neuron highlighting and view centering.\n- Session-only whole-viewer rotation and screen-axis flip controls.\n- View-preserving Z-layer display synchronized across Image and ROI overlays.\n- Zero-based ROI annotation with optional Excel import/export.\n- Opt-in 2D proofreading of box centers, dimensions, missing observations,\n  and added neurons using a non-destructive JSON sidecar.\n\n## Installation\n\nInstall into an existing napari environment:\n\n```text\npip install napari-worm-neuron-annotator\n```\n\nFor a fresh environment, install napari with its default Qt 6 backend:\n\n```text\npip install \"napari-worm-neuron-annotator[all]\"\n```\n\nExcel support alone is available through:\n\n```text\npip install \"napari-worm-neuron-annotator[excel]\"\n```\n\nThe base plugin does not install or select a Qt binding. The napari\nenvironment owns the Qt backend; the convenience `all` extra delegates that\nchoice to napari.\n\nThis release targets Python 3.11–3.14 and napari 0.8.x. See the\n[napari 0.8 migration notes](docs/napari-0.8-migration.md) for the dependency\nand compatibility decisions.\n\n## Image + ROI workflow\n\n1. Open an Image layer with `(z,y,x)` or `(t,z,y,x)` axes.\n2. Open `Plugins > Worm Neuron Annotator`.\n3. Select the Image layer, then load the ROI NPY file.\n4. Click a neuron row to check and activate that ID.\n5. Use the checkbox column to add or remove IDs from the persistent set.\n6. Use Q and W to check and activate the previous or next valid ID without\n   clearing IDs already checked.\n7. Use **All** or **None** to check every ID or clear all checked/active IDs.\n\nWith the napari canvas focused, use G/H for the previous/next Z slice in 2D,\nJ/K for the previous/next time frame of a 4D Image, and Shift-J/Shift-K to\nmove backward/forward by 10 time frames. Navigation stops at the data bounds\nrather than wrapping. In an individual Z layer, G/H stays within that layer's\nhalf-open Z range.\n\nThe active row is bold and remains the current row. Unchecking the active ID\nclears the active state; unchecking another ID does not change the active\nneuron.\n\nThe ROI array defines the neuron list. Labels layers are not used for\nselection, box rendering, annotation, centering, time navigation, or Z-layer\ndisplay.\n\n## Worm orientation\n\nThe **Worm Orientation** panel rotates the complete viewer clockwise by 0°,\n90°, 180°, or 270° and can flip the final screen horizontally or vertically.\nImage, ROI boxes, optional text, and Z-layer views stay aligned because\nthe controls change only napari's viewer axes and camera orientation. Source\narrays and layer transforms are not modified.\n\n**Reset** restores the viewer orientation captured for the current session.\nClosing the widget also restores that orientation. If you use napari's native\ntranspose or camera-orientation controls, the resulting view becomes the new\nsession baseline and the plugin controls return to their default state.\n\nThe legacy `LabelManager` Python and command aliases remain available for\ncompatibility. The public widget name is `NeuronAnnotatorWidget`, and napari\nlists only that widget.\n\n## Neuron selection and search\n\nThe neuron tree keeps persistent checked identities separate from the one\nactive identity. Q/W moves through valid neurons and checks each activated\nidentity. Shift+Q/W moves only through already checked neurons that are valid\nat the current time and, in Layer mode, belong to the active Z range. Both\nforms of navigation wrap in zero-based digital-ID order.\n\nThe search field accepts comma-separated digital IDs and biological-name\nfragments. Numeric tokens match an ID exactly; other tokens use a\ncase-insensitive biological-name substring match. Typing highlights every\nmatching tree row without changing selection or moving the view. Enter cycles\nthrough matches one at a time, checking and making only that match active.\n**Check matches** adds all matches to the existing checked set without\nchanging the active neuron.\n\nSearch covers all global ROI identities, including observations missing at\nthe current time or outside the active Z range. Those results remain gray and\ncannot move the current view until they become navigable. Search highlighting\nis confined to the tree; image highlighting continues to use the existing\nselected and active overlay layers.\n\n## Z-layer display\n\nThe compact **Z Layers** panel separates a 3D volume along Z so individual\ndepth ranges can be rendered without the other ranges obscuring them:\n\n1. Select a compatible Image layer.\n2. Inspect the current-time curve showing how many pixels in each Z slice are\n   strictly above the editable threshold (default `170`). Click the curve to\n   add or remove a cut, or enter explicit cuts such as `4,10`.\n3. Click **Split**.\n4. Use **Show** to select `All` or one generated layer.\n\nCuts use half-open Python ranges. For a volume with 18 Z slices, `4,10`\ncreates `[0,4)`, `[4,10)`, and `[10,18)`. A boundary slice belongs to the\nfollowing layer.\n\n**All** displays every generated Image layer using additive blending and all\ncurrently valid checked/active ROI overlays. **Layer k** displays only that\nImage range and the overlays whose box center Z belongs to the range. A box\nthat crosses a cut is shown whole in the one layer containing its center.\n\nChecked and active neuron identities remain global. In an individual layer,\nQ/W navigates only neurons assigned to that layer; other neurons remain in\nthe list, are shown in gray, and keep operable checkboxes. Activating a gray\nrow does not move the view outside the selected Z layer.\n\nGenerated Image layers use slices of NumPy arrays, memory maps, or Dask\narrays rather than full-size zero-filled copies. Direct Zarr arrays should\nbe wrapped as Dask arrays before splitting. The Image source must have\n`(z,y,x)` or `(t,z,y,x)` axes, axis-aligned volume depiction, and no clipping\nplanes. **Clear** removes generated Image layers and restores the source Image\nvisibility captured before splitting. Normal napari eye icons may still\noverride visibility until the next **Show** selection.\n\n### Launch the validated 20260304_w3_immobile dataset\n\nThe repository includes a ready-to-use launcher for the git-ignored local\ndataset at `data/20260304_w3_immobile_npy`:\n\n```text\npixi run launch-actual\n```\n\nIt memory-maps `volumes.npy` and `neuron_point_tuple.npy`, opens napari, docks\nthe navigator, and loads all 120 ROI identities.\n\n## ROI input format\n\nThe ROI loader accepts a numeric NumPy array with shape:\n\n```text\n(T, N, K), K >= 6\n```\n\nThe first six fields are:\n\n```text\nx_center, y_center, z_scaled, width, height, depth_scaled\n```\n\nAdditional fields are ignored. The neuron ID is the index on the `N` axis:\n\n```text\nneuron_id = 0 ... N - 1\n```\n\nNaN, infinite values, non-positive sizes, and time points outside the source\narray are treated as missing observations. Missing neurons remain in the\ncheckable list so that their global identity is stable, but Q/W skips them at\nthe current time point.\n\n### Coordinate and time mapping\n\nThe plugin requires the selected Image layer to have one of these axis orders:\n\n```text\n(z, y, x)\n(t, z, y, x)\n```\n\n`z_divisor`, defaulting to 5, converts source z and depth coordinates:\n\n```text\nz_index = z_scaled / z_divisor\ndepth_in_slices = depth_scaled / z_divisor\n```\n\nFor a viewer that displays a cropped or strided time range:\n\n```text\nsource_t = volume_start + viewer_t * volume_stride\n```\n\nConfigure `volume_start` and `volume_stride` before loading the NPY.\n\nThe derived ROI overlay layers copy scale, translation, axis labels, and\nunits from the Image layer. Do not apply the z scale a second time in the ROI\ncoordinates.\n\n## 2D and 3D box display\n\nTwo managed Vectors layers are created after loading an ROI file:\n\n- `Neuron boxes – selected`: checked, currently valid boxes colored by their\n  stable `neuron_id` palette;\n- `Neuron box – active`: the active box with a thick yellow outline.\n\nInitially only the first valid neuron is checked and active. **All** includes\nall IDs in the selected layer, while **None** empties both box layers and the\noptional text overlay. Checked identities that are missing at the current time\nremain checked but are temporarily omitted from the geometry.\n\nEnable **Show selected box labels** to place one text label at the center of\neach currently rendered checked box. **Label text** selects Biological,\nDigital, or `Digital + biological` text. Biological is the default and falls\nback to the zero-based `neuron_id` when empty; the combined form is written as\n`12 · AVA` and also falls back to the ID. The third `annotation` column is not\nused for box labels. The option is off by default. Use **Text color** to choose\na session-only label color that contrasts with the current Image colormap.\n\nIn 2D mode, the plugin draws four rectangle edges only when the current z\nslice intersects the box's half-open z range.\n\nIn 3D mode, each box is represented by 12 vector edges. Overlapping boxes\nremain independent vector records with a `neuron_id` feature. They may overlap\nvisually, but one box does not erase the identity of another.\n\nVectors and the transparent Points text layer are derived display data. They\nare removed when the ROI is unloaded or the widget closes and are not saved\nas a separate annotation format.\n\nThe proofreading target is a separate, session-only Vectors layer. It is drawn\nas two thin orthogonal line segments (rather than a Points marker), with a\ndefault half-length of 8 data units and an edge width of 1 pixel. These display\nconstants are independent of the neuron box dimensions.\n\n## 2D proofreading\n\nProofreading is off by default and is available only in napari's 2D display\nwith Z view set to **All**. Select the source Image layer, turn proofreading\non, then make an unmodified short left-click on the Image to lock a fixed\ncrosshair target. Moving the pointer does not move this target. Then use:\n\n- F7 to delete the active neuron's observation at the current volume;\n- F8 to place a missing active observation at the locked target;\n- F9 to add a provisional neuron at the locked target using the default\n  width/height/depth of `7/7/3`;\n- F12 to discard an unapplied size draft and leave proofreading mode.\n\nSuccessful F8/F9 placement clears the target. Changing time or Z, or leaving\nproofreading mode, also clears it. F8 never moves a box that is already\npresent. Width, height, and depth accept positive floating-point values.\n**Apply current t** changes only the locked observation at the current Image\ntime, preserving its center and leaving other volumes untouched.\n**Apply to all existing…** is an explicit opt-in operation that changes the\nsize of every existing observation for that neuron; missing observations are\nnot created and all centers remain unchanged. Delete-all is explicitly\nconfirmed and removes the active ID's observations from every raw volume\nwithout deleting or renumbering its identity. Added IDs can be retired;\nretired numeric IDs remain reserved and are not reused.\n\nThe current-neuron line reports the final state relative to the raw ROI using\n`(moved)`, `(resized)`, `(moved + resized)`, `(placed)`, `(deleted)`, or\n`(added)` markers. These markers remain visible after saving; the separate\n`Unsaved proof edits` indicator only describes changes since the most recent\nsave/load snapshot. A size edit that has not yet been applied is shown as an\n`Unapplied size draft` and is never written to a sidecar without an explicit\nApply/Discard decision.\n\n**Save proof edits** writes canonical sparse edits to a schema-v2 JSON sidecar\n(`changed_fields` records whether each patch changes presence, center, and/or\nsize). Existing schema-v1 sidecars are accepted and kept clean in memory; the\nnext explicit save upgrades the same file in place. The current sidecar path\nis retained for subsequent saves, while **Save As…** switches that path.\nCancel or validation/permission failures leave the working state and path\nunchanged. The original ROI NPY remains read-only. **Export corrected NPY**\ncreates a separate array with stable neuron indices; deleted geometry uses NaN\nin the first six fields. If an Image's shape or spatial metadata changes,\nproofreading pauses until a compatible Image is restored.\n\n## Annotation\n\nThe `digital` column stores the zero-based ROI `neuron_id`.\n\nThe table follows the loaded ROI identities. Existing biological names and\nannotation text are preserved by identity when the ROI source changes.\nActivating a neuron selects its annotation row. Selecting a table row checks\nand activates the corresponding neuron without clearing other checked IDs.\nThe `biological` value is also displayed in the neuron list.\n\nThe complete navigator is vertically scrollable when the napari dock is\nshorter than its controls.\n\nExcel operations support `.xlsx` workbooks. Saving and loading do not apply an\nimplicit `+1` or `-1` conversion.\n\n## Development\n\nRun tests and lint from the repository root:\n\n```text\npixi run pytest -q\npixi run -e excel pytest -q\npixi run ruff check .\n```\n\nThe repository uses a `src` layout. Pure ROI parsing and geometry live in\n`src/napari_worm_neuron_annotator/_roi.py`; Qt and napari lifecycle behavior\nlive in `src/napari_worm_neuron_annotator/_widget.py`.\n\n## License\n\nDistributed under the BSD-3-Clause license.\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": null,
+    "download_url": null,
+    "author": "JH Wang",
+    "author_email": "wjh19937458882@mail.ustc.edu.cn",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": null,
+    "classifier": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Programming Language :: Python :: 3.14",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "requires_dist": [
+      "napari<0.9,>=0.8",
+      "numpy",
+      "qtpy",
+      "napari[all]<0.9,>=0.8; extra == \"all\"",
+      "openpyxl>=3.1; extra == \"excel\"",
+      "tox; extra == \"testing\"",
+      "pytest; extra == \"testing\"",
+      "pytest-cov; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "napari[pyqt6]<0.9,>=0.8; extra == \"testing\""
+    ],
+    "requires_python": "<3.15,>=3.11",
+    "requires_external": null,
+    "project_url": [
+      "Bug Tracker, https://github.com/Wenlab/napari-worm-neuron-annotator/issues",
+      "Documentation, https://github.com/Wenlab/napari-worm-neuron-annotator#README.md",
+      "Source Code, https://github.com/Wenlab/napari-worm-neuron-annotator",
+      "User Support, https://github.com/Wenlab/napari-worm-neuron-annotator/issues"
+    ],
+    "provides_extra": [
+      "all",
+      "excel",
+      "testing"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}

@@ -1,0 +1,90 @@
+{
+  "name": "napari-mask-curator",
+  "display_name": "Mask Curator",
+  "visibility": "public",
+  "icon": "",
+  "categories": [],
+  "schema_version": "0.2.1",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-mask-curator.make_mask_curation_widget",
+        "title": "Mask Curation (Mask Curator)",
+        "python_name": "napari_mask_curator._widget:make_mask_curation_widget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "napari-mask-curator.make_mask_curation_widget",
+        "display_name": "Mask Curation",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "napari-mask-curator",
+    "version": "0.1.1",
+    "dynamic": [
+      "license-file"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "Manual curation in napari: quickly pick the best cell/nuclei masks from segmentation outputs (Cellpose/Baysor/parameter sweeps), with new IDs, undo, overlap pruning, compact save, and fast logging.",
+    "description": "A napari dock widget for **manual curation of segmentation masks**.\nIt is designed for workflows where you generate multiple candidate masks (e.g., Cellpose/Baysor/parameter sweeps),\nand then **quickly pick the best instance per cell/nucleus** inside napari with full traceability.\n\n## Key features\n\n- **Follow → Work**: create a working copy `*.mask__work` from your selected mask layer, so the original stays untouched.\n- **Collect (Always NEW ID)**: click an object in `__work` to copy it into `manual_best` with a **new unique label ID**.\n- **Undo (U / Alt-U)**: revert the last collect and restore the **exact pre-click state**.\n- **Overlap prune (P / Alt-P)**: remove candidate objects in `__work` that overlap too much with `manual_best` (avoid duplicates).\n- **Compact save (S / Alt-S)**: before saving, relabel `manual_best` to **consecutive IDs (1..N)**.\n- **Fast logging**: JSONL + TSV logs of every action (for methods papers / traceability).\n- **Blink**: toggle selected layer visibility at 0.5s to compare masks quickly.\n\n## Compatibility\n\n- **Python:** 3.10–3.13 (tested on 3.11)\n- **napari:** 0.6.x (tested on 0.6.6)\n\n## What input masks should look like\n\n- Input mask should be a **Labels** layer.\n- The layer name is expected to contain **`.mask`** (example: `d290_cp0_fl0.2.mask`).\n  - This is how the plugin identifies which layers are “candidate masks”.\n\n> Tip: if your mask is a LZW-compressed TIFF and napari fails to open it, install `imagecodecs`:\n>\n> `conda install -c conda-forge imagecodecs`\n\n## Typical workflow\n\n1. **Open napari**\n2. Load:\n   - A background image (optional), e.g. DAPI\n   - A candidate mask Labels layer, e.g. `d290_cp0_fl0.2.mask`\n3. Open the panel: **Plugins → Mask Curator → Mask Curation**\n4. Select your `*.mask` layer and click **Follow → Work + Prune**\n   - Creates `*.mask__work`\n   - Creates/uses `manual_best`\n5. Click **Collect: OFF (A)** to switch it to **Collect: ON**\n6. **Left-click** objects in `__work` to collect into `manual_best`\n7. If you mis-click, press **Undo** (or **U / Alt-U**)\n8. Press **Prune Now** (or **P / Alt-P**) to prune overlaps\n9. Press **Save manual_best** (or **S / Alt-S**) to export final curated masks with compact IDs.\n\n## Hotkeys\n\n- **Alt-A**: Toggle Collect ON/OFF\n- **Alt-U**: Undo last collect\n- **Alt-P**: Prune Now\n- **Alt-R**: Reset Work\n- **Alt-S**: Save manual_best\n\n(Buttons are also provided for all actions.)\n\n## Parameters (panel)\n\n- **Overlap prune thr**: candidates are removed if overlap ratio **≥ thr**\n- **ROI pad(px)**: padding around object bbox used for fast local updates\n\n## Outputs\n\nWhen saving, the plugin writes:\n\n- `manual_best_ID_uint32.tif` — curated Labels with compact consecutive IDs (1..N)\n- `manual_best_black_uint8.tif` — binary mask (0/255)\n- `manual_best_id_map_old_to_new.tsv` — mapping from pre-save IDs to compact IDs\n\nLogs (traceability):\n\n- `curation_logs/curation_<timestamp>.jsonl`\n- `curation_logs/curation_<timestamp>.tsv`\n\n## Installation\n\n### From PyPI\n```bash\npip install napari-mask-curator\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": null,
+    "download_url": null,
+    "author": "Yaohua Li",
+    "author_email": "liyaohua12345@foxmail.com",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "Copyright (c) 2026, Yaohua Li\nAll rights reserved.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n\n* Redistributions of source code must retain the above copyright notice, this\n  list of conditions and the following disclaimer.\n\n* Redistributions in binary form must reproduce the above copyright notice,\n  this list of conditions and the following disclaimer in the documentation\n  and/or other materials provided with the distribution.\n\n* Neither the name of copyright holder nor the names of its\n  contributors may be used to endorse or promote products derived from\n  this software without specific prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\"\nAND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\nIMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\nDISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE\nFOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\nDAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR\nSERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER\nCAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,\nOR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\nOF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n",
+    "classifier": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "requires_dist": [
+      "numpy",
+      "magicgui",
+      "qtpy",
+      "scikit-image",
+      "napari[all]; extra == \"all\""
+    ],
+    "requires_python": ">=3.10",
+    "requires_external": null,
+    "project_url": null,
+    "provides_extra": [
+      "all"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}

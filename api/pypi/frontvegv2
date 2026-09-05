@@ -1,0 +1,421 @@
+{
+  "info": {
+    "author": "Abdoul Djalil OUSSEINI HAMZA",
+    "author_email": "abdouldjalilo@gmail.com",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Framework :: napari",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.10"
+    ],
+    "description": "# FrontVeg V2: Foreground-Aware Zero-Shot Plant Trait Segmentation in Trellised Crops\r\n\r\n<!-- ## Authors -->\r\n**Abdoul Djalil Ousseini Hamza** ([ORCID](https://orcid.org/0009-0008-6172-4439)), **Herearii Metuarea** ([ORCID](https://orcid.org/0009-0008-2716-0617)), **Corentin Lothod\u00e9** ([ORCID](https://orcid.org/0000-0002-8209-317X)), **Morgane Roth** ([ORCID](https://orcid.org/0000-0002-5244-4215)), **Eric Duch\u00eane** ([ORCID](https://orcid.org/0000-0003-2712-1892)), **Lionel Ley**, **David Alletru** ([ORCID](https://orcid.org/0009-0006-6238-6123)), and **David Rousseau**<sup>*</sup> ([ORCID](https://orcid.org/0000-0002-7935-1609))\r\n\r\n*\\* Project Supervisor* \r\n\r\n<!-- <img src=\"https://raw.githubusercontent.com/djaliloh/FrontVegV2/main/assets/logo.png\" alt=\"Project Logo\" style=\"max-width: 100%; height: auto;\"> -->\r\n\r\n<!-- ![Logo](https://raw.githubusercontent.com/djaliloh/FrontVegV2/main/assets/logo.png)  -->\r\n\r\n<!-- <img src=\"assets/logo.png\" alt=\"Project Logo\" style=\"max-width: 100%; height: auto;\"> -->\r\n\r\n<!-- <img src=\"https://i.imgur.com/NcQWGjS.png\" alt=\"Project Logo\" style=\"max-width: 100%; height: auto;\"> -->\r\n<img src=\"https://raw.githubusercontent.com/djaliloh/Deep-learning-training/main/results/logo_parteneaire.png\" alt=\"Partner Logo\" style=\"max-width: 100%; height: auto;\">\r\n\r\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/frontvegv2)](https://napari-hub.org/plugins/frontvegv2.html) [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/) \r\n[![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=flat&logo=PyTorch&logoColor=white)](https://pytorch.org/)\r\n[![License: BSD 3-Clause](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)\r\n\r\n<!-- uncomment this when the repos become public -->\r\n<!-- [![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/djaliloh/FrontVegV2)](https://github.com/djaliloh/FrontVegV2) --> \r\n\r\n\r\n\r\n# FrontVeg V2\r\n\r\nA napari plugin for automated plant organ segmentation and leaf area estimation in trellised crops using side view monocular RGB images.\r\n\r\n<!-- > \u26a0\ufe0f **Important:** SAM3 requires gated model weights from Hugging Face. Please follow the setup instructions below before running the plugin. -->  \r\n\r\nSome examples of organ segmentation on different trellised crops: \r\n\r\n<p align=\"center\">\r\n  <img src=\"https://raw.githubusercontent.com/djaliloh/Deep-learning-training/main/results/frontvegv2_expl_grid.png\" alt=\"FrontVeg V2 Segmentation Examples Grid\" style=\"max-width: 100%; height: auto;\">\r\n</p>\r\n\r\n---\r\n\r\n## Prerequisites\r\n\r\n1. **Create and activate a virtual environment** \r\n\r\nWe recommend using Python 3.10 and cuda 12.1:\r\n\r\n   ```bash\r\n   conda create -n <env_name> python=3.10 -y\r\n   conda activate <env_name>\r\n   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121\r\n   ```\r\n\r\n2. **Request SAM3 Weights Access:**\r\n   Request access to the SAM3 checkpoint on [Hugging Face](https://huggingface.co/facebook/sam3). Once approved, download `sam3.pt`.\r\n\r\n3. **Download Depth-Anything V2 Weights:**\r\n   Download the Large model checkpoint (`depth_anything_v2_vitl.pth`) from the official [Depth-Anything V2 repository](https://github.com/DepthAnything/Depth-Anything-V2).\r\n\r\n4. **Place your downloaded checkpoints inside the project folder:** \r\n   - Place sam3.pt into: checkpoints/sam3_ckpts/\r\n   - Place depth checkpoints into: checkpoints/depthanything_ckpts/\r\n\r\n---\r\n\r\n<!-- ## Installation\r\n\r\n### Option 1: Recommended (Git Clone + Editable Install)\r\n\r\nThis option automatically sets up the relative paths for `external/` submodules and `checkpoints/`.\r\n\r\n```bash\r\n# 1. Clone the repository \r\ngit clone https://github.com/djaliloh/FrontVegV2.git\r\ncd FrontVegV2\r\n\r\n# 2. Clone and install external models in the external/ folder:\r\ncd external\r\n\r\n# Depth-Anything V2\r\ngit clone https://github.com/DepthAnything/Depth-Anything-V2.git\r\n\r\n# SAM3\r\ngit clone https://github.com/facebookresearch/sam3.git\r\ncd sam3\r\npip install -e .\r\ncd ../..\r\n\r\n# 3. Install in editable mode \r\npip install -e .\r\n```\r\n\r\n> \u2139\ufe0f **Note:** This is the development repository. A standalone installation via `git clone` will be released soon. \r\n> In the meantime, please follow **Option 2** to use the plugin.  \r\n\r\n\r\n### Option 2: Direct PyPI Install\r\n\r\n```bash \r\n\r\npip install frontvegV2\r\n```  -->\r\n<!-- ################################################### -->\r\n\r\n\r\n## Installation\r\n\r\nFrontVeg V2 requires a dedicated Conda environment and two external models: **Depth-Anything V2** and **SAM3**.\r\n\r\n> **Note:** The FrontVeg V2 GitHub repository is currently private. Therefore, users should install the FrontVeg V2 package from PyPI rather than cloning the main repository.\r\n\r\n<!-- ### 1. Create and activate a Conda environment\r\n\r\nWe recommend using Python 3.10:\r\n\r\n```bash\r\nconda create -n frontvegv2 python=3.10\r\nconda activate frontvegv2\r\n``` -->\r\n\r\n### 1. Clone and install the external models\r\n\r\nCreate a directory for the external dependencies:\r\n\r\n```bash\r\nmkdir external\r\ncd external\r\n```\r\n\r\n#### Depth-Anything V2\r\n\r\n```bash\r\ngit clone https://github.com/DepthAnything/Depth-Anything-V2.git\r\n```\r\n\r\nDepth-Anything V2 does not need to be installed as a package at this stage; FrontVeg V2 uses it from the `external/` directory.\r\n\r\n#### SAM3\r\n\r\n```bash\r\ngit clone https://github.com/facebookresearch/sam3.git\r\ncd sam3\r\npip install -e .\r\ncd ..\r\n```\r\n\r\nYou should now have:\r\n\r\n```text\r\nexternal/\r\n\u251c\u2500\u2500 Depth-Anything-V2/\r\n\u2514\u2500\u2500 sam3/\r\n```\r\n\r\n### 2. Install FrontVeg V2 from PyPI\r\n\r\nOnce the external dependencies have been installed, return to the directory where you want to use FrontVeg V2 and run:\r\n\r\n```bash\r\npip install frontvegV2\r\n```\r\n\r\nThis installs the FrontVeg V2 package and its Python dependencies.\r\n\r\n### 3. Check the installation\r\n\r\nYou can verify that FrontVeg V2 is available with:\r\n\r\n```bash\r\npython -c \"import frontveg; print('FrontVeg V2 installed successfully')\"\r\n```\r\n\r\n> **Important:** The external repositories must be installed before running FrontVeg V2. In particular, **SAM3 must be installed with `pip install -e .`** from its cloned repository.\r\n\r\n### Alternative: Development Installation\r\n\r\nIf you have access to the private FrontVeg V2 GitHub repository and want to modify the source code, you can clone the repository and install it in editable mode:\r\n\r\n```bash\r\ngit clone https://github.com/djaliloh/FrontVegV2.git\r\ncd FrontVegV2\r\n\r\nmkdir external\r\ncd external\r\n\r\n# Depth-Anything V2\r\ngit clone https://github.com/DepthAnything/Depth-Anything-V2.git\r\n\r\n# SAM3\r\ngit clone https://github.com/facebookresearch/sam3.git\r\ncd sam3\r\npip install -e .\r\n\r\ncd ../..\r\n\r\n# Install FrontVeg V2 in editable mode\r\npip install -e .\r\n```\r\n\r\nThis development installation is intended for contributors and users who need direct access to the source code.\r\n\r\n\r\n\r\n\r\n<!-- ################################################# -->\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n<!-- ### Option 2: Direct PyPI Install + Environment Variables  -->\r\n\r\n<!-- ```powershell\r\n# If you installed the plugin directly via PyPI (pip install frontvegv2), you must specify the paths to your local SAM3 code repository and checkpoints using environment variables : \r\n\r\n# Windows (PowerShell):\r\n$env:FRONTVEG_SAM3_REPO = \"<path_to_sam3_repo>\"\r\n$env:FRONTVEG_SAM3_CKPT = \"<path_to_sam3.pt>\"\r\n$env:FRONTVEG_DEPTH_REPO = \"<path_to_depth_anything_v2_repo>\"\r\n$env:FRONTVEG_DEPTH_CKPT_DIR = \"<path_to_depth_ckpts_folder>\"\r\n\r\nnapari\r\n\r\n\r\n# Linux / macOS (Bash):\r\nexport FRONTVEG_SAM3_REPO=\"<path_to_sam3_repo>\"\r\nexport FRONTVEG_SAM3_CKPT=\"<path_to_sam3.pt>\"\r\nexport FRONTVEG_DEPTH_REPO=\"<path_to_depth_anything_v2_repo>\"\r\nexport FRONTVEG_DEPTH_CKPT_DIR=\"<path_to_depth_ckpts_folder>\"\r\n\r\nnapari\r\n``` -->\r\n\r\n\r\n\r\n## Usage in Napari\r\n\r\n1. Launch Napari: `napari`\r\n2. Open an RGB image of a row crop.\r\n3. Select **Plugins > FrontVeg V2 Studio**.\r\n4. Set your prompt (e.g., \"leaf\") and adjust parameters (Tile Overlap, Sigma, etc.).\r\n5. Click **Run Complete Pipeline**.\r\n\r\n\r\n<!-- ## Citing FrontVeg V2\r\n\r\n```bibtex\r\n@article{djaliloh2026frontvegv2,\r\n  title={FrontVeg-V2: Foreground-Aware Zero-Shot Plant Trait Segmentation in Trellised Crops Using Side View Monocular RGB Images},\r\n  author={A-D. Ousseini Hamza, et al.}, \r\n  journal={SoftwareX}, \r\n  year={2026},\r\n  url={https://github.com/djaliloh/FrontVeg2} \r\n}\r\n```  -->\r\n\r\n<!-- ## License\r\nLicense is pending. -->\r\n\r\n## Acknowledgements\r\n\r\nThis work was supported by the French **Programme et \u00c9quipements Prioritaires de Recherche (PEPR) AgroEcoNum** ([pepr-agroeconum.fr](https://www.pepr-agroeconum.fr/)), the **France 2030** program through the Agence Nationale de la Recherche (ANR), and the European Union\u2019s **Horizon Europe** research and innovation programme (Grant No. 101094587, **PHENET**). \r\n\r\nThis research used computing resources from the **GLiCID Computing Facility** (Ligerien Group for Intensive Distributed Computing, [doi:10.60487/glicid](https://doi.org/10.60487/glicid), Pays de la Loire, France), as well as HPC and storage resources provided by **GENCI at IDRIS** on the Jean Zay supercomputer\u2019s H100 partition (Grant 2025-AD010115553R1).\r\n\r\nThe authors would like to thank **Sirine Gharbi**, **Oumaima Karia**, **Justin Langlois**, **Paul**, and **Thomas** for their valuable assistance in annotating the image dataset used in this study.\r\n\r\n## Contact\r\n\r\nImhorphen team, bioimaging research group, <br> \r\nIRHS, UMR 1345, INRAE, <br>\r\n42 Rue Georges Morel, 49070 Beaucouz\u00e9, France\r\n\r\n- David Rousseau - Professor, david.rousseau@univ-angers.fr\r\n- Corentin Lothode - Researcher Engineer, corentin.lothode@inrae.fr\r\n- Herearii Metuarea - PhD student, herearii.metuarea@univ-angers.fr\r\n- Abdoul Djalil Ousseini Hamza - Engineer, abdoul-djalil.ousseini-hamza@inrae.fr\r\n\r\n\r\n## Troubleshooting\r\n\r\n- Missing Module 'triton': On Windows, install the Windows-compatible Triton build: pip install triton-windows.\r\n- RuntimeError: mat1 and mat2 must have the same dtype: If running on GPUs older than NVIDIA Ampere (e.g., GTX 10xx, RTX 20xx), ensure autocast is set to float16 or float32 instead of bfloat16.\r\n- Missing Checkpoints Error: Verify that sam3.pt exists at the expected path or set FRONTVEG_SAM3_CKPT manually.\r\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": "https://github.com/djaliloh/FrontVegV2",
+    "keywords": null,
+    "license": "BSD-3-Clause",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "frontvegV2",
+    "package_url": "https://pypi.org/project/frontvegV2/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/frontvegV2/",
+    "project_urls": {
+      "Homepage": "https://github.com/djaliloh/FrontVegV2"
+    },
+    "provides_extra": [
+      "dev"
+    ],
+    "release_url": "https://pypi.org/project/frontvegV2/0.1.5/",
+    "requires_dist": [
+      "napari[all]",
+      "numpy==1.26.4",
+      "opencv-python==4.8.1.78",
+      "pillow",
+      "scipy",
+      "matplotlib",
+      "einops",
+      "triton-windows; sys_platform == \"win32\"",
+      "triton; sys_platform == \"linux\"",
+      "setuptools==69.5.1",
+      "scikit-learn",
+      "decord",
+      "psutil",
+      "pycocotools",
+      "pandas",
+      "scikit-image",
+      "setuptools==69.5.1; extra == \"dev\"",
+      "scikit-learn; extra == \"dev\"",
+      "decord; extra == \"dev\"",
+      "psutil; extra == \"dev\""
+    ],
+    "requires_python": null,
+    "summary": "Automated plant organ segmentation and leaf area estimation in trellised crops using side view monocular RGB images.",
+    "version": "0.1.5",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 40411999,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "djaliloh"
+      }
+    ]
+  },
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "118de6738519a02abb06adcdbd9d01537a0e88d6592938bb7c20c3fad2c01469"
+        },
+        "digests": {
+          "blake2b_256": "4cc2dc951fee3cf51cd4ae6a851337bcf9b325eef2186a581cca57856300b5cf",
+          "md5": "806970b056e27b853c82060aed78d462",
+          "sha256": "e700ad30f08e88347287618b05163ee91715db1e3457a2d7fb8be4404dd1b1b4"
+        },
+        "downloads": -1,
+        "filename": "frontvegv2-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "806970b056e27b853c82060aed78d462",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": null,
+        "size": 34780,
+        "upload_time": "2026-08-09T05:45:44",
+        "upload_time_iso_8601": "2026-08-09T05:45:44.104218Z",
+        "url": "https://files.pythonhosted.org/packages/4c/c2/dc951fee3cf51cd4ae6a851337bcf9b325eef2186a581cca57856300b5cf/frontvegv2-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "3c80d176dc883c45b62adaaa27ad951f2a0e51bafed882fa0fddcae0528845c9",
+          "md5": "2216e5fd0378b1cd724addd4203c82a6",
+          "sha256": "c950036f4b8ddec745eeed3bbd56d5a92aa23dd86fa959fefb43038a4bb2df90"
+        },
+        "downloads": -1,
+        "filename": "frontvegv2-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "2216e5fd0378b1cd724addd4203c82a6",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": null,
+        "size": 30185,
+        "upload_time": "2026-08-09T05:45:45",
+        "upload_time_iso_8601": "2026-08-09T05:45:45.391344Z",
+        "url": "https://files.pythonhosted.org/packages/3c/80/d176dc883c45b62adaaa27ad951f2a0e51bafed882fa0fddcae0528845c9/frontvegv2-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "42fdc30309877803102b90e5570ddf5eb6a74e3685d23afb13cf4011bd5f33ac"
+        },
+        "digests": {
+          "blake2b_256": "87541b94046fcc36de612ec7b195bbc1167186c827d4345cf52eda84b5112c23",
+          "md5": "9ae0a4179767d3dea70309779a791897",
+          "sha256": "38043ce4c845df909acbb1d44caf934cec8348732422660468ffde8331235a3c"
+        },
+        "downloads": -1,
+        "filename": "frontvegv2-0.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "9ae0a4179767d3dea70309779a791897",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": null,
+        "size": 34913,
+        "upload_time": "2026-08-09T16:59:38",
+        "upload_time_iso_8601": "2026-08-09T16:59:38.179258Z",
+        "url": "https://files.pythonhosted.org/packages/87/54/1b94046fcc36de612ec7b195bbc1167186c827d4345cf52eda84b5112c23/frontvegv2-0.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "ddf10da5be007178e1bfd27357afdae8cc2f2490154f5ef93337a93688102705",
+          "md5": "75974c3d7bc02888f450a205b33c15d8",
+          "sha256": "49f8b603ca18bdf616f76a09079265002f3535790ffd87f7d436e4ae42421e49"
+        },
+        "downloads": -1,
+        "filename": "frontvegv2-0.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "75974c3d7bc02888f450a205b33c15d8",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": null,
+        "size": 30462,
+        "upload_time": "2026-08-09T16:59:39",
+        "upload_time_iso_8601": "2026-08-09T16:59:39.068301Z",
+        "url": "https://files.pythonhosted.org/packages/dd/f1/0da5be007178e1bfd27357afdae8cc2f2490154f5ef93337a93688102705/frontvegv2-0.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.2": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "eb391f01763d26aa664623b3bf0132056be0b7d2d50e85d25f171453c0744aa6"
+        },
+        "digests": {
+          "blake2b_256": "c8d8d0475bc53714fe7bc976c63dd40058e37bb8d54e0fc06c2bb30afb5fe1e4",
+          "md5": "0973838789b7c3f8a8f68f4dc538b723",
+          "sha256": "a8971a78a4d32d1c3f88e829a979bc0442302eedf98451411faa629f349904cd"
+        },
+        "downloads": -1,
+        "filename": "frontvegv2-0.1.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "0973838789b7c3f8a8f68f4dc538b723",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": null,
+        "size": 34911,
+        "upload_time": "2026-08-09T17:09:46",
+        "upload_time_iso_8601": "2026-08-09T17:09:46.149701Z",
+        "url": "https://files.pythonhosted.org/packages/c8/d8/d0475bc53714fe7bc976c63dd40058e37bb8d54e0fc06c2bb30afb5fe1e4/frontvegv2-0.1.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "f9753d1f4bf52e36ef83aac697ad56174bdedc356e39683f3744099d6452cdec",
+          "md5": "de08e19a7d50e0c4ce84b674283a65b0",
+          "sha256": "3066358fc1733cc7c2a0f990cdae8567559edbb7907ee9179aade456ad16fc60"
+        },
+        "downloads": -1,
+        "filename": "frontvegv2-0.1.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "de08e19a7d50e0c4ce84b674283a65b0",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": null,
+        "size": 30442,
+        "upload_time": "2026-08-09T17:09:47",
+        "upload_time_iso_8601": "2026-08-09T17:09:47.285647Z",
+        "url": "https://files.pythonhosted.org/packages/f9/75/3d1f4bf52e36ef83aac697ad56174bdedc356e39683f3744099d6452cdec/frontvegv2-0.1.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.3": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "47cafb22530aa2de92f2a204937ff0df3b23cae5a4475912efb8d5daf91d7ce7"
+        },
+        "digests": {
+          "blake2b_256": "d00f44fd848ba5c686ce8efdc81c2c91e4ceb72aa91d894bcbcbd34623423b77",
+          "md5": "c7d001520bd70226d71e5345be13e1c8",
+          "sha256": "e1f6a6ca269fe042d8019bb56649831377461a8077b21a1a12cbf0f745a68bb7"
+        },
+        "downloads": -1,
+        "filename": "frontvegv2-0.1.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "c7d001520bd70226d71e5345be13e1c8",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": null,
+        "size": 36035,
+        "upload_time": "2026-08-11T01:41:18",
+        "upload_time_iso_8601": "2026-08-11T01:41:18.657260Z",
+        "url": "https://files.pythonhosted.org/packages/d0/0f/44fd848ba5c686ce8efdc81c2c91e4ceb72aa91d894bcbcbd34623423b77/frontvegv2-0.1.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "bf292cdc1dc5a2545191e3eb5a6c3607eb9cce99e8cad323429f7a32f8c7ae49",
+          "md5": "0b25e52483928bf1d3a1b2db8b63e940",
+          "sha256": "27b8e6ed97c640b4c792eb53dca2687160907ea8826a7ebef6a9c046552183ad"
+        },
+        "downloads": -1,
+        "filename": "frontvegv2-0.1.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "0b25e52483928bf1d3a1b2db8b63e940",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": null,
+        "size": 32777,
+        "upload_time": "2026-08-11T01:41:19",
+        "upload_time_iso_8601": "2026-08-11T01:41:19.834436Z",
+        "url": "https://files.pythonhosted.org/packages/bf/29/2cdc1dc5a2545191e3eb5a6c3607eb9cce99e8cad323429f7a32f8c7ae49/frontvegv2-0.1.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.4": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "7d978c90ee47ae44f10f3bc2ac792060886760adbde887f3e1116a8c3dfb7a18"
+        },
+        "digests": {
+          "blake2b_256": "04a52f56f44bfca45c863bb14e8a1f314e439d3774b081ad598eaa0cc2a55cc3",
+          "md5": "904893cbdb97532e2b0699a7b6af6215",
+          "sha256": "52ac9777719e5675e83ff5718adf14c3c80e667214e2d171825272d4584751a1"
+        },
+        "downloads": -1,
+        "filename": "frontvegv2-0.1.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "904893cbdb97532e2b0699a7b6af6215",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": null,
+        "size": 36045,
+        "upload_time": "2026-08-11T08:24:44",
+        "upload_time_iso_8601": "2026-08-11T08:24:44.299780Z",
+        "url": "https://files.pythonhosted.org/packages/04/a5/2f56f44bfca45c863bb14e8a1f314e439d3774b081ad598eaa0cc2a55cc3/frontvegv2-0.1.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "2cc100e251d8b2482743beab707ad4ae865155b1379fc94b56a0505f40435088",
+          "md5": "555e7752eadd61e96362ebb6861e688f",
+          "sha256": "ac59b8092e69740c88ad746c63d9276d563bb282dec9697ca4158d7dca96d62e"
+        },
+        "downloads": -1,
+        "filename": "frontvegv2-0.1.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "555e7752eadd61e96362ebb6861e688f",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": null,
+        "size": 32760,
+        "upload_time": "2026-08-11T08:24:45",
+        "upload_time_iso_8601": "2026-08-11T08:24:45.349666Z",
+        "url": "https://files.pythonhosted.org/packages/2c/c1/00e251d8b2482743beab707ad4ae865155b1379fc94b56a0505f40435088/frontvegv2-0.1.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.5": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "32a9f490beac4f18deccb878a66b0bf30b4926192730e8cdc9471d17bbd8d4df"
+        },
+        "digests": {
+          "blake2b_256": "d275abb6a931912382632a11c55915f5dc75e0de52eb9dd069b00bd4c64549f4",
+          "md5": "37531a1fca9a9d15101dcae419e113b5",
+          "sha256": "ff7b768e8eff9856eeb083b7a4935d3a43d12d2fdb6ff7199d27f38c7984c185"
+        },
+        "downloads": -1,
+        "filename": "frontvegv2-0.1.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "37531a1fca9a9d15101dcae419e113b5",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": null,
+        "size": 36736,
+        "upload_time": "2026-08-26T13:56:40",
+        "upload_time_iso_8601": "2026-08-26T13:56:40.511402Z",
+        "url": "https://files.pythonhosted.org/packages/d2/75/abb6a931912382632a11c55915f5dc75e0de52eb9dd069b00bd4c64549f4/frontvegv2-0.1.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "840711f091ba179dd246bdadc8158c46aca4a7f30c33d6c0674c1a63c90a066e",
+          "md5": "482709e1e21bffd1d986bfd6490893b9",
+          "sha256": "dd786835493aa6a94bbc660d0b4806cebd7aa80048fd919318f2e1deb857c88d"
+        },
+        "downloads": -1,
+        "filename": "frontvegv2-0.1.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "482709e1e21bffd1d986bfd6490893b9",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": null,
+        "size": 34076,
+        "upload_time": "2026-08-26T13:56:41",
+        "upload_time_iso_8601": "2026-08-26T13:56:41.660669Z",
+        "url": "https://files.pythonhosted.org/packages/84/07/11f091ba179dd246bdadc8158c46aca4a7f30c33d6c0674c1a63c90a066e/frontvegv2-0.1.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "32a9f490beac4f18deccb878a66b0bf30b4926192730e8cdc9471d17bbd8d4df"
+      },
+      "digests": {
+        "blake2b_256": "d275abb6a931912382632a11c55915f5dc75e0de52eb9dd069b00bd4c64549f4",
+        "md5": "37531a1fca9a9d15101dcae419e113b5",
+        "sha256": "ff7b768e8eff9856eeb083b7a4935d3a43d12d2fdb6ff7199d27f38c7984c185"
+      },
+      "downloads": -1,
+      "filename": "frontvegv2-0.1.5-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "37531a1fca9a9d15101dcae419e113b5",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": null,
+      "size": 36736,
+      "upload_time": "2026-08-26T13:56:40",
+      "upload_time_iso_8601": "2026-08-26T13:56:40.511402Z",
+      "url": "https://files.pythonhosted.org/packages/d2/75/abb6a931912382632a11c55915f5dc75e0de52eb9dd069b00bd4c64549f4/frontvegv2-0.1.5-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "840711f091ba179dd246bdadc8158c46aca4a7f30c33d6c0674c1a63c90a066e",
+        "md5": "482709e1e21bffd1d986bfd6490893b9",
+        "sha256": "dd786835493aa6a94bbc660d0b4806cebd7aa80048fd919318f2e1deb857c88d"
+      },
+      "downloads": -1,
+      "filename": "frontvegv2-0.1.5.tar.gz",
+      "has_sig": false,
+      "md5_digest": "482709e1e21bffd1d986bfd6490893b9",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": null,
+      "size": 34076,
+      "upload_time": "2026-08-26T13:56:41",
+      "upload_time_iso_8601": "2026-08-26T13:56:41.660669Z",
+      "url": "https://files.pythonhosted.org/packages/84/07/11f091ba179dd246bdadc8158c46aca4a7f30c33d6c0674c1a63c90a066e/frontvegv2-0.1.5.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
