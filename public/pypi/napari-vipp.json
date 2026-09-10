@@ -15,7 +15,7 @@
       "Topic :: Scientific/Engineering :: Image Processing",
       "Topic :: Scientific/Engineering :: Visualization"
     ],
-    "description": "<p align=\"center\">\n  <picture>\n    <source media=\"(prefers-color-scheme: dark)\" srcset=\"https://raw.githubusercontent.com/rensutheart/napari-vipp/main/docs/assets/branding/vipp-logo-dark.svg\">\n    <img src=\"https://raw.githubusercontent.com/rensutheart/napari-vipp/main/docs/assets/branding/vipp-logo.svg\" alt=\"VIPP\" width=\"420\">\n  </picture>\n</p>\n\n# VIPP \u2014 Visual Image Processing Platform\n\n**Design inspectable bioimage workflows with visual feedback at every stage.**\n\nVisual image processing made approachable through **visual workflows for\nreproducible bioimage analysis**.\n\n[![CI](https://github.com/rensutheart/napari-vipp/actions/workflows/ci.yml/badge.svg)](https://github.com/rensutheart/napari-vipp/actions/workflows/ci.yml)\n[![PyPI](https://img.shields.io/pypi/v/napari-vipp.svg)](https://pypi.org/project/napari-vipp/)\n[![Python](https://img.shields.io/pypi/pyversions/napari-vipp.svg)](https://pypi.org/project/napari-vipp/)\n[![License](https://img.shields.io/pypi/l/napari-vipp.svg)](LICENSE)\n\nVIPP is an open-source, napari-native platform for building bioimage analyses\nas visual graphs. Connect image, mask, label and table nodes, inspect parameters\nand intermediate results, compare processing routes on the same input, and then\nmove from representative samples to collection-wide execution.\n\nBuild and run workflows from the available nodes without writing Python. Save\nthem as versioned JSON, export them as Python, and retain the source, axes,\ncalibration, parameters, outputs and implementation provenance needed to\nunderstand how results were produced.\n\n> **Alpha software:** workflows and parameters may still change. Validate every\n> analysis on representative data before scientific interpretation or\n> publication.\n\n![VIPP workspace with a calculated 3D deconvolution workflow](https://raw.githubusercontent.com/rensutheart/napari-vipp/main/docs/assets/user-guide/vipp-3d-deconvolution-workspace.png)\n\n*A calculated 3D deconvolution workflow with the node catalogue, thumbnail\npreviews and selected-node inspector visible together.*\n\n## Why VIPP\n\n- **See each transformation.** Inspect images, histograms, tables, metadata and\n  parameters while designing the workflow.\n- **Iterate locally.** Recalculate one stage without repeatedly running every\n  later step.\n- **Compare approaches.** Apply different processing routes to the same input\n  and inspect the consequences side by side.\n- **Check before scaling.** Test representative samples before running the\n  workflow across an image collection.\n- **Keep the analysis record.** Save the graph, export Python, define batch\n  outputs and preserve execution provenance.\n- **Accelerate selected operations.** Dedicated GPU implementations are\n  available for supported filtering, restoration, segmentation and measurement\n  operations.\n\n## Install\n\nFor this version, use the\n[`v0.15.0a3` release page](https://github.com/rensutheart/napari-vipp/releases/tag/v0.15.0a3).\n\n| Platform | Recommended route |\n| --- | --- |\n| Windows 64-bit | Download `VIPP-Setup-0.15.0a3-Windows-x86_64-UNSIGNED.exe` from the release page. The setup application creates and manages a dedicated VIPP environment. A supported 64-bit Python is a separate prerequisite. |\n| macOS Apple Silicon | Download `VIPP-0.15.0a3-macOS-arm64-UNSIGNED.pkg`. The package is self-contained and CPU-only. |\n| macOS Intel | Download `VIPP-0.15.0a3-macOS-x86_64-UNSIGNED.pkg`. The package is self-contained and CPU-only. |\n| Linux or an existing Python environment | Use the manual installation below. CPU execution is supported. |\n\nThe desktop installers are unsigned alpha builds. Download them only from the\nofficial release, verify the matching SHA-256 file, and follow the\n[Quick Start](https://rensutheart.github.io/vipp-mkdocs/stable/getting-started/installation/) for the exact platform instructions.\n\nFor a manual installation, use a dedicated CPython 3.12 or 3.13 environment.\nOn Windows or Linux:\n\n```bash\npython -m pip install \"napari[pyqt6]>=0.6\" \"napari-vipp==0.15.0a3\"\nvipp\n```\n\nOn macOS, replace `\"napari[pyqt6]>=0.6\"` with `\"napari[pyside6]>=0.6\"`.\nThe macOS route is CPU-only.\n\nInside an existing napari session, open:\n\n```text\nPlugins > VIPP Workflow (napari-vipp)\n```\n\n## Try A Bundled Workflow\n\nNo external data is needed for the first run:\n\n1. Launch VIPP, open the gear menu, and select **Open example\u2026**.\n2. Open **Red-Channel Label Cleanup**.\n3. Select the nodes from left to right. Inspect their parameters, previews,\n   histograms, metadata and outputs.\n4. Change a parameter and compare the affected stages. Use **Calculate** where\n   a computationally intensive node requires an explicit run.\n5. Pin an output into napari for full-resolution inspection, then save the\n   workflow as JSON.\n\nNext, open **Deterministic Batch & Provenance** for a self-contained example of\ncollection processing and reproducibility artifacts. See the\n[example workflow index](https://rensutheart.github.io/vipp-mkdocs/stable/reference/example-workflows/) for more starting points.\n\n## Analysis Coverage\n\n| Goal | Available building blocks |\n| --- | --- |\n| Prepare images | Intensity transforms, background correction, filtering, denoising, channel handling, axis operations, masks and volume regions of interest. |\n| Segment structures | Global and local thresholds, edges, watershed, binary morphology, label cleanup and connected-component operations. |\n| Quantify results | Object and intensity measurements, calibrated 3D mesh morphology, skeleton and network analysis, colocalisation, object association and table composition. |\n| Restore images | Measured or generated point-spread functions, Richardson\u2013Lucy and RL\u2013TV deconvolution in 2D and 3D. |\n| Reuse analyses | Workflow JSON, generated Python, explicit batch outputs, collection manifests and execution provenance. |\n\nVIPP reads OME-TIFF, ImageJ TIFF, TIFF, local OME-Zarr 0.4/0.5,\nNPY/NPZ and common 2D image formats. Optional readers add formats including ND2\nand CZI. The [I/O guide](https://rensutheart.github.io/vipp-mkdocs/stable/reference/import-export/) documents the complete matrix,\nmetadata behavior and limitations.\n\nMost graph operations currently materialize their inputs in memory. Plan cache,\npreview and output choices deliberately for large z-stacks and OME-Zarr data.\nSee [Cache and memory](https://rensutheart.github.io/vipp-mkdocs/stable/reference/cache-memory/).\n\n## GPU Acceleration (Optional)\n\nVIPP is fully usable on CPU on Windows, Linux and macOS. Selected\ncomputationally intensive operations offer dedicated GPU acceleration on\nqualified NVIDIA systems. VIPP records the implementation that ran, and a GPU\nrequest that cannot be honored falls back visibly to CPU.\n\nThe current public GPU route uses native 64-bit Windows, CPython 3.12, CUDA 13\nand an NVIDIA GPU with compute capability 7.5 or newer. Performance depends on\nthe operation, data and hardware. See the [GPU Guide](https://rensutheart.github.io/vipp-mkdocs/stable/how-to/choose-compute/) for\ninstallation, supported operation families, qualification and benchmarking.\n\n## Reproducibility And Scientific Traceability\n\nVIPP keeps workflow structure, parameters and intermediate decisions visible\nduring interactive design. Saved and batch-run workflows can retain source\nidentity, semantic axes, physical calibration, selected outputs and the actual\nCPU or GPU implementation used.\n\nThis record supports reproducibility, but it does not establish biological\nvalidity automatically. Users remain responsible for checking assumptions,\nparameter choices and results on suitable controls and representative data.\nRead the [scientific integrity boundaries](https://rensutheart.github.io/vipp-mkdocs/stable/developer/architecture/#non-negotiable-scientific-contracts)\nand [scientific behavior requirements](CONTRIBUTING.md#scientific-behavior-requirements).\n\n## Documentation\n\nThe [VIPP manual](https://rensutheart.github.io/vipp-mkdocs/stable/) is the single\nhome for user instructions. Select a version in the manual to match your installation.\n\n- [Quick Start](https://rensutheart.github.io/vipp-mkdocs/stable/getting-started/installation/) \u2014 installers, manual setup and the first workflow\n- [User Guide](https://rensutheart.github.io/vipp-mkdocs/stable/how-to/) \u2014 graph authoring, inspection, batch processing and export\n- [Example workflows](https://rensutheart.github.io/vipp-mkdocs/stable/reference/example-workflows/) \u2014 bundled starting points by analysis task\n- [Image import and export](https://rensutheart.github.io/vipp-mkdocs/stable/reference/import-export/) \u2014 formats, metadata and collection inputs\n- [GPU Guide](https://rensutheart.github.io/vipp-mkdocs/stable/how-to/choose-compute/) \u2014 acceleration, qualification and benchmarking\n- [Measurement workflows](https://rensutheart.github.io/vipp-mkdocs/stable/workflows/object-measurements-tables/) \u2014 quantitative analysis patterns\n- [Architecture](https://rensutheart.github.io/vipp-mkdocs/stable/developer/architecture/) \u2014 execution and scientific-integrity contracts\n- [Troubleshooting](https://rensutheart.github.io/vipp-mkdocs/stable/troubleshooting/) \u2014 common problems and support\n\n## Development And Support\n\nImplementation context stays with the code: [contributing](CONTRIBUTING.md),\n[architecture](docs/architecture.md), [planning and roadmap](docs/planning.md),\n[repository documentation](docs/README.md), and [changelog](CHANGELOG.md).\nSee [documentation ownership](docs/documentation.md) before editing a guide.\n\n```powershell\npython -m venv .venv\n.venv\\Scripts\\Activate.ps1\npython -m pip install -e \".[dev]\"\npython -m npe2 validate src/napari_vipp/napari.yaml\npython -m ruff check .\npython -m pytest\n```\n\nRead [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. Ask usage\nquestions in [GitHub Discussions](https://github.com/rensutheart/napari-vipp/discussions),\nuse [SUPPORT.md](SUPPORT.md) for help, report vulnerabilities privately through\n[SECURITY.md](SECURITY.md), and follow the [Code of Conduct](CODE_OF_CONDUCT.md).\n\n## Citation And License\n\nIf VIPP contributes to your work, acknowledge `napari-vipp` and link to this\nrepository. Citation metadata is available in [CITATION.cff](CITATION.cff). A\nDOI or manuscript citation will be added when available.\n\nnapari-vipp is distributed under the BSD 3-Clause License. See\n[LICENSE](LICENSE) for the full terms.\n",
+    "description": "<p align=\"center\">\n  <picture>\n    <source media=\"(prefers-color-scheme: dark)\" srcset=\"https://raw.githubusercontent.com/rensutheart/napari-vipp/main/docs/assets/branding/vipp-logo-dark.svg\">\n    <img src=\"https://raw.githubusercontent.com/rensutheart/napari-vipp/main/docs/assets/branding/vipp-logo.svg\" alt=\"VIPP\" width=\"420\">\n  </picture>\n</p>\n\n# VIPP \u2014 Visual Image Processing Platform\n\n**Design inspectable bioimage workflows with visual feedback at every stage.**\n\nVisual image processing made approachable through **visual workflows for\nreproducible bioimage analysis**.\n\n[![CI](https://github.com/rensutheart/napari-vipp/actions/workflows/ci.yml/badge.svg)](https://github.com/rensutheart/napari-vipp/actions/workflows/ci.yml)\n[![PyPI](https://img.shields.io/pypi/v/napari-vipp.svg)](https://pypi.org/project/napari-vipp/)\n[![Python](https://img.shields.io/pypi/pyversions/napari-vipp.svg)](https://pypi.org/project/napari-vipp/)\n[![License](https://img.shields.io/pypi/l/napari-vipp.svg)](LICENSE)\n\nVIPP is an open-source, napari-native platform for building bioimage analyses\nas visual graphs. Connect image, mask, label and table nodes, inspect parameters\nand intermediate results, compare processing routes on the same input, and then\nmove from representative samples to collection-wide execution.\n\nBuild and run workflows from the available nodes without writing Python. Save\nthem as versioned JSON, export them as Python, and retain the source, axes,\ncalibration, parameters, outputs and implementation provenance needed to\nunderstand how results were produced.\n\n> **Alpha software:** workflows and parameters may still change. Validate every\n> analysis on representative data before scientific interpretation or\n> publication.\n\n![VIPP workspace with a calculated 3D deconvolution workflow](https://raw.githubusercontent.com/rensutheart/napari-vipp/main/docs/assets/user-guide/vipp-3d-deconvolution-workspace.png)\n\n*A calculated 3D deconvolution workflow with the node catalogue, thumbnail\npreviews and selected-node inspector visible together.*\n\n## Why VIPP\n\n- **See each transformation.** Inspect images, histograms, tables, metadata and\n  parameters while designing the workflow.\n- **Iterate locally.** Recalculate one stage without repeatedly running every\n  later step.\n- **Compare approaches.** Apply different processing routes to the same input\n  and inspect the consequences side by side.\n- **Check before scaling.** Test representative samples before running the\n  workflow across an image collection.\n- **Keep the analysis record.** Save the graph, export Python, define batch\n  outputs and preserve execution provenance.\n- **Accelerate selected operations.** Dedicated GPU implementations are\n  available for supported filtering, restoration, segmentation and measurement\n  operations.\n\n## Install\n\nFor this version, use the\n[`v0.15.0a4` release page](https://github.com/rensutheart/napari-vipp/releases/tag/v0.15.0a4).\n\n| Platform | Recommended route |\n| --- | --- |\n| Windows 64-bit | Download `VIPP-Setup-0.15.0a4-Windows-x86_64-UNSIGNED.exe` from the release page. The setup application creates and manages a dedicated VIPP environment. A supported 64-bit Python is a separate prerequisite. |\n| macOS Apple Silicon | Download `VIPP-0.15.0a4-macOS-arm64-UNSIGNED.pkg`. The package is self-contained and CPU-only. |\n| macOS Intel | Download `VIPP-0.15.0a4-macOS-x86_64-UNSIGNED.pkg`. The package is self-contained and CPU-only. |\n| Linux or an existing Python environment | Use the manual installation below. CPU execution is supported. |\n\nThe desktop installers are unsigned alpha builds. Download them only from the\nofficial release, verify the matching SHA-256 file, and follow the\n[Quick Start](https://rensutheart.github.io/vipp-mkdocs/stable/getting-started/installation/) for the exact platform instructions.\n\nFor a manual installation, use a dedicated CPython 3.12 or 3.13 environment.\nOn Windows or Linux:\n\n```bash\npython -m pip install \"napari[pyqt6]>=0.6\" \"napari-vipp==0.15.0a4\"\nvipp\n```\n\nOn macOS, replace `\"napari[pyqt6]>=0.6\"` with `\"napari[pyside6]>=0.6\"`.\nThe macOS route is CPU-only.\n\nInside an existing napari session, open:\n\n```text\nPlugins > VIPP Workflow (napari-vipp)\n```\n\n## Try A Bundled Workflow\n\nNo external data is needed for the first run:\n\n1. Launch VIPP, open the gear menu, and select **Open example\u2026**.\n2. Open **Red-Channel Label Cleanup**.\n3. Select the nodes from left to right. Inspect their parameters, previews,\n   histograms, metadata and outputs.\n4. Change a parameter and compare the affected stages. Use **Calculate** where\n   a computationally intensive node requires an explicit run.\n5. Pin an output into napari for full-resolution inspection, then save the\n   workflow as JSON.\n\nNext, open **Deterministic Batch & Provenance** for a self-contained example of\ncollection processing and reproducibility artifacts. See the\n[example workflow index](https://rensutheart.github.io/vipp-mkdocs/stable/reference/example-workflows/) for more starting points.\n\n## Analysis Coverage\n\n| Goal | Available building blocks |\n| --- | --- |\n| Prepare images | Intensity transforms, background correction, filtering, denoising, channel handling, axis operations, masks and volume regions of interest. |\n| Segment structures | Global and local thresholds, edges, watershed, binary morphology, label cleanup and connected-component operations. |\n| Quantify results | Object and intensity measurements, calibrated 3D mesh morphology, skeleton and network analysis, colocalisation, object association and table composition. |\n| Restore images | Measured or generated point-spread functions, Richardson\u2013Lucy and RL\u2013TV deconvolution in 2D and 3D. |\n| Reuse analyses | Workflow JSON, generated Python, explicit batch outputs, collection manifests and execution provenance. |\n\nVIPP reads OME-TIFF, ImageJ TIFF, TIFF, local OME-Zarr 0.4/0.5,\nNPY/NPZ and common 2D image formats. Optional readers add formats including ND2\nand CZI. The [I/O guide](https://rensutheart.github.io/vipp-mkdocs/stable/reference/import-export/) documents the complete matrix,\nmetadata behavior and limitations.\n\nMost graph operations currently materialize their inputs in memory. Plan cache,\npreview and output choices deliberately for large z-stacks and OME-Zarr data.\nSee [Cache and memory](https://rensutheart.github.io/vipp-mkdocs/stable/reference/cache-memory/).\n\n## GPU Acceleration (Optional)\n\nVIPP is fully usable on CPU on Windows, Linux and macOS. Selected\ncomputationally intensive operations offer dedicated GPU acceleration on\nqualified NVIDIA systems. VIPP records the implementation that ran, and a GPU\nrequest that cannot be honored falls back visibly to CPU.\n\nThe current public GPU route uses native 64-bit Windows, CPython 3.12, CUDA 13\nand an NVIDIA GPU with compute capability 7.5 or newer. Performance depends on\nthe operation, data and hardware. See the [GPU Guide](https://rensutheart.github.io/vipp-mkdocs/stable/how-to/choose-compute/) for\ninstallation, supported operation families, qualification and benchmarking.\n\n## Reproducibility And Scientific Traceability\n\nVIPP keeps workflow structure, parameters and intermediate decisions visible\nduring interactive design. Saved and batch-run workflows can retain source\nidentity, semantic axes, physical calibration, selected outputs and the actual\nCPU or GPU implementation used.\n\nThis record supports reproducibility, but it does not establish biological\nvalidity automatically. Users remain responsible for checking assumptions,\nparameter choices and results on suitable controls and representative data.\nRead the [scientific integrity boundaries](https://rensutheart.github.io/vipp-mkdocs/stable/developer/architecture/#non-negotiable-scientific-contracts)\nand [scientific behavior requirements](CONTRIBUTING.md#scientific-behavior-requirements).\n\n## Documentation\n\nThe [VIPP manual](https://rensutheart.github.io/vipp-mkdocs/stable/) is the single\nhome for user instructions. Select a version in the manual to match your installation.\n\n- [Quick Start](https://rensutheart.github.io/vipp-mkdocs/stable/getting-started/installation/) \u2014 installers, manual setup and the first workflow\n- [User Guide](https://rensutheart.github.io/vipp-mkdocs/stable/how-to/) \u2014 graph authoring, inspection, batch processing and export\n- [Example workflows](https://rensutheart.github.io/vipp-mkdocs/stable/reference/example-workflows/) \u2014 bundled starting points by analysis task\n- [Image import and export](https://rensutheart.github.io/vipp-mkdocs/stable/reference/import-export/) \u2014 formats, metadata and collection inputs\n- [GPU Guide](https://rensutheart.github.io/vipp-mkdocs/stable/how-to/choose-compute/) \u2014 acceleration, qualification and benchmarking\n- [Measurement workflows](https://rensutheart.github.io/vipp-mkdocs/stable/workflows/object-measurements-tables/) \u2014 quantitative analysis patterns\n- [Architecture](https://rensutheart.github.io/vipp-mkdocs/stable/developer/architecture/) \u2014 execution and scientific-integrity contracts\n- [Troubleshooting](https://rensutheart.github.io/vipp-mkdocs/stable/troubleshooting/) \u2014 common problems and support\n\n## Development And Support\n\nImplementation context stays with the code: [contributing](CONTRIBUTING.md),\n[architecture](docs/architecture.md), [planning and roadmap](docs/planning.md),\n[repository documentation](docs/README.md), and [changelog](CHANGELOG.md).\nSee [documentation ownership](docs/documentation.md) before editing a guide.\n\n```powershell\npython -m venv .venv\n.venv\\Scripts\\Activate.ps1\npython -m pip install -e \".[dev]\"\npython -m npe2 validate src/napari_vipp/napari.yaml\npython -m ruff check .\npython -m pytest\n```\n\nRead [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. Ask usage\nquestions in [GitHub Discussions](https://github.com/rensutheart/napari-vipp/discussions),\nuse [SUPPORT.md](SUPPORT.md) for help, report vulnerabilities privately through\n[SECURITY.md](SECURITY.md), and follow the [Code of Conduct](CODE_OF_CONDUCT.md).\n\n## Citation And License\n\nIf VIPP contributes to your work, acknowledge `napari-vipp` and link to this\nrepository. Citation metadata is available in [CITATION.cff](CITATION.cff). A\nDOI or manuscript citation will be added when available.\n\nnapari-vipp is distributed under the BSD 3-Clause License. See\n[LICENSE](LICENSE) for the full terms.\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -59,7 +59,7 @@
       "microscope",
       "nd2"
     ],
-    "release_url": "https://pypi.org/project/napari-vipp/0.15.0a3/",
+    "release_url": "https://pypi.org/project/napari-vipp/0.15.0a4/",
     "requires_dist": [
       "czifile<2027,>=2026.8.16",
       "dask[array]>=2025.2",
@@ -89,6 +89,7 @@
       "scikit-image==0.26.0; (python_version == \"3.12\" and (platform_system == \"Windows\" or platform_system == \"Linux\")) and extra == \"gpu-cuda12\"",
       "cupy-cuda12x[ctk]==14.1.1; (python_version == \"3.12\" and (platform_system == \"Windows\" or platform_system == \"Linux\")) and extra == \"gpu-cuda12\"",
       "cuda-pathfinder==1.6.0; (python_version == \"3.12\" and (platform_system == \"Windows\" or platform_system == \"Linux\")) and extra == \"gpu-cuda12\"",
+      "bioio-lif; extra == \"microscope\"",
       "cuda-toolkit==12.9.2.0; (python_version == \"3.12\" and (platform_system == \"Windows\" or platform_system == \"Linux\")) and extra == \"gpu-cuda12\"",
       "nvidia-cublas-cu12==12.9.2.10; (python_version == \"3.12\" and (platform_system == \"Windows\" or platform_system == \"Linux\")) and extra == \"gpu-cuda12\"",
       "nvidia-cuda-nvrtc-cu12==12.9.86; (python_version == \"3.12\" and (platform_system == \"Windows\" or platform_system == \"Linux\")) and extra == \"gpu-cuda12\"",
@@ -142,7 +143,6 @@
       "bioio>=3.4; extra == \"microscope\"",
       "bioio-bioformats; extra == \"microscope\"",
       "bioio-czi; extra == \"microscope\"",
-      "bioio-lif; extra == \"microscope\"",
       "czifile[all]>=2026.6.12; python_version >= \"3.12\" and extra == \"microscope\"",
       "liffile[all]>=2026.4.11; python_version >= \"3.12\" and extra == \"microscope\"",
       "nd2>=0.11; extra == \"microscope\"",
@@ -152,11 +152,11 @@
     ],
     "requires_python": "<3.14,>=3.12",
     "summary": "Visual image processing made approachable",
-    "version": "0.15.0a3",
+    "version": "0.15.0a4",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 40898053,
+  "last_serial": 40935619,
   "ownership": {
     "organization": null,
     "roles": [
@@ -1127,6 +1127,54 @@
         "yanked_reason": null
       }
     ],
+    "0.15.0a4": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "16a9813bf79d136c5e0b2b82a24d04b6a009cc41760bd200e5779b56622fc1a7"
+        },
+        "digests": {
+          "blake2b_256": "3e841cdfdf0f410aeaa8482661d932e5e7a2f56c34f520c48f852656dca24c5f",
+          "md5": "7deb523b745efee1609877bcb74e6644",
+          "sha256": "ff620be680d017a995a616dcfe0a57cac5dfa1a2c7ea4020598b66941823d9a7"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.15.0a4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "7deb523b745efee1609877bcb74e6644",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.14,>=3.12",
+        "size": 1986740,
+        "upload_time": "2026-09-10T15:35:24",
+        "upload_time_iso_8601": "2026-09-10T15:35:24.776707Z",
+        "url": "https://files.pythonhosted.org/packages/3e/84/1cdfdf0f410aeaa8482661d932e5e7a2f56c34f520c48f852656dca24c5f/napari_vipp-0.15.0a4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "0fdbd99361aa18de7704eca55e4db6e8b3af4d4f019d003af36f576f14fadc9c",
+          "md5": "3a10b0dbe3c50340dbb35f75b2202481",
+          "sha256": "fcb9488224c31b9df62d826b53aca9c23aa17482cd56b685055d0c743f9f0c57"
+        },
+        "downloads": -1,
+        "filename": "napari_vipp-0.15.0a4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "3a10b0dbe3c50340dbb35f75b2202481",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.14,>=3.12",
+        "size": 8379243,
+        "upload_time": "2026-09-10T15:35:26",
+        "upload_time_iso_8601": "2026-09-10T15:35:26.821434Z",
+        "url": "https://files.pythonhosted.org/packages/0f/db/d99361aa18de7704eca55e4db6e8b3af4d4f019d003af36f576f14fadc9c/napari_vipp-0.15.0a4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
     "0.7.0a1": [
       {
         "comment_text": null,
@@ -1564,24 +1612,24 @@
     {
       "comment_text": null,
       "core-metadata": {
-        "sha256": "fbaed2028e562022e6d2462fdc9228266493d62410df7bb64abcc10e106182a9"
+        "sha256": "16a9813bf79d136c5e0b2b82a24d04b6a009cc41760bd200e5779b56622fc1a7"
       },
       "digests": {
-        "blake2b_256": "727c2254bf5f880b0329f26035aeffd5b2c8737aac3cae7b4cf2beef6603d257",
-        "md5": "0a5c2b49fff072a84de97d122cec470c",
-        "sha256": "a80f717091fbf216fc9e6d573d240e1bcb21613bb75a958d0d465fcdb6e890cb"
+        "blake2b_256": "3e841cdfdf0f410aeaa8482661d932e5e7a2f56c34f520c48f852656dca24c5f",
+        "md5": "7deb523b745efee1609877bcb74e6644",
+        "sha256": "ff620be680d017a995a616dcfe0a57cac5dfa1a2c7ea4020598b66941823d9a7"
       },
       "downloads": -1,
-      "filename": "napari_vipp-0.15.0a3-py3-none-any.whl",
+      "filename": "napari_vipp-0.15.0a4-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "0a5c2b49fff072a84de97d122cec470c",
+      "md5_digest": "7deb523b745efee1609877bcb74e6644",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": "<3.14,>=3.12",
-      "size": 1983247,
-      "upload_time": "2026-09-09T15:45:06",
-      "upload_time_iso_8601": "2026-09-09T15:45:06.670825Z",
-      "url": "https://files.pythonhosted.org/packages/72/7c/2254bf5f880b0329f26035aeffd5b2c8737aac3cae7b4cf2beef6603d257/napari_vipp-0.15.0a3-py3-none-any.whl",
+      "size": 1986740,
+      "upload_time": "2026-09-10T15:35:24",
+      "upload_time_iso_8601": "2026-09-10T15:35:24.776707Z",
+      "url": "https://files.pythonhosted.org/packages/3e/84/1cdfdf0f410aeaa8482661d932e5e7a2f56c34f520c48f852656dca24c5f/napari_vipp-0.15.0a4-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
@@ -1589,21 +1637,21 @@
       "comment_text": null,
       "core-metadata": false,
       "digests": {
-        "blake2b_256": "36a1f0601f45ed29cfb45dffb2799e147b69259b89cb30d1a4df300ee9084698",
-        "md5": "af16213e48a416ae67bb4949c343783f",
-        "sha256": "e50387b4deacedfac0c01d755912971f88618e73886c50e94aed9b3b00b472ec"
+        "blake2b_256": "0fdbd99361aa18de7704eca55e4db6e8b3af4d4f019d003af36f576f14fadc9c",
+        "md5": "3a10b0dbe3c50340dbb35f75b2202481",
+        "sha256": "fcb9488224c31b9df62d826b53aca9c23aa17482cd56b685055d0c743f9f0c57"
       },
       "downloads": -1,
-      "filename": "napari_vipp-0.15.0a3.tar.gz",
+      "filename": "napari_vipp-0.15.0a4.tar.gz",
       "has_sig": false,
-      "md5_digest": "af16213e48a416ae67bb4949c343783f",
+      "md5_digest": "3a10b0dbe3c50340dbb35f75b2202481",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": "<3.14,>=3.12",
-      "size": 8359162,
-      "upload_time": "2026-09-09T15:45:08",
-      "upload_time_iso_8601": "2026-09-09T15:45:08.636059Z",
-      "url": "https://files.pythonhosted.org/packages/36/a1/f0601f45ed29cfb45dffb2799e147b69259b89cb30d1a4df300ee9084698/napari_vipp-0.15.0a3.tar.gz",
+      "size": 8379243,
+      "upload_time": "2026-09-10T15:35:26",
+      "upload_time_iso_8601": "2026-09-10T15:35:26.821434Z",
+      "url": "https://files.pythonhosted.org/packages/0f/db/d99361aa18de7704eca55e4db6e8b3af4d4f019d003af36f576f14fadc9c/napari_vipp-0.15.0a4.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
