@@ -1,10 +1,11 @@
 import json
 import os
 import re
+from dataclasses import dataclass
 from functools import lru_cache
 from itertools import chain
 from pathlib import Path
-from typing import Literal, TypedDict
+from typing import Literal
 
 import requests
 from gql import Client, gql
@@ -16,14 +17,16 @@ GITHUB_RE = re.compile(r"https://github\.com/([^/]+)/([^/#@]+)")
 PluginName = str
 
 
-class CommitInfo(TypedDict):
+@dataclass
+class CommitInfo:
     date: str
     message: str
     author_name: str
     author_login: str
 
 
-class GithubActivity(TypedDict):
+@dataclass
+class GithubActivity:
     default_branch: str
     open_issues: int
     pull_requests: int
@@ -35,7 +38,8 @@ class GithubActivity(TypedDict):
     open_runtime_vulnerability_alerts: int
 
 
-class CoverageInfo(TypedDict):
+@dataclass
+class CoverageInfo:
     hits: int
     lines: int
     ratio: float
@@ -44,7 +48,8 @@ class CoverageInfo(TypedDict):
     branch: str
 
 
-class RepoSummary(TypedDict):
+@dataclass
+class RepoSummary:
     url: str
     activity: GithubActivity
     coverage: CoverageInfo | None
