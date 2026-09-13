@@ -1,0 +1,1805 @@
+{
+  "info": {
+    "author": "Wulin Teo",
+    "author_email": null,
+    "bugtrack_url": null,
+    "classifiers": [
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "License :: OSI Approved :: MIT License",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.11",
+      "Topic :: Scientific/Engineering :: Artificial Intelligence",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-sam3-assistant\n\n[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20367206.svg)](https://doi.org/10.5281/zenodo.20367206)\n\n![napari-sam3-assistant UI](docs/ui.png)\n\nLatest version: `4.4.0`\n\n`napari-sam3-assistant` is a napari plugin for local Segment Anything Model 3\n(SAM3) segmentation. It provides:\n\n- a guided `Simple` mode for common segmentation work;\n- an `Advanced` mode for model setup, batch runs, tiled inference, result\n  tables, and 3D/video-style propagation;\n- a separate `SAM3 Mask Operations` widget for cleanup, relabeling, isolation,\n  merge, overlap inspection, and export.\n\nThe plugin is intended for researchers who want SAM3 results back in napari as\nnormal `Labels`, `Shapes`, and table-style outputs that can be reviewed,\ncorrected, saved, and exported.\n\n## What It Does\n\n- Segment 2D images with point, box/Shapes, labels-mask, text, or exemplar\n  prompts.\n- Search for similar features with exemplar prompting from a drawn region or\n  crop image.\n- Correct previews with Live Points using positive and negative clicks.\n- Run tiled inference on large TIFF or OME-Zarr-style images.\n- In Advanced mode, run Phase 1 Huge Volume exemplar scans by processing 3D stacks slice by slice and writing tiled masks directly to OME-Zarr.\n- Scan large 2D images tile by tile from an exemplar ROI and stitch the result\n  into full-size labels.\n- Run experimental folder batch inference from a tested exemplar, writing TIFF\n  or OME-Zarr masks to disk without loading full batch outputs into the viewer.\n- Propagate prompts through 3D stacks or video-like data when the installed SAM3\n  backend supports the workflow.\n- Save previews, clean connected components, relabel values, isolate overlapping\n  candidates, merge labels/layers, inspect overlap, and export final masks.\n- In Mask Operations, edit bounded regions with `Mask Cleanup / Multiclass` and save the current working region back to OME-Zarr or out to TIFF.\n\n## Documentation\n\nStart here:\n\n1. [Installation](docs/installation.md)\n2. [Model setup](docs/model_setup.md)\n3. [User guide](docs/user_guide.md)\n4. [Mask operations](docs/mask_operations.md)\n5. [Troubleshooting](docs/troubleshooting.md)\n6. [Huge Volume Mode](docs/huge_volume_mode.md)\n\nSpecialized setup:\n\n- [CPU-only SAM3.0 setup](docs/cpu_only.md)\n- [Windows SAM3.1 workaround](windows_sam31_workaround/README.md)\n\nMaintainer notes:\n\n- [Documentation strategy](docs/documentation_strategy.md)\n- [Changelog](CHANGELOG.md)\n\n## Quick Start\n\n1. Install napari, PyTorch, the SAM3 backend, and this plugin.\n2. Download the SAM3 model files from Meta's gated Hugging Face repositories.\n3. Launch napari.\n4. Open `Plugins > SAM3 Assistant`.\n5. Choose a model folder.\n6. In `Simple` mode, select an image, choose a task tab, add a prompt, and click\n   `Run`, `Run Current ROI`, or `Start 3D`.\n7. Use `Mask Ops` or `Plugins > SAM3 Mask Operations` when the preview needs\n   cleanup, merge, or export.\n\nFor full setup commands, see [Installation](docs/installation.md).\n\n## Requirements\n\n- Python `>=3.11`\n- napari `>=0.5`\n- SAM3 Python package importable as `sam3`\n- CUDA-enabled PyTorch and torchvision for normal use\n- Local SAM3 model directory containing:\n  - `config.json`\n  - `processor_config.json`\n  - a weight file such as `sam3.pt`, `model.safetensors`, or\n    `sam3.1_multiplex.pt`\n\nCPU-only use is experimental and limited to SAM3.0 2D image workflows with a\nCPU-safe SAM3 backend. See [CPU-only SAM3.0 setup](docs/cpu_only.md).\n\n## Model Files\n\nSAM3 is not bundled with this plugin. Install the SAM3 backend separately and\ndownload model files from Meta's gated Hugging Face repositories:\n\n- https://huggingface.co/facebook/sam3\n- https://huggingface.co/facebook/sam3.1\n\nExample SAM3.0 folder:\n\n```text\nD:\\models\\sam3\\\n  config.json\n  processor_config.json\n  sam3.pt\n```\n\nExample SAM3.1 folder:\n\n```text\nD:\\models\\sam3_1\\\n  config.json\n  processor_config.json\n  sam3.1_multiplex.pt\n```\n\nCurrent model support:\n\n- SAM3.0 weights: 2D image tasks and 3D/video propagation\n- SAM3.1 `sam3.1_multiplex.pt`: 3D/video propagation through the SAM3.1\n  multiplex video predictor\n- SAM3.1 is not currently routed through the plugin's 2D image model loader\n\nSee [Model setup](docs/model_setup.md) for validation and device details.\n\n## Prompt Guidance\n\nFor microscopy and other research images, the most useful prompts are usually\nvisual examples and local corrections, not text descriptions.\n\nRecommended starting order:\n\n1. `Exemplar` with a box or Shapes region for feature search.\n2. `Live Points` with positive and negative points for local correction and\n   repeatable object-by-object segmentation.\n3. `3D Multiplex` with a box or Shapes region for propagating one selected\n   object through slices or frames.\n4. `2D Slice` with point or box prompts for quick single-plane local masks.\n\nText prompting is available, but it is least reliable for specialized\nmicroscopy/anatomy terms. Labels-mask prompts are also available, but they are\nbest treated as an advanced option when you already have a useful rough mask.\n\nShapes prompts are treated as bounding boxes by the current SAM3 prompt path.\nRectangles are the clearest choice. Polygons can mark a region, but SAM3\nreceives the polygon's bounding rectangle, not the exact polygon contour.\n\nSee [User guide](docs/user_guide.md) for detailed examples.\n\n## Workflow Highlights\n\nFast local segmentation loop:\n\n1. Use `Exemplar`, `2D Slice`, or a box/Shapes prompt to create a preview.\n2. Switch to `Live Points` when the preview is close.\n3. Add positive points on missed parts and negative points on leakage.\n4. Use the Live Points right-click menu to `Accept + Clear`. This menu is available in both Simple mode and Advanced mode while Live Points is active.\n5. Click `Save Labels` or `Save & Clean`.\n6. Move to the next object or ROI and repeat.\n\nTiled ROI loop:\n\n1. Enable tiled inference and choose a tile/ROI size.\n2. Draw or select a prompt box/point.\n3. Click `Run Current ROI Only` to test that local region.\n4. Changing ROI size recomputes the next local region; previous active ROIs are reused only when the requested size still matches.\n\nExemplar scan loop:\n\n1. Draw a tight exemplar region around a representative object.\n2. Run the current ROI first.\n3. If the ROI result is good, scan the full image by tiles.\n4. Review `SAM3 tiled exemplar labels` and `SAM3 tiled exemplar boxes`.\n5. Use `SAM3 Mask Operations` for cleanup, isolation, merge, and export.\n\nTiled exemplar scans are a search workflow, not an exact repeat of `Run Current ROI Only`. The current tiled scan uses one exemplar crop as a visual reference for each tile by composing an exemplar-plus-tile image, then writes the tile-side result back to the full canvas. Multiple boxes in the current ROI can help `Run Current ROI Only` when they overlap that ROI, but tiled scan currently uses the first collected exemplar crop as the default reference for all tiles.\n\nExperimental folder batch loop:\n\n1. In Advanced `Exemplar segmentation`, load one representative image or crop.\n2. Enable tiled inference, choose tile size and overlap, and draw/select the exemplar box.\n3. Click `Run Current ROI Only` to confirm the exemplar works locally.\n4. Check `Run folder batch`; Step 4 shows input folder, output folder, and output format.\n5. Click `Run Folder Batch`. Masks are written to disk with the same input stem plus `_mask`, such as `image001_mask.tif` or `image001_mask.ome.zarr`.\n\nFolder batch is experimental. Input currently supports common 2D image files and TIFF stacks (`.tif`, `.tiff`, `.png`, `.jpg`, `.jpeg`, `.bmp`). OME-Zarr and ND2 input, nested-folder mirroring, overwrite/resume policy, and chunked output for truly huge `100k x 100k` images are not wired yet. Batch outputs are not automatically loaded into the viewer; drag written masks or OME-Zarr outputs into napari to review quality.\n\nHuge Volume Phase 1 is available in Advanced Exemplar mode for 3D stacks. Enable `Enable tiled inference`, check `Scan all Z slices to OME-Zarr`, then use `Scan Z Stack by Tiles`. This path writes tile labels directly to an OME-Zarr mask store and does not create a full in-memory volume. To curate the result, drag/open the mask as a Labels layer, use `Mask Operations > Mask Cleanup / Multiclass` with `Current slice` or a small `Z range` plus `Manual ROI`/`Drawn ROI`, then use `Region Output` to write the current working region back to the loaded OME-Zarr store/array or export it as TIFF. Region Output reports OME-Zarr shape/chunks/axes/dtype and requires an explicit override before writing to a different store. Mask Cleanup blocks unsafe huge-volume choices such as `Whole volume` and unbounded `Full mask`. Seam merging, cross-Z object linking, and resumable jobs are planned later phases.\n\nAdvanced mode also includes `Detection threshold`, with default `0.35`. Lower\nvalues accept weaker candidates and may add false positives. Higher values are\nstricter and may miss faint or uncommon structures. The Results table `Score`\nis backend confidence when available; it is a review aid, not a scientific\nquality measurement.\n\n## Output Layers\n\nCommon preview layers:\n\n```text\nSAM3 preview labels\nSAM3 preview masks\nSAM3 preview boxes\nSAM3 propagated preview labels\nSAM3 tiled exemplar labels\nSAM3 tiled exemplar masks\nSAM3 tiled exemplar boxes\n```\n\nCommon saved or curated layers:\n\n```text\nSAM3 saved labels\nSAM3 saved propagated labels\nSAM3 saved tiled exemplar labels\nisolated_objects\nmerged_class_mask\nfinal_training_mask\n```\n\n## Current Status\n\nThis project is young and under active development. The core inference workflow\nis stable: collect prompts in napari, run SAM3 locally, write previews back to\nnapari, and help users save masks. Mask Operations is useful but still evolving.\nThe UI may continue to change, so the documentation is organized around user\ntasks rather than exact layout alone.\n\n## Development\n\nInstall in editable mode:\n\n```bash\npip install -e .\n```\n\nRun tests:\n\n```bash\nPYTHONPATH=src pytest -q\n```\n\nThe test suite covers coordinate mapping, prompt collection, adapter utility\nbehavior, mask operation services, and static widget UI checks. It does not\ndownload SAM3 weights.\n\n## Citation\n\nIf you use `napari-sam3-assistant` in your work, please cite the Zenodo archive for version `4.4.0`:\n\nTeo, Wulin. (2026). `napari-sam3-assistant` (Version 4.4.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.20367206\n\n```bibtex\n@software{teo_2026_napari_sam3_assistant,\n  author = {Teo, Wulin},\n  title = {napari-sam3-assistant},\n  version = {4.4.0},\n  year = {2026},\n  publisher = {Zenodo},\n  doi = {10.5281/zenodo.20367206},\n  url = {https://doi.org/10.5281/zenodo.20367206}\n}\n```\n\n## References\n\n- SAM3 repository: https://github.com/facebookresearch/sam3\n- SAM3 model files: https://huggingface.co/facebook/sam3\n- PyTorch installation selector: https://pytorch.org/get-started/locally/\n\n## Acknowledgement\n\nThe demo image was provided by the Electron Microscopy Core Facility at Houston\nMethodist Research Institute.\n\n## License\n\nMIT. See the project license file.\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": "napari, SAM3, segmentation, tracking, microscopy, image analysis",
+    "license": "MIT",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-sam3-assistant",
+    "package_url": "https://pypi.org/project/napari-sam3-assistant/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-sam3-assistant/",
+    "project_urls": {
+      "DOI": "https://doi.org/10.5281/zenodo.20367206",
+      "Homepage": "https://github.com/wulinteousa2-hash/napari-sam3-assistant",
+      "Issues": "https://github.com/wulinteousa2-hash/napari-sam3-assistant/issues",
+      "Repository": "https://github.com/wulinteousa2-hash/napari-sam3-assistant"
+    },
+    "provides_extra": null,
+    "release_url": "https://pypi.org/project/napari-sam3-assistant/4.4.0/",
+    "requires_dist": [
+      "napari>=0.5.0",
+      "qtpy",
+      "numpy",
+      "scipy",
+      "pillow",
+      "tifffile",
+      "zarr",
+      "ome-zarr"
+    ],
+    "requires_python": ">=3.11",
+    "summary": "A napari plugin for Segment Anything Model 3 (SAM3) image segmentation with Simple and Advanced workflows, text, points, boxes, exemplars, tiled ROI inference, mask operations, and 3D/video-like propagation",
+    "version": "4.4.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 37405341,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "viralvector"
+      }
+    ]
+  },
+  "releases": {
+    "0.0.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "dd3941560c9690798c7fec781a5bcc15113db7530b81cc39399a329c71f73e71"
+        },
+        "digests": {
+          "blake2b_256": "46094c9ee14ca1883569d9357c229d947b39f4a27b4f6edd054f21755affcada",
+          "md5": "72d59b7851bbe236df0b3cf4d27f62ff",
+          "sha256": "88a373ae9940a44df59c8060f5f5042a44bfb502e46f7c3539e7230109c8a114"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-0.0.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "72d59b7851bbe236df0b3cf4d27f62ff",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.12",
+        "size": 30852,
+        "upload_time": "2026-04-18T01:38:59",
+        "upload_time_iso_8601": "2026-04-18T01:38:59.289043Z",
+        "url": "https://files.pythonhosted.org/packages/46/09/4c9ee14ca1883569d9357c229d947b39f4a27b4f6edd054f21755affcada/napari_sam3_assistant-0.0.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "59f30f4f9538fdaa17752723a1d91d36e50092934bb3f828f31e35883ee7d710",
+          "md5": "8d2d2ac483299b26fbc5b3e26e2db92c",
+          "sha256": "d1fe46c0e465d54b07c1b75489def224d395b4c555d6cf3ca2c71ed2f9d2c01c"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-0.0.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "8d2d2ac483299b26fbc5b3e26e2db92c",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.12",
+        "size": 33155,
+        "upload_time": "2026-04-18T01:39:00",
+        "upload_time_iso_8601": "2026-04-18T01:39:00.765334Z",
+        "url": "https://files.pythonhosted.org/packages/59/f3/0f4f9538fdaa17752723a1d91d36e50092934bb3f828f31e35883ee7d710/napari_sam3_assistant-0.0.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "17c829c3d728b81e27248c2cda205319c7e0185f4c557a761726639557a7424b"
+        },
+        "digests": {
+          "blake2b_256": "e3547adb3f81ab2c387f40288b312e642cd6a180cae03845d2f1c6ed4a9dbcfe",
+          "md5": "f1e99030493ff1cb9a5ef4bba820131a",
+          "sha256": "0a792dd34bb47514bfa770e5ce2bb982cb49cdc2727ccee4336dfae8e6661375"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-1.0.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "f1e99030493ff1cb9a5ef4bba820131a",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.12",
+        "size": 30967,
+        "upload_time": "2026-04-18T01:51:40",
+        "upload_time_iso_8601": "2026-04-18T01:51:40.557671Z",
+        "url": "https://files.pythonhosted.org/packages/e3/54/7adb3f81ab2c387f40288b312e642cd6a180cae03845d2f1c6ed4a9dbcfe/napari_sam3_assistant-1.0.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "9a063ef283d456a25d8bd4653ec4be1c1b53c53abfa6ae9649461bb5bb665c9c",
+          "md5": "6fa4d3161ecf7688a64811173330775b",
+          "sha256": "61112270d8a6cdae236b1435b420d55fcecda8cc64a27d4a6598d20dd405015e"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-1.0.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "6fa4d3161ecf7688a64811173330775b",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.12",
+        "size": 33255,
+        "upload_time": "2026-04-18T01:51:41",
+        "upload_time_iso_8601": "2026-04-18T01:51:41.825710Z",
+        "url": "https://files.pythonhosted.org/packages/9a/06/3ef283d456a25d8bd4653ec4be1c1b53c53abfa6ae9649461bb5bb665c9c/napari_sam3_assistant-1.0.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.2": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "09d3578a150de1698e4c76c1f5d8927c2cf340d3c73a37bf382addb4f19d2ff0"
+        },
+        "digests": {
+          "blake2b_256": "376bf763881676e32b923691ac7620ff559fab2046985e11757b5e369a326ed6",
+          "md5": "4be69b3ae43ace1befa96889d31de293",
+          "sha256": "a4e9445c4ac3ff535f4004ff23588e40bf48249eb674d8ae8bdae174a4a907ae"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-1.0.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "4be69b3ae43ace1befa96889d31de293",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.12",
+        "size": 30941,
+        "upload_time": "2026-04-18T02:07:12",
+        "upload_time_iso_8601": "2026-04-18T02:07:12.393258Z",
+        "url": "https://files.pythonhosted.org/packages/37/6b/f763881676e32b923691ac7620ff559fab2046985e11757b5e369a326ed6/napari_sam3_assistant-1.0.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "225dcaced7c57590d07d902a51b3aae691a489a3492c09ba6e5b128a5bd7bd29",
+          "md5": "872619032e773c57ea84416af804795f",
+          "sha256": "012ba05c41374df4628bb5ede30bafb88eb86e155a96ef5c76f74f671117f85b"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-1.0.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "872619032e773c57ea84416af804795f",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.12",
+        "size": 33194,
+        "upload_time": "2026-04-18T02:07:13",
+        "upload_time_iso_8601": "2026-04-18T02:07:13.624973Z",
+        "url": "https://files.pythonhosted.org/packages/22/5d/caced7c57590d07d902a51b3aae691a489a3492c09ba6e5b128a5bd7bd29/napari_sam3_assistant-1.0.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.1.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "8da203b5681d8454414a31aca7b9f5606a25ee07ff37af6e9e1d721e32589dc4"
+        },
+        "digests": {
+          "blake2b_256": "69c77c1e442351f99d2490418a7166a6508d38e68b9c3918d48b018b8dddd163",
+          "md5": "f639664d212d4aca22c7955268bbd795",
+          "sha256": "432177f90a993e1b903d984df522d939469a04a9d868f685139b39bbd6a944c3"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-1.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "f639664d212d4aca22c7955268bbd795",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.12",
+        "size": 31865,
+        "upload_time": "2026-04-18T03:36:13",
+        "upload_time_iso_8601": "2026-04-18T03:36:13.561695Z",
+        "url": "https://files.pythonhosted.org/packages/69/c7/7c1e442351f99d2490418a7166a6508d38e68b9c3918d48b018b8dddd163/napari_sam3_assistant-1.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "ecb33d04bcb4abec0565c7ea25d342a8ff1e2f3c65fa617d0e7c6e7c99be5ffd",
+          "md5": "804cccd9c15668a65d54e137a7a933d4",
+          "sha256": "97e3361eff1f4ecee276ffa7c85d5f85a73b96efa122aacc1b7d9c03c2388a90"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-1.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "804cccd9c15668a65d54e137a7a933d4",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.12",
+        "size": 34284,
+        "upload_time": "2026-04-18T03:36:14",
+        "upload_time_iso_8601": "2026-04-18T03:36:14.665917Z",
+        "url": "https://files.pythonhosted.org/packages/ec/b3/3d04bcb4abec0565c7ea25d342a8ff1e2f3c65fa617d0e7c6e7c99be5ffd/napari_sam3_assistant-1.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "2.0.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "1e73e918a1c7ca218a6cfbf8e281e26c18b3d05e17be72589ae0ee4aa46d6bda"
+        },
+        "digests": {
+          "blake2b_256": "0d4f6fcdbb510065bcd7563268325b33a0c300bdc05ecedfe8aa4bec3b678183",
+          "md5": "92ae954e3b8b08a8dc95eccb8c1b9853",
+          "sha256": "54dec232a1b7f42c8b3c477710f945467745100b805f95898deaf9127c21fd02"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-2.0.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "92ae954e3b8b08a8dc95eccb8c1b9853",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.12",
+        "size": 44834,
+        "upload_time": "2026-04-18T19:36:00",
+        "upload_time_iso_8601": "2026-04-18T19:36:00.054735Z",
+        "url": "https://files.pythonhosted.org/packages/0d/4f/6fcdbb510065bcd7563268325b33a0c300bdc05ecedfe8aa4bec3b678183/napari_sam3_assistant-2.0.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "d2eb5a6b23186eb69af0a7ecfd6bd763e2f87e036c4344854494291f886580a3",
+          "md5": "471f6abfeda1009298484810fae749a7",
+          "sha256": "04a552bb0b22d3ad1ccfab32b31b91ff55c43f354650c75a5e64c919d0ebb7ae"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-2.0.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "471f6abfeda1009298484810fae749a7",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.12",
+        "size": 50507,
+        "upload_time": "2026-04-18T19:36:01",
+        "upload_time_iso_8601": "2026-04-18T19:36:01.743586Z",
+        "url": "https://files.pythonhosted.org/packages/d2/eb/5a6b23186eb69af0a7ecfd6bd763e2f87e036c4344854494291f886580a3/napari_sam3_assistant-2.0.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "3.0.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "98a600ef651631487a9b48fcc48351a780315255e68b9d2e8cb0bc74f8a2dbfe"
+        },
+        "digests": {
+          "blake2b_256": "c9a1d757a294a7d7613bba920c97935d685dfbb6a5f4ae620d0dd7caaa9042a3",
+          "md5": "812a6f22a4a3be3bdf028ba8ac415e72",
+          "sha256": "24d8122adacb40b263246746c6c5e1afc4b521d6020f06b1561137cf89e883b2"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-3.0.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "812a6f22a4a3be3bdf028ba8ac415e72",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.12",
+        "size": 74290,
+        "upload_time": "2026-04-20T11:04:31",
+        "upload_time_iso_8601": "2026-04-20T11:04:31.953123Z",
+        "url": "https://files.pythonhosted.org/packages/c9/a1/d757a294a7d7613bba920c97935d685dfbb6a5f4ae620d0dd7caaa9042a3/napari_sam3_assistant-3.0.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "3e05402feca94364a66548ddd84b6fe8b15ab2eef88ace8c941e13cf790913ff",
+          "md5": "e54f05aa0dc130e97119348a85d288c9",
+          "sha256": "be098f99fe0e2a6448f466faa89e97a3a97580fbc1dc0f076181a4e15e0e24d9"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-3.0.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e54f05aa0dc130e97119348a85d288c9",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.12",
+        "size": 74175,
+        "upload_time": "2026-04-20T11:04:33",
+        "upload_time_iso_8601": "2026-04-20T11:04:33.229345Z",
+        "url": "https://files.pythonhosted.org/packages/3e/05/402feca94364a66548ddd84b6fe8b15ab2eef88ace8c941e13cf790913ff/napari_sam3_assistant-3.0.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "3.0.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "79c0a01cb4e196c0fae4b00d0423bbb037e85eb071653b3aeeb0eeab7c2b7fc8"
+        },
+        "digests": {
+          "blake2b_256": "87f27ce1cdffdcf170a68010b083b69f9b54394724d235f6714d80bfebef78f0",
+          "md5": "e15051a9a6fab56fd0862164981cd6da",
+          "sha256": "16941b4a6bf983b140571d02281957ca0f118f74de3ea89afd1cb3d8cb1f6642"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-3.0.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "e15051a9a6fab56fd0862164981cd6da",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.12",
+        "size": 74522,
+        "upload_time": "2026-04-20T14:10:22",
+        "upload_time_iso_8601": "2026-04-20T14:10:22.797943Z",
+        "url": "https://files.pythonhosted.org/packages/87/f2/7ce1cdffdcf170a68010b083b69f9b54394724d235f6714d80bfebef78f0/napari_sam3_assistant-3.0.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "7700ed7c59430b9fdf7b2855cd63821ea054e7901cd9d91cc37936006052cdea",
+          "md5": "ee6230d260b9b63401ff48eb860a5148",
+          "sha256": "18735d8d7dbb1f9fea3bc9a5b866c2229fef0fb55be3b88a75589632ba3e8872"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-3.0.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "ee6230d260b9b63401ff48eb860a5148",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.12",
+        "size": 74057,
+        "upload_time": "2026-04-20T14:10:28",
+        "upload_time_iso_8601": "2026-04-20T14:10:28.205448Z",
+        "url": "https://files.pythonhosted.org/packages/77/00/ed7c59430b9fdf7b2855cd63821ea054e7901cd9d91cc37936006052cdea/napari_sam3_assistant-3.0.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "3.0.2": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "f7ac21ae9b8a91ea46981b0334ca97c12555c1d8851d90ac1f889d588004df30"
+        },
+        "digests": {
+          "blake2b_256": "36ec2467ac55199bbab9e01b4ce1972f7febbb887430a58bbee9136baf2045d4",
+          "md5": "a23709210ae8b7d47a9f52bfa3b2fef7",
+          "sha256": "fa53bb1d3e9ddf01c7b8ff5f7dc6972fe59fda0b8dc4a42a9d8becee991f6b94"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-3.0.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "a23709210ae8b7d47a9f52bfa3b2fef7",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.12",
+        "size": 74559,
+        "upload_time": "2026-04-20T16:56:37",
+        "upload_time_iso_8601": "2026-04-20T16:56:37.283809Z",
+        "url": "https://files.pythonhosted.org/packages/36/ec/2467ac55199bbab9e01b4ce1972f7febbb887430a58bbee9136baf2045d4/napari_sam3_assistant-3.0.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "b85916b8f69f4d3a5b64ced9214c73d8c6ccdd490d583f0d7700ad87de3cc9fb",
+          "md5": "3e521d292d98433a793ee66157523415",
+          "sha256": "008c84ce6e5820f2cc6c3a6428c78eab4f31c245ecffed48ce082e3cc9f7b475"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-3.0.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "3e521d292d98433a793ee66157523415",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.12",
+        "size": 74126,
+        "upload_time": "2026-04-20T16:56:38",
+        "upload_time_iso_8601": "2026-04-20T16:56:38.841483Z",
+        "url": "https://files.pythonhosted.org/packages/b8/59/16b8f69f4d3a5b64ced9214c73d8c6ccdd490d583f0d7700ad87de3cc9fb/napari_sam3_assistant-3.0.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "3.0.3": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "11cc1e9183e6fc9d788ebf5d91950878af1e5275f1a9d94512cc0f5a95f4a83d"
+        },
+        "digests": {
+          "blake2b_256": "27e49a74b8a480b6af5d9be146c0dfab9b818766befdbcd768958fa47092d0a0",
+          "md5": "164522803563adfb8b948439dac8b91c",
+          "sha256": "15f46f23d9dcffccbd2bdebd9103560b5634881fae8f666a500934a8365868de"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-3.0.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "164522803563adfb8b948439dac8b91c",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.12",
+        "size": 74654,
+        "upload_time": "2026-04-20T19:00:09",
+        "upload_time_iso_8601": "2026-04-20T19:00:09.626927Z",
+        "url": "https://files.pythonhosted.org/packages/27/e4/9a74b8a480b6af5d9be146c0dfab9b818766befdbcd768958fa47092d0a0/napari_sam3_assistant-3.0.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "b79865546b73bf64b197320928603340b4413c407929f426f937f0a0df508ced",
+          "md5": "9679f996a57f0a8223e0b08aeebf7fda",
+          "sha256": "33f975d5fbaa5390ac6a6c737313b76f742547ffcac71db9ab395a0f60326c50"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-3.0.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "9679f996a57f0a8223e0b08aeebf7fda",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.12",
+        "size": 74201,
+        "upload_time": "2026-04-20T19:00:11",
+        "upload_time_iso_8601": "2026-04-20T19:00:11.413490Z",
+        "url": "https://files.pythonhosted.org/packages/b7/98/65546b73bf64b197320928603340b4413c407929f426f937f0a0df508ced/napari_sam3_assistant-3.0.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "3.1.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "c5409c83503eebef2351bb4113e358317252167400eaf322cacd41623f5b4d76"
+        },
+        "digests": {
+          "blake2b_256": "89ffe6ae3e6576e9155537884f09d819cd53428b8b3070f12d1e55a992cf81b1",
+          "md5": "2cd8ac0a48c2ef221a41c09d93693082",
+          "sha256": "4f00e32421c0ad8eaac90f82e4747860182527fb99d96244641fc5cb9325a3b0"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-3.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "2cd8ac0a48c2ef221a41c09d93693082",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.12",
+        "size": 75242,
+        "upload_time": "2026-04-20T19:47:25",
+        "upload_time_iso_8601": "2026-04-20T19:47:25.031424Z",
+        "url": "https://files.pythonhosted.org/packages/89/ff/e6ae3e6576e9155537884f09d819cd53428b8b3070f12d1e55a992cf81b1/napari_sam3_assistant-3.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "86c33b637818a43e572cb5a285b36a2157ec143afec1fc332d051f7823532f00",
+          "md5": "53723f5ddd82cddf49e03dac79cf11a8",
+          "sha256": "4f90ec03db3536170d37c47309be3a6d9c43c1e0aefd00977a829d40d274e8ef"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-3.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "53723f5ddd82cddf49e03dac79cf11a8",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.12",
+        "size": 75083,
+        "upload_time": "2026-04-20T19:47:26",
+        "upload_time_iso_8601": "2026-04-20T19:47:26.669240Z",
+        "url": "https://files.pythonhosted.org/packages/86/c3/3b637818a43e572cb5a285b36a2157ec143afec1fc332d051f7823532f00/napari_sam3_assistant-3.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "3.2.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "ec5f9e3fce2cc2b7f02f5a662b335389d15deef6f982141fedbc181b2f0e3e47"
+        },
+        "digests": {
+          "blake2b_256": "1141f43ad4aa85d41bee7785d3e18c9757dcb82bba3c7fcdb35e0e97dea20db5",
+          "md5": "b7f9ef12801b25e62634ae1c04018a18",
+          "sha256": "c712b5395ce4d5d5b5d255ba4b603633ef2659d6d061fa5e618903d34c981061"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-3.2.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "b7f9ef12801b25e62634ae1c04018a18",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.12",
+        "size": 74067,
+        "upload_time": "2026-04-21T02:00:01",
+        "upload_time_iso_8601": "2026-04-21T02:00:01.883160Z",
+        "url": "https://files.pythonhosted.org/packages/11/41/f43ad4aa85d41bee7785d3e18c9757dcb82bba3c7fcdb35e0e97dea20db5/napari_sam3_assistant-3.2.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "cb2434d116072272ff5fc82a00550da86caa5e526c92894464581fdefb87bb2c",
+          "md5": "732dff46b1d6c180aa83e924b46a10ce",
+          "sha256": "a1f97f865a3eef27c312ba9b6834afab877d73bee76faa44e8521bf43ebfdca2"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-3.2.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "732dff46b1d6c180aa83e924b46a10ce",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.12",
+        "size": 73360,
+        "upload_time": "2026-04-21T02:00:03",
+        "upload_time_iso_8601": "2026-04-21T02:00:03.047510Z",
+        "url": "https://files.pythonhosted.org/packages/cb/24/34d116072272ff5fc82a00550da86caa5e526c92894464581fdefb87bb2c/napari_sam3_assistant-3.2.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "3.3.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "3a4f3464e97d83217cdfdfb42ac8aaf781c87fd4c781ffb89c45462573b9d96f"
+        },
+        "digests": {
+          "blake2b_256": "499a05b66fd663a863e8628303bc61e5a56c3222ac27a1b7a19f2dd0e3d6dcc5",
+          "md5": "7254332e8a7b07eb03fa9de34bd53b54",
+          "sha256": "34465212146eca987efa9b790df33f326ca9580c95efcacafe61af0bc17e8889"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-3.3.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "7254332e8a7b07eb03fa9de34bd53b54",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.12",
+        "size": 75181,
+        "upload_time": "2026-04-21T03:25:15",
+        "upload_time_iso_8601": "2026-04-21T03:25:15.062164Z",
+        "url": "https://files.pythonhosted.org/packages/49/9a/05b66fd663a863e8628303bc61e5a56c3222ac27a1b7a19f2dd0e3d6dcc5/napari_sam3_assistant-3.3.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "309ac2516dde571a79054b272fb2c90eaa81743385f44b711f725fe58e878880",
+          "md5": "5f9cc3deb9938d90154ccc3fe02b1110",
+          "sha256": "c4f61a219221fdc7860fd8aa25cb6064f3a5b191f75e89ce0908c8aabbdb61e2"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-3.3.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "5f9cc3deb9938d90154ccc3fe02b1110",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.12",
+        "size": 75352,
+        "upload_time": "2026-04-21T03:25:16",
+        "upload_time_iso_8601": "2026-04-21T03:25:16.144420Z",
+        "url": "https://files.pythonhosted.org/packages/30/9a/c2516dde571a79054b272fb2c90eaa81743385f44b711f725fe58e878880/napari_sam3_assistant-3.3.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "4.0.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "ae489670f9aded0487b7b132c7c63a1925776564e6cb0593d4ddc33860f42528"
+        },
+        "digests": {
+          "blake2b_256": "5a79a1606fafb029d544c2a7c2cfbc9a5f012c1a10608d5ad0cccabf20ae933b",
+          "md5": "53c490464dc9ec93a10f39dfa09646e2",
+          "sha256": "9dcf0761293c5d0dfaefd1002b6c858d7f786f8f65115f8796f750bb59b2ce69"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.0.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "53c490464dc9ec93a10f39dfa09646e2",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.12",
+        "size": 100187,
+        "upload_time": "2026-04-21T21:34:33",
+        "upload_time_iso_8601": "2026-04-21T21:34:33.935340Z",
+        "url": "https://files.pythonhosted.org/packages/5a/79/a1606fafb029d544c2a7c2cfbc9a5f012c1a10608d5ad0cccabf20ae933b/napari_sam3_assistant-4.0.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "60e1f668d8f164212d28a254aa0216d6ee5f48360ac288902839f26c3395d48d",
+          "md5": "e0543d367293beca038293fca8e03e70",
+          "sha256": "fe18571e1e892b67145d11496c83679767743446740c95a4099e51a97565693a"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.0.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e0543d367293beca038293fca8e03e70",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.12",
+        "size": 93728,
+        "upload_time": "2026-04-21T21:34:35",
+        "upload_time_iso_8601": "2026-04-21T21:34:35.045425Z",
+        "url": "https://files.pythonhosted.org/packages/60/e1/f668d8f164212d28a254aa0216d6ee5f48360ac288902839f26c3395d48d/napari_sam3_assistant-4.0.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "4.0.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "21d216dba6eb020f3969255a65bd65920a5997e5e4be5da058f5898a0010bc38"
+        },
+        "digests": {
+          "blake2b_256": "cf9ab37f5992b54376b768c8172ee57b72a05ade61b401ccf8316271ec0d822f",
+          "md5": "76a4ae34f883a3061058f2b2705242d9",
+          "sha256": "fe99aeca4425c9e7009b1f1fba3b117b50a49b763e7d5535211bfadd9facf77c"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.0.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "76a4ae34f883a3061058f2b2705242d9",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 101580,
+        "upload_time": "2026-04-24T04:10:15",
+        "upload_time_iso_8601": "2026-04-24T04:10:15.494624Z",
+        "url": "https://files.pythonhosted.org/packages/cf/9a/b37f5992b54376b768c8172ee57b72a05ade61b401ccf8316271ec0d822f/napari_sam3_assistant-4.0.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "a6ed27c107bc4a7a53862958c017f9cc9712539f9db02f79995fe487d7194812",
+          "md5": "544cf7934ec46c91a25f71a02247eb0a",
+          "sha256": "2f9074940e7404444bb6cae3df9c96e1facc5975f4dc26ccce8cfb531971f80e"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.0.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "544cf7934ec46c91a25f71a02247eb0a",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 96004,
+        "upload_time": "2026-04-24T04:10:16",
+        "upload_time_iso_8601": "2026-04-24T04:10:16.836980Z",
+        "url": "https://files.pythonhosted.org/packages/a6/ed/27c107bc4a7a53862958c017f9cc9712539f9db02f79995fe487d7194812/napari_sam3_assistant-4.0.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "4.0.3": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "e46ebd5cdb84d700824be7c23e15b8e35525dcdca7686689237f2fa9d5839274"
+        },
+        "digests": {
+          "blake2b_256": "d4072932df09691e573afc7a1636de6a72d622a2b540da6312af6962caca32e4",
+          "md5": "f8ba36bd35d76dd6eb15875ca45a2d90",
+          "sha256": "61738c76179b11fcff589a0b6a573f944d4d654766207751d15abd26f6c92127"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.0.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "f8ba36bd35d76dd6eb15875ca45a2d90",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 103063,
+        "upload_time": "2026-04-27T13:45:56",
+        "upload_time_iso_8601": "2026-04-27T13:45:56.986008Z",
+        "url": "https://files.pythonhosted.org/packages/d4/07/2932df09691e573afc7a1636de6a72d622a2b540da6312af6962caca32e4/napari_sam3_assistant-4.0.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "43d7949913999befb0b85e57e80c728076d6627d4ac99825538c7dac7adf252c",
+          "md5": "db9c03505faea3f8b06815d10d399690",
+          "sha256": "1bf9fca652f958ae5ec89a6b0cbae98a3eb51fb278eb60fe16368d7d7002117a"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.0.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "db9c03505faea3f8b06815d10d399690",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 98544,
+        "upload_time": "2026-04-27T13:45:59",
+        "upload_time_iso_8601": "2026-04-27T13:45:59.077243Z",
+        "url": "https://files.pythonhosted.org/packages/43/d7/949913999befb0b85e57e80c728076d6627d4ac99825538c7dac7adf252c/napari_sam3_assistant-4.0.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "4.1.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "8ffe09ab1213f04617954d75d82f9fab2b9a8b7ffa667ad5483f8837ac145646"
+        },
+        "digests": {
+          "blake2b_256": "8aff0ecfc222de5c3ca641adf2be111ee38df54f96a21addebc3c785aba735ab",
+          "md5": "6e2a68437f93cb8a462bdf01215e474c",
+          "sha256": "5a0b278449ccb23f12fd611e4a3e76b9b23f273e92a2333c053d5ac82ab92fcc"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "6e2a68437f93cb8a462bdf01215e474c",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 107223,
+        "upload_time": "2026-04-28T19:27:16",
+        "upload_time_iso_8601": "2026-04-28T19:27:16.998570Z",
+        "url": "https://files.pythonhosted.org/packages/8a/ff/0ecfc222de5c3ca641adf2be111ee38df54f96a21addebc3c785aba735ab/napari_sam3_assistant-4.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "8dbcfc1efe5926509a0e6040fb765757ed3f703785738d90eaf58bf01b545034",
+          "md5": "56c79cf1c96a5f3b2e5f335a8d94ddc1",
+          "sha256": "b369cff10cf172e061ddc43f293e3832eb3ed4016df4a1fee8d37bead5cd5242"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "56c79cf1c96a5f3b2e5f335a8d94ddc1",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 104742,
+        "upload_time": "2026-04-28T19:27:18",
+        "upload_time_iso_8601": "2026-04-28T19:27:18.462184Z",
+        "url": "https://files.pythonhosted.org/packages/8d/bc/fc1efe5926509a0e6040fb765757ed3f703785738d90eaf58bf01b545034/napari_sam3_assistant-4.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "4.2.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "06cfb2d0a6fa82054ca83056203f2e5252ecf843e138d1e85ac7d4e80a50b2a4"
+        },
+        "digests": {
+          "blake2b_256": "481c350bc355c5fdde38e6dd295d0c9b4fece57815e7e33d89f4a674162911fd",
+          "md5": "808076f6a83958e20931e8370e561c94",
+          "sha256": "cda53eac0b7eec7a5a54f1f0206fa78a62413aa770abccb232f7a0ffdfeb412d"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.2.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "808076f6a83958e20931e8370e561c94",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 112477,
+        "upload_time": "2026-04-30T02:02:44",
+        "upload_time_iso_8601": "2026-04-30T02:02:44.274125Z",
+        "url": "https://files.pythonhosted.org/packages/48/1c/350bc355c5fdde38e6dd295d0c9b4fece57815e7e33d89f4a674162911fd/napari_sam3_assistant-4.2.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "6205aabfa2142d82c129eb04670fc280524dc5ee940aec3655f69559dddff209",
+          "md5": "7c331b6858eca1e9b5a9e673cf7d29cb",
+          "sha256": "c47dff790fceebe997d1a98cc75eae03b71991e4f7cbc0421d4729a4e9678206"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.2.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "7c331b6858eca1e9b5a9e673cf7d29cb",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 110542,
+        "upload_time": "2026-04-30T02:02:45",
+        "upload_time_iso_8601": "2026-04-30T02:02:45.614229Z",
+        "url": "https://files.pythonhosted.org/packages/62/05/aabfa2142d82c129eb04670fc280524dc5ee940aec3655f69559dddff209/napari_sam3_assistant-4.2.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "4.2.10": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "273d32ae5720e53565d4d9a22ccd38ab048182a4b37daf5c507ec8a07757d5f0"
+        },
+        "digests": {
+          "blake2b_256": "5bd1b7ef62a67c140c5d55278ad4d87c41404b010e99a5f0c9e890662761b2cd",
+          "md5": "231886a0a90e15e79cdde6e5fd869038",
+          "sha256": "95c44f7f326e5d16c01cc0c91108aedb3c33122102df112231a4ffe376fcf116"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.2.10-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "231886a0a90e15e79cdde6e5fd869038",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 161462,
+        "upload_time": "2026-05-09T05:20:12",
+        "upload_time_iso_8601": "2026-05-09T05:20:12.668106Z",
+        "url": "https://files.pythonhosted.org/packages/5b/d1/b7ef62a67c140c5d55278ad4d87c41404b010e99a5f0c9e890662761b2cd/napari_sam3_assistant-4.2.10-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "22e432973ef1580b8e7f63ec0b156c4d26188e873ac4716dcf04013562d115b2",
+          "md5": "7a7497750f8efcdffc57b228348359c3",
+          "sha256": "fdf801d9c1f69fbb49b80c3ed10c09ae3117348dc9c18e2853395e8cf45893f7"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.2.10.tar.gz",
+        "has_sig": false,
+        "md5_digest": "7a7497750f8efcdffc57b228348359c3",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 158998,
+        "upload_time": "2026-05-09T05:20:13",
+        "upload_time_iso_8601": "2026-05-09T05:20:13.890928Z",
+        "url": "https://files.pythonhosted.org/packages/22/e4/32973ef1580b8e7f63ec0b156c4d26188e873ac4716dcf04013562d115b2/napari_sam3_assistant-4.2.10.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "4.2.11": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "f2ac4805348a6739c6cba70a761d2985bd7d202d12e9fd9af113ff5a3b1fce79"
+        },
+        "digests": {
+          "blake2b_256": "f905c443c9396bb0b3cb3dc3666e50000cd9a6a26b9eed91b2da03b7b903efd5",
+          "md5": "28c7f037d8381e456e32e25182aba437",
+          "sha256": "1b92c4cc93cb60b4695f5d2680f903accf3737b5782a41bc3d8593e46391c6d2"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.2.11-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "28c7f037d8381e456e32e25182aba437",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 162840,
+        "upload_time": "2026-05-11T03:18:49",
+        "upload_time_iso_8601": "2026-05-11T03:18:49.914029Z",
+        "url": "https://files.pythonhosted.org/packages/f9/05/c443c9396bb0b3cb3dc3666e50000cd9a6a26b9eed91b2da03b7b903efd5/napari_sam3_assistant-4.2.11-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "1e1392f3fca7f03f176c3b989b9b4e705ec5ec9c483b50c471f663206597b513",
+          "md5": "a6d5646c9996cc7456bf7f351f51a62e",
+          "sha256": "2208513a7a143d831b3d623aeb70190529953e9e638dc697cc4bc7901742ba77"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.2.11.tar.gz",
+        "has_sig": false,
+        "md5_digest": "a6d5646c9996cc7456bf7f351f51a62e",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 168838,
+        "upload_time": "2026-05-11T03:18:51",
+        "upload_time_iso_8601": "2026-05-11T03:18:51.556230Z",
+        "url": "https://files.pythonhosted.org/packages/1e/13/92f3fca7f03f176c3b989b9b4e705ec5ec9c483b50c471f663206597b513/napari_sam3_assistant-4.2.11.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "4.2.12": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "f082c2f34f661e759a30382329c329ffb7a5886d26fa793caafc99e7f8fc69e2"
+        },
+        "digests": {
+          "blake2b_256": "6d77dd12b993de76351a80507268b59ae0d3553a848cea690587185ae57c2e49",
+          "md5": "36f830e9144b5c1316ea697a505e520b",
+          "sha256": "93e748ed42e5d0450da3a2dd8d863497540598c6c8fdeb8ec9db815139e47cc4"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.2.12-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "36f830e9144b5c1316ea697a505e520b",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 164928,
+        "upload_time": "2026-05-12T01:44:50",
+        "upload_time_iso_8601": "2026-05-12T01:44:50.147551Z",
+        "url": "https://files.pythonhosted.org/packages/6d/77/dd12b993de76351a80507268b59ae0d3553a848cea690587185ae57c2e49/napari_sam3_assistant-4.2.12-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "ec7dad61eea5e85797c9b1a2bca919bef6cc8a193ea2537739d7f82547e428e7",
+          "md5": "d9a38c2a167fdabd7d5a83dd366472e2",
+          "sha256": "91233631f6263ec0a16db9e28d22849d8ec170fdd83bdf65121c5c98278f4865"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.2.12.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d9a38c2a167fdabd7d5a83dd366472e2",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 172668,
+        "upload_time": "2026-05-12T01:44:51",
+        "upload_time_iso_8601": "2026-05-12T01:44:51.668690Z",
+        "url": "https://files.pythonhosted.org/packages/ec/7d/ad61eea5e85797c9b1a2bca919bef6cc8a193ea2537739d7f82547e428e7/napari_sam3_assistant-4.2.12.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "4.2.13": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "e3b40cc392a749213ca64e0ffd0a16d6f2cf4af96aa15e64680fc3fcc24ed179"
+        },
+        "digests": {
+          "blake2b_256": "d3a7cfa0117b65733847eed8c4420de79fa362d27da9c58f9cf300a9ada168c8",
+          "md5": "6faef24eade37c9a773a3d0c15ed2801",
+          "sha256": "57e237e793667171e926d694be8cf9db7a6322d5e8a2ec86c5f3decc745b6f45"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.2.13-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "6faef24eade37c9a773a3d0c15ed2801",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 165699,
+        "upload_time": "2026-05-13T19:07:38",
+        "upload_time_iso_8601": "2026-05-13T19:07:38.356128Z",
+        "url": "https://files.pythonhosted.org/packages/d3/a7/cfa0117b65733847eed8c4420de79fa362d27da9c58f9cf300a9ada168c8/napari_sam3_assistant-4.2.13-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "75d006fccd7814246024d41ed668da72ae16a8b824be89cfc4df50ed1dafa178",
+          "md5": "370a579a67a74529cc4dbac4cb3088b7",
+          "sha256": "3b370ba4583c61262110dcc2da5291dec50e89b6ed76301999d1714aa8fec40b"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.2.13.tar.gz",
+        "has_sig": false,
+        "md5_digest": "370a579a67a74529cc4dbac4cb3088b7",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 174189,
+        "upload_time": "2026-05-13T19:07:39",
+        "upload_time_iso_8601": "2026-05-13T19:07:39.675892Z",
+        "url": "https://files.pythonhosted.org/packages/75/d0/06fccd7814246024d41ed668da72ae16a8b824be89cfc4df50ed1dafa178/napari_sam3_assistant-4.2.13.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "4.2.3": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "0e2c85ce446a9e091d0d09de513084f02ca3eb0f641ddad4480d7e3441e58883"
+        },
+        "digests": {
+          "blake2b_256": "e379d944549a8c25ba037789f2895d475c99ee8944e6a6b87fca8e842976ae7a",
+          "md5": "0826dbaeea5366e589c267b84d2821b4",
+          "sha256": "d9fb5ec040390c4c60dedc9d128568aadf8644a9225144aa85a962d16fd70175"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.2.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "0826dbaeea5366e589c267b84d2821b4",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 116950,
+        "upload_time": "2026-05-03T03:29:02",
+        "upload_time_iso_8601": "2026-05-03T03:29:02.717404Z",
+        "url": "https://files.pythonhosted.org/packages/e3/79/d944549a8c25ba037789f2895d475c99ee8944e6a6b87fca8e842976ae7a/napari_sam3_assistant-4.2.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "1238f09d61d2e08e59c84e68abd72642f42f9d381bdb5b914d7734b354fe4ac3",
+          "md5": "3ebefa8c3480bfa967d71c31b420a359",
+          "sha256": "39d9d8b275dd15404c99a79e31f3e5a322ccf8d930835c393979e11d02e70b3a"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.2.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "3ebefa8c3480bfa967d71c31b420a359",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 123845,
+        "upload_time": "2026-05-03T03:29:04",
+        "upload_time_iso_8601": "2026-05-03T03:29:04.133278Z",
+        "url": "https://files.pythonhosted.org/packages/12/38/f09d61d2e08e59c84e68abd72642f42f9d381bdb5b914d7734b354fe4ac3/napari_sam3_assistant-4.2.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "4.2.4": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "4fb146f0b52ba07897d641ca061e542d0f053ebd7bc10d154e879e5aa2115669"
+        },
+        "digests": {
+          "blake2b_256": "a73c2a42b1b45d272866e33fdcf1f3f20ecac6f02a2a870daed0f5f7bfe3fc1f",
+          "md5": "75ddc4fd4bcf9f39b177b87ba5efdc0c",
+          "sha256": "2707aa6f17107326f6aab52e84c71f37dc62fd0b5ae0e6601de7cae2e50d9604"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.2.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "75ddc4fd4bcf9f39b177b87ba5efdc0c",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 126416,
+        "upload_time": "2026-05-05T23:03:41",
+        "upload_time_iso_8601": "2026-05-05T23:03:41.708433Z",
+        "url": "https://files.pythonhosted.org/packages/a7/3c/2a42b1b45d272866e33fdcf1f3f20ecac6f02a2a870daed0f5f7bfe3fc1f/napari_sam3_assistant-4.2.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "e4d3e75d6c9de7cd35cfceea2e055c62e27a840c4a534db2ef5d5924e9cd7fae",
+          "md5": "640dda7da88597551b0045dca8af42cd",
+          "sha256": "e162b59ea6fde7a3a273dedb2c069cc73cd53c269da737c5ea72b85e4c4cb710"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.2.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "640dda7da88597551b0045dca8af42cd",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 132100,
+        "upload_time": "2026-05-05T23:03:43",
+        "upload_time_iso_8601": "2026-05-05T23:03:43.141647Z",
+        "url": "https://files.pythonhosted.org/packages/e4/d3/e75d6c9de7cd35cfceea2e055c62e27a840c4a534db2ef5d5924e9cd7fae/napari_sam3_assistant-4.2.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "4.2.5": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "7946af4bf0985541c8716c434f222ed6e82c32468a4c6d0bf571490b482b3912"
+        },
+        "digests": {
+          "blake2b_256": "7e20edada392b9e05384e38df02ce2e801fc175c7c489153b45049049b3d2e8b",
+          "md5": "89cf356fe22d90d0c03a4507557d07eb",
+          "sha256": "927af35a047d0e53c615ab757c59c48b6d42c1fe9546037477a55c694df7adba"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.2.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "89cf356fe22d90d0c03a4507557d07eb",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 133020,
+        "upload_time": "2026-05-06T01:36:58",
+        "upload_time_iso_8601": "2026-05-06T01:36:58.675191Z",
+        "url": "https://files.pythonhosted.org/packages/7e/20/edada392b9e05384e38df02ce2e801fc175c7c489153b45049049b3d2e8b/napari_sam3_assistant-4.2.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "1ae2dde6210bddca603d743694665c46029cd289c09a1d62c9df8d93179f80fe",
+          "md5": "83a7f81443e99dc7b1faa004b592f4ba",
+          "sha256": "8102a7ec1627b69de857035aeb51a3b2374c46062124b109aaa3a49e4e5d0db9"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.2.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "83a7f81443e99dc7b1faa004b592f4ba",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 137694,
+        "upload_time": "2026-05-06T01:36:59",
+        "upload_time_iso_8601": "2026-05-06T01:36:59.923380Z",
+        "url": "https://files.pythonhosted.org/packages/1a/e2/dde6210bddca603d743694665c46029cd289c09a1d62c9df8d93179f80fe/napari_sam3_assistant-4.2.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "4.2.6": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "516fe32280dd1b66e77d134475a8ce1da692dcbb02d261734e24f957aedc9cd0"
+        },
+        "digests": {
+          "blake2b_256": "d8604dd89642a950fa6567f16773709f39832e4ca0acbe99288348cd9f6b0f19",
+          "md5": "d49164ea7f3069a918b992378f80ace6",
+          "sha256": "27ca6a2832de56fdd2c069785cbdbfbf13003f7a91635866e4fa59008169fb84"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.2.6-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "d49164ea7f3069a918b992378f80ace6",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 146936,
+        "upload_time": "2026-05-07T03:31:48",
+        "upload_time_iso_8601": "2026-05-07T03:31:48.653684Z",
+        "url": "https://files.pythonhosted.org/packages/d8/60/4dd89642a950fa6567f16773709f39832e4ca0acbe99288348cd9f6b0f19/napari_sam3_assistant-4.2.6-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "4e3f1587e1c4587b3492e3f6a1626072e0fff9975c8658cc2144637f31d65109",
+          "md5": "4422a23842ee757972ba9a9fb8484940",
+          "sha256": "865842c47dfbfa9f47cd09420215a85dcaca8d95b9a71302b3e41965066dca54"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.2.6.tar.gz",
+        "has_sig": false,
+        "md5_digest": "4422a23842ee757972ba9a9fb8484940",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 150120,
+        "upload_time": "2026-05-07T03:31:50",
+        "upload_time_iso_8601": "2026-05-07T03:31:50.261241Z",
+        "url": "https://files.pythonhosted.org/packages/4e/3f/1587e1c4587b3492e3f6a1626072e0fff9975c8658cc2144637f31d65109/napari_sam3_assistant-4.2.6.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "4.2.7": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "db6db3689ea6269515f1e52128b106d0430b95c93ff141a5b857f947d2bef384"
+        },
+        "digests": {
+          "blake2b_256": "3a408587418da2df43febf4c19483da0ba209a31cc8bd1503a376595dbf570f6",
+          "md5": "79abadb2503128c9c67777ed4beb0176",
+          "sha256": "4ac92ffa25e5a6f42bfd71a6c550c13f5f08f73ca6a723270f3b1ea2a7fb516c"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.2.7-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "79abadb2503128c9c67777ed4beb0176",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 149802,
+        "upload_time": "2026-05-07T20:03:45",
+        "upload_time_iso_8601": "2026-05-07T20:03:45.006942Z",
+        "url": "https://files.pythonhosted.org/packages/3a/40/8587418da2df43febf4c19483da0ba209a31cc8bd1503a376595dbf570f6/napari_sam3_assistant-4.2.7-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "5621e06d31c45a848487f6b7a822f823275929df6a25029bd8a71131196b96d7",
+          "md5": "0c29ace4bb3e3cbe569fce129822bdb4",
+          "sha256": "c84955bf70290c1a11706bf4832bb5948dde784f4cb7d57a5e007e41f13bfc41"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.2.7.tar.gz",
+        "has_sig": false,
+        "md5_digest": "0c29ace4bb3e3cbe569fce129822bdb4",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 146384,
+        "upload_time": "2026-05-07T20:03:46",
+        "upload_time_iso_8601": "2026-05-07T20:03:46.332659Z",
+        "url": "https://files.pythonhosted.org/packages/56/21/e06d31c45a848487f6b7a822f823275929df6a25029bd8a71131196b96d7/napari_sam3_assistant-4.2.7.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "4.2.9": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "e9da944c6ff9420af19eae82e389171bb25fd5f2c6889ef9f5a43aaffcd1faf9"
+        },
+        "digests": {
+          "blake2b_256": "deb345b026afd5f8958099dc713f3547901e17db1d94ab7ce3750d5b8ce7bb8d",
+          "md5": "f2636247a567c9aaec6b171b09cb1f1b",
+          "sha256": "69e572177dd071924edc55b14c67634d9bcb0f57cdeff31b0113d9c706435fcb"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.2.9-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "f2636247a567c9aaec6b171b09cb1f1b",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 159916,
+        "upload_time": "2026-05-09T04:04:05",
+        "upload_time_iso_8601": "2026-05-09T04:04:05.657965Z",
+        "url": "https://files.pythonhosted.org/packages/de/b3/45b026afd5f8958099dc713f3547901e17db1d94ab7ce3750d5b8ce7bb8d/napari_sam3_assistant-4.2.9-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "b53f2abb3014e895768327df5abc61ee116048c9914bf88a7e9b5ca4524f12b5",
+          "md5": "b78cb7bb4a8791d97143389c6f8b5571",
+          "sha256": "914e4923235fe3339b8ee3b8b86d086095a0c23fa111f0a8ab4ba69a481077b6"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.2.9.tar.gz",
+        "has_sig": false,
+        "md5_digest": "b78cb7bb4a8791d97143389c6f8b5571",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 156874,
+        "upload_time": "2026-05-09T04:04:07",
+        "upload_time_iso_8601": "2026-05-09T04:04:07.166015Z",
+        "url": "https://files.pythonhosted.org/packages/b5/3f/2abb3014e895768327df5abc61ee116048c9914bf88a7e9b5ca4524f12b5/napari_sam3_assistant-4.2.9.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "4.3.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "6a356d26a16d43e0fdc320b486ee8ba6f7d865e83ef52f93d9b3b827cf4507df"
+        },
+        "digests": {
+          "blake2b_256": "2f0069e30e968ecb85a38a18fa28e4137228b45c9376b53771167b82c7781057",
+          "md5": "28692962d30f512b434168303ceed6bd",
+          "sha256": "0c1bd90108d752ea0d39da5e895256ebd9e7937575928ae68f33334f70725de9"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.3.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "28692962d30f512b434168303ceed6bd",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 175410,
+        "upload_time": "2026-05-15T18:43:15",
+        "upload_time_iso_8601": "2026-05-15T18:43:15.946489Z",
+        "url": "https://files.pythonhosted.org/packages/2f/00/69e30e968ecb85a38a18fa28e4137228b45c9376b53771167b82c7781057/napari_sam3_assistant-4.3.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "bfaaa6c8ce22a395716105b0aed67ba2785c5f890e9589bafa1f198b3eb64915",
+          "md5": "c01662eafad3d55cc4f38fa22b5ee397",
+          "sha256": "1e972d6776fd36ab0e49490caacf139aa1b191340daefc0e256a0e45e95d3f1d"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.3.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "c01662eafad3d55cc4f38fa22b5ee397",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 183375,
+        "upload_time": "2026-05-15T18:43:17",
+        "upload_time_iso_8601": "2026-05-15T18:43:17.584421Z",
+        "url": "https://files.pythonhosted.org/packages/bf/aa/a6c8ce22a395716105b0aed67ba2785c5f890e9589bafa1f198b3eb64915/napari_sam3_assistant-4.3.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "4.3.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "36ba2d845190d7d3291fc679165054a6185b671e026967dace38b2d45be2cc31"
+        },
+        "digests": {
+          "blake2b_256": "46bdb6e465fd5f61d97ba1e05bfb91ae361a3ffd18a444248fd7258f65d8051c",
+          "md5": "f01ab8a584863e1f50c1a1a8f1c1d830",
+          "sha256": "d387242c2451028ada8d13442720488eeb191a0da79cb729a567dc17bfecbe18"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.3.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "f01ab8a584863e1f50c1a1a8f1c1d830",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 174280,
+        "upload_time": "2026-05-15T23:31:49",
+        "upload_time_iso_8601": "2026-05-15T23:31:49.663890Z",
+        "url": "https://files.pythonhosted.org/packages/46/bd/b6e465fd5f61d97ba1e05bfb91ae361a3ffd18a444248fd7258f65d8051c/napari_sam3_assistant-4.3.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "e6ca231492b61e7e1c6948a579299424c5e0c67b98e35b8898cc3a228d26844b",
+          "md5": "7fecc49f3516432c7d853a1fa55084c9",
+          "sha256": "a73029aed6f1e861fbbcb7963d190762a9f57c30194137894a125c8b043941ce"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.3.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "7fecc49f3516432c7d853a1fa55084c9",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 170877,
+        "upload_time": "2026-05-15T23:31:50",
+        "upload_time_iso_8601": "2026-05-15T23:31:50.989525Z",
+        "url": "https://files.pythonhosted.org/packages/e6/ca/231492b61e7e1c6948a579299424c5e0c67b98e35b8898cc3a228d26844b/napari_sam3_assistant-4.3.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "4.3.2": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "56e57f700c95945397e81ae09e111ca976730079c54bf8104b53d3018c7d5230"
+        },
+        "digests": {
+          "blake2b_256": "e96ddca3700b72fbef67cc24e44da38028862002ed339a03b6141b0c700d0b9e",
+          "md5": "1ad2d4da7ba5d50e8fe38bc6af47e57f",
+          "sha256": "a0a0a7bdbefb213fa3d18bb24e57c618c368e2ea3b5deaf4f7ab2154430fd7bf"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.3.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "1ad2d4da7ba5d50e8fe38bc6af47e57f",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 176046,
+        "upload_time": "2026-05-16T14:26:19",
+        "upload_time_iso_8601": "2026-05-16T14:26:19.229975Z",
+        "url": "https://files.pythonhosted.org/packages/e9/6d/dca3700b72fbef67cc24e44da38028862002ed339a03b6141b0c700d0b9e/napari_sam3_assistant-4.3.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "b56338edd9f21068daec57495d4114d3c9014aa2828393410eab274a9f4b0f1e",
+          "md5": "6915177f0dd163f4f1b743d9de7761df",
+          "sha256": "c9a8172e852d19eee78317222983d43ec51a80f7831d31fa5cb0ac2c89aea878"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.3.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "6915177f0dd163f4f1b743d9de7761df",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 173045,
+        "upload_time": "2026-05-16T14:26:20",
+        "upload_time_iso_8601": "2026-05-16T14:26:20.733004Z",
+        "url": "https://files.pythonhosted.org/packages/b5/63/38edd9f21068daec57495d4114d3c9014aa2828393410eab274a9f4b0f1e/napari_sam3_assistant-4.3.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "4.3.3": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "546a4d30c64cf33c27e2c6fa7204b081d8905ee6d4854cc8de4bf734147af2a5"
+        },
+        "digests": {
+          "blake2b_256": "7e16f8d02ea182ec7f1f84871ef833e98f40aca7499e73b85b507258665d2b8c",
+          "md5": "569a53c2377b10ba0128a830c01abfbc",
+          "sha256": "feb99d5a69f1c5aaa146e5285785756bb9f3a65a4ceecdc4a57d0c0f4a91f2dd"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.3.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "569a53c2377b10ba0128a830c01abfbc",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 176782,
+        "upload_time": "2026-05-16T16:42:44",
+        "upload_time_iso_8601": "2026-05-16T16:42:44.070910Z",
+        "url": "https://files.pythonhosted.org/packages/7e/16/f8d02ea182ec7f1f84871ef833e98f40aca7499e73b85b507258665d2b8c/napari_sam3_assistant-4.3.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "42dc2b972ed26ebdef682dadf67f149252fa72a8fc24d48d366bc01f0158b440",
+          "md5": "26dd42b6a9c0e66c92dae21080def1a0",
+          "sha256": "51f884630181ac05686ba0f2d23d73fa8363ef70b184fc4888576a56f07f6225"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.3.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "26dd42b6a9c0e66c92dae21080def1a0",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 173892,
+        "upload_time": "2026-05-16T16:42:45",
+        "upload_time_iso_8601": "2026-05-16T16:42:45.381671Z",
+        "url": "https://files.pythonhosted.org/packages/42/dc/2b972ed26ebdef682dadf67f149252fa72a8fc24d48d366bc01f0158b440/napari_sam3_assistant-4.3.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "4.3.4": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "b3e82eaee7263ec9630f35057e74b16053695ab089da617fdc2aa426ff78c600"
+        },
+        "digests": {
+          "blake2b_256": "a291256db8cca7e5ed7cb6e7294129a2b77f536e2adf1fba487d04cf6fd291f0",
+          "md5": "9d3ddd58e19b612e98c700339a8230de",
+          "sha256": "f90c75b974c917ed7f2e1b0c5c0f8d07b817469022b6cac8d25f6f3ce3cc9a14"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.3.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "9d3ddd58e19b612e98c700339a8230de",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 170103,
+        "upload_time": "2026-05-19T13:46:36",
+        "upload_time_iso_8601": "2026-05-19T13:46:36.290796Z",
+        "url": "https://files.pythonhosted.org/packages/a2/91/256db8cca7e5ed7cb6e7294129a2b77f536e2adf1fba487d04cf6fd291f0/napari_sam3_assistant-4.3.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "4980b836a42fd5794063ee385345f5f36f0e509e280d0cbe82bdb81f3dfa364d",
+          "md5": "ea34ff4118355923b430a85d5bcffda9",
+          "sha256": "07dcd364d4f38c395d2909194e16f06a065bc03a3341248810b86e3b8e156698"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.3.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "ea34ff4118355923b430a85d5bcffda9",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 160198,
+        "upload_time": "2026-05-19T13:46:37",
+        "upload_time_iso_8601": "2026-05-19T13:46:37.853032Z",
+        "url": "https://files.pythonhosted.org/packages/49/80/b836a42fd5794063ee385345f5f36f0e509e280d0cbe82bdb81f3dfa364d/napari_sam3_assistant-4.3.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "4.3.6": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "b840e2711ddf218a69e7e67aa41c5b43be7a2823a2b33a26b247b371705eaf83"
+        },
+        "digests": {
+          "blake2b_256": "ff5dee350d145d5054139bfa10716832f09c406899b23603b7999b9cf503fdce",
+          "md5": "07673cc091def5e50814eafd0465ce98",
+          "sha256": "62ba613d7d0096b8d3ac612f83e3a6fb983363cbbef60cf2ce7ad6e0a9527f05"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.3.6-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "07673cc091def5e50814eafd0465ce98",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 173812,
+        "upload_time": "2026-05-23T19:22:08",
+        "upload_time_iso_8601": "2026-05-23T19:22:08.770685Z",
+        "url": "https://files.pythonhosted.org/packages/ff/5d/ee350d145d5054139bfa10716832f09c406899b23603b7999b9cf503fdce/napari_sam3_assistant-4.3.6-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "9017652f2e02e9e42af7ae0bf25622fd6f2f9238af265582f4b74104babefe62",
+          "md5": "4c30fa37691d8118d3c1781d9cd49444",
+          "sha256": "df6de81e0ec85c3f145dd190fcee1be5b97cfc1b17bb79271e755505e7ac7a95"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.3.6.tar.gz",
+        "has_sig": false,
+        "md5_digest": "4c30fa37691d8118d3c1781d9cd49444",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 165133,
+        "upload_time": "2026-05-23T19:22:10",
+        "upload_time_iso_8601": "2026-05-23T19:22:10.030772Z",
+        "url": "https://files.pythonhosted.org/packages/90/17/652f2e02e9e42af7ae0bf25622fd6f2f9238af265582f4b74104babefe62/napari_sam3_assistant-4.3.6.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "4.3.9": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "1bff4d2a96f2b6effa422a5855b33ddad861e153d7c351f0d5fc57cc0c6ceb15"
+        },
+        "digests": {
+          "blake2b_256": "74267ac45ebdb0c689f226625d29ecd98ef9c62edbebdc0f75bac38a77439782",
+          "md5": "494fe91cdace7a5ad2f3f3cb056a63a1",
+          "sha256": "d3f2903a4f21b37f44bc0b0fb4b5649a072b58f0faabb2bdce7092111e06f61b"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.3.9-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "494fe91cdace7a5ad2f3f3cb056a63a1",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 180875,
+        "upload_time": "2026-05-24T04:54:18",
+        "upload_time_iso_8601": "2026-05-24T04:54:18.145572Z",
+        "url": "https://files.pythonhosted.org/packages/74/26/7ac45ebdb0c689f226625d29ecd98ef9c62edbebdc0f75bac38a77439782/napari_sam3_assistant-4.3.9-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "abdc1b800a28647724b3b7e3cf006f6b51c6790eeb85dbb43e11558227a3e1aa",
+          "md5": "9bc32fbf6867472edb393f06f4d68df2",
+          "sha256": "cf3b445eefda0b77ce36bbe8f7e898cd20e7423c3f44960dad7ea755438f2f81"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.3.9.tar.gz",
+        "has_sig": false,
+        "md5_digest": "9bc32fbf6867472edb393f06f4d68df2",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 173373,
+        "upload_time": "2026-05-24T04:54:19",
+        "upload_time_iso_8601": "2026-05-24T04:54:19.619334Z",
+        "url": "https://files.pythonhosted.org/packages/ab/dc/1b800a28647724b3b7e3cf006f6b51c6790eeb85dbb43e11558227a3e1aa/napari_sam3_assistant-4.3.9.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "4.4.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "f722007356a8e7747cbfb8c113823947f312a1d1c8ae2cfe9a26b38f9185297b"
+        },
+        "digests": {
+          "blake2b_256": "a471ba403e1ffb4cd55e26c3881701589605bb3e10cbaa96daee0bbf97065fd6",
+          "md5": "5017616def8d2be66f90c4c3fb7da021",
+          "sha256": "f56114efd532449fd03f208bcfe54a74b4a6e406a1aa4875cf6c72f9d35c5e9d"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.4.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "5017616def8d2be66f90c4c3fb7da021",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 197762,
+        "upload_time": "2026-05-25T22:24:54",
+        "upload_time_iso_8601": "2026-05-25T22:24:54.820339Z",
+        "url": "https://files.pythonhosted.org/packages/a4/71/ba403e1ffb4cd55e26c3881701589605bb3e10cbaa96daee0bbf97065fd6/napari_sam3_assistant-4.4.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "ba20b19cedcafd47b6904ef5d8cb55b470c8de6c302d38b693102da8e19e4cda",
+          "md5": "211ef173c087c8ec9310d7c65e19d603",
+          "sha256": "e18c584bdbaa0a85ad14199f702abc4fad40b2e6f31f868fcd218e48056e1dee"
+        },
+        "downloads": -1,
+        "filename": "napari_sam3_assistant-4.4.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "211ef173c087c8ec9310d7c65e19d603",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 189416,
+        "upload_time": "2026-05-25T22:24:56",
+        "upload_time_iso_8601": "2026-05-25T22:24:56.263277Z",
+        "url": "https://files.pythonhosted.org/packages/ba/20/b19cedcafd47b6904ef5d8cb55b470c8de6c302d38b693102da8e19e4cda/napari_sam3_assistant-4.4.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "f722007356a8e7747cbfb8c113823947f312a1d1c8ae2cfe9a26b38f9185297b"
+      },
+      "digests": {
+        "blake2b_256": "a471ba403e1ffb4cd55e26c3881701589605bb3e10cbaa96daee0bbf97065fd6",
+        "md5": "5017616def8d2be66f90c4c3fb7da021",
+        "sha256": "f56114efd532449fd03f208bcfe54a74b4a6e406a1aa4875cf6c72f9d35c5e9d"
+      },
+      "downloads": -1,
+      "filename": "napari_sam3_assistant-4.4.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "5017616def8d2be66f90c4c3fb7da021",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.11",
+      "size": 197762,
+      "upload_time": "2026-05-25T22:24:54",
+      "upload_time_iso_8601": "2026-05-25T22:24:54.820339Z",
+      "url": "https://files.pythonhosted.org/packages/a4/71/ba403e1ffb4cd55e26c3881701589605bb3e10cbaa96daee0bbf97065fd6/napari_sam3_assistant-4.4.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "ba20b19cedcafd47b6904ef5d8cb55b470c8de6c302d38b693102da8e19e4cda",
+        "md5": "211ef173c087c8ec9310d7c65e19d603",
+        "sha256": "e18c584bdbaa0a85ad14199f702abc4fad40b2e6f31f868fcd218e48056e1dee"
+      },
+      "downloads": -1,
+      "filename": "napari_sam3_assistant-4.4.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "211ef173c087c8ec9310d7c65e19d603",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.11",
+      "size": 189416,
+      "upload_time": "2026-05-25T22:24:56",
+      "upload_time_iso_8601": "2026-05-25T22:24:56.263277Z",
+      "url": "https://files.pythonhosted.org/packages/ba/20/b19cedcafd47b6904ef5d8cb55b470c8de6c302d38b693102da8e19e4cda/napari_sam3_assistant-4.4.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

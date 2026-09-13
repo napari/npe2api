@@ -1,0 +1,463 @@
+{
+  "info": {
+    "author": "Wulin Teo",
+    "author_email": null,
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 5 - Production/Stable",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "License :: OSI Approved :: MIT License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Multimedia :: Video :: Capture",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-demo-assistant\n\n`napari-demo-assistant` records short napari workflow videos with live visual cues, including arrows, numbered step circles, and optional labels.\n\nIt is designed for scientific-software demos, user support, GitHub issue feedback, tutorials, and plugin workflows such as `napari-sam3-assistant`.\n\nCurrent release: `1.5.0`.\n\n![napari-demo-assistant dock widget](docs/ui.png)\n\nThe plugin focuses on **demo recording**, not screenshot capture. Most operating systems already provide screenshot tools. The missing workflow is a simple napari-native way to record what happened and show users where to click.\n\n## Key features\n\n- Record the full napari window or only the viewer canvas.\n- Export MP4 video with H.264 compression.\n- Save annotated PNG snapshots of the selected capture target.\n- Add arrows, text stamps, and numbered step circles while recording.\n- Add drag-sized circles and rectangles for screenshot-style callouts.\n- Choose filled or transparent circle/rectangle interiors.\n- Use high-contrast annotation color palettes.\n- Attach optional narrative labels to annotations.\n- Use a compact, icon-driven dock widget designed for napari.\n- See drawing state, annotation visibility, napari control state, frame count, and elapsed time at a glance.\n- Right-click or press `Esc` to exit drawing mode.\n- Keep annotations visible after leaving drawing mode.\n- Undo/redo annotations with buttons or `Ctrl+Z` / `Ctrl+Y`.\n- Save timeline step markers beside the video as `.steps.json`.\n- Optionally log clicked napari/plugin controls as an action trail beside the video.\n- Export YouTube-friendly `.srt` captions beside the video.\n- Remember the last output path and annotation color palette.\n\n## Why this plugin exists\n\nFor interactive napari workflows, a short video is often clearer than written instructions. This is especially true for prompting, mask previews, label cleanup, layer switching, and plugin-specific controls.\n\nWritten documentation still matters, but UI changes make screenshots and step-by-step text expensive to maintain. A quick recording of the current napari workflow is often the fastest way to help users follow the correct steps.\n\n`napari-demo-assistant` helps developers, imaging scientists, and support users record clear napari workflow videos with lightweight visual guidance. It is also useful for troubleshooting because users can show exactly what they clicked, what happened, and where an error appeared.\n\nCommercial tools such as Snagit are useful, but they may not be available on Linux, remote workstations, or scientific Python environments. This plugin provides a focused napari-native alternative.\n\n## Typical use cases\n\n- Record short napari workflow tutorials for teaching, onboarding, or plugin documentation.\n- Demonstrate plugin steps, button clicks, layer selection, and mask-cleanup actions.\n- Create video replies for GitHub issues, user support, or collaborator feedback.\n- Let users record bugs, unexpected behavior, or error messages so developers can see exactly what happened.\n\n## Installation\n\n### From PyPI\n\n```bash\npip install napari-demo-assistant\n```\n\n### Development install\n\nFrom the repository root:\n\n```bash\npip install -e .\n```\n\nThen start napari:\n\n```bash\nnapari\n```\n\nOpen the plugin from:\n\n```text\nPlugins > Demo Assistant\n```\n\n## Basic workflow\n\n1. Choose the recording target:\n   - `Full napari window`\n   - `Viewer canvas only`\n2. Choose the output `.mp4` path.\n3. Click `Start Recording`.\n4. Add annotations when needed:\n   - `Arrow`\n   - `Text`\n   - `Step Circle`\n5. Right-click or press `Esc` to exit drawing mode.\n6. Click `Stop` to finish recording.\n\nThe `Add Step Marker` workflow is for the recorded video timeline, not for drawing on the viewer. When used during recording, it updates the current step text for the video overlay and saves the step time/frame beside the video as `.steps.json`.\n\n## Annotation behavior\n\nLive annotations can cover the full napari window, including plugin controls. This allows arrows and step markers to point to either the viewer or the user interface.\n\nDrawing mode is intentionally easy to exit:\n\n- Right-click exits drawing mode.\n- `Esc` exits drawing mode.\n- `Exit` exits drawing mode.\n- Existing annotations stay visible.\n- Napari mouse control is restored after drawing mode is off.\n- `Clear` deletes current annotation marks while keeping the overlay ready.\n- `Remove Overlay` unloads the overlay itself and restores napari control.\n\n## Output notes\n\nThe plugin records MP4 video using `imageio-ffmpeg`, `mss`, OpenCV, and H.264 compression.\n\n`CRF quality` controls compression:\n\n- Lower CRF looks better but creates larger files.\n- Higher CRF creates smaller files with more compression.\n- Example: `23` is higher quality, `28` is the compact default, and `32` is smaller.\n\nA practical default for demos is usually `CRF 28` at `12 FPS`.\n\nWhen action logging is enabled, a `.actions.json` file is saved beside the video. This file records meaningful UI controls clicked during recording, such as buttons, checkboxes, combo boxes, and spin boxes. It is intended as a brief written trail for tutorials, troubleshooting, and GitHub issue feedback. Actions are still logged while recording is paused, using the current time and frame.\n\nWhen SRT caption export is enabled, a plain UTF-8 `.srt` file is saved beside the video for YouTube subtitle upload. Captions use manual step markers by default because they are usually cleaner for viewers. The optional `Include action clicks in captions` setting can add logged control clicks to the captions for troubleshooting videos.\n\n## Limitations\n\n- Intended for napari workflow recording, not general desktop screen capture.\n- Audio recording is not included.\n- Screenshot capture is not a major feature because most operating systems already provide it.\n- Very large windows, high FPS, or low CRF values can produce large video files.\n- Very large capture regions may fail on some Linux/X11 or high-resolution display setups. If full-window recording fails, resize napari smaller, move it fully onto the monitor, or use `Viewer canvas only`.\n\n## License\n\nThis project is released under the MIT License.\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": "napari, screen recording, demo recording, microscopy, image analysis, scientific software",
+    "license": "MIT",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-demo-assistant",
+    "package_url": "https://pypi.org/project/napari-demo-assistant/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-demo-assistant/",
+    "project_urls": {
+      "Homepage": "https://github.com/wulinteousa2-hash/napari-demo-assistant",
+      "Issues": "https://github.com/wulinteousa2-hash/napari-demo-assistant/issues",
+      "Repository": "https://github.com/wulinteousa2-hash/napari-demo-assistant"
+    },
+    "provides_extra": null,
+    "release_url": "https://pypi.org/project/napari-demo-assistant/1.5.0/",
+    "requires_dist": [
+      "napari",
+      "qtpy",
+      "numpy",
+      "mss",
+      "opencv-python",
+      "imageio-ffmpeg"
+    ],
+    "requires_python": ">=3.9",
+    "summary": "A lightweight napari plugin for recording workflow demonstration videos with live annotations and step markers.",
+    "version": "1.5.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 37184580,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "viralvector"
+      }
+    ]
+  },
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "cfe00556a7099be05c8a6cbddbf6ed3d9f278b5c1bad5aa339bae0ac8e4a00f6"
+        },
+        "digests": {
+          "blake2b_256": "09353cec494702e88cd001321719614fa893c0f87f9b73f4ea5fbb181bace213",
+          "md5": "228e445dcc4959642c440693876b4927",
+          "sha256": "80087857df1b0b7d25252fc0b143e2bfd4254463296cfcdf163daf7d2f173e83"
+        },
+        "downloads": -1,
+        "filename": "napari_demo_assistant-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "228e445dcc4959642c440693876b4927",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 17304,
+        "upload_time": "2026-05-16T17:32:06",
+        "upload_time_iso_8601": "2026-05-16T17:32:06.200900Z",
+        "url": "https://files.pythonhosted.org/packages/09/35/3cec494702e88cd001321719614fa893c0f87f9b73f4ea5fbb181bace213/napari_demo_assistant-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "d033a51ae5ba1c56bbfc63cea0c76a96bd6e459aab7670122dd88763d97a1562",
+          "md5": "49b2f5237f65a1d36dbd0688aefce9bd",
+          "sha256": "68d80abf98838521f8d5bfe8b20d5c6c85d8bc838581e9e546e3b91badf3a11c"
+        },
+        "downloads": -1,
+        "filename": "napari_demo_assistant-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "49b2f5237f65a1d36dbd0688aefce9bd",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 17760,
+        "upload_time": "2026-05-16T17:32:07",
+        "upload_time_iso_8601": "2026-05-16T17:32:07.368077Z",
+        "url": "https://files.pythonhosted.org/packages/d0/33/a51ae5ba1c56bbfc63cea0c76a96bd6e459aab7670122dd88763d97a1562/napari_demo_assistant-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.1.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "12882b4dd8c719b69b9844f844d2a1ab0526b7ec76ee2f149022a8316bffed24"
+        },
+        "digests": {
+          "blake2b_256": "a7d918a9c05e19452513fbaf30efdbdd3161871b729e2ce7c17825922b0b7cf3",
+          "md5": "b8e0e1c1735c92792ed747786985ebf3",
+          "sha256": "c35f08e7d2bc882b59d600fc5331af8943dc2efc747863d22da9557a86a8a983"
+        },
+        "downloads": -1,
+        "filename": "napari_demo_assistant-1.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "b8e0e1c1735c92792ed747786985ebf3",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 21827,
+        "upload_time": "2026-05-16T19:49:19",
+        "upload_time_iso_8601": "2026-05-16T19:49:19.500247Z",
+        "url": "https://files.pythonhosted.org/packages/a7/d9/18a9c05e19452513fbaf30efdbdd3161871b729e2ce7c17825922b0b7cf3/napari_demo_assistant-1.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "53f437f9ee3ab05ead2c2c293e52c449bcf18289f9c3e6564369a9f1bbae5584",
+          "md5": "aca57e80e79187e707124d59b345fc5a",
+          "sha256": "91aa37240068bbfc1e8c74e9dff6d87dd35b2417bcfb93c85ffde3e8bea2e1cc"
+        },
+        "downloads": -1,
+        "filename": "napari_demo_assistant-1.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "aca57e80e79187e707124d59b345fc5a",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 22794,
+        "upload_time": "2026-05-16T19:49:20",
+        "upload_time_iso_8601": "2026-05-16T19:49:20.750245Z",
+        "url": "https://files.pythonhosted.org/packages/53/f4/37f9ee3ab05ead2c2c293e52c449bcf18289f9c3e6564369a9f1bbae5584/napari_demo_assistant-1.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.2.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "6f95b0c7dadd8580144d3ed2e0ee724d4e72a7915e602f3c64fda3a01f0edde8"
+        },
+        "digests": {
+          "blake2b_256": "1ed4e777a9069862cb5b29a8b01b1ceb4bd6d82d106f23bc9d16d3ae8e856d83",
+          "md5": "fafe825c7323bcc87f692adc958175ff",
+          "sha256": "8f40f2ac4f8cf5deb17cb66fe4d0cff23008d9f6477d44472bfc0421fa7ce08e"
+        },
+        "downloads": -1,
+        "filename": "napari_demo_assistant-1.2.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "fafe825c7323bcc87f692adc958175ff",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 22914,
+        "upload_time": "2026-05-16T20:33:30",
+        "upload_time_iso_8601": "2026-05-16T20:33:30.984652Z",
+        "url": "https://files.pythonhosted.org/packages/1e/d4/e777a9069862cb5b29a8b01b1ceb4bd6d82d106f23bc9d16d3ae8e856d83/napari_demo_assistant-1.2.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "2204471970073d6ad4b7bb429bab6e5163a80f6726fc83d1741ea1ff540323e6",
+          "md5": "1babb940cfddde6d1062a79b5e693aaf",
+          "sha256": "7e0ad600516f05b86c461519278a99542fb9ee6b78b67d2423f161b4c9b8e1ec"
+        },
+        "downloads": -1,
+        "filename": "napari_demo_assistant-1.2.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "1babb940cfddde6d1062a79b5e693aaf",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 24023,
+        "upload_time": "2026-05-16T20:33:32",
+        "upload_time_iso_8601": "2026-05-16T20:33:32.204086Z",
+        "url": "https://files.pythonhosted.org/packages/22/04/471970073d6ad4b7bb429bab6e5163a80f6726fc83d1741ea1ff540323e6/napari_demo_assistant-1.2.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.2.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "1b25acd012843791c20c19e3f69def8e1f6dd9748d1d8acd4db9627f80286d71"
+        },
+        "digests": {
+          "blake2b_256": "90240e418b73247ead44bacbe8a7c9eecc8caee4cbed02cd43c99a74a2a77b2b",
+          "md5": "8a60a4c2b8c4c0a7b3f579aa78320ee6",
+          "sha256": "4fd0151f5852af6272b0b2ce6c0157d96912afcadcd7da4a646e37f9b9d63c2a"
+        },
+        "downloads": -1,
+        "filename": "napari_demo_assistant-1.2.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "8a60a4c2b8c4c0a7b3f579aa78320ee6",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 23993,
+        "upload_time": "2026-05-19T01:46:31",
+        "upload_time_iso_8601": "2026-05-19T01:46:31.601554Z",
+        "url": "https://files.pythonhosted.org/packages/90/24/0e418b73247ead44bacbe8a7c9eecc8caee4cbed02cd43c99a74a2a77b2b/napari_demo_assistant-1.2.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "72e67113313acb79b6ff7c55135a2f809b55a89ef9320ec1458ec2a26981ff1b",
+          "md5": "f58173348f1d6422cf7e59d6944389a1",
+          "sha256": "6bdad63331f8d41ffdf916f1801d6ff4afea4733c2492c3453227fb5a98d064c"
+        },
+        "downloads": -1,
+        "filename": "napari_demo_assistant-1.2.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "f58173348f1d6422cf7e59d6944389a1",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 25203,
+        "upload_time": "2026-05-19T01:46:33",
+        "upload_time_iso_8601": "2026-05-19T01:46:33.406672Z",
+        "url": "https://files.pythonhosted.org/packages/72/e6/7113313acb79b6ff7c55135a2f809b55a89ef9320ec1458ec2a26981ff1b/napari_demo_assistant-1.2.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.3.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "5abc6695d89e5a90b51aad2df4e521c4483ac3f0b15ee03b12407ae7ce940010"
+        },
+        "digests": {
+          "blake2b_256": "bd6f8648bde302084a8946c4904d436feea9a1854ee3312734b31c43a1633bd5",
+          "md5": "70c73fa87f1c1461d886e09b40d5d5c1",
+          "sha256": "2259192c875151dc097828827334ea2f5aaa761cdd35e1f3cd503c9d71ff9ecd"
+        },
+        "downloads": -1,
+        "filename": "napari_demo_assistant-1.3.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "70c73fa87f1c1461d886e09b40d5d5c1",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 24506,
+        "upload_time": "2026-05-19T02:03:29",
+        "upload_time_iso_8601": "2026-05-19T02:03:29.302296Z",
+        "url": "https://files.pythonhosted.org/packages/bd/6f/8648bde302084a8946c4904d436feea9a1854ee3312734b31c43a1633bd5/napari_demo_assistant-1.3.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "e56af5b34b31fa59e0a607ec8c9c110b96d07601878f5ed48399bc2b631f5460",
+          "md5": "c32ee24a10f603ab1410523663b095dd",
+          "sha256": "b6d401176d8fac9c03b544102685afde323581f41184e1a65851fd5628a3d859"
+        },
+        "downloads": -1,
+        "filename": "napari_demo_assistant-1.3.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "c32ee24a10f603ab1410523663b095dd",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 25698,
+        "upload_time": "2026-05-19T02:03:31",
+        "upload_time_iso_8601": "2026-05-19T02:03:31.880660Z",
+        "url": "https://files.pythonhosted.org/packages/e5/6a/f5b34b31fa59e0a607ec8c9c110b96d07601878f5ed48399bc2b631f5460/napari_demo_assistant-1.3.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.3.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "e107a2228fe72c94dadd98d894f8ab602d32aafbc0d10d30b257fa7af30f57b0"
+        },
+        "digests": {
+          "blake2b_256": "cd5adc8ccd6a74f2510467831dbe6280ede0b3003dcb1b7b3e4611219b1ab949",
+          "md5": "a4529e76551e05b780fd880a9fbd1039",
+          "sha256": "be5ff39d5c0bf5809f3de30c4e3a3760dd0f6a5af638562f61f93bfb3605cf2c"
+        },
+        "downloads": -1,
+        "filename": "napari_demo_assistant-1.3.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "a4529e76551e05b780fd880a9fbd1039",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 24670,
+        "upload_time": "2026-05-19T02:16:53",
+        "upload_time_iso_8601": "2026-05-19T02:16:53.238064Z",
+        "url": "https://files.pythonhosted.org/packages/cd/5a/dc8ccd6a74f2510467831dbe6280ede0b3003dcb1b7b3e4611219b1ab949/napari_demo_assistant-1.3.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "7976adcbc50165a241963406b314c8a1a7e87dfd1b053766b52a80d294c6ea80",
+          "md5": "716e80dce88e6ee730bd6580e8e80c1a",
+          "sha256": "55cae6d989291ed70a4cd8974b7704ef6fb546d4a3d7ad60a928b87271ac3437"
+        },
+        "downloads": -1,
+        "filename": "napari_demo_assistant-1.3.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "716e80dce88e6ee730bd6580e8e80c1a",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 25865,
+        "upload_time": "2026-05-19T02:16:58",
+        "upload_time_iso_8601": "2026-05-19T02:16:58.593641Z",
+        "url": "https://files.pythonhosted.org/packages/79/76/adcbc50165a241963406b314c8a1a7e87dfd1b053766b52a80d294c6ea80/napari_demo_assistant-1.3.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.5.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "0a768263e34303c5f16920dd1f5095d05c3d38fba2d6b5153c39cadecc7a10e2"
+        },
+        "digests": {
+          "blake2b_256": "d9c1fdb92c400d7409355ad21ffe2770da37d19dab41299751add5e87e3d0b59",
+          "md5": "cf9b40d081f262b8c9dde170afd9f190",
+          "sha256": "028e48e8603e51840f0bb1409767f9b0496f90d9ce433f524b232a8cb3ba052f"
+        },
+        "downloads": -1,
+        "filename": "napari_demo_assistant-1.5.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "cf9b40d081f262b8c9dde170afd9f190",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 27078,
+        "upload_time": "2026-05-19T02:55:23",
+        "upload_time_iso_8601": "2026-05-19T02:55:23.706365Z",
+        "url": "https://files.pythonhosted.org/packages/d9/c1/fdb92c400d7409355ad21ffe2770da37d19dab41299751add5e87e3d0b59/napari_demo_assistant-1.5.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "51fd04f70485e5a7cbe97d26da860a7383ab85aa056384c6e3959a1be5238ae6",
+          "md5": "ec8545eb5bf7748dfa5251b495c99395",
+          "sha256": "0756f37d17bbe4f3c5b35d88d1aa147590c04a43d8d6989e92b3cac908e161ce"
+        },
+        "downloads": -1,
+        "filename": "napari_demo_assistant-1.5.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "ec8545eb5bf7748dfa5251b495c99395",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 28487,
+        "upload_time": "2026-05-19T02:55:24",
+        "upload_time_iso_8601": "2026-05-19T02:55:24.849099Z",
+        "url": "https://files.pythonhosted.org/packages/51/fd/04f70485e5a7cbe97d26da860a7383ab85aa056384c6e3959a1be5238ae6/napari_demo_assistant-1.5.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "0a768263e34303c5f16920dd1f5095d05c3d38fba2d6b5153c39cadecc7a10e2"
+      },
+      "digests": {
+        "blake2b_256": "d9c1fdb92c400d7409355ad21ffe2770da37d19dab41299751add5e87e3d0b59",
+        "md5": "cf9b40d081f262b8c9dde170afd9f190",
+        "sha256": "028e48e8603e51840f0bb1409767f9b0496f90d9ce433f524b232a8cb3ba052f"
+      },
+      "downloads": -1,
+      "filename": "napari_demo_assistant-1.5.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "cf9b40d081f262b8c9dde170afd9f190",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.9",
+      "size": 27078,
+      "upload_time": "2026-05-19T02:55:23",
+      "upload_time_iso_8601": "2026-05-19T02:55:23.706365Z",
+      "url": "https://files.pythonhosted.org/packages/d9/c1/fdb92c400d7409355ad21ffe2770da37d19dab41299751add5e87e3d0b59/napari_demo_assistant-1.5.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "51fd04f70485e5a7cbe97d26da860a7383ab85aa056384c6e3959a1be5238ae6",
+        "md5": "ec8545eb5bf7748dfa5251b495c99395",
+        "sha256": "0756f37d17bbe4f3c5b35d88d1aa147590c04a43d8d6989e92b3cac908e161ce"
+      },
+      "downloads": -1,
+      "filename": "napari_demo_assistant-1.5.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "ec8545eb5bf7748dfa5251b495c99395",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.9",
+      "size": 28487,
+      "upload_time": "2026-05-19T02:55:24",
+      "upload_time_iso_8601": "2026-05-19T02:55:24.849099Z",
+      "url": "https://files.pythonhosted.org/packages/51/fd/04f70485e5a7cbe97d26da860a7383ab85aa056384c6e3959a1be5238ae6/napari_demo_assistant-1.5.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

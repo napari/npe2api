@@ -1,0 +1,179 @@
+{
+  "info": {
+    "author": null,
+    "author_email": "Kishore Balaji Sivaprakash <sivaprak@tcd.ie>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 3 - Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Scientific/Engineering :: Bio-Informatics",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-cta \u2014 Calcium Transient Analyzer\r\n\r\nA napari plugin for automated analysis of fluorescence calcium imaging recordings from cardiomyocytes (or any excitable cells). Extracts spatial cluster maps and standard cardiac kinetic metrics \u2014 entirely within the napari viewer, no scripting required.\r\n\r\n---\r\n\r\n## Table of Contents\r\n1. [Overview](#1-overview)\r\n2. [Installation](#2-installation)\r\n3. [Project Structure](#3-project-structure)\r\n4. [Quick Start](#4-quick-start)\r\n5. [Interface Reference](#5-interface-reference)\r\n6. [Parameters Reference](#6-parameters-reference)\r\n7. [Signal Processing Pipeline](#7-signal-processing-pipeline)\r\n8. [Output Data Reference](#8-output-data-reference)\r\n9. [Troubleshooting](#9-troubleshooting)\r\n\r\n---\r\n\r\n## 1. Overview\r\n\r\n### What CTA does\r\n- Loads time-lapse fluorescence microscopy recordings (TIFF or Olympus VSI/ETS format)\r\n- Bins and smooths the image stack to generate per-pixel calcium traces\r\n- Corrects photobleach drift using baseline subtraction\r\n- Clusters cells by waveform shape using **K-Means**; projects results as a colour-coded spatial map\r\n- Extracts standard cardiac kinetic metrics: BPM, amplitude, rise/decay times, contraction duration\r\n- Provides an interactive trace viewer and guided export workflow to Excel (Metrics + Traces sheets)\r\n\r\n### Key features\r\n\r\n| Feature | Detail |\r\n|---------|--------|\r\n| Supported formats | `.tif`, `.tiff`, `.vsi` (Olympus ETS) |\r\n| Spatial binning | Configurable; auto-tunes to image size |\r\n| Baseline correction | Single-exponential fit or valley interpolation |\r\n| Clustering | K-Means on waveform features |\r\n| Batch mode | Multi-file queue with amplitude\u00b2-weighted random sampling |\r\n| Export | Two-sheet Excel: Metrics (kinetics) + Traces (raw signal per time point) |\r\n\r\n---\r\n\r\n## 2. Installation\r\n\r\n### Prerequisites\r\n- Python 3.9 or later\r\n- napari 0.4 or later\r\n\r\n### Install as a napari plugin\r\nFrom the folder containing `pyproject.toml`:\r\n\r\n```bash\r\npip install -e .\r\n```\r\n\r\nThen open napari \u2014 the plugin appears under **Plugins \u2192 CTA Controls**.\r\n\r\n### Dependencies (installed automatically)\r\n```\r\nnapari, numpy, pandas, tifffile, scipy, scikit-image, scikit-learn,\r\nmatplotlib, openpyxl, aicsimageio, imagecodecs\r\n```\r\n\r\n---\r\n\r\n## 3. Project Structure\r\n\r\n```\r\nnapari-cta/\r\n\u251c\u2500\u2500 CTA/\r\n\u2502   \u251c\u2500\u2500 __init__.py        # Plugin entry point\r\n\u2502   \u251c\u2500\u2500 backend.py         # Signal processing, ETS reader, feature extraction, worker threads\r\n\u2502   \u251c\u2500\u2500 widget.py          # napari UI \u2014 left control panel + bottom results panel\r\n\u2502   \u2514\u2500\u2500 napari.yaml        # npe2 plugin manifest\r\n\u2514\u2500\u2500 pyproject.toml         # Package metadata and napari entry point\r\n```\r\n\r\n### Key classes\r\n\r\n| Name | File | Description |\r\n|------|------|-------------|\r\n| `CalciumControls` | widget.py | Left panel widget; file queue, parameters, analysis controls |\r\n| `ResultsWidget` | widget.py | Bottom panel; trace graph + metrics table |\r\n| `AnalysisWorker` | backend.py | QThread; runs full pipeline for one file |\r\n| `extract_detailed_features` | backend.py | Per-signal kinetic feature extraction |\r\n\r\n---\r\n\r\n## 4. Quick Start\r\n\r\n1. Open napari: `python -m napari`\r\n2. Go to **Plugins \u2192 CTA Controls**\r\n3. Click **Add Files...** and select a `.tif` or `.vsi` file\r\n4. With **Auto-Process on Load** checked, analysis starts immediately\r\n5. A cluster colour map appears as an overlay on the image\r\n6. Click any coloured region to select that cell \u2014 its trace and metrics appear in the bottom panel\r\n7. Click **Verify, Save & Go Next** to save that file's cells and move to the next file\r\n8. Click **Export Master Excel** when done with all files\r\n\r\n---\r\n\r\n## 5. Interface Reference\r\n\r\n### Panel 1 \u2014 File Queue\r\n\r\n| Control | Function |\r\n|---------|----------|\r\n| **Add Files...** | Opens file dialog; supports `.tif`, `.tiff`, `.vsi`. Multiple files accepted. |\r\n| **Remove Selected** | Removes the highlighted file from the queue. |\r\n| **File list** | Click any item to load that file immediately. |\r\n| **Auto-Process on Load** | When checked, analysis runs automatically on load. |\r\n\r\n### Panel 2 \u2014 Parameters\r\n\r\n| Control | Function |\r\n|---------|----------|\r\n| **Mode** | Toggle between FPS (frames per second) or Duration (total seconds). |\r\n| **FPS / Dur value** | Numeric value for the selected mode. Auto-filled from TIFF metadata when available. |\r\n| **Bin size** | Spatial bin in pixels (e.g. 16 \u2192 16\u00d716 blocks). Auto-set to 16 for images \u2264 2047 px, 32 for larger. |\r\n| **Baseline model** | `Single Exp`: exponential decay fit (better for long photobleach). `Boundary`: valley interpolation (faster). |\r\n| **Info bar** | Shows frame count, FPS, and total duration for the loaded file. |\r\n\r\n### Panel 3 \u2014 Analysis\r\n\r\n| Control | Function |\r\n|---------|----------|\r\n| **Run Analysis** | Starts analysis with current parameters. Available when a file is loaded. |\r\n| **Progress bar** | Tracks pipeline progress from load \u2192 bin \u2192 correct \u2192 cluster. |\r\n| **Beats detected** | Beat count from the averaged trace after analysis. |\r\n| **Sync index** | Mean pairwise Pearson correlation across active cells (0 = no sync, 1 = perfect sync). |\r\n\r\n### Panel 4 \u2014 Guided Export\r\n\r\n| Control | Function |\r\n|---------|----------|\r\n| **Verify, Save & Go Next** | Saves selected cells from current file into master list, advances to next file. |\r\n| **Verified Cells** | Running count of saved cells across all files. |\r\n| **Export Master Excel** | Saves all verified cells to a `.xlsx` with two sheets: Metrics and Traces. |\r\n\r\n### Panel 5 \u2014 VSI to TIFF Converter\r\n\r\n| Control | Function |\r\n|---------|----------|\r\n| **Convert VSI Batch...** | Converts one or more Olympus `.vsi` files to 16-bit TIFF. |\r\n\r\n### Bottom Panel \u2014 Traces & Metrics\r\n\r\n| Control | Function |\r\n|---------|----------|\r\n| **Max Points** | Maximum number of simultaneously shown traces (1\u201350). |\r\n| **Random Sample** | Randomly selects cells, biased toward high-amplitude signals. |\r\n| **Clear Selection** | Removes all selected cells from graph and table. |\r\n| **Save Graph** | Saves the current trace plot as a 300 dpi PNG. |\r\n| **Click on image** | Clicking a pixel adds/removes that cell's trace. Selected cells show as numbered dots on the cluster map. |\r\n\r\n---\r\n\r\n## 6. Parameters Reference\r\n\r\n| Parameter | Default | Range | Notes |\r\n|-----------|---------|-------|-------|\r\n| FPS | 15.0 | 0.1 \u2013 9999 | Auto-read from TIFF metadata when available |\r\n| Duration | 15.0 | 0.1 \u2013 9999 s | Alternative to FPS |\r\n| Bin size | 16 px | 2 \u2013 128 | Larger = fewer cells, faster; smaller = more cells, slower |\r\n| Baseline model | Single Exp | \u2014 | Single Exp handles photobleach better; Boundary is faster |\r\n| Max Points | 6 | 1 \u2013 50 | Maximum concurrent traces in bottom panel |\r\n\r\n---\r\n\r\n## 7. Signal Processing Pipeline\r\n\r\n### Step 1 \u2014 Image loading\r\n- **TIFF**: `tifffile.imread` \u2192 `(T, H, W)` array; FPS read from ImageJ metadata\r\n- **VSI (Olympus)**: Direct ETS binary reader (no aicsimageio required for the main path); fallback to `aicsimageio`\r\n- 2D single frames promoted to `(1, H, W)`\r\n\r\n### Step 2 \u2014 Intensity normalisation\r\n- Sample 16 frames to compute 0.4th and 99.6th percentile\r\n- Clip to this range and rescale to `[0, 255]`\r\n- Removes hot pixels and outlier frames\r\n\r\n### Step 3 \u2014 Spatial binning and smoothing\r\n- Gaussian blur (\u03c3 = H/204.8) per frame\r\n- `skimage.measure.block_reduce` averages `(bin \u00d7 bin)` tiles\r\n- Output: `(N_cells, T)` signal matrix\r\n\r\n### Step 4 \u2014 Baseline correction\r\nFor each trace:\r\n1. Detect valley anchor points\r\n2. Interpolate baseline through valleys\r\n3. If **Single Exp**: fit `a\u00b7exp(\u2212t/\u03c4) + c` to baseline; subtract fitted curve\r\n4. If **Boundary**: subtract interpolated valley curve directly\r\n\r\n### Step 5 \u2014 Active cell detection\r\nA cell is active if its corrected signal range exceeds 0.5 intensity units.\r\n\r\n### Step 6 \u2014 K-Means clustering\r\n- Features: mean, std, max, skewness, kurtosis of each trace\r\n- `sklearn.cluster.KMeans` (n_init=10) fitted to active cell features\r\n- Inactive cells receive label \u22121\r\n- Labels reshaped to `(H_bin, W_bin)` and displayed as a napari Labels layer\r\n\r\n### Step 7 \u2014 Synchronicity index\r\nMean off-diagonal Pearson correlation across all active cell traces. Values near 1.0 = all cells beat in phase.\r\n\r\n---\r\n\r\n## 8. Output Data Reference\r\n\r\n### Master Excel \u2014 Metrics sheet\r\n\r\n| Column | Unit | Description |\r\n|--------|------|-------------|\r\n| Filename | \u2014 | Source file name |\r\n| ID | \u2014 | Linear cell index |\r\n| X (Binned) | px | Column in binned coordinates |\r\n| Y (Binned) | px | Row in binned coordinates |\r\n| BPM | beats/min | Estimated beat rate |\r\n| Amp | a.u. | Peak amplitude above baseline |\r\n| F0 | a.u. | Resting baseline fluorescence |\r\n| T_ON_ms | ms | Time from transient start to peak |\r\n| T10_ON | ms | Rise time to 10% of peak |\r\n| T50_ON | ms | Rise time to 50% of peak |\r\n| T90_ON | ms | Rise time to 90% of peak |\r\n| T_OFF_ms | ms | Time from peak to transient end |\r\n| T10_OFF | ms | Decay time to 90% level |\r\n| T50_OFF | ms | Half-decay time |\r\n| T90_OFF | ms | Decay time to 10% level |\r\n| CD | ms | Contraction duration |\r\n\r\n### Master Excel \u2014 Traces sheet\r\n\r\nOne row per selected cell. Columns: `Filename`, `ID`, `X (Binned)`, `Y (Binned)`, followed by one column per time point labelled `t=X.XXXs`.\r\n\r\n---\r\n\r\n## 9. Troubleshooting\r\n\r\n### \"Could not load file\" on a VSI file\r\nInstall the optional aicsimageio fallback:\r\n```bash\r\npip install aicsimageio\r\n```\r\n\r\n### Analysis produces no clusters / all cells inactive\r\n- Verify FPS or Duration is correct for the recording\r\n- Try reducing Bin size (e.g. 32 \u2192 16) to increase cell count\r\n- Check that the recording actually contains beating cells\r\n\r\n### Bottom panel not visible\r\nThe bottom panel is added automatically when the plugin loads. If it is hidden, go to **Window** in napari's menu bar and enable **Traces & Metrics**.\r\n\r\n### Plugin not visible in Plugins menu\r\nRe-run the editable install from the folder containing `pyproject.toml`:\r\n```bash\r\npip install -e .\r\n```\r\n\r\n### VSI conversion produces wrong frame intervals\r\nThe converter reads the frame interval from VSI metadata. If not found, it defaults to 1 fps. Correct the FPS manually in Panel 2 after loading the converted TIFF.\r\n\r\n---\r\n\r\n*Developed at Trinity College Dublin*\r\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": "napari, calcium imaging, cardiomyocyte, calcium transient, fluorescence microscopy, image analysis, BPM, electrophysiology",
+    "license": null,
+    "license_expression": "MIT",
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-cta",
+    "package_url": "https://pypi.org/project/napari-cta/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-cta/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/sivaprak-hub/napari-cta/issues",
+      "Homepage": "https://github.com/sivaprak-hub/napari-cta",
+      "Repository": "https://github.com/sivaprak-hub/napari-cta"
+    },
+    "provides_extra": null,
+    "release_url": "https://pypi.org/project/napari-cta/0.1.0/",
+    "requires_dist": [
+      "napari",
+      "numpy",
+      "pandas",
+      "tifffile",
+      "scipy",
+      "scikit-image",
+      "scikit-learn",
+      "matplotlib",
+      "openpyxl",
+      "aicsimageio",
+      "imagecodecs"
+    ],
+    "requires_python": ">=3.9",
+    "summary": "Calcium Transient Analyzer \u2014 automated kinetic analysis of fluorescence calcium imaging in napari",
+    "version": "0.1.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 40001333,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "sivaprak"
+      }
+    ]
+  },
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "e3732d80a617ae0dfb13b0f23d1ebf060b7a0eaead8ec9a3cc3b2671b9dcf9e8"
+        },
+        "digests": {
+          "blake2b_256": "b3679da5f32d1224ad0ae3686c0855112f44d799121039ba0d1cad5cfdaa8bd4",
+          "md5": "48827bd5c20f572f3ab8539c9928702e",
+          "sha256": "fb1ba55bae76aa4a2cf2641d80a9d2ecc3a2c96ecdaeea7c7f2c0602eda97e32"
+        },
+        "downloads": -1,
+        "filename": "napari_cta-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "48827bd5c20f572f3ab8539c9928702e",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 41771,
+        "upload_time": "2026-08-13T20:45:33",
+        "upload_time_iso_8601": "2026-08-13T20:45:33.553080Z",
+        "url": "https://files.pythonhosted.org/packages/b3/67/9da5f32d1224ad0ae3686c0855112f44d799121039ba0d1cad5cfdaa8bd4/napari_cta-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "9fe9a6e1b64abbe1dc5aee896f9b76806fad8f42d1ec827c2a6b042c011afdd8",
+          "md5": "888216ef79ccce21f87d4ed07af25ded",
+          "sha256": "7e5218c24bccf86c8ecbc3a96999bce2d740f0e287705126bb43731139ef7dae"
+        },
+        "downloads": -1,
+        "filename": "napari_cta-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "888216ef79ccce21f87d4ed07af25ded",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 41129,
+        "upload_time": "2026-08-13T20:45:34",
+        "upload_time_iso_8601": "2026-08-13T20:45:34.866992Z",
+        "url": "https://files.pythonhosted.org/packages/9f/e9/a6e1b64abbe1dc5aee896f9b76806fad8f42d1ec827c2a6b042c011afdd8/napari_cta-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "e3732d80a617ae0dfb13b0f23d1ebf060b7a0eaead8ec9a3cc3b2671b9dcf9e8"
+      },
+      "digests": {
+        "blake2b_256": "b3679da5f32d1224ad0ae3686c0855112f44d799121039ba0d1cad5cfdaa8bd4",
+        "md5": "48827bd5c20f572f3ab8539c9928702e",
+        "sha256": "fb1ba55bae76aa4a2cf2641d80a9d2ecc3a2c96ecdaeea7c7f2c0602eda97e32"
+      },
+      "downloads": -1,
+      "filename": "napari_cta-0.1.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "48827bd5c20f572f3ab8539c9928702e",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.9",
+      "size": 41771,
+      "upload_time": "2026-08-13T20:45:33",
+      "upload_time_iso_8601": "2026-08-13T20:45:33.553080Z",
+      "url": "https://files.pythonhosted.org/packages/b3/67/9da5f32d1224ad0ae3686c0855112f44d799121039ba0d1cad5cfdaa8bd4/napari_cta-0.1.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "9fe9a6e1b64abbe1dc5aee896f9b76806fad8f42d1ec827c2a6b042c011afdd8",
+        "md5": "888216ef79ccce21f87d4ed07af25ded",
+        "sha256": "7e5218c24bccf86c8ecbc3a96999bce2d740f0e287705126bb43731139ef7dae"
+      },
+      "downloads": -1,
+      "filename": "napari_cta-0.1.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "888216ef79ccce21f87d4ed07af25ded",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.9",
+      "size": 41129,
+      "upload_time": "2026-08-13T20:45:34",
+      "upload_time_iso_8601": "2026-08-13T20:45:34.866992Z",
+      "url": "https://files.pythonhosted.org/packages/9f/e9/a6e1b64abbe1dc5aee896f9b76806fad8f42d1ec827c2a6b042c011afdd8/napari_cta-0.1.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

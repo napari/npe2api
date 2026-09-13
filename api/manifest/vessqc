@@ -1,0 +1,106 @@
+{
+  "name": "vessqc",
+  "display_name": "VessQC",
+  "visibility": "public",
+  "icon": "",
+  "categories": [
+    "Segmentation",
+    "Image Processing"
+  ],
+  "schema_version": "0.2.1",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "vessqc.make_qwidget",
+        "title": "Make vessqc QWidget",
+        "python_name": "vessqc:VessQcWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "vessqc.make_qwidget",
+        "display_name": "Vessel Quality Check",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "vessqc",
+    "version": "1.0.0",
+    "dynamic": [
+      "license-file"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "Quality control plugin for vessel segmentation in napari",
+    "description": "# VessQC: Uncertainty-Guided Curation for 3D Segmentation\n\n[![License BSD-3](https://img.shields.io/pypi/l/VessQC.svg?color=green)](https://github.com/MMV-Lab/VessQC/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/VessQC.svg?color=green)](https://pypi.org/project/VessQC)\n[![Python Version](https://img.shields.io/pypi/pyversions/VessQC.svg?color=green)](https://python.org)\n[![tests](https://github.com/MMV-Lab/VessQC/workflows/tests/badge.svg)](https://github.com/MMV-Lab/VessQC/actions)\n[![codecov](https://codecov.io/gh/MMV-Lab/VessQC/branch/main/graph/badge.svg)](https://codecov.io/gh/MMV-Lab/VessQC)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/VessQC)](https://napari-hub.org/plugins/VessQC)\n\n<!-- 2.1 [File Naming Conventions](#file-naming-conventions)--->\n<!-- 2.2 [Generating Uncertainty Maps](#generating-uncertainty-maps)--->\n## Table of Contents\n\n1. [Overview](#Overview)\n2. [Input Data Requirements](#input-data-requirements)\n3. [Installation and Launch](#installation-and-launch)\n4. [Curation Workflow](#curation-workflow)\n5. [Save Behavior](#save-behavior)\n6. [Citation](#citation)\n7. [Contributing](#contributing)\n8. [License](#license)\n9. [Issues](#issues)\n\n## Overview\nOverview\nThis repository provides the implementation of **VessQC**, introduced in the manuscript *\"Bridging 3D Deep Learning and Uncertainty-Guided Curation for Analysis and High-Quality Segmentation Ground Truth\"*, submitted to **ISBI 2026**.\n\n**VessQC** is an open-source, human-in-the-loop tool for efficient, uncertainty-guided curation of large 3D volumetric segmentations, with a particular emphasis on complex vascular structures. By leveraging e.g. pixel-wise or topology-aware uncertainty estimation, VessQC prioritizes regions most likely to contain segmentation errors, thereby significantly improving error recall and reducing manual effort.\n\nThis [napari] plugin was generated using [Cookiecutter] and the [@napari] [cookiecutter-napari-plugin] template.\n\n## Input Data Requirements\n\nVessQC requires three core input files per volume, all of which must be perfectly aligned and of identical spatial dimensions. Supported file formats include `.tiff` and `.nii` and all related variants (e.g., `.ome.tif`, `.tif`, `.nii.gz`).\n\n1. **Raw Image Volume:** The original 3D image data (e.g., lightsheet microscopy stack).  \n2. **Segmentation Mask:** A binary segmentation mask of the target structures.  \n3. **Uncertainty Map:** A voxel-wise uncertainty map highlighting regions of potential segmentation error.\n\n### File Naming Conventions\n\nVessQC automatically detects corresponding files based on naming patterns. Each file type must follow the conventions below:\n\n| File Type           | Required Suffix   | Example Filename            |\n|---------------------|------------------|------------------------------|\n| Raw Image Volume    | `_IM`            | `sample01_IM.tiff`           |\n| Segmentation Mask   | `_segPred`       | `sample01_segPred.tiff`      |\n| Uncertainty Map     | `_uncertainty`   | `sample01_uncertainty.tiff`  |\n\n> Ensure that all files belonging to the same sample share the same prefix (e.g., `sample01`) to allow automatic matching during loading.\n\n### Generating Uncertainty Maps\n\nUncertainty maps can be generated using models provided in our supplementary repository:\n[VessQC-Supplementary](https://github.com/SimPutt/VessQC-Supplementary)\n\nThis repository includes both **pixel-wise** and **topology-aware** uncertainty pipelines. Please follow its documentation to produce the required uncertainty maps before running VessQC.\n\n## Installation and Launch\n\n**VessQC** is a plugin that runs within the, open-source image viewer, **napari**. Please follow the steps below to install both napari and the VessQC plugin.\n\n### 1. Install napari\n\nVessQC requires a working installation of **napari** (Python 3.10-3.13 recommended). For the latest and most detailed instructions, always refer to the official [napari installation guide](https://napari.org/dev/tutorials/fundamentals/quick_start.html).\n\n#### Option A: Python/pip Installation\n\nIf you are familiar with Python environments, you can install napari via pip inside a clean virtual environment:\n\n1. **Create a virtual environment:**\n    ```bash\n    conda create -y -n napari-env -c conda-forge python=3.11\n    conda activate napari-env\n    ```\n2. **Install napari:**\n    ```bash\n    python -m pip install 'napari[all]'\n    ```\n\n#### Option B: Bundled App\n\nFor a simple installation without managing Python environments, download the bundled application for your operating system (e.g., version 0.6.7):\n* **Linux:** `napari-0.6.7-Linux-x86_64.sh`\n* **macOS (Intel):** `napari-0.6.7-macOS-x86_64.pkg`\n* **macOS (Apple Silicon):** `napari-0.6.7-macOS-arm64.pkg`\n* **Windows:** `napari-0.6.7-Windows-x86_64.exe`\n\nOther artifacts can be found on the [napari Releases page](https://github.com/napari/napari/releases).\n\n### 2. Install VessQC\n\nOnce napari is installed and your environment is active (for Option A), you can install **VessQC** via [pip]:\n\n```bash\npip install VessQC\n```\n\nOr install the latest development version directly from GitHub:\n\n```bash\npip install git+https://github.com/MMV-Lab/VessQC.git\n```\n\nOnce installation is complete, launch [napari] and start VessQC through the Plugins menu.\n\n## Curation Workflow\n\nThe typical workflow involves loading the three required files and then iterating through the following steps:\n\n1. **Load Data:** Use the File menu to load the Image, Segmentation, and Uncertainty Map.\n\n2. **Navigate to High-Uncertainty segments:**  VessQC shows a **ranked list of segmented branches** sorted by their associated uncertainty scores and allows direct **selection of a branch** from the list to automatically crop the area and center to that location\n\n3. **Review and Edit:** Examine the 3D and 2D views at the high-uncertainty location. If an error is identified, use the provided annotation tools to correct the segmentation mask in the 2D viewer.\n\n4. **Iterate:** Continue navigating to the next highest uncertain location and repeat the review and edit process.\n\n5. **Save:** Once the curation process is complete, save the updated segmentation according to your chosen save mode (see below).\n\n## Save Behavior\nVessQC offers two save modes to manage the progress and finalization of curated segmentations:\n\n### 1. Temporary Save\n* The folder structure remains unchanged.\n* Newly curated files are saved with the suffix ```_temp```. Example: ```sample01_segPred_temp.tiff```\n* When the same dataset is reloaded, VessQC automatically prioritizes the ```_temp```version for continued editing.\n\n### 2. Final Save\n* The finalized image, segmentation, uncertainty map, and curated segmentation are moved to a new ```done/``` subdirectory.\n\n* The moved items are removed from the main directory, ensuring they no longer appear in the list of available images during subsequent sessions.\n\n* This two-tier saving mechanism supports both iterative refinement and systematic completion tracking during large-scale curation projects.\n\n## Citation\nIf you use the VessQC tool or the methodologies, please cite the corresponding paper:\n\nTODO\n<!---\n@article{puettmann2025vessqc,\n  title={Bridging 3D Deep Learning and Uncertainty-Guided Curation for Analysis and High-Quality Segmentation Ground Truth},\n  author={Püttmann, Simon and Sánchez Contreras, Jonathan Jair and Kowitz, Lennart and Lampen, Peter and Gupta, Saumya and Panzeri, Davide and Hagemann, Nina and Xiong, Qiaojie and Hermann, Dirk and Chen, Chao and Chen, Jianxu},\n  journal={Proceedings of the IEEE International Symposium on Biomedical Imaging (ISBI)},\n  year={2025}}\n```\n-->\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"VessQC\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n[file an issue]: https://github.com/MMV-Lab/VessQC/issues\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": null,
+    "download_url": null,
+    "author": null,
+    "author_email": "Peter Lampen <lampen@isas.de>, Lennart Kowitz <lennart.kowitz@isas.de>",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "Copyright (c) 2024, Peter Lampen\nAll rights reserved.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n\n* Redistributions of source code must retain the above copyright notice, this\n  list of conditions and the following disclaimer.\n\n* Redistributions in binary form must reproduce the above copyright notice,\n  this list of conditions and the following disclaimer in the documentation\n  and/or other materials provided with the distribution.\n\n* Neither the name of copyright holder nor the names of its\n  contributors may be used to endorse or promote products derived from\n  this software without specific prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\"\nAND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\nIMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\nDISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE\nFOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\nDAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR\nSERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER\nCAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,\nOR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\nOF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n",
+    "classifier": [
+      "Development Status :: 4 - Beta",
+      "Intended Audience :: Science/Research",
+      "Framework :: napari",
+      "Topic :: Scientific/Engineering :: Image Processing",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Operating System :: OS Independent",
+      "License :: OSI Approved :: BSD License"
+    ],
+    "requires_dist": [
+      "joblib>=1.2",
+      "napari>=0.4.18",
+      "numpy>=1.23",
+      "qtpy>=2.3",
+      "scipy>=1.9",
+      "superqt>=0.7.3",
+      "SimpleITK>=2.2",
+      "tifffile>=2023.2.28",
+      "pyqt5; extra == \"qt\"",
+      "tox; extra == \"testing\"",
+      "pytest; extra == \"testing\"",
+      "pytest-cov; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\""
+    ],
+    "requires_python": ">=3.9",
+    "requires_external": null,
+    "project_url": [
+      "Homepage, https://github.com/MMV-Lab/VessQC",
+      "Bug Tracker, https://github.com/MMV-Lab/VessQC/issues",
+      "Documentation, https://github.com/MMV-Lab/VessQC#README.md",
+      "Source Code, https://github.com/MMV-Lab/VessQC",
+      "User Support, https://github.com/MMV-Lab/VessQC/issues"
+    ],
+    "provides_extra": [
+      "qt",
+      "testing"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}

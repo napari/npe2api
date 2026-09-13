@@ -1,0 +1,131 @@
+{
+  "name": "napari-gribberish",
+  "display_name": "Gribberish",
+  "visibility": "public",
+  "icon": null,
+  "categories": [
+    "IO",
+    "Utilities"
+  ],
+  "schema_version": "0.2.1",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-gribberish.get_reader",
+        "title": "Open GRIB data with Gribberish",
+        "python_name": "napari_gribberish._reader:napari_get_reader",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-gribberish.make_sample_data",
+        "title": "Load HRRR sample data",
+        "python_name": "napari_gribberish._sample_data:make_sample_data",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-gribberish.make_variable_selector",
+        "title": "GRIB variable selector",
+        "python_name": "napari_gribberish._widget:GribVariableSelector",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": [
+      {
+        "command": "napari-gribberish.get_reader",
+        "filename_patterns": [
+          "*.grib",
+          "*.grib2",
+          "*.grb",
+          "*.grb2"
+        ],
+        "accepts_directories": false
+      }
+    ],
+    "writers": null,
+    "widgets": [
+      {
+        "command": "napari-gribberish.make_variable_selector",
+        "display_name": "GRIB variable selector",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": [
+      {
+        "command": "napari-gribberish.make_sample_data",
+        "key": "hrrr-sfc",
+        "display_name": "HRRR surface (remote)"
+      }
+    ],
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "napari-gribberish",
+    "version": "0.1.0",
+    "dynamic": [
+      "license-file"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "Read GRIB (GRIB1/GRIB2) weather and ocean data into napari using gribberish",
+    "description": "# napari-gribberish\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-gribberish.svg?color=green)](https://github.com/ianhi/napari-gribberish/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-gribberish.svg?color=green)](https://pypi.org/project/napari-gribberish)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-gribberish.svg?color=green)](https://python.org)\n[![tests](https://github.com/ianhi/napari-gribberish/workflows/tests/badge.svg)](https://github.com/ianhi/napari-gribberish/actions)\n[![codecov](https://codecov.io/gh/ianhi/napari-gribberish/branch/main/graph/badge.svg)](https://codecov.io/gh/ianhi/napari-gribberish)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-gribberish)](https://napari-hub.org/plugins/napari-gribberish)\n[![npe2](https://img.shields.io/badge/plugin-npe2-blue?link=https://napari.org/stable/plugins/index.html)](https://napari.org/stable/plugins/index.html)\n\nOpen **GRIB** (GRIB1 / GRIB2) weather and ocean forecast files in [napari], powered by\nthe fast Rust-based [gribberish] decoder.\n\n![HRRR 2 m temperature over the continental US](docs/images/hero-hrrr-temperature.png)\n\n> *HRRR 2 m temperature over the continental US — the Rocky Mountains show up cold on the left.*\n\nEvery variable in a file becomes an image layer, and any non-spatial dimensions\n(forecast time, vertical level, ensemble member, …) become interactive slider axes.\n\n## Features\n\n- 📂 **Reader** — drag-and-drop or `File ▸ Open` any `.grib`, `.grib2`, `.grb`, or\n  `.grb2` file. Each variable loads as its own layer with units and long name\n  attached, and the horizontal grid mapped to layer `scale`/`translate` when the\n  coordinates are regular.\n- 🎛️ **Multi-dimensional navigation** — time / level / member dimensions become\n  napari sliders, so you can scrub or animate through a forecast.\n- 🧭 **Smart colormaps** — sequential fields use `plasma`; directional fields\n  (wave/wind direction, 0–360°) get a *cyclic* colormap so 0° and 360° match.\n- 🧰 **Variable selector widget** — choose exactly which variables to load and how\n  to display them (separate / blended / grid).\n- 🌐 **Sample data** — stream a slice of NOAA HRRR straight from the public AWS\n  Open Data bucket, showcasing gribberish's remote + indexed reading.\n\n## Installation\n\n```bash\npip install \"napari-gribberish[all]\"   # includes napari + Qt\n```\n\nIf you already have napari installed:\n\n```bash\npip install napari-gribberish\n```\n\nLatest development version:\n\n```bash\npip install \"git+https://github.com/ianhi/napari-gribberish.git\"\n```\n\n> **Note:** requires napari ≥ 0.8 and Python ≥ 3.12.\n\n## Usage\n\n### Opening a file\n\nDrag a GRIB file onto the napari window, or use `File ▸ Open`. From Python:\n\n```python\nimport napari\n\nviewer = napari.Viewer()\nviewer.open(\"forecast.grib2\", plugin=\"napari-gribberish\")\nnapari.run()\n```\n\nTo avoid stacking many opaque layers on top of each other, the reader loads every\nvariable but reveals only the first — toggle the others with the 👁 icons in the\nlayer list.\n\n### Multi-dimensional data\n\nFiles with extra dimensions (here ERA5 with forecast time × pressure level ×\nensemble member) expose one slider per non-spatial axis. Drag them, or press ▶ to\nanimate.\n\n![ERA5 opened in napari with time, level and member sliders](docs/images/dimension-sliders-era5.png)\n\n### Variable selector widget\n\n`Plugins ▸ GRIB variable selector` opens a dock where you pick a file, select which\nvariables to load, and choose a display mode:\n\n- **separate** — one layer per variable, only the first visible (best for unrelated fields)\n- **blend** — all selected variables visible with additive blending (overlay a few fields)\n- **grid** — all selected variables side by side for comparison\n\n![The GRIB variable selector dock widget](docs/images/variable-selector-widget.png)\n\nGrid mode is handy for comparing related fields at a glance — note the wave-direction\npanel (bottom-left) automatically uses a cyclic colormap:\n\n![Four wave variables compared side by side in grid mode](docs/images/grid-compare-wave.png)\n\n### Sample data\n\n`File ▸ Open Sample ▸ Gribberish ▸ HRRR surface (remote)` streams 2 m temperature and\n10 m wind gust from the public NOAA HRRR archive on AWS (requires network access).\n\n### Reading GRIB without napari\n\nThe plugin is a thin layer over gribberish's xarray backend, so the same files open\ndirectly with:\n\n```python\nimport xarray as xr\n\nds = xr.open_dataset(\"forecast.grib2\", engine=\"gribberish\", collapse_groups=True)\n```\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n```bash\nuv run pytest          # run the test suite\nuv run napari          # launch napari with the plugin installed\n```\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-gribberish\" is free and open source software.\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[gribberish]: https://github.com/mpiannucci/gribberish\n[GRIB]: https://en.wikipedia.org/wiki/GRIB\n[copier]: https://copier.readthedocs.io/en/stable/\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[napari-plugin-template]: https://github.com/napari/napari-plugin-template\n[file an issue]: https://github.com/ianhi/napari-gribberish/issues\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": null,
+    "download_url": null,
+    "author": "Ian Hunt-Isaak",
+    "author_email": "ian@earthmover.io",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": null,
+    "classifier": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Programming Language :: Python :: 3.14",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "requires_dist": [
+      "numpy",
+      "magicgui",
+      "qtpy",
+      "gribberish[xarray]>=1.5",
+      "napari[all]; extra == \"all\""
+    ],
+    "requires_python": ">=3.12",
+    "requires_external": null,
+    "project_url": [
+      "Bug Tracker, https://github.com/ianhi/napari-gribberish/issues",
+      "Documentation, https://github.com/ianhi/napari-gribberish#README.md",
+      "Source Code, https://github.com/ianhi/napari-gribberish",
+      "User Support, https://github.com/ianhi/napari-gribberish/issues"
+    ],
+    "provides_extra": [
+      "all"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}

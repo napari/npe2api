@@ -1,0 +1,139 @@
+{
+  "name": "napari-storm",
+  "display_name": "Napari STORM Plugin",
+  "visibility": "public",
+  "icon": null,
+  "categories": [],
+  "schema_version": "0.3.0",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-storm.show_dock",
+        "title": "Show STORM Analysis Dock",
+        "python_name": "napari_storm._dock_widget:napari_storm",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-storm.read",
+        "title": "Read localization file",
+        "python_name": "napari_storm._reader:napari_get_reader",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": [
+      {
+        "command": "napari-storm.read",
+        "filename_patterns": [
+          "*.h5",
+          "*.hdf5",
+          "*.hdf",
+          "*.yaml",
+          "*.csv",
+          "*.smlm",
+          "*.npy",
+          "*.json",
+          "*.mfx",
+          "*.mat",
+          "*.pmx",
+          "*.ns",
+          "*.test"
+        ],
+        "accepts_directories": true
+      }
+    ],
+    "writers": null,
+    "widgets": [
+      {
+        "command": "napari-storm.show_dock",
+        "display_name": "Napari STORM",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configurations": {}
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "napari-storm",
+    "version": "2.1.0",
+    "dynamic": [
+      "license-file"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "A Napari plugin for visualizing single-molecule localization microscopy data.",
+    "description": "![napari-storm](https://raw.githubusercontent.com/napari-storm/napari-storm/main/resources/napari_storm_logo.png)\n\n# napari-storm\n\nA plugin for interactive visualization of Single Molecule Localization Microscopy (SMLM) datasets with Napari.  This package uses the (currently experimental) Napari Particles layer developed by Martin Weigert (https://github.com/maweigert).\n\n----------------------------------\n\n\n## Installation\n\nnapari-storm needs Python 3.10–3.12. It's recommended to install it into its\nown environment, e.g. with conda:\n\n    conda create --name napari-storm python=3.11 pip\n\n    conda activate napari-storm\n\nThen install from PyPI. The `[pyqt6]` extra brings in napari's Qt backend;\nwithout an extra, no Qt binding is installed and napari cannot open a window\n(use `[pyside6]` if you prefer PySide):\n\n    pip install \"napari-storm[pyqt6]\"\n\nTo work on napari-storm itself, install from a clone instead:\n\n    git clone https://github.com/napari-storm/napari-storm\n\n    cd napari-storm\n\n    pip install -e \".[dev,pyqt6]\"\n\n\n\n## Usage\n\n### Starting napari-storm\nTo start the program, run the napari_start.py, e.g. by navigating in your anaconda prompt to the location of the\nnapri_start.py (root) and run it with:\n\n    python.exe napari_start.py\n\nOr simply start the napari version that was just installed into your environment, e.g. again using the conda prompt:\n\n    napari\n\nand then opening napari-storm in the plugins tab.\n\n### Importing data into napari-storm\nDrag & drop onto the dock widget supported file types (Picasso, ThunderSTORM, MINFLUX, etc.) directly into napari or use the import file dialog.\n\nMINFLUX data is read in both Abberior layouts: the original one, and the flat\nlayout Imspector writes from **24.10** onwards. The newer one is accepted as\n`.npy`, `.json`, `.mat`, `.zarr`, and as pyMINFLUX's own `.pmx`. Which layout a\nfile uses is determined from the file, so there is nothing to choose. A `.zarr`\ndataset is a folder rather than a file; since a file dialog cannot select one,\npick any file inside it and the whole dataset opens.\n\nIf your file is not covered:\n\n\n- one can either write a custom import function by following the instructions in the src/napari_storm/Custom_Import.py\n- try the (experimental) file recognition import button, which will try to extract the headers of your file\nand lets you assign your data. This should work for any .hdf5, .csv or npy. file.\n\n### Basic usage\nWhen a dataset is imported you should be able to see 4 tabs in the widget: Data Controls, File Infos, Decorators and\nData Filter. In the data controls tab you can change the render range, load\na new file, merge the currently open dataset with another that from another file and change your view.\nThere is also the option to change the colormap, adjust the contrast with the slider beneath the colormap picking as well\nas adding a scalebar or active rainbow colorcoding (for 3D datasets).\n\nThe File Infos tab simply displays information on the currently opened datasets.\n\nIn the decorators tab you can activate a grid plane and customize a lot of things for the grid as well as the render range box.\n\nLast but not least is the data filter tab, which gives you the option to filter your displayed datasets by all properties available in the dataset.\nThere you will find two sliders, where the top one lets you change the x-range of the displayed property and the other one controlls\nthe cut-off/cut-on of your filter. To apply the filter settings to the dataset simply press\none of the apply buttons.\n\n### Tips\n- Double click or drag the tabs anywhere to detach them from the window. This way you have an overview over all of them at the same time\n- For STORM/PALM ... datasets, it is possible to change the rendering options in the data controls tab to \"variabel gaussian mode\", to include the uncertainty values or photon counts for the rendering\n- hold shift and drag the mouse for panning\n\n## Documentation\nThere is a custom Q&A GPT for this repo specifically, available at\nhttps://chatgpt.com/g/g-68aebb6371a88191877094b48513d690-napari-storm-q-a\n\nTo access the documentation install the following packages (once):\n```bash\npip install mkdocs mkdocs-material mkdocstrings[python] pymdown-extensions\n```\n\nThen build and serve the docs:\n\n```bash\nmkdocs serve\n```\n\n## Acknowledgements\n\nnapari-storm builds on work by others, with thanks:\n\n- **[napari-particles](https://github.com/maweigert/napari-particles)** by Martin\n  Weigert (BSD-3-Clause), the experimental Particles layer this plugin renders\n  through. The modules derived from it live in\n  `src/napari_storm/napari_particles/` and carry their own `NOTICE`.\n- **[pyMINFLUX](https://pyminflux.ethz.ch/)** by the Single Cell Facility of the\n  D-BSSE, ETH Zurich ([source](https://github.com/bsse-scf/pyMINFLUX),\n  Apache-2.0). Its `MinFluxReaderV2` is the reference for the MINFLUX layout\n  Imspector writes from 24.10 onwards: the version markers that tell the two\n  layouts apart, the per-container quirks, and the `.pmx` structure were all\n  read from it. napari-storm's reader is an independent implementation and\n  contains no pyMINFLUX code, but it would not exist without theirs having\n  documented the format first.\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[file an issue]: https://github.com/napari-storm/napari-storm/issues\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": "https://github.com/napari-storm/napari-storm",
+    "download_url": null,
+    "author": "Lenny Reinkensmeier",
+    "author_email": "lrein@live.de",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "BSD-3-Clause",
+    "classifier": [
+      "Framework :: napari",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Operating System :: OS Independent",
+      "License :: OSI Approved :: BSD License"
+    ],
+    "requires_dist": [
+      "napari<0.8,>=0.4",
+      "qtpy",
+      "numpy",
+      "pandas",
+      "matplotlib",
+      "imageio",
+      "tifffile",
+      "h5py",
+      "vispy",
+      "scikit-image",
+      "scikit-learn",
+      "pillow",
+      "scipy",
+      "zarr<3",
+      "napari[pyqt6]<0.8,>=0.4; extra == \"pyqt6\"",
+      "PySide6; extra == \"pyside6\"",
+      "pre-commit; extra == \"dev\"",
+      "pytest; extra == \"dev\"",
+      "pytest-cov; extra == \"dev\"",
+      "pytest-qt; extra == \"dev\"",
+      "napari[all]<0.8,>=0.4; extra == \"dev\"",
+      "tox; extra == \"dev\"",
+      "twine; extra == \"dev\"",
+      "build; extra == \"dev\""
+    ],
+    "requires_python": ">=3.10",
+    "requires_external": null,
+    "project_url": [
+      "Bug Tracker, https://github.com/napari-storm/napari-storm/issues",
+      "Documentation, https://github.com/napari-storm/napari-storm/tree/main/docs",
+      "Source Code, https://github.com/napari-storm/napari-storm",
+      "User Support, https://github.com/napari-storm/napari-storm/issues"
+    ],
+    "provides_extra": [
+      "pyqt6",
+      "pyside6",
+      "dev"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}

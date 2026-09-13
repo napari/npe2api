@@ -1,0 +1,129 @@
+{
+  "name": "napari-macrophage",
+  "display_name": "napari-macrophage",
+  "visibility": "public",
+  "icon": null,
+  "categories": [],
+  "schema_version": "0.3.0",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-macrophage.upload_image",
+        "title": "Load Image + Mask",
+        "python_name": "napari_macrophage.build_widgets:make_add_layer_from_tif_widget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-macrophage.upload_zarr",
+        "title": "Load from zarr",
+        "python_name": "napari_macrophage.build_widgets:make_add_layer_from_zarr_widget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-macrophage.edit_overlay_all",
+        "title": "Edit CD206 + DAPI + Masks",
+        "python_name": "napari_macrophage.build_widgets:make_edit_overlay_all_widget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-macrophage.run_watershed_for_all_rois",
+        "title": "Run Watershed for All ROIs",
+        "python_name": "napari_macrophage.build_widgets:make_run_watershed_for_all_rois_widget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "napari-macrophage.upload_image",
+        "display_name": "Load Image + Mask",
+        "autogenerate": false
+      },
+      {
+        "command": "napari-macrophage.upload_zarr",
+        "display_name": "Load from Zarr",
+        "autogenerate": false
+      },
+      {
+        "command": "napari-macrophage.edit_overlay_all",
+        "display_name": "Edit CD206 + DAPI + Masks",
+        "autogenerate": false
+      },
+      {
+        "command": "napari-macrophage.run_watershed_for_all_rois",
+        "display_name": "Run Watershed for All ROIs",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configurations": {}
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "napari-macrophage",
+    "version": "0.0.5",
+    "dynamic": [
+      "license-file"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "A napari plugin for interactive 3D macrophage image analysis: mask editing, Otsu/Watershed segmentation, YOLO bbox export, and morphology analysis.",
+    "description": "# napari-macrophage\n\n[![PyPI](https://img.shields.io/pypi/v/napari-macrophage)](https://pypi.org/project/napari-macrophage/)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-macrophage)](https://pypi.org/project/napari-macrophage/)\n[![License](https://img.shields.io/badge/license-Apache%202.0-blue)](https://github.com/Amirhk-dev/macrophage-napari/blob/main/LICENSE)\n[![napari hub](https://img.shields.io/badge/napari%20hub-napari--macrophage-blue)](https://napari-hub.org/plugins/napari-macrophage)\n\nA napari plugin for interactive 3D macrophage image analysis — mask editing, Otsu/Watershed segmentation, YOLO bounding box export, and morphology analysis.\n\n<div align=\"center\">\n  <table>\n    <tr>\n      <td align=\"center\"><img src=\"docs/3D_generation.gif\" width=\"500\" alt=\"Demo\" /></td>\n      <td align=\"center\"><img src=\"docs/3D_rendered_sample.png\" width=\"300\" alt=\"3D rendered macrophage\" /></td>\n    </tr>\n    <tr>\n      <td align=\"center\"><em>3D segmentation of macrophages overlaid with the volume</em></td>\n      <td align=\"center\"><em>3D rendering of a single macrophage</em></td>\n    </tr>\n  </table>\n</div>\n\n## Features\n\n- Load multi-channel TIFF/Zarr images (CD206, DAPI, Collagen, F480) and 3D instance masks\n- Click-to-select objects; delete per-slice or globally; rename, renumber IDs\n- Draw ROI → Otsu preview (adjustable threshold) → optional Watershed → save 3D mask\n- ONNX-based automatic macrophage detection (CD206 + DAPI)\n- Annotate and export/import bounding boxes in YOLO `.txt` format\n- Per-object morphology analysis: volume, surface area, sphericity → CSV export\n- Isotropic resampling of image and mask\n- 3D rendering of individual macrophages (smoothed surface mesh, adjustable shading, black/white background, PNG screenshot, mesh export to STL/OBJ/PLY)\n\n## Installation\n\n**With uv (recommended)**\n```bash\nuv sync                       # core deps\nuv sync --extra detection     # + onnxruntime for ONNX detection\nuv run napari\n```\n\n**With pip**\n```bash\npip install napari-macrophage\nnapari\n```\n\n**Development**\n```bash\npip install -e .\nnapari\n```\n\n## Usage\n\n1. **Load data** — Plugins → napari-macrophage → Load Image + Mask\n2. **Edit masks** — Plugins → napari-macrophage → Edit CD206 + DAPI + Masks\n3. **Segment** — Draw ROI bbox → Otsu preview → Save or Run Watershed\n4. **Detect** — Run ONNX detection on CD206 + DAPI slices\n5. **Render 3D** — In the *3D Visualization* panel, enter an Object ID and click *Generate 3D* to open the macrophage in a new window; save a PNG or export the mesh (STL/OBJ/PLY) from that window\n6. **Export** — YOLO `.txt` bounding boxes or morphology `.csv`\n\nInput shape: `(Z, Y, X)` for grayscale, `(C, Z, Y, X)` for multi-channel (C ∈ {2, 5}).\n\n## Companion pipeline\n\nFor fully automated end-to-end segmentation (YOLO + SAM2 + Cellpose), see:\n**[macrophage-image-processor](https://github.com/Amirhk-dev/macrophage-image-processor)**\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": null,
+    "download_url": null,
+    "author": null,
+    "author_email": "Amirhossein Kardoost <kardoostamirhossein@gmail.com>",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": null,
+    "classifier": [
+      "Framework :: napari",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Operating System :: OS Independent"
+    ],
+    "requires_dist": [
+      "napari[all]",
+      "magicgui",
+      "tifffile",
+      "numpy",
+      "scipy",
+      "scikit-image",
+      "zarr",
+      "torch; extra == \"detection\"",
+      "onnxruntime; extra == \"detection\""
+    ],
+    "requires_python": ">=3.10",
+    "requires_external": null,
+    "project_url": null,
+    "provides_extra": [
+      "detection"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}

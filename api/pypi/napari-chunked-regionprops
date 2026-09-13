@@ -1,0 +1,651 @@
+{
+  "info": {
+    "author": null,
+    "author_email": "Laurent Guerard <laurent.guerard@unibas.ch>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 3 - Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+      "Programming Language :: Python :: 3",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-chunked-regionprops\n\n[![PyPI](https://img.shields.io/pypi/v/napari-chunked-regionprops.svg)](https://pypi.org/project/napari-chunked-regionprops/)\n[![Python versions](https://img.shields.io/pypi/pyversions/napari-chunked-regionprops.svg)](https://pypi.org/project/napari-chunked-regionprops/)\n[![License: GPLv3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)\n\nOut-of-core, chunk-parallel regionprops-style measurements for **huge**\nlabelled images inside napari.\n\n`skimage.measure.regionprops` needs the full labelled + intensity array in\nRAM \u2014 fine for one tile, not for a hundred-thousand-object OME-ZARR volume.\nThis plugin measures a `Labels` layer directly against an `Image` layer,\nworking straight off the layers' backing dask/zarr arrays: each chunk is\naggregated locally (one `scipy.ndimage` call per chunk, over whichever\nobject ids are actually inside it), then every chunk's small partial sums\nare merged in a single pass \u2014 without ever materializing the whole volume,\nand without task count scaling with object count (see *Keeping RAM and\ntime bounded* below).\n\n## Install\n\n```bash\npip install napari-chunked-regionprops\n```\n\n## Use\n\n1. Open your image + labels in napari (e.g. via\n   [patchworks](https://github.com/imcf/patchworks)'s\n   `view_in_napari(...)`, which also sets each layer's physical `scale`, so\n   measurements come out in \u00b5m \u2014 not just pixels).\n2. `Plugins \u2192 Chunked Regionprops \u2192 Measure`.\n3. Pick the Image and Labels layer, check the measurements you want, hit\n   **Measure**. The UI stays responsive throughout (runs in a background\n   thread) with a progress bar; every measurement is also written to CSV\n   automatically (no dialog) \u2014 see *Output* below.\n4. Browse the table in the dock widget, or **Save CSV\u2026** to pick a different\n   location (which then becomes the target for future automatic saves too).\n\nThe measured table is also written to the Labels layer's `.features`, so you\ncan immediately color the layer by any measured value via napari's built-in\n\"color by feature\" for Labels layers.\n\nRe-clicking **Measure** with the same layers/level/stats is instant \u2014 results\nare cached for the session (in memory; cleared when the widget/viewer\ncloses).\n\n### Output\n\nEvery successful measurement is written to CSV automatically, no dialog:\n`<save folder>/<labels layer name>_measurements.csv`, where the save folder\nis the last one you picked via **Save CSV\u2026**, or the current working\ndirectory if you never have.\n\n### Keeping RAM and time bounded\n\nTwo things matter for a huge volume, both handled automatically:\n\n- **Chunking.** Every array is rechunked to a bounded size before measuring\n  *only if it needs it* \u2014 a plain numpy-backed layer (or any dask array that\n  isn't already sensibly chunked) would otherwise become **one giant\n  chunk**, silently forcing the whole volume into RAM. A layer that's\n  already a well-chunked OME-ZARR pyramid is left untouched \u2014 rechunking an\n  already-fine array is itself expensive (real data movement), not free\n  insurance.\n- **Chunk-local aggregation, not per-object tasks.** Every chunk is visited\n  once per stat-computation phase, regardless of how many objects or stats\n  are requested: one `scipy.ndimage` call per chunk computes partial sums\n  (count, sum, min, max, position sums, \u2026) for whichever ids are actually\n  present in that chunk, then all chunks' partial sums are merged in a\n  single final pass. Task count scales with chunk count, not object count \u2014\n  an earlier version of this plugin used a per-object-id design instead,\n  which built one task *per requested object id*; for a dataset with 100k+\n  objects that made the task graph itself the bottleneck, independent of\n  data size. Progress is reported per dask task within each of the two phases\n  (scanning, then computing) \u2014 real counts from the running computation,\n  not a fixed per-stat tick.\n- **Skipping the scan.** If the Labels layer came from\n  [patchworks](https://github.com/imcf/patchworks)'s `view_in_napari(...)`\n  with `sequential_labels=True` at merge time, the layer carries a\n  known-object-count hint. At pyramid level 0 (full resolution) this lets\n  the plugin skip the whole-volume \"scanning for objects\" pass entirely \u2014\n  the status bar says \"using known object count (N) \u2014 skipping scan\" when\n  this kicks in. Not trusted at coarser pyramid levels, since downsampling\n  can drop small objects.\n\nThe **Workers** spin box controls how many threads that combined computation\nuses (default `min(4, cpu count)`). More workers can mean more decoded\nchunks held in memory at once \u2014 turn it down (even to 1) if a measurement is\nstill using too much RAM; turn it up if you have RAM to spare and want it\nfaster.\n\n## Measurements\n\n| Stat | Needs intensity image | Notes |\n|---|---|---|\n| `area_voxels` | no | voxel count (+ `area_um2`/`area_um3` if the layer is calibrated) |\n| `centroid` | no | geometric centroid, one column per axis (+ `_um` twins) |\n| `weighted_centroid` | yes | intensity-weighted centroid |\n| `mean_intensity` | yes | |\n| `std_intensity` | yes | |\n| `min_intensity` | yes | |\n| `max_intensity` | yes | |\n\n## Multiscale / pyramid layers\n\nA \"Pyramid level\" spin box lets you measure a coarser level first \u2014 much\nfaster, handy to sanity-check the setup before running the full-resolution\npass on a very large volume.\n\n## Development\n\n```bash\ngit clone https://github.com/imcf/napari-chunked-regionprops\ncd napari-chunked-regionprops\npip install -e \".[dev]\"\npytest\n```\n\n## License\n\nGNU General Public License v3.0 (GPL-3.0). See [LICENSE](LICENSE).\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": null,
+    "home_page": null,
+    "keywords": "bioimage, dask, image processing, napari, regionprops",
+    "license": "GPL-3.0-only",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-chunked-regionprops",
+    "package_url": "https://pypi.org/project/napari-chunked-regionprops/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-chunked-regionprops/",
+    "project_urls": {
+      "Homepage": "https://github.com/imcf/napari-chunked-regionprops"
+    },
+    "provides_extra": [
+      "dev"
+    ],
+    "release_url": "https://pypi.org/project/napari-chunked-regionprops/0.14.0/",
+    "requires_dist": [
+      "dask[array]>=2023.1.0",
+      "magicgui",
+      "napari>=0.7.1",
+      "numpy>=1.24",
+      "pandas>=1.5",
+      "qtpy",
+      "scipy>=1.9",
+      "pyqt5; extra == \"dev\"",
+      "pytest; extra == \"dev\"",
+      "pytest-qt; extra == \"dev\""
+    ],
+    "requires_python": ">=3.9",
+    "summary": "Out-of-core regionprops-style measurements for huge labelled images in napari",
+    "version": "0.14.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 39215250,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "lguerard"
+      }
+    ]
+  },
+  "releases": {
+    "0.10.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "c4e9f811c86dff787aadc1f000e5470278b813100cf34d9068f0a09782d7f2b7"
+        },
+        "digests": {
+          "blake2b_256": "b92cc560526c2999cb4106001d69931a4d6cecf3beb57695e43d12ee64c3eb14",
+          "md5": "5581392bdceabefbbd8455a983c06f91",
+          "sha256": "91d2ee31b4432cf2e0a2bca230a442afb6bd19e7f5fdaa3127e7f4cef35a4b1b"
+        },
+        "downloads": -1,
+        "filename": "napari_chunked_regionprops-0.10.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "5581392bdceabefbbd8455a983c06f91",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 37217,
+        "upload_time": "2026-07-13T14:33:41",
+        "upload_time_iso_8601": "2026-07-13T14:33:41.155709Z",
+        "url": "https://files.pythonhosted.org/packages/b9/2c/c560526c2999cb4106001d69931a4d6cecf3beb57695e43d12ee64c3eb14/napari_chunked_regionprops-0.10.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "b00c7ee98674145184da0dfc576b27c985e3a1f5df187151d762860619ce605d",
+          "md5": "098a76d53d76995637e162509d7f9fdb",
+          "sha256": "1646c3cddde710c4361affe05db2e765973224e7bf4266bf7b43f756a29a03d9"
+        },
+        "downloads": -1,
+        "filename": "napari_chunked_regionprops-0.10.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "098a76d53d76995637e162509d7f9fdb",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 43071,
+        "upload_time": "2026-07-13T14:33:42",
+        "upload_time_iso_8601": "2026-07-13T14:33:42.406204Z",
+        "url": "https://files.pythonhosted.org/packages/b0/0c/7ee98674145184da0dfc576b27c985e3a1f5df187151d762860619ce605d/napari_chunked_regionprops-0.10.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.11.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "050bea6c0c63b2fd6c552f2f25cb35fb7feee387dc53677e96c61e8cd7bc9a02"
+        },
+        "digests": {
+          "blake2b_256": "0db7f48f843f3e1f20427778d42aec26f181138f91db6df42516ccbd56f21b35",
+          "md5": "711a286ebc76cbb7215ffe6fedbe2a61",
+          "sha256": "98346f8deedeba04db9afaebb36b2b584172c940eda98aba60726622a8b0b9f1"
+        },
+        "downloads": -1,
+        "filename": "napari_chunked_regionprops-0.11.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "711a286ebc76cbb7215ffe6fedbe2a61",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 37811,
+        "upload_time": "2026-07-15T09:13:08",
+        "upload_time_iso_8601": "2026-07-15T09:13:08.026004Z",
+        "url": "https://files.pythonhosted.org/packages/0d/b7/f48f843f3e1f20427778d42aec26f181138f91db6df42516ccbd56f21b35/napari_chunked_regionprops-0.11.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "0b062ed6a7331fc338b27d7c687e471388462c2123e44f2d984a7d0b6e4c28ec",
+          "md5": "141358dc3bc6de7e91e5d15a96bb33f7",
+          "sha256": "50b5dc135fa67ef2cf65bff07840266399112c7b39a848935f64e697a2753944"
+        },
+        "downloads": -1,
+        "filename": "napari_chunked_regionprops-0.11.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "141358dc3bc6de7e91e5d15a96bb33f7",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 44109,
+        "upload_time": "2026-07-15T09:13:09",
+        "upload_time_iso_8601": "2026-07-15T09:13:09.150418Z",
+        "url": "https://files.pythonhosted.org/packages/0b/06/2ed6a7331fc338b27d7c687e471388462c2123e44f2d984a7d0b6e4c28ec/napari_chunked_regionprops-0.11.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.11.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "c81a610672961b0f980a321f3eb2ef1d2f7146db43d390b98180002180ff31b9"
+        },
+        "digests": {
+          "blake2b_256": "9673ad1a82b4be90a64a55eafc4c7b06ff097ca4db8f4f361837204b84b8758e",
+          "md5": "74ec068baff917a66a8271b2839e0ea5",
+          "sha256": "04f4ca1dd04db2e81e5ab62f3a87d32d94f4b94ebabe8b6f2c908bf931fc2e6a"
+        },
+        "downloads": -1,
+        "filename": "napari_chunked_regionprops-0.11.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "74ec068baff917a66a8271b2839e0ea5",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 38076,
+        "upload_time": "2026-07-16T09:01:45",
+        "upload_time_iso_8601": "2026-07-16T09:01:45.877297Z",
+        "url": "https://files.pythonhosted.org/packages/96/73/ad1a82b4be90a64a55eafc4c7b06ff097ca4db8f4f361837204b84b8758e/napari_chunked_regionprops-0.11.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "922872b3df390bb1983278051d0a1ba6f13d13a1e62b57ef0f90cc1a27ee2657",
+          "md5": "7103415618a78ba8925c229fe67d7ea8",
+          "sha256": "9e786fe10d5d632879a1fdbacb7842f55627f9e8f73fe511bfa7330fc49cb684"
+        },
+        "downloads": -1,
+        "filename": "napari_chunked_regionprops-0.11.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "7103415618a78ba8925c229fe67d7ea8",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 44456,
+        "upload_time": "2026-07-16T09:01:47",
+        "upload_time_iso_8601": "2026-07-16T09:01:47.177264Z",
+        "url": "https://files.pythonhosted.org/packages/92/28/72b3df390bb1983278051d0a1ba6f13d13a1e62b57ef0f90cc1a27ee2657/napari_chunked_regionprops-0.11.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.12.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "0fafdacf7155ad3c284ff5c3a691aad909e037e19050494fe5342a5dfc361ef2"
+        },
+        "digests": {
+          "blake2b_256": "d7d74280a080ee423f39b0482ed6626973631a2f01ae5099cb905b28c4aa8a94",
+          "md5": "04d0bf25f2f378a7d872b882f7b1cdef",
+          "sha256": "476d0dbe4ea0ec378417ea41c20677072b05c58162f2dee336ec90bf31667b98"
+        },
+        "downloads": -1,
+        "filename": "napari_chunked_regionprops-0.12.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "04d0bf25f2f378a7d872b882f7b1cdef",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 38629,
+        "upload_time": "2026-07-20T13:57:19",
+        "upload_time_iso_8601": "2026-07-20T13:57:19.808217Z",
+        "url": "https://files.pythonhosted.org/packages/d7/d7/4280a080ee423f39b0482ed6626973631a2f01ae5099cb905b28c4aa8a94/napari_chunked_regionprops-0.12.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "ebb3e9a0959b100adac9281456e0ca0cc138ce1c7984363ccd8c7214306b8684",
+          "md5": "54ac5499160c5ce8da130485be9105b6",
+          "sha256": "8b321dec2d62c4aa8169376b5a6b25a66b975ebd6def90d2bfe61b703d63e25c"
+        },
+        "downloads": -1,
+        "filename": "napari_chunked_regionprops-0.12.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "54ac5499160c5ce8da130485be9105b6",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 45378,
+        "upload_time": "2026-07-20T13:57:21",
+        "upload_time_iso_8601": "2026-07-20T13:57:21.101598Z",
+        "url": "https://files.pythonhosted.org/packages/eb/b3/e9a0959b100adac9281456e0ca0cc138ce1c7984363ccd8c7214306b8684/napari_chunked_regionprops-0.12.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.13.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "d47603862139adcf9a67a83ccec1ad56e7a47311159bb026ee105b4425a31765"
+        },
+        "digests": {
+          "blake2b_256": "8061996876c0994443fafc59d5eb1e9cc892c69a9d4868842863b6bad6096817",
+          "md5": "db197c8cdc3f44e157ba6d6c9801d68c",
+          "sha256": "b410868dc618a83da7d2c0a558cb86f7533d7e8dfea43bbfa46ee2422489298b"
+        },
+        "downloads": -1,
+        "filename": "napari_chunked_regionprops-0.13.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "db197c8cdc3f44e157ba6d6c9801d68c",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 39656,
+        "upload_time": "2026-07-21T09:14:43",
+        "upload_time_iso_8601": "2026-07-21T09:14:43.138664Z",
+        "url": "https://files.pythonhosted.org/packages/80/61/996876c0994443fafc59d5eb1e9cc892c69a9d4868842863b6bad6096817/napari_chunked_regionprops-0.13.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "1f0351bcacce4ff9831379e520790561af4bd7c61a32ab92d09d787325c97b1d",
+          "md5": "5aeaf8bc3480f6e98080eb66bec7a51e",
+          "sha256": "4e4d9a609e139cb309add6736a5f7ab53c2ac13ae08c99bd5cbbb45ef9b2603d"
+        },
+        "downloads": -1,
+        "filename": "napari_chunked_regionprops-0.13.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "5aeaf8bc3480f6e98080eb66bec7a51e",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 46858,
+        "upload_time": "2026-07-21T09:14:44",
+        "upload_time_iso_8601": "2026-07-21T09:14:44.329950Z",
+        "url": "https://files.pythonhosted.org/packages/1f/03/51bcacce4ff9831379e520790561af4bd7c61a32ab92d09d787325c97b1d/napari_chunked_regionprops-0.13.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.14.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "2fcb9fe080011b07fa91bec84edddd3c6e5f731d1beeb035146c7d7e7c08bd06"
+        },
+        "digests": {
+          "blake2b_256": "33a622fc90eb1ee568a942b74d2624e5a4fbb7e0828bce3dddf14d88e3278414",
+          "md5": "908d70484e7abf5b4d4a389306faaa46",
+          "sha256": "7fcf1692e5eb409a84984a87a9df7588b26ac7d876315b88c36cf0477f47cb92"
+        },
+        "downloads": -1,
+        "filename": "napari_chunked_regionprops-0.14.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "908d70484e7abf5b4d4a389306faaa46",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 40157,
+        "upload_time": "2026-07-21T09:49:13",
+        "upload_time_iso_8601": "2026-07-21T09:49:13.919033Z",
+        "url": "https://files.pythonhosted.org/packages/33/a6/22fc90eb1ee568a942b74d2624e5a4fbb7e0828bce3dddf14d88e3278414/napari_chunked_regionprops-0.14.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "80f831fa9a38127dedc23394579f72095384a0defe327f00d58fcb43009ae956",
+          "md5": "3962db67c3274357192c2629ff3dbfea",
+          "sha256": "b903c7d366adf19a610b2a962648d0ad6d903bc8b265a7dd6ce9febae6e71b5e"
+        },
+        "downloads": -1,
+        "filename": "napari_chunked_regionprops-0.14.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "3962db67c3274357192c2629ff3dbfea",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 47754,
+        "upload_time": "2026-07-21T09:49:15",
+        "upload_time_iso_8601": "2026-07-21T09:49:15.159636Z",
+        "url": "https://files.pythonhosted.org/packages/80/f8/31fa9a38127dedc23394579f72095384a0defe327f00d58fcb43009ae956/napari_chunked_regionprops-0.14.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.5.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "b2750fd529a809c4d72894ab80daa62c8487c40977b057916cefb8ca1b71e906"
+        },
+        "digests": {
+          "blake2b_256": "26fca4ecae5011c8a54c808c6d9420d7ea3629ed1d7fc8506f4667f2d5b6e21a",
+          "md5": "7b3bbdf65bc3955c263524f2b6171ccf",
+          "sha256": "563fc309bd6ee5cd49b62e17a8b399ff272f4200d9ed4228cd0c9c2a753b6cdc"
+        },
+        "downloads": -1,
+        "filename": "napari_chunked_regionprops-0.5.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "7b3bbdf65bc3955c263524f2b6171ccf",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 31799,
+        "upload_time": "2026-07-02T13:17:56",
+        "upload_time_iso_8601": "2026-07-02T13:17:56.429049Z",
+        "url": "https://files.pythonhosted.org/packages/26/fc/a4ecae5011c8a54c808c6d9420d7ea3629ed1d7fc8506f4667f2d5b6e21a/napari_chunked_regionprops-0.5.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "18fc0ca67b97e0b4becb1cf769a5416c0787c9972d07fd528a20e86ad7643226",
+          "md5": "6f153efe841d051a4629b5500e4448d0",
+          "sha256": "87dfbbd8122ef671d9bea7861970de283ce12661407d4c9076dbd075c7a2cc0f"
+        },
+        "downloads": -1,
+        "filename": "napari_chunked_regionprops-0.5.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "6f153efe841d051a4629b5500e4448d0",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 35609,
+        "upload_time": "2026-07-02T13:17:57",
+        "upload_time_iso_8601": "2026-07-02T13:17:57.690108Z",
+        "url": "https://files.pythonhosted.org/packages/18/fc/0ca67b97e0b4becb1cf769a5416c0787c9972d07fd528a20e86ad7643226/napari_chunked_regionprops-0.5.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.6.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "d426e02a5013a28d85e9f858851671b4c145ac57f6edeaf110b6cdde720baf52"
+        },
+        "digests": {
+          "blake2b_256": "ed856d6ce84c285bd2480a40b5dc32407d8b0623483981924598a73af1f38a1d",
+          "md5": "41acd2022fcfa8b0bf1d0fa09d0bb22c",
+          "sha256": "eb0407b5a6e3c7cb8fd3b14b09d63bb761448d1b47ad469d5c9120e250304095"
+        },
+        "downloads": -1,
+        "filename": "napari_chunked_regionprops-0.6.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "41acd2022fcfa8b0bf1d0fa09d0bb22c",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 32748,
+        "upload_time": "2026-07-13T07:34:07",
+        "upload_time_iso_8601": "2026-07-13T07:34:07.801669Z",
+        "url": "https://files.pythonhosted.org/packages/ed/85/6d6ce84c285bd2480a40b5dc32407d8b0623483981924598a73af1f38a1d/napari_chunked_regionprops-0.6.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "a4f0effcfe888f7ef615a0f32a41e5a416e67b89c643ba048ac63e9d4a71b72c",
+          "md5": "75620c978c5135501a5c5a6cf684d533",
+          "sha256": "b82688e5be6ea8bdbda979cccb9bd8e6c7ab44a165f0dc8883136107fc07b698"
+        },
+        "downloads": -1,
+        "filename": "napari_chunked_regionprops-0.6.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "75620c978c5135501a5c5a6cf684d533",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 36837,
+        "upload_time": "2026-07-13T07:34:09",
+        "upload_time_iso_8601": "2026-07-13T07:34:09.053503Z",
+        "url": "https://files.pythonhosted.org/packages/a4/f0/effcfe888f7ef615a0f32a41e5a416e67b89c643ba048ac63e9d4a71b72c/napari_chunked_regionprops-0.6.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.7.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "e3055f1a648845fda3a3d9571fed54e58bc3cd2268867bfee2b6bf7984c25ff8"
+        },
+        "digests": {
+          "blake2b_256": "a6ae83a430af63c83a7c4974b6b37c7f557ca5a59ac985f9e3b88ab80b09f057",
+          "md5": "7f757c399c32697bc14fb6ae789bfe5b",
+          "sha256": "fd9524f64c962ecc74078a6467e8207eb7c98109f9c7ec50fd1a7ae8a012456f"
+        },
+        "downloads": -1,
+        "filename": "napari_chunked_regionprops-0.7.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "7f757c399c32697bc14fb6ae789bfe5b",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 33670,
+        "upload_time": "2026-07-13T09:22:42",
+        "upload_time_iso_8601": "2026-07-13T09:22:42.183399Z",
+        "url": "https://files.pythonhosted.org/packages/a6/ae/83a430af63c83a7c4974b6b37c7f557ca5a59ac985f9e3b88ab80b09f057/napari_chunked_regionprops-0.7.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "3dee0826671c2265d328ecff30513a60eda495041aaf67197de7a18bf583d5b2",
+          "md5": "5a9ee11c18cb2a1b6b6a108c18ccef63",
+          "sha256": "a7fa77d079e3bf27d2078aefcaa60f4e4bc996f95f241b28e816c197823f0c89"
+        },
+        "downloads": -1,
+        "filename": "napari_chunked_regionprops-0.7.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "5a9ee11c18cb2a1b6b6a108c18ccef63",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 38182,
+        "upload_time": "2026-07-13T09:22:43",
+        "upload_time_iso_8601": "2026-07-13T09:22:43.631435Z",
+        "url": "https://files.pythonhosted.org/packages/3d/ee/0826671c2265d328ecff30513a60eda495041aaf67197de7a18bf583d5b2/napari_chunked_regionprops-0.7.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.8.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "9c9a0ce533539f49db7e8ac58a62971f7e2fc434c3970e246012ec6c23aa4800"
+        },
+        "digests": {
+          "blake2b_256": "3e1bbfcb09b0fd98c81af21d124f9997420dfc8a33b8dd33438c50d909ed5252",
+          "md5": "146de603cd56c364357a8cceb54d8657",
+          "sha256": "e9f1b937233b7c60e815adb8be220f4361a91f23d562d5e90993a0d00e614551"
+        },
+        "downloads": -1,
+        "filename": "napari_chunked_regionprops-0.8.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "146de603cd56c364357a8cceb54d8657",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 34402,
+        "upload_time": "2026-07-13T10:49:35",
+        "upload_time_iso_8601": "2026-07-13T10:49:35.894676Z",
+        "url": "https://files.pythonhosted.org/packages/3e/1b/bfcb09b0fd98c81af21d124f9997420dfc8a33b8dd33438c50d909ed5252/napari_chunked_regionprops-0.8.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "0c47ee16b6444e811a8113cb313da0121665e0c7202365df864bead20b9d105e",
+          "md5": "26cc8f95d9feef5534329c53ef4ff5d7",
+          "sha256": "a2746853741f1e962c66c8d92db8ae2194819593093887c2d2516cb3f08898e7"
+        },
+        "downloads": -1,
+        "filename": "napari_chunked_regionprops-0.8.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "26cc8f95d9feef5534329c53ef4ff5d7",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 38984,
+        "upload_time": "2026-07-13T10:49:36",
+        "upload_time_iso_8601": "2026-07-13T10:49:36.971208Z",
+        "url": "https://files.pythonhosted.org/packages/0c/47/ee16b6444e811a8113cb313da0121665e0c7202365df864bead20b9d105e/napari_chunked_regionprops-0.8.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.9.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "4ee2e4221de3e2661d697c51ba61d2b785f41567d3375c2b3a79d6da20068005"
+        },
+        "digests": {
+          "blake2b_256": "e661d6e1c808da007a74ba8ddb9aa3098c6ad1c2afbff6788cd8c909ce6b3f68",
+          "md5": "654998ffc4d8b1a507e63a5092cdd2e9",
+          "sha256": "b9ad9e1a5834856884eb4a6130ea07abdec369b28a2578cec21ca9a2f9cd482d"
+        },
+        "downloads": -1,
+        "filename": "napari_chunked_regionprops-0.9.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "654998ffc4d8b1a507e63a5092cdd2e9",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 36723,
+        "upload_time": "2026-07-13T13:12:55",
+        "upload_time_iso_8601": "2026-07-13T13:12:55.320795Z",
+        "url": "https://files.pythonhosted.org/packages/e6/61/d6e1c808da007a74ba8ddb9aa3098c6ad1c2afbff6788cd8c909ce6b3f68/napari_chunked_regionprops-0.9.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "367ba5f488b45c36e216500886942288e4f3885feb0588a87f2f708aeae836be",
+          "md5": "af048046fc3e53a3b247165b3ddf9153",
+          "sha256": "261a042ff79654990e473bba776eb41e71e3f00fbd898fb70ee291583bce2c9a"
+        },
+        "downloads": -1,
+        "filename": "napari_chunked_regionprops-0.9.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "af048046fc3e53a3b247165b3ddf9153",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 42134,
+        "upload_time": "2026-07-13T13:12:56",
+        "upload_time_iso_8601": "2026-07-13T13:12:56.680024Z",
+        "url": "https://files.pythonhosted.org/packages/36/7b/a5f488b45c36e216500886942288e4f3885feb0588a87f2f708aeae836be/napari_chunked_regionprops-0.9.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "2fcb9fe080011b07fa91bec84edddd3c6e5f731d1beeb035146c7d7e7c08bd06"
+      },
+      "digests": {
+        "blake2b_256": "33a622fc90eb1ee568a942b74d2624e5a4fbb7e0828bce3dddf14d88e3278414",
+        "md5": "908d70484e7abf5b4d4a389306faaa46",
+        "sha256": "7fcf1692e5eb409a84984a87a9df7588b26ac7d876315b88c36cf0477f47cb92"
+      },
+      "downloads": -1,
+      "filename": "napari_chunked_regionprops-0.14.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "908d70484e7abf5b4d4a389306faaa46",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.9",
+      "size": 40157,
+      "upload_time": "2026-07-21T09:49:13",
+      "upload_time_iso_8601": "2026-07-21T09:49:13.919033Z",
+      "url": "https://files.pythonhosted.org/packages/33/a6/22fc90eb1ee568a942b74d2624e5a4fbb7e0828bce3dddf14d88e3278414/napari_chunked_regionprops-0.14.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "80f831fa9a38127dedc23394579f72095384a0defe327f00d58fcb43009ae956",
+        "md5": "3962db67c3274357192c2629ff3dbfea",
+        "sha256": "b903c7d366adf19a610b2a962648d0ad6d903bc8b265a7dd6ce9febae6e71b5e"
+      },
+      "downloads": -1,
+      "filename": "napari_chunked_regionprops-0.14.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "3962db67c3274357192c2629ff3dbfea",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.9",
+      "size": 47754,
+      "upload_time": "2026-07-21T09:49:15",
+      "upload_time_iso_8601": "2026-07-21T09:49:15.159636Z",
+      "url": "https://files.pythonhosted.org/packages/80/f8/31fa9a38127dedc23394579f72095384a0defe327f00d58fcb43009ae956/napari_chunked_regionprops-0.14.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

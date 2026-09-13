@@ -1,0 +1,95 @@
+{
+  "name": "seu-3d",
+  "display_name": "seu-3d",
+  "visibility": "public",
+  "icon": null,
+  "categories": [],
+  "schema_version": "0.2.1",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "seu-3d.load_atlas",
+        "title": "Make seu-3d Viewer Widget",
+        "python_name": "seu_3d.load:ReadAdata",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "seu-3d.load_atlas",
+        "display_name": "Load spatial transcriptomics data",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "seu-3d",
+    "version": "2.0.0",
+    "dynamic": [
+      "license-file"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "3d spatial visualization napari plugin",
+    "description": "# SEU-3D\n\n3D visualization and analysis plugin for spatial transcriptomics embryo data based on napari.\n\n[![PyPI version](https://img.shields.io/pypi/v/seu-3d.svg)](https://pypi.org/project/seu-3d/)\n[![License](https://img.shields.io/pypi/l/seu-3d.svg)](https://github.com/DingAnZhong/SEU-3D)\n\n## Features\n\n- **3D Visualization**: Render spatial transcriptomics data in 3D with napari\n- **Tissue Filtering**: Filter cells by tissue type, slice, germ layer, and XYZ range\n- **Gene Expression Analysis**: Single, dual, and triple gene expression coloring\n- **Similarity Search**: Find genes with similar expression patterns\n- **Moran's I Spatial Autocorrelation**: Compute spatial gene enrichment\n- **Differential Expression**: Identify tissue-specific marker genes\n- **Annotation**: Cluster and label cell populations in 3D space\n- **Surface Reconstruction**: Generate 3D surfaces for tissue regions (pyvista)\n- **Automatic Color Mapping**: Deterministic tissue colors from a discrete colormap\n\n## Installation\n\n```bash\npip install seu-3d\n```\n\nThen open napari and look for \"Load spatial transcriptomics data\" in the plugins menu.\n\n## Environment\n\nAll runtime dependencies are declared in `pyproject.toml` and installed automatically via pip:\n\n```bash\npip install seu-3d              # core functionality\npip install \"seu-3d[surface]\"   # + pyvista, for 3D surface reconstruction\n```\n\n- Python >= 3.9\n\n## Data Format\n\nThe plugin reads `.h5ad` files. Two fields are **chosen in the widget** when\nloading; everything else is auto-detected by fixed names:\n\n| Field | Location | Required | Used for |\n|---|---|---|---|\n| *(your choice)* | `adata.obsm` key | Yes | Spatial coordinates. 3D `(x, y, z)` preferred; if 2D `(x, y)`, `obs['z']` is used as z |\n| *(your choice)* | `adata.obs` column | Yes | Tissue / cell-type labels (coloring, filtering, diff-expression) |\n| `z` | `adata.obs` | Only when the coordinate key is 2D | Z position of each cell |\n| `slices` | `adata.obs` | Optional | Slice/sample filter (falls back to `orig.ident`) |\n| `orig.ident` | `adata.obs` | Optional | Fallback slice/sample filter |\n| `germ_layer` | `adata.obs` | Optional | Germ-layer filter |\n| `x_flatten`, `y_flatten` | `adata.obs` | Optional | \"Show Flatten\" 2D projection |\n\nMissing optional fields simply disable the corresponding tab; the rest of the\nplugin keeps working.\n\n## Quick Start\n\n```python\nimport napari\nviewer = napari.Viewer()\n# Add spatial transcriptomics h5ad file via the napari plugin menu\n```\n\n## Update Log\n\n### [2.0.0] — 2026-07-19\n- **Packaging**:\n  - Declare runtime dependencies in `pyproject.toml` (previously `pip install seu-3d` pulled in nothing)\n  - Restrict `packages.find` to `seu_3d*` so stray directories are never published\n  - Remove the unused, broken `weiwei/` source tree and the dead `_umap_selection` module\n  - Single-source the version from `seu_3d.__version__`\n- **Bug Fixes**:\n  - Fix slice filtering never applying (`obs['slice']` vs `obs['slices']` mismatch)\n  - Fix differential-expression tissue selection reading only the first character of the tissue name\n  - Fix annotation coordinate matching failing on floats (cKDTree nearest-neighbour matching) and guard empty selections\n  - Fix saving annotations before annotating raised `AttributeError`\n  - Fix NaN colors for genes with constant expression\n  - Deterministic tissue colors (removed random shuffle)\n  - Re-filtering and XY preview now reuse their napari layers instead of piling up new ones\n- **Performance**:\n  - Remove redundant full `AnnData.copy()` in filtering and surface generation; filtering now applies one combined mask (a single copy per click instead of four)\n  - Annotations accumulate in one persistent copy (no per-click dataset copy, and repeated annotations no longer reset earlier ones)\n  - Move h5ad reading, Moran's I, surface reconstruction and similar-gene search to worker threads (no more GUI freezing)\n  - Sparse-aware cosine similarity and column means (no full-matrix densification)\n- **UX**:\n  - Gene-expression views reuse a single `gene_expression` layer instead of stacking a new view per click\n  - Dock panel width is bounded and scrollable; AnnData info box is read-only and height-capped\n  - Documented the expected `obs`/`obsm` field names (see Data Format above)\n- **Code Quality**: remove duplicate/unused imports, unify gene-expression coloring into shared helpers\n- **Housekeeping**:\n  - Centralize 2D->3D coordinate stacking in `Embryo` (written back to `obsm`)\n  - Add MIT `LICENSE` and unit tests for `Embryo`\n\n### [1.1.17] — 2026-05-30\n- First public release as a napari manifest plugin: h5ad loading, tissue/slice/germ-layer/XY filtering, 1-3 gene expression coloring, similar-gene search, Moran's I, differential expression, annotation, pyvista surface reconstruction\n\n### [1.1.6]\nFirst release with napari manifest support\n\n### [1.0.4]\nFix error that plugin could not show\n\n### [1.0.3]\nFix napari.yaml\n\n### [1.0.2]\nForgot to upload napari.yaml\n\n### [1.0.1]\nFirst release\n\n## Acknowledgements\n\n- [sc3D](https://github.com/GuignardLab/sc3D)\n- [napari-sc3D-viewer](https://github.com/GuignardLab/napari-sc3D-viewer)\n\n## License\n\nReleased under the [MIT License](LICENSE), like the upstream [sc3D](https://github.com/GuignardLab/sc3D) project it is derived from.\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": null,
+    "download_url": null,
+    "author": null,
+    "author_email": "XieLab <220242543@seu.edu.cn>",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": null,
+    "classifier": [
+      "Framework :: napari",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.9",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Operating System :: OS Independent"
+    ],
+    "requires_dist": [
+      "napari>=0.4.19",
+      "magicgui>=0.8",
+      "qtpy>=2.0",
+      "anndata>=0.8",
+      "numpy>=1.23",
+      "pandas>=1.5",
+      "scipy>=1.9",
+      "scikit-learn>=1.1",
+      "matplotlib>=3.6",
+      "colorcet>=3.0",
+      "scanpy>=1.9",
+      "squidpy>=1.2",
+      "pyvista>=0.38; extra == \"surface\""
+    ],
+    "requires_python": ">=3.9",
+    "requires_external": null,
+    "project_url": [
+      "Homepage, https://github.com/DingAnZhong/SEU-3D",
+      "Repository, https://github.com/DingAnZhong/SEU-3D"
+    ],
+    "provides_extra": [
+      "surface"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}

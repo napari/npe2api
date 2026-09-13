@@ -1,0 +1,483 @@
+{
+  "info": {
+    "author": "AUTHORS.rst",
+    "author_email": "yangxg@bnl.gov",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-resview\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-resview.svg?color=green)](https://github.com/XYangXRay/napari-resview/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-resview.svg?color=green)](https://pypi.org/project/napari-resview)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-resview.svg?color=green)](https://python.org)\n[![tests](https://github.com/XYangXRay/napari-resview/workflows/tests/badge.svg)](https://github.com/XYangXRay/napari-resview/actions)\n[![codecov](https://codecov.io/gh/XYangXRay/napari-resview/branch/main/graph/badge.svg)](https://codecov.io/gh/XYangXRay/napari-resview)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-resview)](https://napari-hub.org/plugins/napari-resview)\n[![npe2](https://img.shields.io/badge/plugin-npe2-blue?link=https://napari.org/stable/plugins/index.html)](https://napari.org/stable/plugins/index.html)\n[![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-purple.json)](https://github.com/copier-org/copier)\n\n**A tool of 3D reciprocal space mapping (RSM) for X-ray diffraction experiments with interactive data processing, visualization and analysis built on Napari platfom.**\n\n---\n\n## Installation\n\nYou can install `napari-resview` via [pip]:\n\n```\npip install napari-resview\n```\n\nIf napari is not already installed, you can install `napari-resview` with napari and Qt via:\n\n```\npip install \"napari-resview[all]\"\n```\n\nTo install latest development version:\n\n```\npip install git+https://github.com/XYangXRay/napari-resview.git\n```\n\n---\n\n## Overview\n\n`napari-resview` is a comprehensive processing, visualization and analysis tool designed for synchrotron X-ray diffraction experiments. Built as a [napari] plugin, it enables researchers to interactively explore, process, and visualize 3D reciprocal space maps with advanced features for data loading, ROI selection, and crystallographic analysis.\n\n### Key Features\n\n- **\ud83d\udcca 3D Visualization**: Interactive 3D rendering of reciprocal space maps using napari's powerful volume rendering\n- **\u2702\ufe0f ROI-Based Cropping**: Define and apply regions of interest with visual feedback\n- **\ud83c\udfd7\ufe0f RSM Construction Pipeline**: Complete workflow from raw SPEC/TIFF data to 3D reciprocal space\n- **\ud83d\udcd0 UB Matrix Management**: Tools for orientation matrix setup, refinement, and validation\n- **\u26a1 Asynchronous Processing**: Non-blocking data loading with progress tracking\n- **\ud83d\udcbe Multiple Export Formats**: Export to VTR (VTK) format for use with ParaView and other tools\n- **\ud83c\udf9b\ufe0f Profile-Based Workflow**: Save and restore experimental configurations\n- **\ud83d\udcc8 Real-time Data Integration**: Merge SPEC metadata with TIFF intensity frames on-the-fly\n\n### Use Cases\n\n- **Synchrotron Beamline Analysis**: Real-time and offline data processing at NSLS-II beamlines\n- **Crystal Structure Studies**: Reciprocal space reconstruction for structural analysis\n- **Strain Mapping**: Analyze crystal strain and deformation through reciprocal space features\n- **Quality Control**: Quick visualization and validation of diffraction data quality\n- **Research & Education**: Interactive tool for teaching crystallography and X-ray diffraction concepts\n\n---\n\n## Quick Start\n\n### Launching the Plugin\n\nAfter installation, launch napari and open the ResView widget:\n\n```bash\nnapari\n```\n\nThen in napari: **Plugins \u2192 napari-resview: ResView Widget**\n\n### Basic Workflow\n\n1. **Configure Loader Profile**\n\n   - Select beamline profile (ISR or CMS)\n   - If ISR beamline, specify SPEC file, setup YAML, and TIFF directory\n   - If CMS beamline, specify rotation angles\n   - Configure any additional loader parameters\n2. **Load Data**\n\n   - Click \"Load\" to asynchronously load and merge data\n   - Monitor progress in the status panel\n   - View intensity frames in the napari viewer\n3. **Apply ROI Cropping (Optional)**\n\n   - Draw ROI shapes on the intensity viewer\n   - Click \"Crop from ROI\" to apply cropping\n   - Cropped data is used for all subsequent operations\n4. **Build RSM**\n\n   - Configure UB matrix parameters\n   - Set resolution and bounds\n   - Click \"Build\" to construct reciprocal space map\n5. **Visualize**\n\n   - Adjust visualization settings (colormap, opacity, contrast)\n   - Add grid overlays and axis markers\n   - Export slices or subvolumes\n6. **Export**\n\n   - Save RSM volume to .tiff, .npz, or .vtr format as you like\n   - Export for use in ParaView or other visualization tools\n\n---\n\n## Detailed Usage\n\n### Data Loading\n\nThe plugin supports two main beamline configurations:\n\n#### ISR Loader\n\n```python\nfrom napari_resview.data_io import RSMDataLoader_ISR\n\nloader = RSMDataLoader_ISR(\n    spec_file=\"path/to/scan.spec\",\n    setup_file=\"path/to/setup.yaml\",\n    tiff_dir=\"path/to/tiff_images/\",\n    use_dask=False,\n    process_hklscan_only=True,\n    selected_scans=[21, 22, 23]\n)\nsetup, ub, df = loader.load()\n```\n\n#### CMS Loader\n\n```python\nfrom napari_resview.data_io import RSMDataloader_CMS\n\nloader = RSMDataloader_CMS(\n    spec_file=\"path/to/scan.spec\",\n    setup_file=\"path/to/setup.yaml\",\n    ub_file=\"path/to/ub.txt\",\n    use_dask=False\n)\nsetup, ub, df = loader.load()\n```\n\n### Building Reciprocal Space Maps\n\n```python\nfrom napari_resview.rsm3d import RSMBuilder\n\n# Initialize builder with loaded data\nbuilder = RSMBuilder(\n    setup,\n    ub,\n    df,\n    ub_includes_2pi=True,\n    center_is_one_based=False\n)\n\n# Build RSM with specified resolution and bounds\nrsm_grid, rsm_axes = builder.build(\n    resolution=200,\n    bounds={'qx': (-2, 2), 'qy': (-2, 2), 'qz': (-2, 2)}\n)\n```\n\n### Visualization\n\n```python\nfrom napari_resview.data_viz import RSMNapariViewer\nimport napari\n\n# Create viewer\nrsm_viewer = RSMNapariViewer(\n    grid=rsm_grid,\n    axes=rsm_axes,\n    axes_names=['qx', 'qy', 'qz']\n)\n\n# Launch in napari\nviewer = rsm_viewer.launch()\n\n# Add grid overlay\nrsm_viewer.add_grid_overlay(step=0.5, viewer=viewer)\n```\n\n### Configuration Files\n\n#### Setup YAML Example\n\n```yaml\nbeamline: ISR\nenergy: 10.0  # keV\nwavelength: 1.2398  # Angstroms\ndetector:\n  pixel_size: 55e-6  # meters\n  distance: 0.5  # meters\n  beam_center: [257, 515]\n  size: [514, 1030]\nangles:\n  omega: 0.0\n  chi: 90.0\n  phi: 0.0\n  tth: 20.0\n```\n\n#### Profile Persistence\n\nThe plugin automatically saves and restores your configuration in `rsm3d_defaults.yaml`, including:\n\n- Active profile (ISR/CMS)\n- File paths and directories\n- UB matrix values\n- Resolution and bounds settings\n- Visualization preferences\n\n---\n\n## Key Components\n\n### Data I/O (`data_io.py`)\n\n- `RSMDataLoader_ISR`: Load ISR beamline SPEC + TIFF data\n- `RSMDataloader_CMS`: Load CMS beamline data with HDF5 support\n- `ExperimentSetup`: Manage experimental configuration\n- `write_rsm_volume_to_vtr()`: Export RSM to VTK format\n\n### RSM Builder (`rsm3d.py`)\n\n- `RSMBuilder`: Construct 3D reciprocal space maps from experimental data\n- Supports xrayutilities coordinate transformations\n- Flexible motor mapping and axis configuration\n- Gridding and interpolation options\n\n### Visualization (`data_viz.py`)\n\n- `RSMNapariViewer`: 3D volume rendering of RSM\n- `IntensityNapariViewer`: 2D intensity frame viewer with ROI tools\n- Grid overlays and coordinate displays\n- Interactive slice extraction\n\n### Widget (`resview_widget.py`)\n\n- `ResviewDockWidget`: Main napari dock widget\n- Tabbed interface: Data, Build, View, Export\n- Profile management with YAML persistence\n- Asynchronous data loading with progress tracking\n\n---\n\n## API Reference\n\n### Main Classes\n\n#### RSMDataLoader_ISR\n\n```python\nloader = RSMDataLoader_ISR(\n    spec_file: str,          # Path to SPEC file\n    setup_file: str,         # Path to setup YAML\n    tiff_dir: str,           # Directory containing TIFF images\n    use_dask: bool = False,  # Use Dask for large datasets\n    process_hklscan_only: bool = False,  # Filter hklscan only\n    selected_scans: list = None  # List of scan numbers to process\n)\nsetup, ub, df = loader.load()\n```\n\n#### RSMBuilder\n\n```python\nbuilder = RSMBuilder(\n    setup,                   # ExperimentSetup object\n    UB,                      # UB orientation matrix (3x3)\n    df,                      # DataFrame with intensity data\n    ub_includes_2pi: bool = True,  # UB includes 2\u03c0 factor\n    center_is_one_based: bool = False,  # Beam center indexing\n    sample_axes: list = None,  # xrayutilities sample axes\n    detector_axes: list = None  # xrayutilities detector axes\n)\n\ngrid, axes = builder.build(\n    resolution: int = 200,   # Grid resolution\n    bounds: dict = None      # {'qx': (min, max), 'qy': (min, max), 'qz': (min, max)}\n)\n```\n\n#### RSMNapariViewer\n\n```python\nviewer = RSMNapariViewer(\n    grid: np.ndarray,        # 3D intensity array\n    axes,                    # Coordinate axes (list of 3 arrays)\n    axes_names: list = ['qx', 'qy', 'qz']  # Axis labels\n)\n\nnapari_viewer = viewer.launch()  # Open in napari\nviewer.add_grid_overlay(step=0.5, viewer=napari_viewer)\nviewer.add_slices(positions={'qx': 0, 'qy': 0, 'qz': 0})\n```\n\n---\n\n## Development\n\n### Setting Up Development Environment\n\n```bash\ngit clone https://github.com/NSLS2/napari-resview.git\ncd napari-resview\npip install -e \".[dev]\"\n```\n\n### Running Tests\n\n```bash\n# Run all tests\npytest\n\n# Run with coverage\npytest --cov=napari_resview --cov-report=html\n\n# Run specific test file\npytest tests/test_resview_widget.py\n```\n\n### Code Quality\n\n```bash\n# Format code with black\nblack src/\n\n# Sort imports\nisort src/\n\n# Type checking\nmypy src/\n```\n\n### Using tox\n\nThe project includes tox configuration for automated testing:\n\n```bash\n# Run all tox environments\ntox\n\n# Run specific environment\ntox -e py310\n```\n\n---\n\n## Contributing\n\nContributions are very welcome! We appreciate bug reports, feature requests, documentation improvements, and code contributions.\n\n### How to Contribute\n\n1. **Fork the repository** on GitHub\n2. **Clone your fork** locally:\n   ```bash\n   git clone https://github.com/YOUR_USERNAME/napari-resview.git\n   cd napari-resview\n   ```\n3. **Create a branch** for your changes:\n   ```bash\n   git checkout -b feature/your-feature-name\n   ```\n4. **Make your changes** and add tests if applicable\n5. **Run tests** to ensure everything works:\n   ```bash\n   pytest\n   ```\n6. **Commit your changes** with clear commit messages:\n   ```bash\n   git commit -m \"Add: description of your changes\"\n   ```\n7. **Push to your fork**:\n   ```bash\n   git push origin feature/your-feature-name\n   ```\n8. **Submit a pull request** on GitHub\n\n### Contribution Guidelines\n\n- Follow PEP 8 style guidelines\n- Add tests for new features\n- Update documentation as needed\n- Ensure the test coverage stays the same or improves\n- Write clear commit messages\n- Keep pull requests focused on a single feature or fix\n\n### Reporting Issues\n\nIf you encounter bugs or have feature requests, please [file an issue] with:\n\n- A clear, descriptive title\n- Steps to reproduce (for bugs)\n- Expected vs. actual behavior\n- Your environment (OS, Python version, napari version)\n- Relevant error messages or screenshots\n\n---\n\n## Troubleshooting\n\n### Common Issues\n\n**Plugin doesn't appear in napari menu**\n\n- Ensure napari-resview is installed in the same environment as napari\n- Restart napari after installation\n- Check: `napari --plugin-info` to verify plugin is detected\n\n**Data loading fails**\n\n- Verify file paths are correct\n- Check that TIFF files match SPEC scan numbers\n- Ensure setup YAML has correct format\n- Review error messages in napari's terminal/console\n\n**Memory errors with large datasets**\n\n- Enable `use_dask=True` for lazy loading\n- Reduce resolution in Build settings\n- Apply ROI cropping to reduce data size\n- Close other memory-intensive applications\n\n**Visualization appears empty or black**\n\n- Adjust contrast limits in napari layer controls\n- Check data range with `print(grid.min(), grid.max())`\n- Ensure data is non-zero\n- Try different colormaps or opacity settings\n\n**UB matrix errors**\n\n- Verify UB matrix dimensions (3\u00d73)\n- Check `ub_includes_2pi` setting matches your data\n- Ensure proper motor mapping in configuration\n\n### Getting Help\n\n- Check the [napari documentation](https://napari.org/stable/)\n- Browse [existing issues](https://github.com/NSLS2/napari-resview/issues)\n- Ask questions in napari [community forum](https://forum.image.sc/tag/napari)\n- Contact the development team at yangxg@bnl.gov\n\n---\n\n## Citation\n\nIf you use napari-resview in your research, please cite:\n\n```bibtex\n@software{napari_resview,\n  title = {napari-resview: A napari plugin for 3D reciprocal space mapping},\n  author = {Yang, Xiaogang and contributors},\n  year = {2024},\n  url = {https://github.com/NSLS2/napari-resview},\n  note = {Developed at Brookhaven National Laboratory, NSLS-II}\n}\n```\n\nAlso consider citing the underlying tools:\n\n- [napari](https://napari.org/): Multi-dimensional image viewer\n- [xrayutilities](https://xrayutilities.sourceforge.io/): X-ray diffraction analysis\n\n---\n\n## Acknowledgments\n\n- Developed at **Brookhaven National Laboratory (BNL)**, National Synchrotron Light Source II (NSLS-II)\n- Built using the [napari] framework and [napari-plugin-template]\n- Powered by [xrayutilities] for crystallographic calculations\n- Thanks to the napari community for excellent documentation and support\n\n## License\n\nDistributed under the terms of the [BSD-3] license, \"napari-resview\" is free and open source software.\n\nSee [LICENSE](LICENSE) for full details.\n\n---\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with:\n\n- A detailed description of the problem\n- Steps to reproduce the issue\n- Your environment information (OS, Python version, package versions)\n- Relevant error messages or logs\n- Screenshots if applicable\n\n---\n\n## Changelog\n\n### Version History\n\nSee the [GitHub releases](https://github.com/NSLS2/napari-resview/releases) page for version history and changelog.\n\n---\n\n## Contact\n\n- **Maintainer**: Xiaogang Yang (yangxg@bnl.gov)\n- **Institution**: Brookhaven National Laboratory, NSLS-II\n- **Repository**: https://github.com/NSLS2/napari-resview\n- **Issues**: https://github.com/NSLS2/napari-resview/issues\n\n---\n\n[napari]: https://github.com/napari/napari\n[copier]: https://copier.readthedocs.io/en/stable/\n[xrayutilities]: https://xrayutilities.sourceforge.io/\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[napari-plugin-template]: https://github.com/napari/napari-plugin-template\n[file an issue]: https://github.com/NSLS2/napari-resview/issues\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": "BSD 3-Clause License\n        \n        Copyright (c) 2026, Brookhaven National Laboratory\n        \n        Redistribution and use in source and binary forms, with or without\n        modification, are permitted provided that the following conditions are met:\n        \n        1. Redistributions of source code must retain the above copyright notice, this\n           list of conditions and the following disclaimer.\n        \n        2. Redistributions in binary form must reproduce the above copyright notice,\n           this list of conditions and the following disclaimer in the documentation\n           and/or other materials provided with the distribution.\n        \n        3. Neither the name of the copyright holder nor the names of its\n           contributors may be used to endorse or promote products derived from\n           this software without specific prior written permission.\n        \n        THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\"\n        AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\n        IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\n        DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE\n        FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\n        DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR\n        SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER\n        CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,\n        OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\n        OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n        ",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE",
+      "LICENSE_README.md",
+      "AUTHORS.rst"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-resview",
+    "package_url": "https://pypi.org/project/napari-resview/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-resview/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/XYangXRay/napari-resview/issues",
+      "Documentation": "https://github.com/XYangXRay/napari-resview#README.md",
+      "Source Code": "https://github.com/XYangXRay/napari-resview",
+      "User Support": "https://github.com/XYangXRay/napari-resview/issues"
+    },
+    "provides_extra": [
+      "all",
+      "testing"
+    ],
+    "release_url": "https://pypi.org/project/napari-resview/0.1.6/",
+    "requires_dist": [
+      "numpy",
+      "magicgui>=0.10.1",
+      "qtpy>=2.4.3",
+      "xrayutilities==1.7.10",
+      "h5py",
+      "hdf5plugin",
+      "pyyaml>=6.0.3",
+      "vtk>=9.0.0",
+      "pandas>=2.3.3",
+      "dask>=2024.8.0",
+      "pyarrow>=21.0.0",
+      "tifffile",
+      "scipy",
+      "napari[all]; extra == \"all\"",
+      "tox; extra == \"testing\"",
+      "pytest; extra == \"testing\"",
+      "pytest-cov; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "napari[qt]==0.7.0; extra == \"testing\""
+    ],
+    "requires_python": "<3.14,>=3.10",
+    "summary": "A napari plugin for 3D reciprocal space mapping",
+    "version": "0.1.6",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 40870256,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "XYangXRay"
+      }
+    ]
+  },
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "d70f04268dab9824b3567b2dd9e94056f8fc219cc4486afd3fedd06265ff733c"
+        },
+        "digests": {
+          "blake2b_256": "ef501541cea82c84161a4d24b78172e0ca32b8e4ce120c02aaa3351e1a3fe0e7",
+          "md5": "bb5d5904bab7e6a51b7d159e9b9ea3af",
+          "sha256": "0d8d2435cd33d5ddf69db91e1a0a4d2efe2da8b2ec1b9849e1c1c45c62f6b81d"
+        },
+        "downloads": -1,
+        "filename": "napari_resview-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "bb5d5904bab7e6a51b7d159e9b9ea3af",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.14,>=3.10",
+        "size": 16630,
+        "upload_time": "2026-02-26T16:10:37",
+        "upload_time_iso_8601": "2026-02-26T16:10:37.115243Z",
+        "url": "https://files.pythonhosted.org/packages/ef/50/1541cea82c84161a4d24b78172e0ca32b8e4ce120c02aaa3351e1a3fe0e7/napari_resview-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "0434f9e7ea25bb69ee2847a45871a2a9e75f312bfdb6d4feb86b7a25c8f03ee6",
+          "md5": "3750effc0e249eca5206a98cb5415867",
+          "sha256": "9972ea5f5a2fcb208d80fcf7f57f840e7be3d334656cd0dd31316466b15f16b0"
+        },
+        "downloads": -1,
+        "filename": "napari_resview-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "3750effc0e249eca5206a98cb5415867",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.14,>=3.10",
+        "size": 175962,
+        "upload_time": "2026-02-26T16:10:38",
+        "upload_time_iso_8601": "2026-02-26T16:10:38.503978Z",
+        "url": "https://files.pythonhosted.org/packages/04/34/f9e7ea25bb69ee2847a45871a2a9e75f312bfdb6d4feb86b7a25c8f03ee6/napari_resview-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "56051f6bda19db4e59daf141a8d5de739d46723df683be1c802c4325a9f14f58"
+        },
+        "digests": {
+          "blake2b_256": "f8a57d97227c6d682596179e39b44c91b112a70f11b83aa80b5730c47571ee9a",
+          "md5": "681ca68b4a1e19fbb3013b0b2f481f11",
+          "sha256": "24721efd681a22a60052b48d247d29dbd299465aef54c5b8707b9954f0ec5175"
+        },
+        "downloads": -1,
+        "filename": "napari_resview-0.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "681ca68b4a1e19fbb3013b0b2f481f11",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.14,>=3.10",
+        "size": 75131,
+        "upload_time": "2026-02-26T19:48:55",
+        "upload_time_iso_8601": "2026-02-26T19:48:55.314664Z",
+        "url": "https://files.pythonhosted.org/packages/f8/a5/7d97227c6d682596179e39b44c91b112a70f11b83aa80b5730c47571ee9a/napari_resview-0.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "22e24ffa12732e1f0552ab6f2caea84158228bf3d1c4b4ee0e780c3558f60607",
+          "md5": "a199719ed3b803bdb9291d9d244b382b",
+          "sha256": "25ffff8eba702b2a7e7c461810d175593bef582801266c3c8d7de3cd523d914c"
+        },
+        "downloads": -1,
+        "filename": "napari_resview-0.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "a199719ed3b803bdb9291d9d244b382b",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.14,>=3.10",
+        "size": 178900,
+        "upload_time": "2026-02-26T19:48:56",
+        "upload_time_iso_8601": "2026-02-26T19:48:56.597574Z",
+        "url": "https://files.pythonhosted.org/packages/22/e2/4ffa12732e1f0552ab6f2caea84158228bf3d1c4b4ee0e780c3558f60607/napari_resview-0.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.2": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "7e4bc297a6337f1e116e2ecdf61fc0b9e7c07dc921c0d802ec0e54b965178764"
+        },
+        "digests": {
+          "blake2b_256": "5c2f95350a40a77149989d5b69dbae76be4028159f655406d1bb2857d305df4f",
+          "md5": "b40c30feb881938f10991876bb67d3a5",
+          "sha256": "0c3982622d0e3c0cc559aec2a8d6b6baa148a962d8eed56533afcd8f9f4a4313"
+        },
+        "downloads": -1,
+        "filename": "napari_resview-0.1.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "b40c30feb881938f10991876bb67d3a5",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.14,>=3.10",
+        "size": 87526,
+        "upload_time": "2026-03-04T21:01:33",
+        "upload_time_iso_8601": "2026-03-04T21:01:33.824111Z",
+        "url": "https://files.pythonhosted.org/packages/5c/2f/95350a40a77149989d5b69dbae76be4028159f655406d1bb2857d305df4f/napari_resview-0.1.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "522cb0b443fc82c643a55028a516385542530e72684e607d1a6f0f70329bf8b3",
+          "md5": "81853378c8b3807910d0c842649149d0",
+          "sha256": "c142f238f612ccf2d0af49fab91bdd65245cb27359e4cb575c2d211de09cd601"
+        },
+        "downloads": -1,
+        "filename": "napari_resview-0.1.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "81853378c8b3807910d0c842649149d0",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.14,>=3.10",
+        "size": 191169,
+        "upload_time": "2026-03-04T21:01:37",
+        "upload_time_iso_8601": "2026-03-04T21:01:37.348876Z",
+        "url": "https://files.pythonhosted.org/packages/52/2c/b0b443fc82c643a55028a516385542530e72684e607d1a6f0f70329bf8b3/napari_resview-0.1.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.3": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "d713e07910cebe331a07c5a6e06340771344832edf32e8baad5028aef846c5f2"
+        },
+        "digests": {
+          "blake2b_256": "eaa6bff300759f0ca3c1f2120659d5e50320bd473877620e4683d9960cd5cbf3",
+          "md5": "87c4c6f701780a69bbd9c0495ec1acf3",
+          "sha256": "47a37f33604e537ec3f190dac482427fd62918a2f10a8633b1adfd0ee71a92a0"
+        },
+        "downloads": -1,
+        "filename": "napari_resview-0.1.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "87c4c6f701780a69bbd9c0495ec1acf3",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.14,>=3.10",
+        "size": 98593,
+        "upload_time": "2026-03-20T15:30:49",
+        "upload_time_iso_8601": "2026-03-20T15:30:49.477622Z",
+        "url": "https://files.pythonhosted.org/packages/ea/a6/bff300759f0ca3c1f2120659d5e50320bd473877620e4683d9960cd5cbf3/napari_resview-0.1.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "ab4309734e8dba0e9fd38ec4b50e48f059de65080a0852f5c2d02b9378e1cbe0",
+          "md5": "e7e68074401e6c10f2a984689d733100",
+          "sha256": "bfdaf28371a609396fca87e678f417c2c7bd0e919505f0cec04a78950108b16b"
+        },
+        "downloads": -1,
+        "filename": "napari_resview-0.1.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e7e68074401e6c10f2a984689d733100",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.14,>=3.10",
+        "size": 204096,
+        "upload_time": "2026-03-20T15:30:51",
+        "upload_time_iso_8601": "2026-03-20T15:30:51.351430Z",
+        "url": "https://files.pythonhosted.org/packages/ab/43/09734e8dba0e9fd38ec4b50e48f059de65080a0852f5c2d02b9378e1cbe0/napari_resview-0.1.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.4": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "c6c42c878a019a40575b98e01413eb38a08767eaa7f3b31c72aab0d3f9e1f62d"
+        },
+        "digests": {
+          "blake2b_256": "3df8edaca9bcc56d58b10b17af1c0d16f36fc057e4cec245953a0815a1bf7f77",
+          "md5": "8517e4b1c1c243cd9a3940892978161f",
+          "sha256": "40a83524269331ac267730f291d237859ee22d93dc5d36da99f0b1944827b7f0"
+        },
+        "downloads": -1,
+        "filename": "napari_resview-0.1.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "8517e4b1c1c243cd9a3940892978161f",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.14,>=3.10",
+        "size": 98551,
+        "upload_time": "2026-03-23T20:24:33",
+        "upload_time_iso_8601": "2026-03-23T20:24:33.965868Z",
+        "url": "https://files.pythonhosted.org/packages/3d/f8/edaca9bcc56d58b10b17af1c0d16f36fc057e4cec245953a0815a1bf7f77/napari_resview-0.1.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "45e0fff49b3e780b9d31ee1f6415835f9b62a54ff7a28078664e3d5c0d44af12",
+          "md5": "c402fe34769193e739820ed06c304fcb",
+          "sha256": "88d120b9fc56f7707aa5d918859a2a37278002d1810142e67c7a41f8965e1ded"
+        },
+        "downloads": -1,
+        "filename": "napari_resview-0.1.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "c402fe34769193e739820ed06c304fcb",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.14,>=3.10",
+        "size": 190860,
+        "upload_time": "2026-03-23T20:24:35",
+        "upload_time_iso_8601": "2026-03-23T20:24:35.457421Z",
+        "url": "https://files.pythonhosted.org/packages/45/e0/fff49b3e780b9d31ee1f6415835f9b62a54ff7a28078664e3d5c0d44af12/napari_resview-0.1.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.5": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "68c78121bf6a3ef8d4f630e7729089425deb0e65a292b6cde48274e2446e9860"
+        },
+        "digests": {
+          "blake2b_256": "fd9675b05e92a2a6c78e8795e5965428d1d0bbed787e613225c143596cf19789",
+          "md5": "40d3421d12d5f77bb2e9b0a53ff7b9b2",
+          "sha256": "6f04e4aa3bea3f6b379e52c51c8297e193f4eef5003f391b1100aff655577d93"
+        },
+        "downloads": -1,
+        "filename": "napari_resview-0.1.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "40d3421d12d5f77bb2e9b0a53ff7b9b2",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.14,>=3.10",
+        "size": 102926,
+        "upload_time": "2026-09-08T20:41:33",
+        "upload_time_iso_8601": "2026-09-08T20:41:33.018492Z",
+        "url": "https://files.pythonhosted.org/packages/fd/96/75b05e92a2a6c78e8795e5965428d1d0bbed787e613225c143596cf19789/napari_resview-0.1.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "d78d7b145b79ed5175a457cbc600a6231e3f1551eb6434487ccce95b609cc068",
+          "md5": "7fee4513c0cec95a28bd9da212a3fc30",
+          "sha256": "e0150a9c6dbfb1afcfc1bd0a27e94d5c4e03f867b79ff7b2f86a28acea1a3abd"
+        },
+        "downloads": -1,
+        "filename": "napari_resview-0.1.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "7fee4513c0cec95a28bd9da212a3fc30",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.14,>=3.10",
+        "size": 199840,
+        "upload_time": "2026-09-08T20:41:35",
+        "upload_time_iso_8601": "2026-09-08T20:41:35.550745Z",
+        "url": "https://files.pythonhosted.org/packages/d7/8d/7b145b79ed5175a457cbc600a6231e3f1551eb6434487ccce95b609cc068/napari_resview-0.1.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.6": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "9f36a2d19a4f872a99a6ad3f56da47677a823d781d5e8721b3d6d8f6e2365817"
+        },
+        "digests": {
+          "blake2b_256": "392243d267391ecfdb0fe4015d07faa6e658f8158449c826972e4d8a94db1ae4",
+          "md5": "d2affe1ceec7af0ea0af01a8d776a0f5",
+          "sha256": "c33c238b7addd15d93932100585f6a812b31d6f0e7db75fae140f30cda69029a"
+        },
+        "downloads": -1,
+        "filename": "napari_resview-0.1.6-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "d2affe1ceec7af0ea0af01a8d776a0f5",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.14,>=3.10",
+        "size": 104274,
+        "upload_time": "2026-09-08T21:01:52",
+        "upload_time_iso_8601": "2026-09-08T21:01:52.700253Z",
+        "url": "https://files.pythonhosted.org/packages/39/22/43d267391ecfdb0fe4015d07faa6e658f8158449c826972e4d8a94db1ae4/napari_resview-0.1.6-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "906be5ed6b1215da4c86388363b9e9eab8f674d4b4f3e58981eb170f8b95f271",
+          "md5": "d20bdf661091e800caecad9bd27738b4",
+          "sha256": "dc5288a5a34fd14af693ea2bbf781b1b419d410427b1f3943695b95b0b43f311"
+        },
+        "downloads": -1,
+        "filename": "napari_resview-0.1.6.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d20bdf661091e800caecad9bd27738b4",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.14,>=3.10",
+        "size": 201187,
+        "upload_time": "2026-09-08T21:01:54",
+        "upload_time_iso_8601": "2026-09-08T21:01:54.490193Z",
+        "url": "https://files.pythonhosted.org/packages/90/6b/e5ed6b1215da4c86388363b9e9eab8f674d4b4f3e58981eb170f8b95f271/napari_resview-0.1.6.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "9f36a2d19a4f872a99a6ad3f56da47677a823d781d5e8721b3d6d8f6e2365817"
+      },
+      "digests": {
+        "blake2b_256": "392243d267391ecfdb0fe4015d07faa6e658f8158449c826972e4d8a94db1ae4",
+        "md5": "d2affe1ceec7af0ea0af01a8d776a0f5",
+        "sha256": "c33c238b7addd15d93932100585f6a812b31d6f0e7db75fae140f30cda69029a"
+      },
+      "downloads": -1,
+      "filename": "napari_resview-0.1.6-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "d2affe1ceec7af0ea0af01a8d776a0f5",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": "<3.14,>=3.10",
+      "size": 104274,
+      "upload_time": "2026-09-08T21:01:52",
+      "upload_time_iso_8601": "2026-09-08T21:01:52.700253Z",
+      "url": "https://files.pythonhosted.org/packages/39/22/43d267391ecfdb0fe4015d07faa6e658f8158449c826972e4d8a94db1ae4/napari_resview-0.1.6-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "906be5ed6b1215da4c86388363b9e9eab8f674d4b4f3e58981eb170f8b95f271",
+        "md5": "d20bdf661091e800caecad9bd27738b4",
+        "sha256": "dc5288a5a34fd14af693ea2bbf781b1b419d410427b1f3943695b95b0b43f311"
+      },
+      "downloads": -1,
+      "filename": "napari_resview-0.1.6.tar.gz",
+      "has_sig": false,
+      "md5_digest": "d20bdf661091e800caecad9bd27738b4",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": "<3.14,>=3.10",
+      "size": 201187,
+      "upload_time": "2026-09-08T21:01:54",
+      "upload_time_iso_8601": "2026-09-08T21:01:54.490193Z",
+      "url": "https://files.pythonhosted.org/packages/90/6b/e5ed6b1215da4c86388363b9e9eab8f674d4b4f3e58981eb170f8b95f271/napari_resview-0.1.6.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

@@ -1,0 +1,326 @@
+{
+  "info": {
+    "author": null,
+    "author_email": "Xufeng Lin <lxfhfut@gmail.com>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 4 - Beta",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Topic :: Scientific/Engineering :: Bio-Informatics",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# Fungiform\n\n[![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/)\n[![License: BSD-3](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](LICENSE)\n[![CI](https://github.com/lxfhfut/Fungiform/actions/workflows/test.yml/badge.svg)](https://github.com/lxfhfut/Fungiform/actions/workflows/test.yml)\n\nA napari plugin and CLI for **quantifying cell shape and protein distribution\non micropatterned substrates**. Designed for multi-channel fluorescence\nconfocal images of cells grown on mushroom-shaped fibronectin micropatterns.\n\nFungiform aligns a canonical pattern template to each image via normalised\ncross-correlation, warps head / stem / stem-tip sub-regions into image\ncoordinates, segments cells in the cell-border channel, and reports a rich\nper-cell table of region-based protein intensities, stem-axis geometry,\nhead-region protrusions, and nuclear / cytoplasmic ratios.\n\n## Installation\n\n```bash\npip install napari-fungiform\n```\n\nOr from source:\n\n```bash\ngit clone https://github.com/lxfhfut/Fungiform.git\ncd Fungiform\npip install -e .\n```\n\nPython \u2265 3.10 required.\n\n## Quick start\n\n### Napari plugin\n\n```bash\nnapari\n```\n\nThen open **Plugins \u2192 Fungiform**. The widget has two sections:\n\n- **Single Input** \u2014 point at a single 4-channel TIFF (merged layout) or a\n  folder containing per-channel siblings `*_C0.tif \u2026 *_C3.tif` (split layout).\n- **Batch** \u2014 point at a folder of images; outputs go to `<folder>/results/`\n  by default.\n\n### CLI\n\n```bash\nfungiform --dir ./my_images --out ./results\n```\n\nCommon flags:\n\n| Flag | Default | Effect |\n|------|---------|--------|\n| `--split-channels` | off | Inputs are split per channel (`*_C0..C3.tif`) |\n| `--channel-cell` | 1 | 1-indexed cell-border channel (e.g. WGA) |\n| `--channel-protein` | 2 | Protein-of-interest channel |\n| `--channel-nucleus` | 3 | Nucleus channel (e.g. DAPI) |\n| `--channel-pattern` | 4 | Pattern channel (e.g. fibronectin) |\n| `--ball-radius-fraction` | 0.25 | Rolling-ball radius as fraction of cell's MIC |\n| `--no-align` | off | Skip NCC alignment (use when no pattern channel) |\n\nRun `fungiform --help` for the full option list.\n\n## Output\n\nFor each input image `MAX_<title>.tif`, Fungiform writes into the output\ndirectory:\n\n```\n_allResults.csv                          # one row per detected cell\nMAX_<title>_Cell_mask.jpg                # labeled segmentation mask\nMAX_<title>_mask_overlay.jpg             # cell channel + segmentation overlay\nMAX_<title>_image_qc.png                 # 3-panel per-image overview\nqc_cells/<Label>_qc.png                  # 6-panel per-cell QC\nprotrusions/<Label>_protrusions.png      # per-cell protrusion detail\nprotrusions/MAX_<title>_protrusions.png  # rolling-ball multi-cell detail\nprotrusions/MAX_<title>_protrusions_overview.png\n```\n\nSee **[docs/Results_interpretations.md](docs/Results_interpretations.md)** for\na column-by-column description of `_allResults.csv` and a panel-by-panel guide\nto every visualisation.\n\n## Pattern templates\n\nFungiform ships with default mushroom-pattern templates (perfect / head /\nstem) under `src/fungiform/templates/`. To use your own pattern shape, supply\n`--pattern-template`, `--head-template`, and `--stem-template` pointing at\nTIFF masks.\n\n## Citation\n\nIf you use Fungiform in your research, please cite this repository:\n\n```bibtex\n@software{fungiform,\n  author = {Lin, Xufeng},\n  title  = {Fungiform: Napari plugin for micropattern cell quantification},\n  url    = {https://github.com/lxfhfut/Fungiform},\n  year   = {2026}\n}\n```\n\n## License\n\nBSD 3-Clause \u2014 see [LICENSE](LICENSE).\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": "napari, microscopy, micropattern, cell-quantification, image-analysis",
+    "license": "BSD 3-Clause License\n        \n        Copyright (c) 2026, Xufeng Lin\n        \n        Redistribution and use in source and binary forms, with or without\n        modification, are permitted provided that the following conditions are met:\n        \n        1. Redistributions of source code must retain the above copyright notice,\n           this list of conditions and the following disclaimer.\n        \n        2. Redistributions in binary form must reproduce the above copyright notice,\n           this list of conditions and the following disclaimer in the documentation\n           and/or other materials provided with the distribution.\n        \n        3. Neither the name of the copyright holder nor the names of its contributors\n           may be used to endorse or promote products derived from this software\n           without specific prior written permission.\n        \n        THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\"\n        AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\n        IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE\n        ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE\n        LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR\n        CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF\n        SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS\n        INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN\n        CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)\n        ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE\n        POSSIBILITY OF SUCH DAMAGE.\n        ",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-fungiform",
+    "package_url": "https://pypi.org/project/napari-fungiform/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-fungiform/",
+    "project_urls": {
+      "Documentation": "https://github.com/lxfhfut/Fungiform/blob/main/docs/Results_interpretations.md",
+      "Homepage": "https://github.com/lxfhfut/Fungiform",
+      "Issues": "https://github.com/lxfhfut/Fungiform/issues",
+      "Repository": "https://github.com/lxfhfut/Fungiform"
+    },
+    "provides_extra": [
+      "dev"
+    ],
+    "release_url": "https://pypi.org/project/napari-fungiform/0.1.3/",
+    "requires_dist": [
+      "numpy",
+      "tifffile",
+      "scikit-image",
+      "scipy",
+      "matplotlib",
+      "napari",
+      "magicgui",
+      "qtpy",
+      "superqt",
+      "pytest; extra == \"dev\"",
+      "pytest-qt; extra == \"dev\""
+    ],
+    "requires_python": ">=3.10",
+    "summary": "Napari plugin and CLI for quantifying cell shape and protein distribution on micropatterned substrates.",
+    "version": "0.1.3",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 37876620,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "lxfhfut"
+      }
+    ]
+  },
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "588da7b4d4ea21d65a0cd19ba9acd022355e3e055454e34bb09c41d5c5ff602b"
+        },
+        "digests": {
+          "blake2b_256": "d88c4e78226e9f23482a707fe255e680a6e74914c293490d3bfa4bf95020306d",
+          "md5": "61576e2e9f2b324a7c3edc7aba9bf939",
+          "sha256": "fd2eeda7791a821c4ffb606421878cebbfd392e31cdf0aa169b376fb34ab097c"
+        },
+        "downloads": -1,
+        "filename": "napari_fungiform-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "61576e2e9f2b324a7c3edc7aba9bf939",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 66313,
+        "upload_time": "2026-05-14T11:37:58",
+        "upload_time_iso_8601": "2026-05-14T11:37:58.465038Z",
+        "url": "https://files.pythonhosted.org/packages/d8/8c/4e78226e9f23482a707fe255e680a6e74914c293490d3bfa4bf95020306d/napari_fungiform-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "b3214613531773add4fc01cb538c7ab07b14243d2d41ad159c0b7fa1a38b47cf",
+          "md5": "c179b7128b8f6f4b859b024d08fd2a88",
+          "sha256": "c8436a0e93bd3ebb4380afe43610a34b698c104244b14523d9236bed24c163c8"
+        },
+        "downloads": -1,
+        "filename": "napari_fungiform-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "c179b7128b8f6f4b859b024d08fd2a88",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 69112,
+        "upload_time": "2026-05-14T11:38:00",
+        "upload_time_iso_8601": "2026-05-14T11:38:00.378499Z",
+        "url": "https://files.pythonhosted.org/packages/b3/21/4613531773add4fc01cb538c7ab07b14243d2d41ad159c0b7fa1a38b47cf/napari_fungiform-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "379261f77b9ff191ee173eb3037fb97d75d66029caf5266c484343a7021a8ab7"
+        },
+        "digests": {
+          "blake2b_256": "f99c451dc0324aa0ea5f21d20f31556f1beece6358d6717c79e8ab8a9137b63d",
+          "md5": "f57e22c9cfe3ccf4a09bf6615e1be177",
+          "sha256": "c0a496e22d1a9e9beb7307439101a36d68bb1df10d23e0b73e4d29dd35b91b6f"
+        },
+        "downloads": -1,
+        "filename": "napari_fungiform-0.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "f57e22c9cfe3ccf4a09bf6615e1be177",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 66312,
+        "upload_time": "2026-05-14T11:50:32",
+        "upload_time_iso_8601": "2026-05-14T11:50:32.432443Z",
+        "url": "https://files.pythonhosted.org/packages/f9/9c/451dc0324aa0ea5f21d20f31556f1beece6358d6717c79e8ab8a9137b63d/napari_fungiform-0.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "094f93f9c22f6d4bc5d8b9ee701799dbd9da9413b2d98b5a7b7ae0ebf6d25685",
+          "md5": "8a5f23ed63c6763f98b3950b7ee72c23",
+          "sha256": "0e7e9a75686252e7f3c6bd4fa7ff5ade36b44935fa6f38f989b5f72adf82e60a"
+        },
+        "downloads": -1,
+        "filename": "napari_fungiform-0.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "8a5f23ed63c6763f98b3950b7ee72c23",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 69156,
+        "upload_time": "2026-05-14T11:50:34",
+        "upload_time_iso_8601": "2026-05-14T11:50:34.312274Z",
+        "url": "https://files.pythonhosted.org/packages/09/4f/93f9c22f6d4bc5d8b9ee701799dbd9da9413b2d98b5a7b7ae0ebf6d25685/napari_fungiform-0.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.2": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "1cc89e5b061c9ed335f88c51bb6e2813431a748bab4519ff6910d23dc416dcdb"
+        },
+        "digests": {
+          "blake2b_256": "54c0afe578e7b0acf7ab2a5d336adc99244d6568f7e12527cfaf2c7a61f7533e",
+          "md5": "cd45fb5813b180b39221291e8deba611",
+          "sha256": "cedee107c33c39e4ef9d7e88390e2c90002e481de134f35c3c42587aa0608498"
+        },
+        "downloads": -1,
+        "filename": "napari_fungiform-0.1.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "cd45fb5813b180b39221291e8deba611",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 66447,
+        "upload_time": "2026-05-14T12:20:38",
+        "upload_time_iso_8601": "2026-05-14T12:20:38.676327Z",
+        "url": "https://files.pythonhosted.org/packages/54/c0/afe578e7b0acf7ab2a5d336adc99244d6568f7e12527cfaf2c7a61f7533e/napari_fungiform-0.1.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "8814b313ec61fd7e2a7b7acb9dcce07cd7c2490559f894596d54440af5faacf9",
+          "md5": "eb6d805b9c2ca0aafadafa015a99f702",
+          "sha256": "50519ec83a87cadac8be4644a48f3259dcd73b45e9a04b9f064f441af385823b"
+        },
+        "downloads": -1,
+        "filename": "napari_fungiform-0.1.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "eb6d805b9c2ca0aafadafa015a99f702",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 69367,
+        "upload_time": "2026-05-14T12:20:42",
+        "upload_time_iso_8601": "2026-05-14T12:20:42.061964Z",
+        "url": "https://files.pythonhosted.org/packages/88/14/b313ec61fd7e2a7b7acb9dcce07cd7c2490559f894596d54440af5faacf9/napari_fungiform-0.1.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.3": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "6c421fc82bd684eff4ec2a64e7471e6eb881f571fd1a14da07161d517c2bab4c"
+        },
+        "digests": {
+          "blake2b_256": "7afa3ad6ba82fc3725fcc9bdcb708ecf3c269eb954d973fb93ed2ef44132a7a4",
+          "md5": "21b5e0b043b85011a29ec975362cd09f",
+          "sha256": "9bbf2d9db10108e5a55da538b0b7f72f4abd8bca2b528021b5a18cd7fd3c0b73"
+        },
+        "downloads": -1,
+        "filename": "napari_fungiform-0.1.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "21b5e0b043b85011a29ec975362cd09f",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 86351,
+        "upload_time": "2026-06-10T00:36:35",
+        "upload_time_iso_8601": "2026-06-10T00:36:35.018331Z",
+        "url": "https://files.pythonhosted.org/packages/7a/fa/3ad6ba82fc3725fcc9bdcb708ecf3c269eb954d973fb93ed2ef44132a7a4/napari_fungiform-0.1.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "85e2c3abe86470d350dc8d6bacc72b337df60deb20ec54e572a76db761eef275",
+          "md5": "b9a9bc0b84f37694c0474e021aa852ba",
+          "sha256": "2cb18229494446fa3d78c336e3b3803ec105e237cc0aa0fd3a1393343a81d111"
+        },
+        "downloads": -1,
+        "filename": "napari_fungiform-0.1.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "b9a9bc0b84f37694c0474e021aa852ba",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 91764,
+        "upload_time": "2026-06-10T00:36:37",
+        "upload_time_iso_8601": "2026-06-10T00:36:37.868253Z",
+        "url": "https://files.pythonhosted.org/packages/85/e2/c3abe86470d350dc8d6bacc72b337df60deb20ec54e572a76db761eef275/napari_fungiform-0.1.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "6c421fc82bd684eff4ec2a64e7471e6eb881f571fd1a14da07161d517c2bab4c"
+      },
+      "digests": {
+        "blake2b_256": "7afa3ad6ba82fc3725fcc9bdcb708ecf3c269eb954d973fb93ed2ef44132a7a4",
+        "md5": "21b5e0b043b85011a29ec975362cd09f",
+        "sha256": "9bbf2d9db10108e5a55da538b0b7f72f4abd8bca2b528021b5a18cd7fd3c0b73"
+      },
+      "downloads": -1,
+      "filename": "napari_fungiform-0.1.3-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "21b5e0b043b85011a29ec975362cd09f",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.10",
+      "size": 86351,
+      "upload_time": "2026-06-10T00:36:35",
+      "upload_time_iso_8601": "2026-06-10T00:36:35.018331Z",
+      "url": "https://files.pythonhosted.org/packages/7a/fa/3ad6ba82fc3725fcc9bdcb708ecf3c269eb954d973fb93ed2ef44132a7a4/napari_fungiform-0.1.3-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "85e2c3abe86470d350dc8d6bacc72b337df60deb20ec54e572a76db761eef275",
+        "md5": "b9a9bc0b84f37694c0474e021aa852ba",
+        "sha256": "2cb18229494446fa3d78c336e3b3803ec105e237cc0aa0fd3a1393343a81d111"
+      },
+      "downloads": -1,
+      "filename": "napari_fungiform-0.1.3.tar.gz",
+      "has_sig": false,
+      "md5_digest": "b9a9bc0b84f37694c0474e021aa852ba",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.10",
+      "size": 91764,
+      "upload_time": "2026-06-10T00:36:37",
+      "upload_time_iso_8601": "2026-06-10T00:36:37.868253Z",
+      "url": "https://files.pythonhosted.org/packages/85/e2/c3abe86470d350dc8d6bacc72b337df60deb20ec54e572a76db761eef275/napari_fungiform-0.1.3.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

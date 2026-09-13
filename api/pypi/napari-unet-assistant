@@ -1,0 +1,617 @@
+{
+  "info": {
+    "author": "Wulin Teo",
+    "author_email": null,
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 3 - Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-unet-assistant\n\n`napari-unet-assistant` is a napari plugin for supervised 2D and 3D U-Net segmentation workflows.\n\nIt is designed for users who already have image-mask training data and want to pair files, train a U-Net model, run inference, and inspect results directly inside napari.\n\nThis plugin is separate from SAM-based annotation workflows. Its focus is conventional supervised U-Net training from existing image-mask pairs.\n\n## What's new in 0.6.5\n\n- Added recursive dataset-folder auto pairing for TIFF datasets with `images`/`masks`, `raw`/`labels`, mixed-folder, and nested layouts.\n- Added folder-name role hints so dataset folders can guide image-mask pairing even when filenames are less explicit.\n- Added configurable augmentation presets: `none`, `conservative`, `balanced`, and `strong`.\n- Added custom augmentation controls for flips, rotation, shear, scale, brightness jitter, and Gaussian noise.\n- Added model-capacity options for standard, large, and xlarge U-Net widths.\n- Added a model registry with built-in U-Net, MONAI, nnU-Net, and segmentation-models-pytorch backend hooks.\n- Added separate model-family, backbone/encoder, and encoder-weight controls for clearer U-Net variant testing.\n- Added a Model Sweep tab for running multiple backend, model-family, backbone, weight, and capacity combinations sequentially.\n- Added a dedicated nnU-Net pipeline path that exports training pairs, runs nnU-Net v2 CLI training, and imports prediction TIFFs.\n- Added early stopping with one learning-rate reduction on validation plateau before stopping after a second plateau.\n- Added a Training Monitor tab with structured run, pair, metric, and output-path summaries.\n- Changed single new training runs to create timestamped child run folders under the selected output parent so repeated runs do not overwrite history.\n- Improved resume metadata loading so epochs, batch size, validation split, and early-stopping controls are restored as editable defaults.\n- Clarified model selection wording with user-facing labels: model source, architecture, feature extractor, pretrained weights, and model size.\n- Made Model Sweep write completed/failed result rows immediately from the worker thread so `sweep_results.csv` stays current through long sweeps.\n- Added a Model Sweep SMP feature-extractor checklist so users can choose small/fast, default, or larger encoders instead of sweeping every SMP encoder blindly.\n- Added an in-app Model Sweep results comparison view with a sortable table, metric bars, and a shortcut to use the selected run for inference.\n- Added multiclass mask label-range validation before training starts.\n- Added saving and loading of augmentation settings in run configuration metadata.\n- Added a training stop button that cancels after the current batch, discards the interrupted model state, and clears GPU cache when available.\n- Added a U-Net architecture preview for the selected 2D/3D mode and output-channel configuration.\n- Added short tooltips across the main controls to explain settings in place.\n- Improved the training UI layout with clearer tabs and more stable dock-widget sizing.\n\n## Highlights\n\n- TIFF-first 2D and 3D U-Net training\n- Binary and multiclass segmentation\n- Clear binary output-channel wording: binary uses one foreground channel while background remains label 0\n- Recursive smart image-mask pairing\n- Pair review with confidence, reason, and shape-check status\n- Patch-based training with configurable patch size and overlap\n- Optional empty-mask patch inclusion\n- Configurable augmentation presets and custom augmentation controls\n- Standard, large, and xlarge U-Net capacity options\n- Optional model backends for MONAI, nnU-Net, and segmentation-models-pytorch\n- Model Sweep for batch training and validation comparison across model choices\n- Training Monitor for structured current-run status, latest/best metrics, and output paths\n- 80/20 validation split\n- Continue training from a previous run\n- Training cancellation from the UI\n- Single-image and folder inference\n- 2D image and 3D volume prediction\n- TIFF prediction export\n- napari-based visualization and QC\n\n## Smart image-mask pairing\n\nThe plugin can pair training data from:\n\n- a dataset root scanned recursively\n- separate image and mask folders\n- one mixed folder containing both images and masks\n- a manual CSV file\n\nDataset-root auto scan supports common layouts such as:\n\n- `images/` + `masks/`\n- `raw/` + `labels/`\n- nested TIFF folders under one dataset root\n- one mixed folder containing `sample.tif` + `sample_mask.tif`\n\nSupported naming patterns include:\n\n- `sample.tif` + `sample_mask.tif`\n- `sample_1.tif` + `sample_2.tif`\n- `sample_image.tif` + `sample_mask.tif`\n- `sample_raw.tif` + `sample_label.tif`\n\nAfter scanning, the plugin shows each proposed pair with confidence, reason, and shape-check status. Ambiguous or invalid pairs are reported instead of being silently used for training.\n\nFolder names such as `images`, `raw`, `masks`, and `labels` can also provide role hints during recursive dataset scans.\n\n## Augmentation\n\nTraining supports augmentation presets and custom controls:\n\n- `none`: no augmentation\n- `conservative`: flips, small rotations/scales, and light brightness jitter\n- `balanced`: stronger rotation/scale, shear, brightness jitter, and light Gaussian noise\n- `strong`: wider rotation/scale/shear ranges, stronger brightness jitter, and stronger Gaussian noise\n- `custom`: user-selected flips, rotation, shear, scale, brightness, and noise settings\n\nThe selected augmentation configuration is saved in each run folder's `config.json` and restored when loading run metadata.\n\n## Training controls\n\nThe training panel includes a stop button for cancelling an active training run. Cancellation is checked between batches, so the current batch may finish before the run stops.\n\nWhen a run is stopped, the interrupted model state is discarded and GPU cache is cleared when available.\n\nThe validation tab also includes early stopping controls. When enabled, the plugin monitors validation Dice. If validation Dice does not improve by at least the configured minimum gain for the patience window, the learning rate is reduced once. If validation Dice still does not improve for another patience window after that reduction, training stops early and keeps the best validation-Dice checkpoint. Validation uses augmentation disabled, even when training augmentation is enabled. When at least two image-mask pairs are available, validation is split by image/mask pair so training and validation patches come from different source images. Single-pair datasets fall back to patch-level validation and record that fallback in `validation.json`. The per-epoch `history.csv` records `learning_rate`, `lr_reduced`, and `early_stopped`, and `validation.json` records split level plus augmentation state.\n\nWhen loading resume metadata, the plugin restores architecture/data settings for compatibility and also restores editable schedule controls such as epochs, batch size, validation split, and early-stopping settings. In continue-training mode, the restored epoch value is the default number of additional epochs to run, not a total lifetime epoch target.\n\n## Training Monitor\n\nThe `Monitor` tab in Training Options gives an organized current-run view instead of another scrolling log. It shows the active run configuration, pair-scan summary, latest validation metrics, best validation metrics, and important output paths such as `config.json`, `history.csv`, `summary.json`, `best_model.pt`, and prediction folders.\n\nThis is different from Step 4 `Results`: Step 4 remains the chronological message log for detailed events, warnings, pair reports, and command output. The Monitor tab is a compact dashboard that overwrites the same fields as training progresses, so users can leave training running and come back to the current state quickly. It also includes lightweight actions to preview one selected/first OK image-mask pair in napari and to reuse the current run folder in the Inference section.\n\n## Model size\n\nTraining can use standard, large, or xlarge U-Net widths. For 2D models, these use base channel widths of 32, 64, and 128. Larger models can learn more complex boundaries, but they need more GPU memory and may require a smaller batch size.\n\n## Model sources\n\nThe default model source is the built-in U-Net and works without extra model packages. MONAI, segmentation-models-pytorch, and nnU-Net are optional backends, so they must be installed into the same Python environment that runs napari. Prefer `python -m pip` from that environment so the package is installed where napari can import it.\n\nIf you install a release of `napari-unet-assistant` that declares the optional extras, you can use:\n\n```bash\npython -m pip install napari-unet-assistant[monai]\npython -m pip install napari-unet-assistant[smp]\npython -m pip install napari-unet-assistant[nnunet]\npython -m pip install napari-unet-assistant[models]\n```\n\nUse `models` to install all optional model backends at once. If your shell treats square brackets specially, quote the requirement:\n\n```bash\npython -m pip install \"napari-unet-assistant[models]\"\n```\n\nIf the extras command does not install the backend package, install the backend dependency directly:\n\n```bash\npython -m pip install monai\npython -m pip install segmentation-models-pytorch\npython -m pip install nnunetv2\n```\n\nFor a development checkout, install the extras from the repository root:\n\n```bash\npython -m pip install -e \".[models]\"\n```\n\nFor the GitHub version, put the extras before the `@` URL:\n\n```bash\npython -m pip install \"napari-unet-assistant[models] @ git+https://github.com/wulinteousa2-hash/napari-unet-assistant.git\"\n```\n\nYou can verify that the optional packages are available with:\n\n```bash\npython -c \"import monai; import segmentation_models_pytorch; import nnunetv2; print('optional model backends ok')\"\n```\n\nIf this import check fails, napari will still load the built-in U-Net backend, but the missing optional model source will not be usable until its package is installed in the active environment. After installing a source, restart napari and select it from the `Model source` dropdown.\n\nThe model registry lives under `src/napari_unet_assistant/models/` and separates provider code into `providers/`. MONAI and segmentation-models-pytorch models are regular `torch.nn.Module` backends. nnU-Net uses a dedicated pipeline workflow because nnU-Net manages its own data conversion, planning, preprocessing, training, and prediction commands.\n\nModel selection is split into:\n\n- `Model source`: the library or workflow provider, such as built-in plugin models, MONAI, SMP, or the separate nnU-Net pipeline. This is the ML/backend term in plainer UI wording.\n- `Architecture`: the model family inside that source, such as U-Net, U-Net++, SegResNet, or DeepLabV3+.\n- `Feature extractor`: the encoder/backbone used by encoder-style models when supported, such as ResNet34, ResNet50, EfficientNet-B0, DenseNet121, or MobileNetV2.\n- `Pretrained weights`: optional starting weights for the feature extractor, such as ImageNet weights for supported 2D SMP encoders.\n- `Model size`: width/depth capacity preset used by sources that expose size controls.\n\n## Model Sweep\n\nUse the `Model Sweep` tab when you want to compare multiple model configurations without starting each run manually. Set the shared training constants first, including data shape, task type, patch settings, augmentation, validation split, epochs, and batch size. Then check the model sources, model sizes, and SMP feature extractors to test, click `Preview model sweep`, and click `Run model sweep`. The regular `Model source`, `Architecture`, and `Feature extractor` controls in the `Run` tab are for single training runs; Model Sweep expands checked sources into valid architectures, selected feature extractors, and pretrained weights automatically.\n\nFor SMP sweeps, the `SMP feature extractors` checklist controls which encoders are expanded. The list is grouped into small/fast, good default, and larger encoders. The default checked encoders preserve the earlier sweep behavior: `resnet34`, `resnet50`, `efficientnet-b0`, `densenet121`, and `mobilenet_v2`.\n\nAfter a sweep finishes, click `Load sweep results` and choose the sweep folder to compare `sweep_results.csv` inside the app. The comparison view provides a sortable table, top-run metric bars for Dice, IoU, F1, or validation loss, and `Use selected run for inference` to load the chosen completed run into the Inference section.\n\nThe sweep runs configurations sequentially so one GPU is used predictably. Each completed configuration gets its own run folder with the usual files:\n\n- `config.json`\n- `run_summary.txt`\n- `validation.json`\n- `history.csv`\n- `summary.json`\n- `best_model.pt`\n\nThe sweep folder also writes:\n\n- `sweep_config.json`: shared settings, augmentation, selected configurations, and skipped entries\n- `sweep_results.csv`: one summary row per skipped, failed, or completed configuration\n- `pairs.csv`: image-mask pairs used by the sweep\n\nThe `sweep_results.csv` table includes source/backend, architecture/model family, model size, feature extractor/encoder, pretrained weights, best validation loss, best validation Dice/IoU/F1, run folder, and any error message. Missing optional backend packages are reported as skipped during preview/run. Failed combinations do not stop the sweep; they are recorded and the next configuration runs. Completed and failed rows are written from the sweep worker as each configuration ends, so partial results stay current even during long runs. The stop button cancels after the current batch or epoch boundary and leaves partial results on disk.\n\nnnU-Net is not trained through Model Sweep because it uses its own data-conversion, planning, training, and prediction pipeline rather than the plugin's direct `torch.nn.Module` training loop. To train nnU-Net, select `nnunet` in the `Run` tab and start a normal training run. The plugin exports the paired TIFF data to a self-contained nnU-Net work folder, runs `nnUNetv2_plan_and_preprocess`, runs `nnUNetv2_train`, and saves `nnunet_workflow.json` so the Inference panel can run `nnUNetv2_predict` and convert predictions back to TIFF.\n\n## Manual CSV pairing\n\nFor manual pairing, provide a CSV file with one image-mask pair per row.\n\nRequired columns:\n\n- `image_path`\n- `mask_path`\n\nOptional column:\n\n- `key`\n\nExample:\n\n```csv\nkey,image_path,mask_path\nsample01,/path/to/images/sample01.tif,/path/to/masks/sample01_mask.tif\nsample02,/path/to/images/sample02.tif,/path/to/masks/sample02_mask.tif\n```\n\nUse absolute paths for the clearest behavior. Relative paths are interpreted from the current working directory.\n\nEach image and mask should have matching spatial dimensions.\n\n## Installation\n\n```bash\npip install git+https://github.com/wulinteousa2-hash/napari-unet-assistant.git\n```\n\nFor editable development:\n\n```bash\ngit clone https://github.com/wulinteousa2-hash/napari-unet-assistant.git\ncd napari-unet-assistant\npip install -e .\nnapari\n```\n\n## Basic workflow\n\n1. Open napari.\n2. Launch **U-Net Assistant**.\n3. Choose a pairing mode.\n4. Scan and review image-mask pairs.\n5. Set training options.\n6. Train a 2D or 3D U-Net model.\n7. Load a saved run folder.\n8. Run inference on new images or volumes.\n9. Review prediction masks in napari.\n\n## Binary vs multiclass outputs\n\nFor binary segmentation, masks still use `0 = background` and nonzero/`1 = foreground`, but the model uses one output channel: foreground probability. Background is implicit when foreground probability is below the threshold.\n\nFor multiclass segmentation, enter the total number of labels including background. For example, three classes means `0 = background`, `1 = class 1`, and `2 = class 2`.\n\n## Supported data\n\n### 2D training\n\n- image: `(Y, X)` grayscale TIFF\n- mask: `(Y, X)` label TIFF\n- binary masks: `0 = background`, nonzero = foreground\n- multiclass masks: integer labels from `0` through `num_classes - 1`; training checks this before starting\n\n### 3D training\n\n- image: `(Z, Y, X)` grayscale TIFF\n- mask: `(Z, Y, X)` label TIFF\n- multiclass masks should use integer labels from `0` through `num_classes - 1`; training checks this before starting:\n  - `0 = background`\n  - `1 = class 1`\n  - `2 = class 2`\n  - `3 = class 3`\n\n## Patch options\n\n### 2D\n\nXY patch sizes:\n\n- 64\n- 128\n- 256\n- 512\n- 1024\n\nDefault: `256 x 256`\n\n### 3D\n\nZ patch sizes:\n\n- 8\n- 16\n- 32\n- 64\n\nXY patch sizes:\n\n- 64\n- 128\n- 256\n- 512\n- 1024\n\nDefault: `16 x 256 x 256`\n\n## Validation\n\nThe current training workflow uses a standard train/validation split. The default validation split is 20%.\n\nK-fold cross-validation is not active in this release.\n\nEach run writes `validation.json` with the active validation mode, split fraction, random seed, total patch count, train patch count, and validation patch count. The training log also reports the same split. Per-epoch validation metrics are written to `history.csv`.\n\nAt training start, the log reports the model source, architecture, feature extractor, pretrained weights, model size, patch settings, augmentation preset, validation setup, epochs, and batch size. The same user-readable summary is written to `run_summary.txt`, while full structured settings are saved in `config.json`.\n\n## Output History\n\nThe `Run output` field is treated as a parent folder for new training runs. Each new single training run creates a timestamped child run folder so repeated one-by-one experiments do not overwrite earlier `history.csv`, `summary.json`, or `best_model.pt` files.\n\nExample:\n\n```text\nmy_training_outputs/\n  run_20260520_143000_builtin_unet_large_plain_none/\n  run_20260520_151500_monai_unet_large_plain_none/\n  run_20260520_163000_smp_unetplusplus_large_resnet34_imagenet/\n  run_20260520_174500_nnunet_nnunetv2_dataset600_2d_fold0/\n```\n\nModel Sweep already uses a parent folder with child run folders under `sweep_YYYYMMDD_HHMMSS/`. Continue-training workflows still target a specific compatible run folder instead of creating a new sibling.\n\n## Outputs\n\nEach run folder can contain:\n\n- `best_model.pt`\n- `config.json`\n- `run_summary.txt`\n- `summary.json`\n- `history.csv`\n- `validation.json`\n- `pairs.csv`\n- prediction TIFF outputs\n\n## Current scope\n\nThis release is focused on TIFF-based supervised U-Net training and inference.\n\nOME-Zarr, spectral/lambda workflows, and SAM-assisted annotation are intentionally outside the scope of this version.\n\n## Reference\n\nThis project builds on U-Net-based nerve morphometry workflows described in:\n\nMoiseev D, Hu B, Li J. Morphometric Analysis of Peripheral Myelinated Nerve Fibers through Deep Learning. *Journal of the Peripheral Nervous System*. 2019;24(1):87-93.  \nhttps://pmc.ncbi.nlm.nih.gov/articles/PMC6420354/\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": "napari, u-net, segmentation, annotation, microscopy, image analysis",
+    "license": "MIT",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-unet-assistant",
+    "package_url": "https://pypi.org/project/napari-unet-assistant/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-unet-assistant/",
+    "project_urls": {
+      "Homepage": "https://github.com/wulinteousa2-hash/napari-unet-assistant",
+      "Issues": "https://github.com/wulinteousa2-hash/napari-unet-assistant/issues",
+      "Repository": "https://github.com/wulinteousa2-hash/napari-unet-assistant"
+    },
+    "provides_extra": [
+      "monai",
+      "nnunet",
+      "smp",
+      "models"
+    ],
+    "release_url": "https://pypi.org/project/napari-unet-assistant/0.6.5/",
+    "requires_dist": [
+      "napari",
+      "numpy",
+      "magicgui",
+      "qtpy",
+      "tifffile",
+      "zarr",
+      "ome-zarr",
+      "dask[array]",
+      "torch",
+      "torchvision",
+      "monai; extra == \"monai\"",
+      "nnunetv2; extra == \"nnunet\"",
+      "segmentation-models-pytorch; extra == \"smp\"",
+      "monai; extra == \"models\"",
+      "nnunetv2; extra == \"models\"",
+      "segmentation-models-pytorch; extra == \"models\""
+    ],
+    "requires_python": ">=3.10",
+    "summary": "a napari plugin for TIFF-based 2D and 3D U-Net segmentation workflows.",
+    "version": "0.6.5",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 37276434,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "viralvector"
+      }
+    ]
+  },
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "3684148792e8ad8d74875e9c7cf200eba8a44dc66159aa87760ff162605b01f5"
+        },
+        "digests": {
+          "blake2b_256": "140bc21a1b6a1e4f0d12e6ac961d3f8d45b372d2e0d6ebffd86c046ba749e35a",
+          "md5": "8afb965bd861292435b9ebd13f7893af",
+          "sha256": "d8b5e9122b140f488b3ab2976de5b1a7529806dbf1ea78089af6ababc945325d"
+        },
+        "downloads": -1,
+        "filename": "napari_unet_assistant-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "8afb965bd861292435b9ebd13f7893af",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 35901,
+        "upload_time": "2026-05-03T00:00:17",
+        "upload_time_iso_8601": "2026-05-03T00:00:17.187805Z",
+        "url": "https://files.pythonhosted.org/packages/14/0b/c21a1b6a1e4f0d12e6ac961d3f8d45b372d2e0d6ebffd86c046ba749e35a/napari_unet_assistant-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "7946bcfa0ef560da16698b4b350dd057e5af9e9de05c2d941b0a5122fff0cb5d",
+          "md5": "acee3bd4c1d49881b15c4bf61d691dad",
+          "sha256": "52e324d1f719c86a89639b3ce90d86ff2c3cfdfe6ff488af4403774ac60708ad"
+        },
+        "downloads": -1,
+        "filename": "napari_unet_assistant-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "acee3bd4c1d49881b15c4bf61d691dad",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 31820,
+        "upload_time": "2026-05-03T00:00:18",
+        "upload_time_iso_8601": "2026-05-03T00:00:18.647785Z",
+        "url": "https://files.pythonhosted.org/packages/79/46/bcfa0ef560da16698b4b350dd057e5af9e9de05c2d941b0a5122fff0cb5d/napari_unet_assistant-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "471ad89a1ebafa78dc62393ef33b5766c8625d329eae0b8ec9c1a9ca04c56bb7"
+        },
+        "digests": {
+          "blake2b_256": "c97b52a0e8de2d06c898e734d8b5bf277cbb6b456cd1d543869088abd857165e",
+          "md5": "1b21be8f814214df24fec95db5ed617b",
+          "sha256": "0373683f4b1e0c5e24b757c3aef4cbd41c24cd705cd378b745069f2f433c8659"
+        },
+        "downloads": -1,
+        "filename": "napari_unet_assistant-0.2.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "1b21be8f814214df24fec95db5ed617b",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 41308,
+        "upload_time": "2026-05-03T18:12:20",
+        "upload_time_iso_8601": "2026-05-03T18:12:20.907339Z",
+        "url": "https://files.pythonhosted.org/packages/c9/7b/52a0e8de2d06c898e734d8b5bf277cbb6b456cd1d543869088abd857165e/napari_unet_assistant-0.2.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "30ed110177d1239f7324af251bed3ca989da98c96f12ed4482a2fe37e6559f57",
+          "md5": "ce6a252c8af476dde801e7c974dcbf16",
+          "sha256": "e2718ff21faf65a330399411b0ec8a8dbe5ea14c5c4648f53ce4f114db0bb2d9"
+        },
+        "downloads": -1,
+        "filename": "napari_unet_assistant-0.2.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "ce6a252c8af476dde801e7c974dcbf16",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 37507,
+        "upload_time": "2026-05-03T18:12:22",
+        "upload_time_iso_8601": "2026-05-03T18:12:22.178486Z",
+        "url": "https://files.pythonhosted.org/packages/30/ed/110177d1239f7324af251bed3ca989da98c96f12ed4482a2fe37e6559f57/napari_unet_assistant-0.2.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "cd6e990d40f964404e3b41aa184b4690b8339dc7b335c1094383e814a51268db"
+        },
+        "digests": {
+          "blake2b_256": "3e5ca21cb41e7066271421569d293a3c3680054792ad627cc63079a49db672cc",
+          "md5": "e63f06897ad81d2b8f2d9a8a2facc0f9",
+          "sha256": "fc4324bbee71868a7f3037793e6d99fba61493a0d7ee4ed34b8cfc9d14e9c172"
+        },
+        "downloads": -1,
+        "filename": "napari_unet_assistant-0.3.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "e63f06897ad81d2b8f2d9a8a2facc0f9",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 47953,
+        "upload_time": "2026-05-10T02:01:01",
+        "upload_time_iso_8601": "2026-05-10T02:01:01.202468Z",
+        "url": "https://files.pythonhosted.org/packages/3e/5c/a21cb41e7066271421569d293a3c3680054792ad627cc63079a49db672cc/napari_unet_assistant-0.3.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "f06f9e17464be0ee15ee4990272593b4dd2b619e167a5512cdc7158c0ba2f691",
+          "md5": "a31157a8da26794c99092659b0ed2349",
+          "sha256": "26ac2270a72987f381e243f043d9d70504a82e3d1ca3d0123c8569148293cdb0"
+        },
+        "downloads": -1,
+        "filename": "napari_unet_assistant-0.3.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "a31157a8da26794c99092659b0ed2349",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 44663,
+        "upload_time": "2026-05-10T02:01:02",
+        "upload_time_iso_8601": "2026-05-10T02:01:02.606569Z",
+        "url": "https://files.pythonhosted.org/packages/f0/6f/9e17464be0ee15ee4990272593b4dd2b619e167a5512cdc7158c0ba2f691/napari_unet_assistant-0.3.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.4.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "d274951ae00f6bf479b2134620bd03c0ff543fd467b72eb0c3b655a0fde81e8f"
+        },
+        "digests": {
+          "blake2b_256": "1fe8699062071bf300874528852b6371733f388f7699696263cca551808b0955",
+          "md5": "c1446b2c3712593c7088ec53600e8fef",
+          "sha256": "b163885e4a443630776bd7613877abbb749028737dc8ba738803fd1063a6996f"
+        },
+        "downloads": -1,
+        "filename": "napari_unet_assistant-0.4.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "c1446b2c3712593c7088ec53600e8fef",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 53538,
+        "upload_time": "2026-05-10T05:00:54",
+        "upload_time_iso_8601": "2026-05-10T05:00:54.524776Z",
+        "url": "https://files.pythonhosted.org/packages/1f/e8/699062071bf300874528852b6371733f388f7699696263cca551808b0955/napari_unet_assistant-0.4.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "6140f49591519237966d99a900b7d9f46f057c61bee4864027f265a277744a68",
+          "md5": "8a91bf49d76ed7d21e0e297ec5ebb187",
+          "sha256": "6624180456cd3fa27384ef327fcd0bcd32ae4a934bc7f58ed78a7724e74bca9c"
+        },
+        "downloads": -1,
+        "filename": "napari_unet_assistant-0.4.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "8a91bf49d76ed7d21e0e297ec5ebb187",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 49148,
+        "upload_time": "2026-05-10T05:00:55",
+        "upload_time_iso_8601": "2026-05-10T05:00:55.938975Z",
+        "url": "https://files.pythonhosted.org/packages/61/40/f49591519237966d99a900b7d9f46f057c61bee4864027f265a277744a68/napari_unet_assistant-0.4.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.6.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "971e4abc7d6789f1f106661ca0392378c3d32516c7b7b4c1544cc71a72cdaa5f"
+        },
+        "digests": {
+          "blake2b_256": "376992610f651b989516f791c71782fadc1a85fa8b0de4af3cc7e137d3121d74",
+          "md5": "b2eb372f5f2906e6ae4a6a0091c0fcee",
+          "sha256": "99536ddc1c13b0a9956a4218272057e1ed631415a9c4a4b73b62fadfa2746c7f"
+        },
+        "downloads": -1,
+        "filename": "napari_unet_assistant-0.6.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "b2eb372f5f2906e6ae4a6a0091c0fcee",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 61292,
+        "upload_time": "2026-05-19T20:07:28",
+        "upload_time_iso_8601": "2026-05-19T20:07:28.427372Z",
+        "url": "https://files.pythonhosted.org/packages/37/69/92610f651b989516f791c71782fadc1a85fa8b0de4af3cc7e137d3121d74/napari_unet_assistant-0.6.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "4f19620ec2be7a1d652c9bf916a06d7b0726b723977ee8c85318c1cf7e42bf13",
+          "md5": "6a63b3175575d8cfd38e8c7587c17082",
+          "sha256": "e9c3c31894c1992af64727b10d280bfc979a4b3a22df5f7e1e53c84d268432e4"
+        },
+        "downloads": -1,
+        "filename": "napari_unet_assistant-0.6.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "6a63b3175575d8cfd38e8c7587c17082",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 57667,
+        "upload_time": "2026-05-19T20:07:29",
+        "upload_time_iso_8601": "2026-05-19T20:07:29.467443Z",
+        "url": "https://files.pythonhosted.org/packages/4f/19/620ec2be7a1d652c9bf916a06d7b0726b723977ee8c85318c1cf7e42bf13/napari_unet_assistant-0.6.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.6.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "8cc32e146311dbd4548be21f9d85e1edd9f06dd5907a006a9797b1497fd95b29"
+        },
+        "digests": {
+          "blake2b_256": "c6cca0a20ecd16c023d8c8c36012a6f3b65678b68acfe7067c8ee2084783d965",
+          "md5": "dcab1826175f797e0956a9fd1e963e42",
+          "sha256": "8de9cae6621ac2740f7997e54fb3d6ef21c8c8ffd40ab665ea5f3cb9e2d42377"
+        },
+        "downloads": -1,
+        "filename": "napari_unet_assistant-0.6.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "dcab1826175f797e0956a9fd1e963e42",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 67588,
+        "upload_time": "2026-05-20T01:46:02",
+        "upload_time_iso_8601": "2026-05-20T01:46:02.507354Z",
+        "url": "https://files.pythonhosted.org/packages/c6/cc/a0a20ecd16c023d8c8c36012a6f3b65678b68acfe7067c8ee2084783d965/napari_unet_assistant-0.6.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "6a755845394fcdb9bcab098906badd1af59d271ca1b793ede8cd2377d2bb2fa3",
+          "md5": "5e620d57a73dbb308302e88ccdafc765",
+          "sha256": "ffe3a6ca973f3b83e6a87d7579c3c994b88c405bc13e665f3821fc139d3feece"
+        },
+        "downloads": -1,
+        "filename": "napari_unet_assistant-0.6.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "5e620d57a73dbb308302e88ccdafc765",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 63503,
+        "upload_time": "2026-05-20T01:46:03",
+        "upload_time_iso_8601": "2026-05-20T01:46:03.839461Z",
+        "url": "https://files.pythonhosted.org/packages/6a/75/5845394fcdb9bcab098906badd1af59d271ca1b793ede8cd2377d2bb2fa3/napari_unet_assistant-0.6.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.6.2": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "b47dce649375c2e5506d63b40f1bcb94693ea8d949e0b4e2f9064e5ff913baa3"
+        },
+        "digests": {
+          "blake2b_256": "feeccf84666e05bbbfd0d5d66c0e8eae8f273add96a1512025c4c5b587cc647a",
+          "md5": "d3beb8888910797e9869839769154fc6",
+          "sha256": "8501fc02aa44112b650d39730387f5fcdafee7742e871c7270cc6f48c55baca6"
+        },
+        "downloads": -1,
+        "filename": "napari_unet_assistant-0.6.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "d3beb8888910797e9869839769154fc6",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 68929,
+        "upload_time": "2026-05-20T02:41:37",
+        "upload_time_iso_8601": "2026-05-20T02:41:37.735859Z",
+        "url": "https://files.pythonhosted.org/packages/fe/ec/cf84666e05bbbfd0d5d66c0e8eae8f273add96a1512025c4c5b587cc647a/napari_unet_assistant-0.6.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "33e8ad0d23320b88d803cdb5cf9daa4de07acdcc230a4c60eaa8854dd7799788",
+          "md5": "e5f69a1e5fbdac1c922ff855811ff37f",
+          "sha256": "18c5bb0375f70cad99cb96283bead53bd3c2b614df33c28ac8fba49867724530"
+        },
+        "downloads": -1,
+        "filename": "napari_unet_assistant-0.6.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e5f69a1e5fbdac1c922ff855811ff37f",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 65114,
+        "upload_time": "2026-05-20T02:41:39",
+        "upload_time_iso_8601": "2026-05-20T02:41:39.003976Z",
+        "url": "https://files.pythonhosted.org/packages/33/e8/ad0d23320b88d803cdb5cf9daa4de07acdcc230a4c60eaa8854dd7799788/napari_unet_assistant-0.6.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.6.3": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "6806f47f0cb01ca769a7fcda0532fb46ebaa9ebc562f037b87182baa0a6b6f44"
+        },
+        "digests": {
+          "blake2b_256": "fbc0eb2962691e9d2d186394658de49fc07280378dd252c4ecf7a7279b849bce",
+          "md5": "5082e92e3edd775930c0cd8fd79e7a63",
+          "sha256": "adfb70cfb17eec4d3b413395f134b5eb62c4b879ac19eaecca2f229e735848bc"
+        },
+        "downloads": -1,
+        "filename": "napari_unet_assistant-0.6.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "5082e92e3edd775930c0cd8fd79e7a63",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 71042,
+        "upload_time": "2026-05-20T12:54:33",
+        "upload_time_iso_8601": "2026-05-20T12:54:33.011709Z",
+        "url": "https://files.pythonhosted.org/packages/fb/c0/eb2962691e9d2d186394658de49fc07280378dd252c4ecf7a7279b849bce/napari_unet_assistant-0.6.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "7b3d77a7070ead96afd08325920993909d89b10885627671097a89ab34b4b537",
+          "md5": "40e53c0fda3af208ec5c4469c0f23a40",
+          "sha256": "cb8b25a6c594d909f7adfdae0a18e02b9cb23e0977dab9456554de1cb03c920c"
+        },
+        "downloads": -1,
+        "filename": "napari_unet_assistant-0.6.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "40e53c0fda3af208ec5c4469c0f23a40",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 67669,
+        "upload_time": "2026-05-20T12:54:34",
+        "upload_time_iso_8601": "2026-05-20T12:54:34.377247Z",
+        "url": "https://files.pythonhosted.org/packages/7b/3d/77a7070ead96afd08325920993909d89b10885627671097a89ab34b4b537/napari_unet_assistant-0.6.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.6.4": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "babdbd7b7de20e7648911c9077a84332ec35dcce032ec5a61e088a9d9ec42135"
+        },
+        "digests": {
+          "blake2b_256": "34d9312e43938310baa5941626e2523be84946c874e170ac6f1ac6b7dcd2b958",
+          "md5": "07cfd1acea6d7378d56299c650b334b0",
+          "sha256": "0f0b2236688c8f48d61891877d322a8753bd4d7b003d93d10e0f50de9b936775"
+        },
+        "downloads": -1,
+        "filename": "napari_unet_assistant-0.6.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "07cfd1acea6d7378d56299c650b334b0",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 73097,
+        "upload_time": "2026-05-20T16:59:28",
+        "upload_time_iso_8601": "2026-05-20T16:59:28.502871Z",
+        "url": "https://files.pythonhosted.org/packages/34/d9/312e43938310baa5941626e2523be84946c874e170ac6f1ac6b7dcd2b958/napari_unet_assistant-0.6.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "b0676ef56d93c24471973c4c9fafe83a915a258b7881c2fd397a4356411d3bce",
+          "md5": "e3d49955c8b7708ea49d1056f0a963e3",
+          "sha256": "009b4bcf3515c305136f16fa3d9c1869346530f28d1a501894288e708b83ad2b"
+        },
+        "downloads": -1,
+        "filename": "napari_unet_assistant-0.6.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e3d49955c8b7708ea49d1056f0a963e3",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 70612,
+        "upload_time": "2026-05-20T16:59:29",
+        "upload_time_iso_8601": "2026-05-20T16:59:29.900620Z",
+        "url": "https://files.pythonhosted.org/packages/b0/67/6ef56d93c24471973c4c9fafe83a915a258b7881c2fd397a4356411d3bce/napari_unet_assistant-0.6.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.6.5": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "02094743c0abbb91011538a52d0f9f5231855f0c813e3e444f94765ed193d539"
+        },
+        "digests": {
+          "blake2b_256": "dc4aebf952e1993ff1c27dacdaaddce9935b8f22d36037296fe567b523fd4445",
+          "md5": "e96a60c73952602a3b93cfbe6f89a800",
+          "sha256": "da5219cbbf5aa72f4cce82bbfdb333c429171695d439085cb0a4f4b6260c4c31"
+        },
+        "downloads": -1,
+        "filename": "napari_unet_assistant-0.6.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "e96a60c73952602a3b93cfbe6f89a800",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 76020,
+        "upload_time": "2026-05-21T13:44:38",
+        "upload_time_iso_8601": "2026-05-21T13:44:38.773774Z",
+        "url": "https://files.pythonhosted.org/packages/dc/4a/ebf952e1993ff1c27dacdaaddce9935b8f22d36037296fe567b523fd4445/napari_unet_assistant-0.6.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "f4db6bbf889ccfee8586df4225161bf86929eef7761723c04fa45967cefc293a",
+          "md5": "14e4b991b69f069eefee595471ad5ee0",
+          "sha256": "d2d31991aae3ea0a3f29283a2941176bd8c57bf3363bf93fa61975382398439d"
+        },
+        "downloads": -1,
+        "filename": "napari_unet_assistant-0.6.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "14e4b991b69f069eefee595471ad5ee0",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 73812,
+        "upload_time": "2026-05-21T13:44:39",
+        "upload_time_iso_8601": "2026-05-21T13:44:39.884360Z",
+        "url": "https://files.pythonhosted.org/packages/f4/db/6bbf889ccfee8586df4225161bf86929eef7761723c04fa45967cefc293a/napari_unet_assistant-0.6.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "02094743c0abbb91011538a52d0f9f5231855f0c813e3e444f94765ed193d539"
+      },
+      "digests": {
+        "blake2b_256": "dc4aebf952e1993ff1c27dacdaaddce9935b8f22d36037296fe567b523fd4445",
+        "md5": "e96a60c73952602a3b93cfbe6f89a800",
+        "sha256": "da5219cbbf5aa72f4cce82bbfdb333c429171695d439085cb0a4f4b6260c4c31"
+      },
+      "downloads": -1,
+      "filename": "napari_unet_assistant-0.6.5-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "e96a60c73952602a3b93cfbe6f89a800",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.10",
+      "size": 76020,
+      "upload_time": "2026-05-21T13:44:38",
+      "upload_time_iso_8601": "2026-05-21T13:44:38.773774Z",
+      "url": "https://files.pythonhosted.org/packages/dc/4a/ebf952e1993ff1c27dacdaaddce9935b8f22d36037296fe567b523fd4445/napari_unet_assistant-0.6.5-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "f4db6bbf889ccfee8586df4225161bf86929eef7761723c04fa45967cefc293a",
+        "md5": "14e4b991b69f069eefee595471ad5ee0",
+        "sha256": "d2d31991aae3ea0a3f29283a2941176bd8c57bf3363bf93fa61975382398439d"
+      },
+      "downloads": -1,
+      "filename": "napari_unet_assistant-0.6.5.tar.gz",
+      "has_sig": false,
+      "md5_digest": "14e4b991b69f069eefee595471ad5ee0",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.10",
+      "size": 73812,
+      "upload_time": "2026-05-21T13:44:39",
+      "upload_time_iso_8601": "2026-05-21T13:44:39.884360Z",
+      "url": "https://files.pythonhosted.org/packages/f4/db/6bbf889ccfee8586df4225161bf86929eef7761723c04fa45967cefc293a/napari_unet_assistant-0.6.5.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

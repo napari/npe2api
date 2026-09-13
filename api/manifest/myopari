@@ -1,0 +1,95 @@
+{
+  "name": "myopari",
+  "display_name": "myopari",
+  "visibility": "public",
+  "icon": null,
+  "categories": [],
+  "schema_version": "0.3.0",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "myopari.make_segmentation_widget",
+        "title": "Image segmentation",
+        "python_name": "myopari._segmentation_widget:SegmentationWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "myopari.make_segmentation_widget",
+        "display_name": "myopari",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configurations": {}
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "myopari",
+    "version": "0.1.6",
+    "dynamic": [
+      "classifier",
+      "description",
+      "description-content-type",
+      "license",
+      "license-file",
+      "requires-dist",
+      "requires-python",
+      "summary"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "User-Friendly AI Software for Automated Quantitative CMR Reporting on Low-Cost, Energy-Efficient Devices",
+    "description": "[![License MIT](https://img.shields.io/pypi/l/myopari.svg?color=green)](https://github.com/minhnhattrinh312/myopari/blob/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/myopari.svg?color=green)](https://pypi.org/project/myopari)\n[![Python Version](https://img.shields.io/pypi/pyversions/myopari.svg?color=green)](https://python.org)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/myopari)](https://napari-hub.org/plugins/myopari)\n\n# 🫀 myopari\n\n**myopari: An Open-Source Edge AI Framework for Automated Quantitative Cardiac MRI Analysis.**\n\n## 💓 Introduction\n\nmyopari is a [napari](https://napari.org/) plugin for cardiac MRI segmentation and quantitative report generation. It brings ONNX-based AI inference to edge devices through an interactive interface that works with both 2D images and 3D volumes.\n\n### ✨ Main features\n\n- 🧠 Built-in `TIRAMISU_ACDC` and `TIRAMISU_EMIDEC` segmentation models\n- 🖥️ Local, edge-friendly ONNX inference\n- 🫀 Optional myocardium-only segmentation\n- 📊 Per-class volume measurements and myocardium mass estimates\n- 📄 Markdown report generation with optional patient information\n- 🤖 Optional LLM-assisted report rewriting with `llama-cpp-python`\n\n### 🎯 Model segmentation outputs\n\nThe output label groups for each model are defined as below:\n\n| Model | Segmentation output | Label value(s) |\n| --- | --- | --- |\n| `TIRAMISU_ACDC` | Right ventricle | `1` |\n| `TIRAMISU_ACDC` | Myocardium | `2` |\n| `TIRAMISU_ACDC` | Left ventricle | `3` |\n| `TIRAMISU_EMIDEC` | Cavity | `1` |\n| `TIRAMISU_EMIDEC` | Myocardium | `2`, `3`, `4` |\n| `TIRAMISU_EMIDEC` | Infarction | `3`, `4` |\n| `TIRAMISU_EMIDEC` | No-reflow | `4` |\n\nSome EMIDEC groups intentionally overlap: infarction and no-reflow are included in the broader myocardium group for quantitative reporting.\n\n## 🚀 Usage\n\n1. Launch napari.\n2. Load a cardiac MRI image or volume.\n3. Open `Plugins → myopari → myopari`.\n4. Click **Select image layer** and choose the image to analyze.\n5. Select the edge device and segmentation model.\n6. Optionally enable **Myocardium only**.\n7. Click **Segment**. The result appears as a new labels layer named `segmentation_<input_layer_name>_<count>`.\n\n### 📝 Create a report\n\nAfter segmentation:\n\n1. Optionally click **Choose patient info files** and select `.cfg`, `.txt`, or `.md` files.\n2. Optionally enable **Use LLM for report**.\n3. Click **Create report**.\n4. Click **Save report to .md** to export the result.\n\nThe report includes per-label volumes in mL and an estimated myocardium mass. If a logo is available in `Resources`, it is embedded in the report and copied beside the saved Markdown file.\n\n## ⌨️ Installation Guide (Command Line)\n\nThe commands below create a dedicated Conda environment, install napari, automatically select the appropriate CPU or CUDA wheel for `llama-cpp-python`, and install myopari:\n\n```bash\nconda create -y -n myopari python=3.13\nconda activate myopari\npip install \"napari[all]==0.7.1\"\n\n# Check your CUDA version. If nvidia-smi is unavailable, use the CPU command.\n# CPU:\npip install llama-cpp-python \\\n    --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu\n# CUDA (replace cu124 with your CUDA wheel tag, for example cu118 or cu121):\npip install llama-cpp-python \\\n    --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu132\npip install myopari\n\nnapari\n```\n\nAfter napari opens, select `Plugins → myopari → myopari`.\n\n## 🧩 Installation Guide *(No Code — Highly Recommended)*\n\nThis is the easiest installation method; no terminal or programming experience is required. 🎉\n\n1. Download and install the official napari bundled app:\n   - 🪟 [Windows installer](https://github.com/napari/napari/releases/download/v0.7.1/napari-0.7.1-Windows-x86_64.exe)\n   - 🐧 [Linux installer](https://github.com/napari/napari/releases/download/v0.7.1/napari-0.7.1-Linux-x86_64.sh)\n   - 📘 [Official bundled-app guide](https://napari.org/0.7.1/tutorials/fundamentals/installation_bundle_conda.html)\n2. Before installing myopari, install `llama-cpp-python` using the installer for your operating system:\n   - 🪟 **Windows:** Download [install_llama2napari_windows.bat](https://github.com/minhnhattrinh312/myopari/releases/download/v0.1.4/install_llama2napari_windows.bat), double-click it, and follow the prompts.\n   - 🐧 **Linux:** Download [install_llama2napari_linux.sh](https://github.com/minhnhattrinh312/myopari/releases/download/v0.1.4/install_llama2napari_linux.sh), run it by bash, and follow the prompts.\n3. Open napari after the `llama-cpp-python` installation finishes.\n4. Go to `Plugins → Install/Uninstall Plugins`.\n5. Search for **myopari**.\n6. Click **Install** and restart napari when installation finishes.\n7. Open the plugin from `Plugins → myopari → myopari`. ✅\n\nThe plugin is also listed on the [napari hub](https://napari-hub.org/plugins/myopari).\n\n## 🛠️ Troubleshooting\n\n- **Segmentation runtime/provider issues:** Check whether `onnxruntime` or `onnxruntime-gpu` is installed. For GPU inference, ensure that the CUDA and driver versions match the installed ONNX Runtime build.\n- **LLM report generation fails:** Install `llama-cpp-python` in napari's environment and ensure internet access is available for the first model download. Disable **Use LLM for report** to continue with standard report generation.\n- **Plugin is missing after installation:** Restart napari and check `Plugins → Install/Uninstall Plugins` to confirm that myopari is installed and enabled.\n\n## 📜 License\n\nmyopari is open-source software licensed under the [MIT License](LICENSE).\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": null,
+    "download_url": null,
+    "author": null,
+    "author_email": null,
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "MIT",
+    "classifier": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: MIT License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.9",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "requires_dist": [
+      "napari",
+      "scikit-image",
+      "onnxruntime-gpu[cuda,cudnn]",
+      "huggingface-hub",
+      "napari-itk-io"
+    ],
+    "requires_python": ">=3.9",
+    "requires_external": null,
+    "project_url": null,
+    "provides_extra": null,
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}
