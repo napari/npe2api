@@ -1,0 +1,153 @@
+{
+  "name": "napari-signal-classifier",
+  "display_name": "Signal Classifier",
+  "visibility": "public",
+  "icon": "",
+  "categories": [],
+  "schema_version": "0.2.1",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-signal-classifier.signal_classifier_qwidget",
+        "title": "Signal Classifier Widget",
+        "python_name": "napari_signal_classifier._widget:Napari_Train_And_Predict_Signal_Classifier",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-signal-classifier.sub_signal_classifier_qwidget",
+        "title": "Sub-Signal Classifier Widget",
+        "python_name": "napari_signal_classifier._widget:Napari_Train_And_Predict_Sub_Signal_Classifier",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "napari-signal-classifier.signal_classifier_qwidget",
+        "display_name": "Train and Predict Signal Classifier",
+        "autogenerate": false
+      },
+      {
+        "command": "napari-signal-classifier.sub_signal_classifier_qwidget",
+        "display_name": "Train and Predict Sub-Signal Classifier",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {
+      "napari/layers/classify": [
+        {
+          "when": null,
+          "group": null,
+          "submenu": "signals_submenu_2"
+        }
+      ],
+      "signals_submenu_2": [
+        {
+          "command": "napari-signal-classifier.signal_classifier_qwidget",
+          "when": null,
+          "group": null,
+          "alt": null
+        },
+        {
+          "command": "napari-signal-classifier.sub_signal_classifier_qwidget",
+          "when": null,
+          "group": null,
+          "alt": null
+        }
+      ]
+    },
+    "submenus": [
+      {
+        "id": "signals_submenu_2",
+        "label": "Signals / Time-Series",
+        "icon": null
+      }
+    ],
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "napari-signal-classifier",
+    "version": "0.0.1",
+    "dynamic": [
+      "license-file"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "A napari plugin that classifies annotated signals stored in a table in the .features of a Labels layer using scikit-learn RandomForest classifier.",
+    "description": "# napari-signal-classifier\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-signal-classifier.svg?color=green)](https://github.com/zoccoler/napari-signal-classifier/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-signal-classifier.svg?color=green)](https://pypi.org/project/napari-signal-classifier)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-signal-classifier.svg?color=green)](https://python.org)\n[![tests](https://github.com/zoccoler/napari-signal-classifier/workflows/tests/badge.svg)](https://github.com/zoccoler/napari-signal-classifier/actions)\n[![codecov](https://codecov.io/gh/zoccoler/napari-signal-classifier/branch/main/graph/badge.svg)](https://codecov.io/gh/zoccoler/napari-signal-classifier)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-signal-classifier)](https://napari-hub.org/plugins/napari-signal-classifier)\n\nA napari plugin that classifies annotated signals stored in a table in the .features of a Labels layer using scikit-learn RandomForest classifier.\n\nIt also provides a sub-signal classifier that can be used to classify sub-signals inside time-series. First it detects sub-sginals with a template matching algorithm and then classifies them also using scikit-learn RandomForest classifier.\n\nThis plugin employs and works in synergy with the [napari-signal-selector plugin](https://github.com/zoccoler/napari-signal-selector?tab=readme-ov-file#napari-signal-selector). Take a look at it to see how to annotate signals in a plotter linked to a napari Labels layer with the .features attribute.\n\n# Usage\n\n## Napari Signal Classifier\n\nAfter having annotated signals in the .features of a Labels layer (check the [napari-signal-selector plugin](https://github.com/zoccoler/napari-signal-selector?tab=readme-ov-file#napari-signal-selector)), you can train a signal classifier and predict the labels of unannotated signals.\n\nOpen the \"Signal Classifier Widget\" from the napari in \"Layers > Classify > Signal / Time-series > Train and Predict Signal Classifier\". The widget will appear in the right panel of napari.\n\nChoose the Labels layer containing the annotated signals to classify (the annotations should have been previsouly done with the napari-signal-selector plugin). Choose the classifier (currently only RandomForest is implemented). Optionally provide a path to a folder where to save the trained model, select the number of trees (estimators) of the RandomForest, the random state for reproducibility, and the training percentage (the percentage of annotated signals that will be used for training, the rest will be used for testing the model and showing the accuracy, intially 80%). Finally click on \"Train and Predict\".\n\nSeveral signal features will be calculated automatically from the signals in the .features of the Labels layer, a RandomForest classifier will be trained on the annotated signals, and the labels of unannotated signals will be predicted. The predicted labels will be stored in a new column in the .features of the Labels layer called \"Predictions\". The accuracy of the model on the test set will be printed in the napari console.\n\n![demo](https://github.com/zoccoler/napari-signal-classifier/raw/main/images/signal_classifier_demo.gif)\n\nThe resulting .features table can be viewed via the native napari features table widget (\"Layers > Visualize > Features Table Widget\") and exported to a CSV file from there for further analysis.\n\n## Napari Sub-Signal Classifier\n\nAfter having annotated signals in the .features of a Labels layer (check the [napari-signal-selector plugin](https://github.com/zoccoler/napari-signal-selector?tab=readme-ov-file#napari-signal-selector)), you can train a sub-signal classifier to classify sub-signals inside time-series.\n\nOpen the \"Sub-Signal Classifier Widget\" from the napari in \"Layers > Classify > Signal / Time-series > Train and Predict Sub-Signal Classifier\". The widget will appear in the right panel of napari.\n\nChoose the same parameters as the Signal Classifier Widget, plus a few additional parameters related to sub-signal detection and merging: the detection threshold for the template matching algorithm (default 0.8), the detrend option (default False) and smooth factor (default 0) for the template generation and the merging overlap threshold (default 0.5) for merging overlapping detected sub-signals. Finally click on \"Train and Predict\".\n\nA signal template for each class will be generated by the median sub-signal of annotated sub-signals and a cross-correlation based template matching algorithm will be used to detect sub-signals in unannotated time-series. Several signal features will be calculated automatically from the detected sub-signals, a RandomForest classifier will be trained on the annotated sub-signals, and the detected unannotated sub-signals will be predicted. The predicted labels will be stored in a new column in the .features of the Labels layer called \"Predictions\". The accuracy of the model on the test set will be printed in the napari console.\n\n![demo](https://github.com/zoccoler/napari-signal-classifier/raw/main//images/sub_signal_classifier_demo.gif)\n\nAgain, the resulting .features table can be viewed via the native napari features table widget (\"Layers > Visualize > Features Table Widget\") and exported to a CSV file from there for further analysis.\n\n----------------------------------\n\nThis [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/cookiecutter-napari-plugin#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/stable/plugins/index.html\n-->\n\n## Installation\n\nYou can install `napari-signal-classifier` via [pip]:\n\n    pip install napari-signal-classifier\n\n\n\nTo install latest development version :\n\n    pip install git+https://github.com/zoccoler/napari-signal-classifier.git\n\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-signal-classifier\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[file an issue]: https://github.com/zoccoler/napari-signal-classifier/issues\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": null,
+    "download_url": null,
+    "author": null,
+    "author_email": "Marcelo Leomil Zoccoler <marzoccoler@gmail.com>",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "Copyright (c) 2023, Marcelo Leomil Zoccoler\nAll rights reserved.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n\n* Redistributions of source code must retain the above copyright notice, this\n  list of conditions and the following disclaimer.\n\n* Redistributions in binary form must reproduce the above copyright notice,\n  this list of conditions and the following disclaimer in the documentation\n  and/or other materials provided with the distribution.\n\n* Neither the name of copyright holder nor the names of its\n  contributors may be used to endorse or promote products derived from\n  this software without specific prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\"\nAND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\nIMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\nDISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE\nFOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\nDAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR\nSERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER\nCAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,\nOR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\nOF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n",
+    "classifier": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Scientific/Engineering :: Image Processing",
+      "Topic :: Scientific/Engineering :: Visualization"
+    ],
+    "requires_dist": [
+      "numpy",
+      "magicgui",
+      "qtpy",
+      "scikit-learn",
+      "nap-plot-tools>=0.1.2",
+      "scipy",
+      "pandas",
+      "dask",
+      "tsfresh",
+      "dtaidistance",
+      "napari-signal-selector>=0.0.6",
+      "cmap",
+      "packaging",
+      "tox; extra == \"testing\"",
+      "pytest; extra == \"testing\"",
+      "pytest-cov; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "napari; extra == \"testing\"",
+      "pyqt5; extra == \"testing\""
+    ],
+    "requires_python": ">=3.10",
+    "requires_external": null,
+    "project_url": [
+      "Homepage, https://github.com/zoccoler/napari-signal-classifier",
+      "Bug Tracker, https://github.com/zoccoler/napari-signal-classifier/issues",
+      "Documentation, https://github.com/zoccoler/napari-signal-classifier#README.md",
+      "Source Code, https://github.com/zoccoler/napari-signal-classifier",
+      "User Support, https://github.com/zoccoler/napari-signal-classifier/issues"
+    ],
+    "provides_extra": [
+      "testing"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}

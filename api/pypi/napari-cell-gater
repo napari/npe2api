@@ -1,0 +1,289 @@
+{
+  "info": {
+    "author": null,
+    "author_email": "Jose Nimo <nimojose@gmail.com>, Wouter-Michiel Vierdag <w-mv@hotmail.com>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 4 - Beta",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-cell-gater\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-cell-gater.svg?color=green)](https://github.com/CosciaLab/napari-cell-gater/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-cell-gater.svg?color=green)](https://pypi.org/project/napari-cell-gater)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-cell-gater.svg?color=green)](https://python.org)\n[![tests](https://github.com/CosciaLab/napari-cell-gater/actions/workflows/test_and_deploy.yml/badge.svg)](https://github.com/CosciaLab/napari-cell-gater/actions/workflows/test_and_deploy.yml)\n[![codecov](https://codecov.io/gh/CosciaLab/napari-cell-gater/branch/main/graph/badge.svg)](https://codecov.io/gh/CosciaLab/napari-cell-gater)\n\nA napari plugin to perform cell marker gating for multiplexed immunofluorescent imaging.\n\n`napari-cell-gater` is part of the [openDVP](https://github.com/CosciaLab/openDVP)\necosystem ([documentation](https://coscialab.github.io/openDVP/)). Use it to pick, per\nsample and per marker, the intensity threshold that separates positive from negative\ncells \u2014 while looking at the image, the segmentation mask and the intensity\ndistribution side by side.\n\n![Visual workflow of napari-cell-gater](https://raw.githubusercontent.com/CosciaLab/napari-cell-gater/main/docs/VisualWorkflow_highres.png)\n\n----------------------------------\n\n## Installation\n\n`napari-cell-gater` needs Python 3.10\u20133.12 and a working [napari] installation\n(see the [napari installation guide](https://napari.org/stable/tutorials/fundamentals/installation)).\n\nWe recommend a fresh environment:\n\n```bash\nconda create -n cell-gater python=3.11\nconda activate cell-gater\npip install \"napari[all]\"\npip install napari-cell-gater\n```\n\nor, with [uv](https://docs.astral.sh/uv/):\n\n```bash\nuv venv --python 3.11 && source .venv/bin/activate\nuv pip install \"napari[all]\" napari-cell-gater\n```\n\nTo get the latest unreleased changes instead:\n\n```bash\npip install git+https://github.com/CosciaLab/napari-cell-gater.git@main\n```\n\nThen launch `napari` and open the plugin from **Plugins \u2192 napari-cell-gater**.\n\n## Inputs\n\nYou need three directories \u2014 images, segmentation masks and quantifications \u2014 with one\nfile per sample:\n\n| Directory | File per sample | Notes |\n|---|---|---|\n| images | `1.ome.tif` or `1.tif` | channel order must match the marker columns of the quantification csv |\n| masks | `1.tif` | label image; large masks can be slow to load |\n| quantifications | `1.csv` | one row per cell, one column per marker, plus morphology columns |\n\nAssumptions:\n\n- Files are named after the sample (`1`, `2`, \u2026 or any shared stem), and the **same**\n  stem is used in all three directories.\n- Every sample must be present in all three directories.\n- Any extra file in those directories can make the plugin fail \u2014 keep them clean.\n\nA ready-to-run example dataset ships with the repository under\n[`tests/test_data/`](https://github.com/CosciaLab/napari-cell-gater/blob/main/tests/test_data) \u2014 5 samples as `imgs/{1..5}.ome.tif`,\n`segs/{1..5}.tif` and `quants/{1..5}.csv`. Point the plugin at those three folders to\ntry it out without preparing your own data.\n\n## Output\n\nGates are written to a csv with one row per sample/marker pair \u2014 see\n[`gates_example.csv`](https://github.com/CosciaLab/napari-cell-gater/blob/main/gates_example.csv):\n\n```csv\nsample_id,marker_id,gate_value\n68,Rabbit IgG,3478.531304347826\n68,Goat IgG,0.0\n```\n\nGate values are always saved in **linear** space, even when plotting in log10.\nThe same file can be read back with **Load existing gates**.\n\n## How to use\n\n1. Load your three directories with **Load quantifications dir**, **Load image dir**\n   and **Load mask dir**. Optionally use **Opt: Load channel map** to supply an explicit\n   channel-to-marker mapping.\n2. Set **Select lowerbound marker column** and **Select upperbound marker column** to\n   the first and last quantification columns you want to gate. Pick the same bounds\n   every session if you plan to save and reload gates.\n3. Optionally adjust **Remove markers with prefix** (default `DNA, DAPI`) to drop\n   nuclear channels from the marker list.\n4. Click **Validate input**. On success the gating controls appear; on failure fix the\n   inputs and validate again.\n5. Choose a **sample** and a **marker** from the dropdowns. Three layers load: the\n   reference channel (**Select reference channel**), the segmentation mask, and the\n   channel being gated. A plot of marker intensity (x) against **Choose Y-axis**\n   (default `Area`) appears, with a slider underneath whose position is drawn as a\n   vertical line.\n6. Tune the view: switch **Plot type** to `Hexbin` for dense clusters, and\n   **Logarithmic scale** to `Yes` to plot in log10 (often easier to read). Adjust image\n   contrast from the napari layer controls at the top left.\n7. Drag the slider to the threshold you think is correct, or type a value into\n   **Manual gate input** and click **Set gate manually**.\n8. Click **Plot Points** to overlay the cells the current gate calls positive.\n9. Repeat steps 6\u20138 until you are satisfied, then click **Save Gate**. The first save\n   asks where to write the gates csv; later saves reuse that path. Go back to step 5 for\n   the next marker or sample.\n\n## Contributing\n\nContributions are very welcome. To set up a development install:\n\n```bash\ngit clone https://github.com/CosciaLab/napari-cell-gater.git\ncd napari-cell-gater\npip install -e \".[dev]\"\npytest\n```\n\nPlease ensure test coverage at least stays the same before you submit a pull request.\n\n## Citation\n\n`napari-cell-gater` is developed as part of the [openDVP](https://github.com/CosciaLab/openDVP)\necosystem. Until the paper is out, please cite this repository and the openDVP\ndocumentation at <https://coscialab.github.io/openDVP/>.\n\n<!-- TODO: add journal citation + DOI on publication -->\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-cell-gater\" is free and open source software.\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[file an issue]: https://github.com/CosciaLab/napari-cell-gater/issues\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": "napari, gating, imaging, proteomics, opendvp",
+    "license": null,
+    "license_expression": "BSD-3-Clause",
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": "Jose Nimo <nimojose@gmail.com>, Wouter-Michiel Vierdag <w-mv@hotmail.com>",
+    "name": "napari-cell-gater",
+    "package_url": "https://pypi.org/project/napari-cell-gater/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-cell-gater/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/CosciaLab/napari-cell-gater/issues",
+      "Documentation": "https://github.com/CosciaLab/napari-cell-gater#readme",
+      "Homepage": "https://github.com/CosciaLab/napari-cell-gater",
+      "Source": "https://github.com/CosciaLab/napari-cell-gater",
+      "User Support": "https://github.com/CosciaLab/napari-cell-gater/issues"
+    },
+    "provides_extra": [
+      "dev"
+    ],
+    "release_url": "https://pypi.org/project/napari-cell-gater/0.5.2/",
+    "requires_dist": [
+      "numpy",
+      "magicgui",
+      "qtpy",
+      "scikit-image",
+      "loguru",
+      "napari",
+      "dask-image",
+      "matplotlib",
+      "pandas",
+      "packaging",
+      "pytest; extra == \"dev\"",
+      "pytest-cov; extra == \"dev\"",
+      "pytest-qt; extra == \"dev\"",
+      "pre-commit; extra == \"dev\"",
+      "ruff; extra == \"dev\"",
+      "tox; extra == \"dev\"",
+      "hatchling; extra == \"dev\"",
+      "PyQt5; extra == \"dev\"",
+      "sphinx; extra == \"dev\"",
+      "myst-parser; extra == \"dev\"",
+      "sphinx-rtd-theme; extra == \"dev\"",
+      "twine; extra == \"dev\""
+    ],
+    "requires_python": ">=3.10",
+    "summary": "A napari plugin to perform cell marker gating for multiplexed immunofluorescent imaging",
+    "version": "0.5.2",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 41087023,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "josenimo"
+      }
+    ]
+  },
+  "releases": {
+    "0.5.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "d2cc7758ed150304b924d3b15df0ec1bc490c08a4d24f67756399626511afdc6"
+        },
+        "digests": {
+          "blake2b_256": "b34245b15d8064d0898eb2b9ad24c17ebb97dac1967ed49e5056c1577086e805",
+          "md5": "776cb25b4edf70436ccc1164074051c7",
+          "sha256": "284a694872fbd391c62cad1742c621f3dba2c9558e1a84760128654597b11854"
+        },
+        "downloads": -1,
+        "filename": "napari_cell_gater-0.5.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "776cb25b4edf70436ccc1164074051c7",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 19394,
+        "upload_time": "2025-07-14T10:55:13",
+        "upload_time_iso_8601": "2025-07-14T10:55:13.732849Z",
+        "url": "https://files.pythonhosted.org/packages/b3/42/45b15d8064d0898eb2b9ad24c17ebb97dac1967ed49e5056c1577086e805/napari_cell_gater-0.5.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "0fa67566ba0cad91d033eeb642e4e81862b06c128dc432d5c86db511a2f0d88f",
+          "md5": "5fbb60183871d0c1dc9795bc760d7769",
+          "sha256": "19701a6ca73954c0c2c168ef31dff688e08a852319903be5f923b6c04b8f84fe"
+        },
+        "downloads": -1,
+        "filename": "napari_cell_gater-0.5.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "5fbb60183871d0c1dc9795bc760d7769",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 24721,
+        "upload_time": "2025-07-14T10:55:14",
+        "upload_time_iso_8601": "2025-07-14T10:55:14.826072Z",
+        "url": "https://files.pythonhosted.org/packages/0f/a6/7566ba0cad91d033eeb642e4e81862b06c128dc432d5c86db511a2f0d88f/napari_cell_gater-0.5.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.5.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "8bb04d3a67916aea346ed42a91547e3bc7c84aba598f8b816d409355a87658bd"
+        },
+        "digests": {
+          "blake2b_256": "2814853cb25a6aca95ed9636564296d2015fc82b774ae3a4dd9be0417bea0c29",
+          "md5": "3c4d66ec052c2db79b354e3785c5d531",
+          "sha256": "cd6f7e6a8b7f4304b216cbf4843ab67458d0a63d11ade95945e325c6e94e9405"
+        },
+        "downloads": -1,
+        "filename": "napari_cell_gater-0.5.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "3c4d66ec052c2db79b354e3785c5d531",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 19400,
+        "upload_time": "2025-07-14T11:01:43",
+        "upload_time_iso_8601": "2025-07-14T11:01:43.252184Z",
+        "url": "https://files.pythonhosted.org/packages/28/14/853cb25a6aca95ed9636564296d2015fc82b774ae3a4dd9be0417bea0c29/napari_cell_gater-0.5.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "1b6aca57ee187d6ebb27b65fc533320815e1fd387aaa0d506d4f00f1f796c1b7",
+          "md5": "5e28f10707a75abc900334a6c07ef580",
+          "sha256": "4ef243cff0f026214eab58e04d4da8e1fd5606b4e13db096fd2063f6d3d719e2"
+        },
+        "downloads": -1,
+        "filename": "napari_cell_gater-0.5.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "5e28f10707a75abc900334a6c07ef580",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 24457,
+        "upload_time": "2025-07-14T11:01:44",
+        "upload_time_iso_8601": "2025-07-14T11:01:44.426817Z",
+        "url": "https://files.pythonhosted.org/packages/1b/6a/ca57ee187d6ebb27b65fc533320815e1fd387aaa0d506d4f00f1f796c1b7/napari_cell_gater-0.5.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.5.2": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "c461b5f38b2910bd21a81e19392abbfae4b45ba81ea24aadb2bf58b9f96da430"
+        },
+        "digests": {
+          "blake2b_256": "cbdd9d8c26a49667b29d8198af93371e26d9631987157ed604a662f3dc6082e0",
+          "md5": "9487214cccd304a02977bc3ae8ef655b",
+          "sha256": "2b8d84e2e8542cf712423a4aa8c63c1cda97da91ebe08cb95f6466275ce4188e"
+        },
+        "downloads": -1,
+        "filename": "napari_cell_gater-0.5.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "9487214cccd304a02977bc3ae8ef655b",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 20298,
+        "upload_time": "2026-09-15T09:14:55",
+        "upload_time_iso_8601": "2026-09-15T09:14:55.373910Z",
+        "url": "https://files.pythonhosted.org/packages/cb/dd/9d8c26a49667b29d8198af93371e26d9631987157ed604a662f3dc6082e0/napari_cell_gater-0.5.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "22a6ae78cd34ba469abebf3a4086005c28d8821f665679c48c3463f35b8458ab",
+          "md5": "a1507ab5a62208109504cb35bf3e1d99",
+          "sha256": "f36843a0a5829a89c91a93ab453be1c859940da68643c32b939626ddff26450c"
+        },
+        "downloads": -1,
+        "filename": "napari_cell_gater-0.5.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "a1507ab5a62208109504cb35bf3e1d99",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 26678,
+        "upload_time": "2026-09-15T09:14:56",
+        "upload_time_iso_8601": "2026-09-15T09:14:56.260304Z",
+        "url": "https://files.pythonhosted.org/packages/22/a6/ae78cd34ba469abebf3a4086005c28d8821f665679c48c3463f35b8458ab/napari_cell_gater-0.5.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "c461b5f38b2910bd21a81e19392abbfae4b45ba81ea24aadb2bf58b9f96da430"
+      },
+      "digests": {
+        "blake2b_256": "cbdd9d8c26a49667b29d8198af93371e26d9631987157ed604a662f3dc6082e0",
+        "md5": "9487214cccd304a02977bc3ae8ef655b",
+        "sha256": "2b8d84e2e8542cf712423a4aa8c63c1cda97da91ebe08cb95f6466275ce4188e"
+      },
+      "downloads": -1,
+      "filename": "napari_cell_gater-0.5.2-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "9487214cccd304a02977bc3ae8ef655b",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.10",
+      "size": 20298,
+      "upload_time": "2026-09-15T09:14:55",
+      "upload_time_iso_8601": "2026-09-15T09:14:55.373910Z",
+      "url": "https://files.pythonhosted.org/packages/cb/dd/9d8c26a49667b29d8198af93371e26d9631987157ed604a662f3dc6082e0/napari_cell_gater-0.5.2-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "22a6ae78cd34ba469abebf3a4086005c28d8821f665679c48c3463f35b8458ab",
+        "md5": "a1507ab5a62208109504cb35bf3e1d99",
+        "sha256": "f36843a0a5829a89c91a93ab453be1c859940da68643c32b939626ddff26450c"
+      },
+      "downloads": -1,
+      "filename": "napari_cell_gater-0.5.2.tar.gz",
+      "has_sig": false,
+      "md5_digest": "a1507ab5a62208109504cb35bf3e1d99",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.10",
+      "size": 26678,
+      "upload_time": "2026-09-15T09:14:56",
+      "upload_time_iso_8601": "2026-09-15T09:14:56.260304Z",
+      "url": "https://files.pythonhosted.org/packages/22/a6/ae78cd34ba469abebf3a4086005c28d8821f665679c48c3463f35b8458ab/napari_cell_gater-0.5.2.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
