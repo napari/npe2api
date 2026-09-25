@@ -1,0 +1,92 @@
+{
+  "name": "napari-hardware-monitor",
+  "display_name": "Hardware Monitor",
+  "visibility": "public",
+  "icon": "",
+  "categories": [
+    "Utilities"
+  ],
+  "schema_version": "0.2.1",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-hardware-monitor.make_widget",
+        "title": "Open Hardware Monitor",
+        "python_name": "napari_hardware_monitor.widget:HardwareMonitorWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "napari-hardware-monitor.make_widget",
+        "display_name": "Hardware Monitor",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "napari-hardware-monitor",
+    "version": "1.1.0",
+    "dynamic": [
+      "license-file"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "A lightweight napari dock widget for monitoring hardware and UI responsiveness during local AI and image analysis workflows.",
+    "description": "# napari-hardware-monitor\n\nHardware and responsiveness monitoring inside napari.\n\n`napari-hardware-monitor` adds a compact dock for watching napari UI responsiveness, CPU, system memory, GPU activity, and GPU memory while image-analysis and local AI workflows run.\n\n![napari-hardware-monitor widget](docs/napari-hardware-monitor_v1.png)\n\n## Features\n\n- napari Health card with Qt event-loop delay and recent-freeze readout\n- CPU, system RAM, NVIDIA GPU, and VRAM monitoring\n- GPU temperature and power draw when reported by `nvidia-smi`\n- compact gauge cards with short history traces\n- optional per-core CPU panel\n- Start / Pause, refresh interval, Float / Attach, and Copy Snapshot controls\n\n## Why This Plugin Exists\n\nLarge images and local AI workflows can make napari slow or briefly unresponsive.\n\nThe operating system may show a \"`napari` is not responding\" dialog with `Wait` and `Force Quit`, but that appears only after the UI is already stuck. It does not keep a history or help after napari responds again.\n\nThis plugin adds the missing context inside napari:\n\n- current hardware pressure from CPU, system RAM, GPU, and VRAM\n- UI responsiveness from Qt event-loop delay\n- a recent-freeze readout, such as `4500 ms, 18s ago`, after recovery\n\nIt does not identify the exact code that caused a freeze. After napari responds again, it shows how long the UI was delayed and what the surrounding hardware state looked like, so users have useful context for adjusting the workload or reporting the issue.\n\n## Scope\n\n`napari-hardware-monitor` is a hardware and responsiveness visibility plugin. It is not a profiler, model launcher, training manager, benchmark suite, or process attribution tool.\n\nThe values are system-level. They tell users what the machine is doing, not which exact plugin or process caused the load.\n\n## GPU Support\n\nNVIDIA GPU monitoring uses `nvidia-smi`. If it is unavailable, the plugin still shows CPU and system memory with a clear no-GPU fallback.\n\nMulti-GPU systems are summarized as aggregate VRAM, maximum GPU utilization, maximum temperature, and total power draw. If a driver reports GPU activity but not VRAM totals, the GPU memory card shows `N/A`.\n\n## Usage\n\nOpen napari and choose:\n\n```text\nPlugins > Hardware Monitor\n```\n\nControls:\n\n- `Start`: begin automatic polling.\n- `Pause`: stop polling while keeping the last values visible.\n- `1s / 2s / 5s`: choose refresh interval.\n- `Float` / `Attach`: detach or reattach the monitor dock when the napari dock container supports it.\n- `Copy`: copy a plain-text hardware and napari health snapshot.\n- `CPU cores`: expand or collapse optional per-core CPU usage.\n\n## Installation\n\n```bash\npip install napari-hardware-monitor\n```\n\n## Development\n\n```bash\ngit clone https://github.com/wulinteousa2-hash/napari-hardware-monitor.git\ncd napari-hardware-monitor\npip install -e \".[test]\"\npytest -q\nnapari\n```\n\n## Design Notes\n\n- Polling runs off the Qt UI thread so a slow `nvidia-smi` call does not freeze the dock.\n- napari Health is measured on the Qt UI thread using event-loop delay.\n- Recent freeze information stays visible briefly after recovery.\n- The dashboard uses Qt painting directly and avoids heavy plotting dependencies.\n- The dashboard keeps only a short in-memory history.\n- Per-core CPU detail is collapsed by default.\n\n## Release Notes\n\n### 1.1.0\n\nUsability and responsiveness diagnostics release.\n\n- Added sticky recent-freeze readout with duration and age.\n- Added recent-freeze details to copied snapshots.\n- Increased default dock width and height for clearer metric cards.\n- Improved metric card sizing so GPU information is not clipped.\n- Made CPU cores collapse restore the compact dock height.\n- Changed Float into a Float / Attach toggle when napari exposes dock floating APIs.\n\n### 1.0.0\n\nStable responsiveness release.\n\n- Added napari Health card.\n- Added Qt event-loop delay monitoring.\n- Added readable health states: Healthy, Busy, Lagging, and Frozen recently.\n- Added health hints for common bottlenecks.\n- Added napari health details to copied snapshots.\n\n### 0.1.0\n\nInitial release.\n\n- Added compact napari dock widget.\n- Added CPU, RAM, GPU, and VRAM dashboard cards.\n- Added gauge and sparkline visualizations.\n- Added optional per-core CPU panel.\n- Added asynchronous hardware polling.\n- Added NVIDIA GPU support through `nvidia-smi`.\n- Added multi-GPU summary behavior.\n- Added dock float action, refresh control, pause/start, and copy snapshot.\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": null,
+    "download_url": null,
+    "author": "Wulin Teo",
+    "author_email": null,
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": null,
+    "classifier": [
+      "Development Status :: 5 - Production/Stable",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.9",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Topic :: Scientific/Engineering :: Image Processing",
+      "Topic :: System :: Monitoring"
+    ],
+    "requires_dist": [
+      "napari",
+      "qtpy",
+      "psutil",
+      "pytest; extra == \"test\""
+    ],
+    "requires_python": ">=3.9",
+    "requires_external": null,
+    "project_url": [
+      "Homepage, https://github.com/wulinteousa2-hash/napari-hardware-monitor",
+      "Repository, https://github.com/wulinteousa2-hash/napari-hardware-monitor",
+      "Issues, https://github.com/wulinteousa2-hash/napari-hardware-monitor/issues"
+    ],
+    "provides_extra": [
+      "test"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}

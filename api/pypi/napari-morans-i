@@ -1,0 +1,179 @@
+{
+  "info": {
+    "author": "Lukas Jarzembowski",
+    "author_email": "lukasjarzembowski@gmail.com",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Programming Language :: Python :: 3.14",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-morans-i\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-morans-i.svg?color=green)](https://github.com/lukasjarzembowski/napari-morans-i/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-morans-i.svg?color=green)](https://pypi.org/project/napari-morans-i)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-morans-i.svg?color=green)](https://python.org)\n[![tests](https://github.com/lukasjarzembowski/napari-morans-i/workflows/tests/badge.svg)](https://github.com/lukasjarzembowski/napari-morans-i/actions)\n[![codecov](https://codecov.io/gh/lukasjarzembowski/napari-morans-i/branch/main/graph/badge.svg)](https://codecov.io/gh/lukasjarzembowski/napari-morans-i)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-morans-i)](https://napari-hub.org/plugins/napari-morans-i)\n[![npe2](https://img.shields.io/badge/plugin-npe2-blue?link=https://napari.org/stable/plugins/index.html)](https://napari.org/stable/plugins/index.html)\n[![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-purple.json)](https://github.com/copier-org/copier)\n\nA [napari] plugin that computes **Local Moran's I** spatial-autocorrelation maps\nof 2-D images, with a permutation-test\u2013based significance map and a categorical\ncluster map (HH / LL / HL / LH / NS).\n\nIt is a Python port of the MATLAB reference implementation\n[`moran_local.m`](https://github.com/dcsabaCD225/Moran_Matlab/blob/main/moran_local.m)\nused in:\n\n> D\u00e1vid Cs. *et al.*, **\"An image segmentation method based on the spatial correlation coefficient of Local Moran\u2019s I - identification of A-type potassium channel clusters in the thalamus\"**,\n> *eLife* (2024). [https://doi.org/10.7554/eLife.89361.1](https://doi.org/10.7554/eLife.89361.2))\n\nThis code was entirely created using Claude Opus 4.7 (2026-05-06). Prompts have been archived in the ```prompts.txt``` file.\n\n---\n## Demo\n![Demo of the plugin](demo.gif)\n## Features\n\n- **Layer chooser** \u2014 operates on any 2-D `Image` layer in the current viewer.\n- **Configurable Moran order** \u2014 controls the size of the Gaussian\n  neighbourhood kernel `(2\u00b7order + 1)\u00b2`.\n- **Four standard significance levels** \u2014 0.05, 0.01, 0.001, 0.0001.\n- **Permutation test** with user-defined number of repeats (default *n* = 200).\n- **Threaded execution** via `napari.qt.threading.thread_worker`, with a live\n  progress bar and a *Cancel* button \u2014 the viewer stays responsive throughout.\n- **Three output layers** added back to the viewer for inspection:\n  | Suffix            | Type   | Meaning                                      |\n  | ----------------- | ------ | -------------------------------------------- |\n  | `_LocalI`         | Image  | Local Moran's I per pixel (continuous)       |\n  | `_Significance`   | Image  | Binary mask: pixels with *p* \u2264 sig\\_level    |\n  | `_Clusters`       | Labels | Categorical cluster code (see legend below)  |\n\n### Cluster legend\n\n| Code | Class | Meaning                                                  |\n| ---- | ----- | -------------------------------------------------------- |\n| 0    | NS    | Not significant                                          |\n| 1    | HH    | High-value pixel surrounded by high-value neighbours     |\n| 2    | LL    | Low-value pixel surrounded by low-value neighbours       |\n| 3    | LH    | Low-value pixel surrounded by high-value neighbours      |\n| 4    | HL    | High-value pixel surrounded by low-value neighbours      |\n\nThese codes match the original MATLAB source one-for-one.\n\n---\n\n## Usage\n\n1. Launch napari and open or drag-drop an image.\n2. Open **Plugins \u2192 Moran's I Analysis**.\n3. (Optional) Try the bundled demo via **File \u2192 Open Sample \u2192 napari-morans-i:\n   Moran's I sample (blocks)**.\n4. Choose the input image layer, the Moran *order*, the significance level,\n   and the number of permutations.\n5. Click **Calculate**. Progress is reported live; **Cancel** stops the\n   permutation test cleanly.\n6. Inspect the three new layers added to the viewer.\n\n---\n\n----------------------------------\n\nThis [napari] plugin was generated with [copier] using the [napari-plugin-template] (None).\n\n<!--\nDon't miss the full getting started guide to set up your new package:\nhttps://github.com/napari/napari-plugin-template#getting-started\n\nand review the napari docs for plugin developers:\nhttps://napari.org/stable/plugins/index.html\n-->\n\n## Installation\n\nYou can install `napari-morans-i` via [pip]:\n\n```bash\npip install napari-morans-i\n```\n\nIf napari is not already installed, you can install `napari-morans-i` with napari and Qt via:\n\n```bash\npip install \"napari-morans-i[all]\"\n```\n\n\nTo install latest development version:\n\n```bash\npip install git+https://github.com/lukasjarzembowski/napari-morans-i.git\n```\n\n---\n\n## Algorithm \u2014 step-by-step\n\nThe implementation lives in `napari_morans_i/_core.py` and reproduces the\nMATLAB script step-for-step. Each step has a corresponding pure function so it\nis independently testable.\n\n### 1. Z-normalisation (`z_normalize`)\n\nConvert the input image *X* into z-scores using the **sample** standard\ndeviation (`ddof=1`), to match MATLAB's default `std`:\n\n```\nz = (X \u2212 mean(X)) / std(X, ddof=1)\n```\n\nIf the image is constant (`std = 0`) we short-circuit to an all-zeros array.\n\n### 2. Gaussian neighbourhood weights (`gaussian_weight_matrix`)\n\nBuild a `(2\u00b7order + 1) \u00d7 (2\u00b7order + 1)` Gaussian kernel `W` with\n`\u03c3 = (order + 1) / 1.7` and **the centre cell zeroed**, exactly as in the\nMATLAB reference. Zeroing the centre means each pixel never contributes to\nits own neighbourhood average.\n\n### 3. Lagged values (`local_morans_i`)\n\nTwo zero-padded 2-D convolutions (`scipy.signal.convolve2d`,\n`mode='same'`, `boundary='fill'`):\n\n```\nWZ  = conv2(z,         W, 'same')   # weighted sum of neighbours\nnS  = conv2(ones_like(z), W, 'same')   # normaliser, edge-correction\nlagged = WZ / nS                    # mean of standardised neighbours\nlocal_i = z * lagged                # Local Moran's I per pixel\n```\n\nThe `nS` normaliser corrects for kernel weight that \"falls off the edge\" of\nthe image, which is why we use zero-padding rather than a periodic boundary.\n\n### 4. Global Moran's I (`global_morans_i`)\n\nThe global statistic is the **OLS slope** of `lagged` regressed on `z` \u2014\ni.e. `cov(z, lagged) / var(z)`. Computed with `numpy.polyfit`. Returns\n`0.0` when `z` has zero variance.\n\n### 5. Permutation test (`_permutation_pass`, inside `morans_compute`)\n\nFor each repetition `1\u2026n_repeats`:\n\n1. Shuffle `z` to obtain `z_perm`.\n2. Recompute the permuted lagged map and `local_i_perm`.\n3. **Sign-aware tally**: for each pixel, increment a counter when\n   `local_i_perm` lies in the same tail (positive vs. negative) as the\n   observed `local_i_obs` and has equal-or-greater magnitude.\n\nAfter `n_repeats` permutations, the pseudo *p*-value per pixel is\n`(count + 1) / (n_repeats + 1)` \u2014 the standard `+1` correction that keeps\n*p* strictly positive. Sign-aware tallying matches the MATLAB reference\nand is **not** equivalent to a two-sided absolute-value test.\n\n### 6. Cluster classification (`classify_clusters`)\n\nThreshold the *p*-values at the user-chosen significance level, then\nclassify each significant pixel by the signs of `z` and `lagged`:\n\n| `z`  | `lagged` | label | code |\n| ---- | -------- | ----- | ---- |\n| \u2265 0  | \u2265 0      | HH    | 1    |\n| < 0  | < 0      | LL    | 2    |\n| < 0  | \u2265 0      | LH    | 3    |\n| \u2265 0  | < 0      | HL    | 4    |\n\nNon-significant pixels get code `0` (NS).\n\n### Threading model\n\nThe whole pipeline is exposed as a *generator* (`morans_compute`) that yields\ninteger progress percentages in `[0, 100]`. The widget wraps it in\n`@napari.qt.threading.thread_worker`:\n\n```python\n@thread_worker\ndef _run():\n    result = yield from morans_compute(image, order=\u2026, sig_level=\u2026, n_repeats=\u2026)\n    return result\n```\n\n`yield from` automatically forwards every progress integer to the worker's\n`yielded` Qt-signal (which drives the progress bar) and forwards the final\nreturn value to the `returned` signal (which adds the output layers).\n\n`Cancel` calls `worker.quit()`, which stops the generator at its next\n`yield`, leaving the viewer responsive at all times.\n\n---\n\n## Citation\n\nIf you use this plugin in academic work, please cite both the original paper\n\n> D\u00e1vid Cs. *et al.* (2024). *eLife*, [doi:10.7554/eLife.89361.1](https://doi.org/10.7554/eLife.89361.2)\n\nand napari (Sofroniew *et al.*, 2022, doi:10.5281/zenodo.3555620).\n\n[napari]: https://napari.org\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## License\n\nDistributed under the terms of the [BSD-3] license,\n\"napari-morans-i\" is free and open source software\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[copier]: https://copier.readthedocs.io/en/stable/\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[napari-plugin-template]: https://github.com/napari/napari-plugin-template\n\n[file an issue]: https://github.com/lukasjarzembowski/napari-morans-i/issues\n\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": null,
+    "license_expression": "BSD-3-Clause",
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-morans-i",
+    "package_url": "https://pypi.org/project/napari-morans-i/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-morans-i/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/lukasjarzembowski/napari-morans-i/issues",
+      "Documentation": "https://github.com/lukasjarzembowski/napari-morans-i#README.md",
+      "Source Code": "https://github.com/lukasjarzembowski/napari-morans-i",
+      "User Support": "https://github.com/lukasjarzembowski/napari-morans-i/issues"
+    },
+    "provides_extra": [
+      "all"
+    ],
+    "release_url": "https://pypi.org/project/napari-morans-i/1.0/",
+    "requires_dist": [
+      "numpy>=1.21",
+      "scipy>=1.7",
+      "magicgui>=0.7",
+      "qtpy>=2.0",
+      "napari",
+      "napari[all]; extra == \"all\""
+    ],
+    "requires_python": ">=3.10",
+    "summary": "A simple plugin that computes Local Moran's I spatial-autocorrelation maps of 2-D images in napari.",
+    "version": "1.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 36897326,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "lukasjarzembowski"
+      }
+    ]
+  },
+  "releases": {
+    "1.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "6dbd960ab3ab541278b2ee97afb94eb8cd56dd335bd083857352cf7cbea5a6fc"
+        },
+        "digests": {
+          "blake2b_256": "c7ad05df216c4661e3e378776641262c3d379462ea99827896b969c3caad568f",
+          "md5": "301b36e0cf83ae429b29095a7186b5d4",
+          "sha256": "eeb49f7fb39b7a5865c9786aa8550468aff15a90e1fd123160863b64ceb98203"
+        },
+        "downloads": -1,
+        "filename": "napari_morans_i-1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "301b36e0cf83ae429b29095a7186b5d4",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 29678,
+        "upload_time": "2026-05-09T16:44:43",
+        "upload_time_iso_8601": "2026-05-09T16:44:43.288379Z",
+        "url": "https://files.pythonhosted.org/packages/c7/ad/05df216c4661e3e378776641262c3d379462ea99827896b969c3caad568f/napari_morans_i-1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "362abf99e1b7c60c3b67c658e7519ca747a9af87e33813793adc8a8b2d2dcd87",
+          "md5": "8c89a82148bac26b97b76b881286d6a5",
+          "sha256": "93f05336a5bd12d83d5b331be4028759a1082e9aaf0bdcc6c9a390cb10df049d"
+        },
+        "downloads": -1,
+        "filename": "napari_morans_i-1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "8c89a82148bac26b97b76b881286d6a5",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 5626622,
+        "upload_time": "2026-05-09T16:44:45",
+        "upload_time_iso_8601": "2026-05-09T16:44:45.459273Z",
+        "url": "https://files.pythonhosted.org/packages/36/2a/bf99e1b7c60c3b67c658e7519ca747a9af87e33813793adc8a8b2d2dcd87/napari_morans_i-1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "6dbd960ab3ab541278b2ee97afb94eb8cd56dd335bd083857352cf7cbea5a6fc"
+      },
+      "digests": {
+        "blake2b_256": "c7ad05df216c4661e3e378776641262c3d379462ea99827896b969c3caad568f",
+        "md5": "301b36e0cf83ae429b29095a7186b5d4",
+        "sha256": "eeb49f7fb39b7a5865c9786aa8550468aff15a90e1fd123160863b64ceb98203"
+      },
+      "downloads": -1,
+      "filename": "napari_morans_i-1.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "301b36e0cf83ae429b29095a7186b5d4",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.10",
+      "size": 29678,
+      "upload_time": "2026-05-09T16:44:43",
+      "upload_time_iso_8601": "2026-05-09T16:44:43.288379Z",
+      "url": "https://files.pythonhosted.org/packages/c7/ad/05df216c4661e3e378776641262c3d379462ea99827896b969c3caad568f/napari_morans_i-1.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "362abf99e1b7c60c3b67c658e7519ca747a9af87e33813793adc8a8b2d2dcd87",
+        "md5": "8c89a82148bac26b97b76b881286d6a5",
+        "sha256": "93f05336a5bd12d83d5b331be4028759a1082e9aaf0bdcc6c9a390cb10df049d"
+      },
+      "downloads": -1,
+      "filename": "napari_morans_i-1.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "8c89a82148bac26b97b76b881286d6a5",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.10",
+      "size": 5626622,
+      "upload_time": "2026-05-09T16:44:45",
+      "upload_time_iso_8601": "2026-05-09T16:44:45.459273Z",
+      "url": "https://files.pythonhosted.org/packages/36/2a/bf99e1b7c60c3b67c658e7519ca747a9af87e33813793adc8a8b2d2dcd87/napari_morans_i-1.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
