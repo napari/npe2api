@@ -37,6 +37,9 @@ def _sorted_versions(versions) -> list[str]:
     """De-dupe and sort versions in descending order, dropping unparseable ones."""
     valid = []
     for version in set(versions):
+        if version is None:
+            # ARRAY_AGG from bigquery can include NULLs
+            continue
         try:
             Version(version)
         except InvalidVersion:
