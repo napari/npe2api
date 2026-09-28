@@ -7,6 +7,9 @@ exists, which versions are yanked, and whether the latest release still has the
 napari classifier.
 
 Requires Google Cloud credentials, e.g. via GOOGLE_APPLICATION_CREDENTIALS.
+
+If any package cannot be fetched, the run is aborted without writing
+`classifiers.json`, so a partial index is never published.
 """
 
 import json
@@ -23,6 +26,7 @@ from packaging.version import InvalidVersion, Version
 PUBLIC = Path(__file__).parent.parent / "public"
 PYPI_DIR = PUBLIC / "pypi"
 CLASSIFIER = "Framework :: napari"
+REQUEST_TIMEOUT = 30
 QUERY = """
 SELECT
   name,
@@ -75,13 +79,25 @@ def _find_by_classifier(classifier: str) -> dict[str, list[str]]:
 
 
 def _fetch_package_info(normalized_name: str) -> tuple[str, dict | None]:
+    """Fetch PyPI info for a package.
+
+    Returns the PyPI JSON, an empty dict if the package no longer exists
+    (HTTP 404), or None if it could not be fetched.
+    """
     try:
-        with urlopen(f"https://pypi.org/pypi/{normalized_name}/json") as f:
+        with urlopen(
+            f"https://pypi.org/pypi/{normalized_name}/json", timeout=REQUEST_TIMEOUT
+        ) as f:
             info = json.load(f)
     except HTTPError as e:
         if e.code == 404:
             return normalized_name, {}
         print(f"  ⚠️ HTTP {e.code} fetching {normalized_name}", file=sys.stderr)
+        return normalized_name, None
+    except (OSError, ValueError) as e:
+        # OSError covers URLError, timeouts, and dropped connections;
+        # ValueError covers an empty or malformed JSON response.
+        print(f"  ⚠️ error fetching {normalized_name}: {e}", file=sys.stderr)
         return normalized_name, None
     (PYPI_DIR / f"{normalized_name}.json").write_text(json.dumps(info, indent=2))
     return normalized_name, info
@@ -106,6 +122,7 @@ def main():
     active = {}
     withdrawn = {}
     deleted = {}
+    failed = []
 
     with ThreadPoolExecutor() as pool:
         icon = {
@@ -118,6 +135,9 @@ def main():
             _fetch_package_info, all_packages_with_classifier
         ):
             if info is None:
+                # a package we cannot fetch must never silently disappear from
+                # the index, so track it and abort the whole run below
+                failed.append(normalized_name)
                 print(f"{icon['error']} {normalized_name} (could not fetch info)")
                 continue
 
@@ -143,6 +163,16 @@ def main():
                 }
 
             print(f"{icon[status]} {normalized_name}")
+
+    if failed:
+        # never publish a partial index: a package missing from classifiers.json
+        # is also missing from the plugin index until the next successful run
+        shown = ", ".join(sorted(failed)[:10])
+        more = f" (and {len(failed) - 10} more)" if len(failed) > 10 else ""
+        raise RuntimeError(
+            f"could not fetch PyPI info for {len(failed)} package(s); "
+            f"refusing to write classifiers.json: {shown}{more}"
+        )
 
     # sort by normalized name
     output = {
