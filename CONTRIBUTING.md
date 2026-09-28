@@ -65,8 +65,8 @@ npm run lint
 For testing data collection locally:
 
 ```bash
-# Find packages by classifier
-python scripts/find_by_classifier.py
+# Find packages by classifier (requires Google Cloud credentials)
+python scripts/bigquery.py
 
 # Fetch manifests for plugins
 python scripts/fetch_manifests.py
@@ -87,7 +87,7 @@ The API endpoints are implemented in `pages/api/`:
 #### Data processing scripts
 
 Core scripts in `scripts/`:
-- `find_by_classifier.py` - Queries BigQuery for napari plugins
+- `bigquery.py` - Queries BigQuery for napari plugins
 - `fetch_manifests.py` - Downloads plugin manifests
 - `reindex.py` - Validates and aggregates plugin data
 
