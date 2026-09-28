@@ -1,4 +1,19 @@
+"""Find all napari plugins on PyPI and write their status to classifiers.json.
+
+Candidate packages and versions come from the public PyPI BigQuery dataset
+(`bigquery-public-data.pypi.distribution_metadata`). Each package is then checked
+against the PyPI JSON API, which is authoritative for whether the package still
+exists, which versions are yanked, and whether the latest release still has the
+napari classifier.
+
+Requires Google Cloud credentials, e.g. via GOOGLE_APPLICATION_CREDENTIALS.
+
+If any package cannot be fetched, the run is aborted without writing
+`classifiers.json`, so a partial index is never published.
+"""
+
 import json
+import sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from urllib.error import HTTPError
@@ -6,65 +21,167 @@ from urllib.request import urlopen
 
 from google.cloud import bigquery
 from packaging.utils import canonicalize_name
-from packaging.version import Version
+from packaging.version import InvalidVersion, Version
 
 PUBLIC = Path(__file__).parent.parent / "public"
 PYPI_DIR = PUBLIC / "pypi"
-PYPI_DIR.mkdir(exist_ok=True, parents=True)
 CLASSIFIER = "Framework :: napari"
+REQUEST_TIMEOUT = 30
 QUERY = """
 SELECT
-  DISTINCT name,
-  STRING_AGG(version) AS versions
+  name,
+  ARRAY_AGG(DISTINCT version) AS versions
 FROM `bigquery-public-data.pypi.distribution_metadata`
-WHERE "{}" IN UNNEST(classifiers)
+WHERE @classifier IN UNNEST(classifiers)
 GROUP BY name
 """
 
-client = bigquery.Client()
-query_job = client.query(QUERY.format(CLASSIFIER))
-withdrawn = {}
-deleted = {}
-active = {
-    canonicalize_name(k): {
-        "name": k,
-        # remove version dupes and sort in descending order
-        "pypi_versions": sorted(set(v.split(",")), key=Version, reverse=True),
+
+def _sorted_versions(versions) -> list[str]:
+    """De-dupe and sort versions in descending order, dropping unparseable ones."""
+    valid = []
+    for version in set(versions):
+        if version is None:
+            # ARRAY_AGG from bigquery can include NULLs
+            continue
+        try:
+            Version(version)
+        except InvalidVersion:
+            print(f"  ⚠️ skipping invalid version {version!r}", file=sys.stderr)
+            continue
+        valid.append(version)
+    return sorted(valid, key=Version, reverse=True)
+
+
+def _find_by_classifier(classifier: str) -> dict[str, list[str]]:
+    """Find all packages with a given classifier using the PyPI BigQuery dataset.
+
+    Returns a dictionary with normalized package names as keys and a sorted list
+    of versions as values.
+    """
+    client = bigquery.Client()
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("classifier", "STRING", classifier)
+        ]
+    )
+    rows = client.query(QUERY, job_config=job_config).result()
+
+    # the same project may appear under differently-cased/punctuated names
+    # across releases, so merge versions by normalized name
+    package_versions: dict[str, set[str]] = {}
+    for name, versions in rows:
+        package_versions.setdefault(canonicalize_name(name), set()).update(versions)
+
+    return {
+        name: _sorted_versions(versions) for name, versions in package_versions.items()
     }
-    for k, v in query_job.result()
-}
 
 
-def _fetch_packge_info(normalized_name: str) -> tuple[str, str]:
+def _fetch_package_info(normalized_name: str) -> tuple[str, dict | None]:
+    """Fetch PyPI info for a package.
+
+    Returns the PyPI JSON, an empty dict if the package no longer exists
+    (HTTP 404), or None if it could not be fetched.
+    """
     try:
-        with urlopen(f"https://pypi.org/pypi/{normalized_name}/json") as f:
-            data = json.load(f)
-    except HTTPError:
-        return (normalized_name, "deleted")
+        with urlopen(
+            f"https://pypi.org/pypi/{normalized_name}/json", timeout=REQUEST_TIMEOUT
+        ) as f:
+            info = json.load(f)
+    except HTTPError as e:
+        if e.code == 404:
+            return normalized_name, {}
+        print(f"  ⚠️ HTTP {e.code} fetching {normalized_name}", file=sys.stderr)
+        return normalized_name, None
+    except (OSError, ValueError) as e:
+        # OSError covers URLError, timeouts, and dropped connections;
+        # ValueError covers an empty or malformed JSON response.
+        print(f"  ⚠️ error fetching {normalized_name}: {e}", file=sys.stderr)
+        return normalized_name, None
+    (PYPI_DIR / f"{normalized_name}.json").write_text(json.dumps(info, indent=2))
+    return normalized_name, info
 
-    (PYPI_DIR / f"{normalized_name}.json").write_text(json.dumps(data, indent=2))
 
-    if CLASSIFIER not in data["info"].get("classifiers", []):
-        return (normalized_name, "withdrawn")
-    return (normalized_name, "active")
+def _prune_yanked_versions(info, versions):
+    releases = info["releases"] if info else {}
+    return [
+        version
+        for version in versions
+        if version in releases and not all(dist["yanked"] for dist in releases[version])
+    ]
 
 
-with ThreadPoolExecutor() as pool:
-    icon = {
-        "active": "✅",
-        "withdrawn": "🔵",
-        "deleted": "❌",
-    }
-    for normalized_name, status in pool.map(_fetch_packge_info, active):
-        print(f"{icon[status]} {normalized_name}")
-        if status == "deleted":
-            deleted[normalized_name] = active.pop(normalized_name)
-        elif status == "withdrawn":
-            withdrawn[normalized_name] = active.pop(normalized_name)
+def main():
+    PYPI_DIR.mkdir(exist_ok=True, parents=True)
+    all_packages_with_classifier = _find_by_classifier(CLASSIFIER)
+    if not all_packages_with_classifier:
+        # never overwrite classifiers.json with an empty index
+        raise RuntimeError(f"BigQuery returned no packages with {CLASSIFIER!r}")
 
-for info_dict in [active, withdrawn, deleted]:
+    active = {}
+    withdrawn = {}
+    deleted = {}
+    failed = []
+
+    with ThreadPoolExecutor() as pool:
+        icon = {
+            "active": "✅",
+            "withdrawn": "🔵",
+            "deleted": "❌",
+            "error": "⚠️",
+        }
+        for normalized_name, info in pool.map(
+            _fetch_package_info, all_packages_with_classifier
+        ):
+            if info is None:
+                # a package we cannot fetch must never silently disappear from
+                # the index, so track it and abort the whole run below
+                failed.append(normalized_name)
+                print(f"{icon['error']} {normalized_name} (could not fetch info)")
+                continue
+
+            status = "active"
+            versions = _prune_yanked_versions(
+                info, all_packages_with_classifier[normalized_name]
+            )
+
+            if not versions:
+                deleted[normalized_name] = versions
+                status = "deleted"
+
+            if status == "active" and CLASSIFIER not in info["info"].get(
+                "classifiers", []
+            ):
+                withdrawn[normalized_name] = versions
+                status = "withdrawn"
+
+            if status == "active":
+                active[normalized_name] = {
+                    "name": info["info"]["name"],
+                    "pypi_versions": versions,
+                }
+
+            print(f"{icon[status]} {normalized_name}")
+
+    if failed:
+        # never publish a partial index: a package missing from classifiers.json
+        # is also missing from the plugin index until the next successful run
+        shown = ", ".join(sorted(failed)[:10])
+        more = f" (and {len(failed) - 10} more)" if len(failed) > 10 else ""
+        raise RuntimeError(
+            f"could not fetch PyPI info for {len(failed)} package(s); "
+            f"refusing to write classifiers.json: {shown}{more}"
+        )
+
     # sort by normalized name
-    info_dict = dict(sorted(info_dict.items()))
+    output = {
+        "active": dict(sorted(active.items())),
+        "withdrawn": dict(sorted(withdrawn.items())),
+        "deleted": dict(sorted(deleted.items())),
+    }
+    (PUBLIC / "classifiers.json").write_text(json.dumps(output, indent=2))
 
-output = {"active": active, "withdrawn": withdrawn, "deleted": deleted}
-(PUBLIC / "classifiers.json").write_text(json.dumps(output, indent=2))
+
+if __name__ == "__main__":
+    main()
