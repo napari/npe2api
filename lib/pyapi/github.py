@@ -9,6 +9,7 @@ from typing import Literal, TypedDict
 import requests
 from gql import Client, gql
 from gql.transport.requests import RequestsHTTPTransport
+from packaging.utils import canonicalize_name
 
 from .core import active_plugins, pypi_info
 
@@ -238,7 +239,7 @@ def _try_fetch_and_store_github_info(name: PluginName):
 
     GITHUB_DIR = Path(__file__).parent.parent.parent / "public" / "github"
     GITHUB_DIR.mkdir(exist_ok=True, parents=True)
-    with open(GITHUB_DIR / f"{name}.json", "w") as f:
+    with open(GITHUB_DIR / f"{canonicalize_name(name)}.json", "w") as f:
         json.dump(summary, f, indent=2)
 
 
