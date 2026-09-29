@@ -12,14 +12,12 @@
       "Programming Language :: Python",
       "Programming Language :: Python :: 3",
       "Programming Language :: Python :: 3 :: Only",
-      "Programming Language :: Python :: 3.10",
       "Programming Language :: Python :: 3.11",
       "Programming Language :: Python :: 3.12",
       "Programming Language :: Python :: 3.13",
-      "Programming Language :: Python :: 3.9",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "# EMCFsys\r\n\r\n**Towards foundation models for EM images analysis.** `emcfsys` provides a comprehensive toolkit and a [napari](https://github.com/napari/napari) plugin for Electron Microscopy (EM) image restoration and segmentation, featuring **EMCellFiner** and **EMCellFound**\u2014two foundation models pre-trained on a massive dataset of 4 million EM images.\r\n\r\n---\r\n\r\n# \u2728 Key Features\r\n\r\n### 1. Key Features for emcfsys\r\n\r\n* **Pre-trained Backbones**: Optimized on **4M+** EM images for superior feature extraction: EMCellFound and EMCellFiner.\r\n* **Code-Free Train and Inference**: Train the segmentation model using Pre-trained Backbones and inference in the GUI without Any Code.\r\n* **Code-Free and Training-Free Image restoration/super-resolution pipline**: Training-Free pipline for EM image restoration/super-resolution.\r\n* Code-Free GUI for Napari, and Code-based example tutorial in [demo_notebook.ipynb](demo_notebook.ipynb). This notebook is built upon mmengine, mmseg, and mmdet to facilitate code\u2011driven training workflows.\r\n* **Fixed bugs caused by missing configs for mmlab\u2011backend.**\r\n\r\n### 2. Segmentation pipline using Foundation model\r\n\r\n* **Pre-trained Backbones**:\r\n  * **EMCellFound Core**: Our foundational backbones are built upon state-of-the-art **ViT (Vision Transformer)** and **ConvNext** architectures. These models are pre-trained using advanced self-supervised learning frameworks, specifically **MAE (Masked Autoencoders)** and **DINOv3**, ensuring robust feature representation for complex electron microscopy data.\r\n  * **Continuous Evolution**: We are committed to the iterative refinement of our models. We periodically retrain **EMCellFound** using superior architectures, optimized algorithms, and larger-scale datasets to ensure the system consistently delivers peak performance.\r\n  * **Timm Library Integration**: To provide maximum flexibility, the system fully supports a wide range of popular pre-trained models from the **timm** library, allowing users to select the most suitable backbone for their specific research needs.\r\n* **Segmentation Heads**: Includes **U-Net**, **PSPNet**, **DeepLabv3+**, **UperNet** , **Mask2former**.\r\n* **Finetune Models**: We support to finetune the EMCellFound/Timm-model to make specialize segmentation pipline.\r\n* **Inference 2D/3D images**: We support to load the Checkpoint and inference image in 2D and 3D.\r\n* **Tailored Training Strategies**: Detailed specifications of our training configurations can be found in the [English user guide](docs/EMCFsys_UserGuide_English.md). Key components include:\r\n  * **Data Augmentation**: Robust `Dataset` class with multiple transform strategies.\r\n  * **Loss Functions**: Integrated **CrossEntropy** and **Dice Loss** (Focal Loss coming soon).\r\n  * **Metrics**: Real-time evaluation using **IoU**, **Accuracy**, and **F1-Score**.\r\n  * **Smart Checkpoints**: Automatically preserves the best-performing model (Best IoU) and prunes redundant files.\r\n\r\n### 3. Image restoration/super-resolution pipline using Foundation model\r\n\r\n* **Retraining-free**: We train the image restoration/super-resolution model EMCellFiner on 4M+ EM images, thus EMCellFiner has robust performance\uff0ccan restore/super-resolution for most of EM images and make them finer.\r\n* **Single-image**: We support restore/super-resolution in the GUI using GPU/CPU, and show in the GUI.\r\n* **Multi-image**: We also support to restore/super-resolution the images in the folder, and output to another folder.\r\n\r\n### 4. Tools\r\n\r\n* **Model Manager & JSON\u2011based Configuration**: Quickly load all parameters within the Napari GUI for model fine\u2011tuning.\r\n* **Dataset\u2011Converter Support**: Built\u2011in utility to convert Labelme JSON annotations into semantic\u2011segmentation masks and instance\u2011segmentation JSON files.\r\n\r\n---\r\n\r\n## \ud83d\udcd6Installation\r\n\r\nTo leverage the full potential of the EMCellFiner and EMCellFound foundation models, an **NVIDIA GPU**(We suggest > RTX3090) is highly recommended.\r\n\r\n#### 1. Environment Preparation\r\n\r\nWe recommend using Conda/miniconda to create an isolated environment.\r\nWe suggest using python>=3.11 (We have successfully test the pipline in python version 3.8\\3.9\\3.10\\3.11)\r\n\r\n```\r\n# Create a new environment named 'emcfsys' with Python> 3.11\r\nconda create -n emcfsys python=3.11 -y\r\n# Activate the environment\r\nconda activate emcfsys\r\n```\r\n\r\n#### 2. Install PyTorch with GPU Support\r\n\r\nemcfsys requires PyTorch > 1.3. For optimal performance, we recommend PyTorch 2.0+. Choose the command matching your CUDA version:\r\n\r\n```\r\n# For Linux and Window:\r\npip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu118\r\n```\r\n\r\nOr follow link to select the torch version [https://pytorch.org/get-started/previous-versions/](https://pytorch.org/get-started/previous-versions/)\r\n\r\n#### 3. Install napari and emcfsys\r\n\r\n3.1 You can follow the napari GUI installation document:[https://github.com/napari/napari](https://github.com/napari/napari)\r\nOr use the follow pipline\r\n\r\n```\r\npip install \"napari[pyqt6, optional]\"\r\n```\r\n\r\nThen you can install `emcfsys` via [pip]:\r\n\r\n```\r\npip install emcfsys\r\n```\r\n\r\nYou can also install emcfsys in the napari-plugin-store\r\n\r\nAt last, install necessary components: (**Very important, don't forget to install these packages**)\r\n\r\n```\r\npip install labelme==5.9.1 numpy timm==1.0.22 opencv-python einops shapely==2.1.2 albumentations ninja Pillow seaborn safetensors huggingface-hub transformers imgviz==1.7.6\r\n```\r\n\r\n### 4. Code\u2011Based Fine\u2011Tuning with MMLab Backend\r\n\r\nWe provide model fine\u2011tuning implementations in both source\u2011code and Jupyter Notebook formats. This part can run independently of the GUI, but it requires additional installation of the MMLab\u2011series packages. Please refer to [demo_notebook.ipynb](demo_notebook.ipynb).\r\n\r\n---\r\n\r\n## \ud83d\udcd6 Quick Start\r\n\r\n1. Use as a napari Plugin\r\n2. Launch napari: napari\r\n3. Navigate to: Plugins -> emcfsys\r\n4. Load your image and select EMCellFiner for instant enhancement.\r\n\r\n## \ud83d\udcd6 Tutorial\r\n\r\nAll tutorials and feature descriptions can be found in the [tutorial documentation](./docs/EMCFsys_UserGuide_English.md) (click me!).\r\n\r\n## License\r\n\r\nDistributed under the terms of the [GNU GPL v3.0] license,\r\n\"emcfsys\" is free and open source software\r\n\r\n## Issues\r\n\r\nIf you encounter any problems, please [file an issue] along with a detailed description.\r\n\r\n[![License GNU GPL v3.0](https://img.shields.io/pypi/l/emcfsys.svg?color=green)]\r\n\r\nTowards foundation models for EM images analysis. EMCellFiner and EMCellFound are two foundation models trained based on a 4 million EM images dataset.\r\n\r\nIf you use this project, please cite:\r\n\r\nYu Z, Guo J, Liu F, et al. EMCF ecosystem: Towards pretrained foundation model for electron microscopy image analysis[J]. bioRxiv, 2025: 2025.12. 09.693109.\r\n\r\n---\r\n\r\n[napari]: [https://github.com/napari/napari](https://github.com/napari/napari)\r\n[napari-plugin-template]: [https://github.com/napari/napari-plugin-template](https://github.com/napari/napari-plugin-template)\r\n",
+    "description": "# EMCFsys\r\n\r\n**Towards foundation models for EM images analysis.** `emcfsys` provides a comprehensive toolkit and a [napari](https://github.com/napari/napari) plugin for Electron Microscopy (EM) image restoration and segmentation, featuring **EMCellFiner** and **EMCellFound**\u2014two foundation models pre-trained on a massive dataset of 4 million EM images.\r\n\r\n---\r\n\r\n# \u2728 Key Features\r\n\r\n### 1. Key Features for emcfsys\r\n\r\n* **Pre-trained Backbones**: Optimized on **4M+** EM images for superior feature extraction: EMCellFound and EMCellFiner.\r\n* **Code-Free Train and Inference**: Train the segmentation model using Pre-trained Backbones and inference in the GUI without Any Code.\r\n* **Code-Free and Training-Free Image restoration/super-resolution pipline**: Training-Free pipline for EM image restoration/super-resolution.\r\n* Code-Free GUI for Napari, and Code-based example tutorial in [demo_notebook.ipynb](demo_notebook.ipynb). This notebook is built upon mmengine, mmseg, and mmdet to facilitate code\u2011driven training workflows.\r\n* **Fixed bugs caused by missing configs for mmlab\u2011backend.**\r\n\r\n### 2. Segmentation pipline using Foundation model\r\n\r\n* **Pre-trained Backbones**:\r\n  * **EMCellFound Core**: Our foundational backbones are built upon state-of-the-art **ViT (Vision Transformer)** and **ConvNext** architectures. These models are pre-trained using advanced self-supervised learning frameworks, specifically **MAE (Masked Autoencoders)** and **DINOv3**, ensuring robust feature representation for complex electron microscopy data.\r\n  * **Continuous Evolution**: We are committed to the iterative refinement of our models. We periodically retrain **EMCellFound** using superior architectures, optimized algorithms, and larger-scale datasets to ensure the system consistently delivers peak performance.\r\n  * **Timm Library Integration**: To provide maximum flexibility, the system fully supports a wide range of popular pre-trained models from the **timm** library, allowing users to select the most suitable backbone for their specific research needs.\r\n* **Segmentation Heads**: Includes **U-Net**, **PSPNet**, **DeepLabv3+**, **UperNet** , **Mask2former**.\r\n* **Finetune Models**: We support to finetune the EMCellFound/Timm-model to make specialize segmentation pipline.\r\n* **Inference 2D/3D images**: We support to load the Checkpoint and inference image in 2D and 3D.\r\n* **Tailored Training Strategies**: Detailed specifications of our training configurations can be found in the [English user guide](docs/EMCFsys_UserGuide_English.md). Key components include:\r\n  * **Data Augmentation**: Robust `Dataset` class with multiple transform strategies.\r\n  * **Loss Functions**: Integrated **CrossEntropy** and **Dice Loss** (Focal Loss coming soon).\r\n  * **Metrics**: Real-time evaluation using **IoU**, **Accuracy**, and **F1-Score**.\r\n  * **Smart Checkpoints**: Automatically preserves the best-performing model (Best IoU) and prunes redundant files.\r\n\r\n### 3. Image restoration/super-resolution pipline using Foundation model\r\n\r\n* **Retraining-free**: We train the image restoration/super-resolution model EMCellFiner on 4M+ EM images, thus EMCellFiner has robust performance\uff0ccan restore/super-resolution for most of EM images and make them finer.\r\n* **Single-image**: We support restore/super-resolution in the GUI using GPU/CPU, and show in the GUI.\r\n* **Multi-image**: We also support to restore/super-resolution the images in the folder, and output to another folder.\r\n\r\n### 4. Tools\r\n\r\n* **Model Manager & JSON\u2011based Configuration**: Quickly load all parameters within the Napari GUI for model fine\u2011tuning.\r\n* **Dataset\u2011Converter Support**: Built\u2011in utility to convert Labelme JSON annotations into semantic\u2011segmentation masks and instance\u2011segmentation JSON files.\r\n\r\n---\r\n\r\n## \ud83d\udcd6 Installation for demo code\r\n\r\nAn NVIDIA GPU is strongly recommended for EMCellFiner inference and EMCellFound fine-tuning. The validated Windows environment uses Python 3.11.10 and PyTorch 2.5.1 with CUDA 11.8. The portable Linux package snapshot is derived from a working environment that used PyTorch 2.4.1 with CUDA 12.1.\r\n\r\nChoose the installation type:\r\n\r\n---\r\n\r\n1. installation for **napari GUI only**\r\n2. installation for **MMLab demo and paper workflows**\r\n\r\n---\r\n\r\n### 1. installation for **napari GUI only:**\r\n\r\ninstall PyTorch, napari, and the released `emcfsys` package. This is sufficient for the graphical restoration, training, and inference workflows.\r\n\r\nUse the same Python version on both operating systems:\r\n\r\n```bash\r\nconda create -n EMCF_napari python=3.11.10 -y\r\nconda activate EMCF_napari\r\n```\r\n\r\nThe following commands apply to both Windows and Linux:\r\n\r\nJust choose pytorch and cuda version suited for your computer:\r\n\r\npytorch from 1.13.0 to 2.7.0 and cuda from 11.3 to12.8 is ok.\r\n\r\nWe recommend pytorch==2.4.1/2.5.1 , cuda ==11.8/12.1\r\n\r\n```Shell\r\n# 1. install pytorch==2.5.1 cuda118\r\npip install torch==2.5.1+cu118 torchvision==0.20.1+cu118 torchaudio==2.5.1+cu118 --index-url https://download.pytorch.org/whl/cu118\r\n# In China, speed uo to install pytorch from mirror station\r\n# pip install torch==2.5.1+cu118 torchvision==0.20.1+cu118 torchaudio==2.5.1+cu118 --index-url https://mirror.nju.edu.cn/pytorch/whl/cu118\r\n\r\n# 2. install napari GUI\r\npip install napari\r\n\r\n# 3. install napari locally\r\npip install emcfsys\r\n```\r\n\r\nThen users can open napari in cmd, and use napari and emcfsys\r\n\r\nThe napari plugin can then be started with:\r\n\r\n```bash\r\nnapari\r\n```\r\n\r\nLinux users need a graphical X11 or Wayland session to open napari. On a headless Linux server, use the code-based workflows without launching the GUI, or configure an appropriate remote display.\r\n\r\n---\r\n\r\n### 2. installation for **MMLab demo and paper workflows:**\r\n\r\nClone this repository and use the pinned environment files. This installation includes MMCV, MMEngine, MMSegmentation, and MMDetection for the examples in [demo_notebook.ipynb](demo_notebook.ipynb).\r\n\r\nThe Windows file records the validated Windows package stack. The Linux file replaces local editable source checkouts with compatible PyPI releases to make installation portable. MMCV binary compatibility still depends on the CUDA Toolkit, compiler, NVIDIA driver, and GPU architecture of the host system.\r\n\r\n#### 2.1. Create the Conda environment\r\n\r\nUse the same Python version on both operating systems:\r\n\r\n```bash\r\nconda create -n EMCF_napari python=3.11.10 -y\r\nconda activate EMCF_napari\r\n```\r\n\r\n#### 2.2. Install the napari GUI only\r\n\r\nThe following commands apply to both Windows and Linux:\r\n\r\nJust choose pytorch and cuda version suited for your computer:\r\n\r\npytorch from 1.13.0 to 2.7.0 and cuda from 11.3 to12.8 is ok.\r\n\r\nWe recommend pytorch==2.4.1/2.5.1 , cuda ==11.8/12.1\r\n\r\n```Shell\r\n# 1. If running the code locally, clone the repository:\r\ngit clone https://github.com/yzy0102/emcfsys.git\r\n\r\n# 2. install pytorch==2.5.1 cuda118\r\npip install torch==2.5.1+cu118 torchvision==0.20.1+cu118 torchaudio==2.5.1+cu118 --index-url https://download.pytorch.org/whl/cu118\r\n# In China, speed uo to install pytorch from mirror station\r\n# pip install torch==2.5.1+cu118 torchvision==0.20.1+cu118 torchaudio==2.5.1+cu118 --index-url https://mirror.nju.edu.cn/pytorch/whl/cu118\r\n\r\n# 3. install napari GUI\r\npip install napari\r\n\r\n# 4. install napari locally\r\ncd emcfsys\r\npip install -e .\r\n```\r\n\r\n#### 2.3 Install the MMLab environment on Windows and Linux (Optional)\r\n\r\nIf users want to run the demo code or train models using this code backend, they need to install the MMLab environment first.\r\n\r\nRun the following commands in PowerShell from the cloned repository root:\r\n\r\n```powershell\r\n\r\npip install ninja==1.13.0 psutil==7.1.3 wheel==0.45.1\r\n\r\n\r\npip install --no-build-isolation -r pined_requirement.txt\r\n```\r\n\r\n```powershell\r\npip install -U openmim\r\nmim install mmengine\r\nmim install mmcv==2.2.0 --no-build-isolation\r\n\r\n# temply ignore the openxlab ERROR about setuptools 81.0.0\r\npip install setuptools==81.0\r\n\r\n# pip install the mmdetection backend locally\r\ncd src/thirdParty/mmdetection\r\npip install -e . --no-build-isolation\r\n\r\n# pip install the mmsegmentation backend locally\r\n# cd src/thirdParty/mmsegmentation\r\ncd ..\r\ncd mmsegmentation\r\npip install -e . --no-build-isolation\r\n\r\n# install frc loaclly\r\ncd ..\r\ncd frc\r\npip install -e .\r\n\r\n\r\n# pip install jupyter\r\npip install jupyter\r\n```\r\n\r\n#### Verify the MMLab installation\r\n\r\nRun this check on either operating system:\r\n\r\n```bash\r\npython -c \"import torch, mmcv, mmengine, mmseg, mmdet; from mmcv.ops import MultiScaleDeformableAttention; print(torch.__version__, mmcv.__version__, mmengine.__version__, mmseg.__version__, mmdet.__version__)\"\r\n```\r\n\r\nThe expected Windows core versions are:\r\n\r\n```text\r\nPyTorch 2.5.1+cu118\r\nMMCV 2.0.0rc4\r\nMMEngine 0.10.7\r\nMMSegmentation 1.2.2\r\nMMDetection 3.3.0\r\n```\r\n\r\nThe expected Linux core versions are:\r\n\r\n```text\r\nPyTorch 2.4.1+cu121\r\nMMCV 2.1.0\r\nMMEngine 0.10.7\r\nMMSegmentation 1.2.2\r\nMMDetection 3.3.0\r\n```\r\n\r\nAfter this check succeeds, open [demo_notebook.ipynb](demo_notebook.ipynb) to run the classification, semantic-segmentation, instance-segmentation, and image-restoration examples. Use repository-relative paths or `pathlib.Path` when adapting notebook paths between Windows and Linux.\r\n\r\nMore demos are listed in /demo/\r\n\r\nsee:\r\n\r\n1. [SR.ipynb](/demo/SR.ipynb)\r\n2. [OrganelleClassify.ipynb](/demo/OrganelleClassify.ipynb)\r\n3. [PlantOrganelleSeg.ipynb](/demo/PlantOrganelleSeg.ipynb)\r\n4. [Instance_Mito_seg.ipynb](/demo/Instance_Mito_seg.ipynb)\r\n5. [Liver_3D_Reconstruction.ipynb](/demo/Liver_3D_Reconstruction.ipynb)\r\n6. [SR_to_Seg_to_3D.ipynb](/demo/SR_to_Seg_to_3D.ipynb),\r\n\r\n---\r\n\r\n## \ud83d\udcd6 Quick Start\r\n\r\n1. Use as a napari Plugin\r\n2. Launch napari: napari\r\n3. Navigate to: Plugins -> emcfsys\r\n4. Load your image and select EMCellFiner for instant enhancement.\r\n\r\n## \ud83d\udcd6 Tutorial\r\n\r\nAll tutorials and feature descriptions can be found in the [tutorial documentation](./docs/EMCFsys_UserGuide_English.md) (click me!).\r\n\r\n## License\r\n\r\nDistributed under the terms of the [GNU GPL v3.0] license,\r\n\"emcfsys\" is free and open source software\r\n\r\n## Issues\r\n\r\nIf you encounter any problems, please [file an issue] along with a detailed description.\r\n\r\n[![License GNU GPL v3.0](https://img.shields.io/pypi/l/emcfsys.svg?color=green)]\r\n\r\nTowards foundation models for EM images analysis. EMCellFiner and EMCellFound are two foundation models trained based on a 4 million EM images dataset.\r\n\r\nIf you use this project, please cite:\r\n\r\nYu Z, Guo J, Liu F, et al. EMCF ecosystem: Towards pretrained foundation model for electron microscopy image analysis[J]. bioRxiv, 2025: 2025.12. 09.693109.\r\n\r\n---\r\n\r\n[napari]: [https://github.com/napari/napari](https://github.com/napari/napari)\r\n[napari-plugin-template]: [https://github.com/napari/napari-plugin-template](https://github.com/napari/napari-plugin-template)\r\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -48,19 +46,19 @@
     "provides_extra": [
       "all"
     ],
-    "release_url": "https://pypi.org/project/emcfsys/0.4.3/",
+    "release_url": "https://pypi.org/project/emcfsys/0.5.1/",
     "requires_dist": [
       "albumentations",
       "einops",
       "huggingface-hub",
       "imgviz==1.7.6",
       "labelme==5.9.1",
-      "numpy",
+      "numpy==2.2.6",
       "magicgui",
       "matplotlib",
       "napari",
       "ninja",
-      "opencv-python",
+      "opencv-python==4.12.0.88",
       "pandas",
       "Pillow",
       "pycocotools",
@@ -73,15 +71,16 @@
       "timm==1.0.22",
       "tqdm",
       "transformers",
+      "ftfy==6.3.1",
       "napari[all]; extra == \"all\""
     ],
-    "requires_python": ">=3.9",
+    "requires_python": ">=3.11",
     "summary": "Towards foundation models for EM images analysis. EMCellFiner and EMCellFound are two foundation models trained based on a 4 million EM images dataset.",
-    "version": "0.4.3",
+    "version": "0.5.1",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 40574324,
+  "last_serial": 41599756,
   "ownership": {
     "organization": null,
     "roles": [
@@ -933,30 +932,78 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.5.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "ffa720aafc1a94115a308ea212bc6b7d81023ba17b0a8e0ec2447687a885a8d3"
+        },
+        "digests": {
+          "blake2b_256": "cc63677f17652e36763c0084b9fc23ee6565edf545bf42cb6cad075556b1e815",
+          "md5": "645a1dc1f030ab7afd4bb3a3db8ed012",
+          "sha256": "1729f94e8ea2a56230e36c04489ede93368dd7293e5826f4165dd4b480b63808"
+        },
+        "downloads": -1,
+        "filename": "emcfsys-0.5.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "645a1dc1f030ab7afd4bb3a3db8ed012",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 8258239,
+        "upload_time": "2026-09-29T14:46:54",
+        "upload_time_iso_8601": "2026-09-29T14:46:54.324642Z",
+        "url": "https://files.pythonhosted.org/packages/cc/63/677f17652e36763c0084b9fc23ee6565edf545bf42cb6cad075556b1e815/emcfsys-0.5.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "49412c82bc72229d790882fad1da85abd45c11d3e9686846c8e5c317b86ebcae",
+          "md5": "b8193d1d95cddaa2435984303a7bcf4b",
+          "sha256": "0d8026db0b4802eedb633ca5eb176b78f15450528051bfc347593056e8cb1b48"
+        },
+        "downloads": -1,
+        "filename": "emcfsys-0.5.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "b8193d1d95cddaa2435984303a7bcf4b",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 37311800,
+        "upload_time": "2026-09-29T14:46:59",
+        "upload_time_iso_8601": "2026-09-29T14:46:59.882908Z",
+        "url": "https://files.pythonhosted.org/packages/49/41/2c82bc72229d790882fad1da85abd45c11d3e9686846c8e5c317b86ebcae/emcfsys-0.5.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": null,
       "core-metadata": {
-        "sha256": "41df27baec9cba9df5a237ce1028f19844e34c1a0d2f497880d1e5e2baa46a2a"
+        "sha256": "ffa720aafc1a94115a308ea212bc6b7d81023ba17b0a8e0ec2447687a885a8d3"
       },
       "digests": {
-        "blake2b_256": "b6a541c89c89b88ae1ade3f3f496caf63f7a4d9a1d3bb27d929ea4dc9f55acb2",
-        "md5": "b5f2f2679c20498e22e2caaf9fb951ea",
-        "sha256": "5ae91b3aef8ae833ce4f53802e891f03503c0f5ed582cbeef80bea6be869e582"
+        "blake2b_256": "cc63677f17652e36763c0084b9fc23ee6565edf545bf42cb6cad075556b1e815",
+        "md5": "645a1dc1f030ab7afd4bb3a3db8ed012",
+        "sha256": "1729f94e8ea2a56230e36c04489ede93368dd7293e5826f4165dd4b480b63808"
       },
       "downloads": -1,
-      "filename": "emcfsys-0.4.3-py3-none-any.whl",
+      "filename": "emcfsys-0.5.1-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "b5f2f2679c20498e22e2caaf9fb951ea",
+      "md5_digest": "645a1dc1f030ab7afd4bb3a3db8ed012",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
-      "requires_python": ">=3.9",
-      "size": 230499,
-      "upload_time": "2026-08-31T13:44:32",
-      "upload_time_iso_8601": "2026-08-31T13:44:32.639832Z",
-      "url": "https://files.pythonhosted.org/packages/b6/a5/41c89c89b88ae1ade3f3f496caf63f7a4d9a1d3bb27d929ea4dc9f55acb2/emcfsys-0.4.3-py3-none-any.whl",
+      "requires_python": ">=3.11",
+      "size": 8258239,
+      "upload_time": "2026-09-29T14:46:54",
+      "upload_time_iso_8601": "2026-09-29T14:46:54.324642Z",
+      "url": "https://files.pythonhosted.org/packages/cc/63/677f17652e36763c0084b9fc23ee6565edf545bf42cb6cad075556b1e815/emcfsys-0.5.1-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
@@ -964,21 +1011,21 @@
       "comment_text": null,
       "core-metadata": false,
       "digests": {
-        "blake2b_256": "5c3c0ada235bd306942b8395a04a0907be95e0d06a3c181cb6c7a40ba5edea7e",
-        "md5": "352b38b2dcf2182282b907c1e3ed6f4b",
-        "sha256": "734d7baec072e4abd79ddbd68af91a455a153fb82e1015cc3a67856a4ae46c06"
+        "blake2b_256": "49412c82bc72229d790882fad1da85abd45c11d3e9686846c8e5c317b86ebcae",
+        "md5": "b8193d1d95cddaa2435984303a7bcf4b",
+        "sha256": "0d8026db0b4802eedb633ca5eb176b78f15450528051bfc347593056e8cb1b48"
       },
       "downloads": -1,
-      "filename": "emcfsys-0.4.3.tar.gz",
+      "filename": "emcfsys-0.5.1.tar.gz",
       "has_sig": false,
-      "md5_digest": "352b38b2dcf2182282b907c1e3ed6f4b",
+      "md5_digest": "b8193d1d95cddaa2435984303a7bcf4b",
       "packagetype": "sdist",
       "python_version": "source",
-      "requires_python": ">=3.9",
-      "size": 7219750,
-      "upload_time": "2026-08-31T13:44:46",
-      "upload_time_iso_8601": "2026-08-31T13:44:46.137413Z",
-      "url": "https://files.pythonhosted.org/packages/5c/3c/0ada235bd306942b8395a04a0907be95e0d06a3c181cb6c7a40ba5edea7e/emcfsys-0.4.3.tar.gz",
+      "requires_python": ">=3.11",
+      "size": 37311800,
+      "upload_time": "2026-09-29T14:46:59",
+      "upload_time_iso_8601": "2026-09-29T14:46:59.882908Z",
+      "url": "https://files.pythonhosted.org/packages/49/41/2c82bc72229d790882fad1da85abd45c11d3e9686846c8e5c317b86ebcae/emcfsys-0.5.1.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
