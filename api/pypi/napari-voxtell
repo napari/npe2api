@@ -1,0 +1,235 @@
+{
+  "info": {
+    "author": null,
+    "author_email": "Benjamin Hamm <benjamin.hamm@dkfz-heidelberg.de>, Maximilian Rokuss <maximilian.rokuss@dkfz-heidelberg.de>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: Apache Software License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# Napari-VoxTell: A Napari Plugin For Text-Promptable 3D Medical Image Segmentation\n\n<div align=\"center\">\n\n[![arXiv](https://img.shields.io/badge/arXiv-2511.11450-B31B1B.svg)](https://arxiv.org/abs/2511.11450)&#160;\n[![GitHub](https://img.shields.io/badge/GitHub-VoxTell-181717?logo=github&logoColor=white)](https://github.com/MIC-DKFZ/VoxTell)&#160;\n[![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Model-VoxTell-yellow)](https://huggingface.co/mrokuss/VoxTell)&#160;\n[![web tool](https://img.shields.io/badge/web-tool-4CAF50)](https://github.com/gomesgustavoo/voxtell-web-plugin)&#160;\n[![OHIF integration](https://img.shields.io/badge/OHIF-integration-101332)](https://github.com/CCI-Bonn/OHIF-AI)&#160;\n[![3D Slicer](https://badgen.net/badge/3D%20Slicer/plugin/1f65b0ff?icon=https://raw.githubusercontent.com/Slicer/slicer.org/bc48de2b885e9bb4a725a24ab44b86273014f0ea/assets/img/3D-Slicer-Mark.svg)](https://github.com/lassoan/SlicerVoxTell)\n[![napari](https://badgen.net/badge/napari/plugin/80d1ff?icon=https://raw.githubusercontent.com/napari/napari/8b74cdfb205338a20a2e63dcbba048007ecd2309/src/napari/resources/logos/gradient-plain-light.svg)](https://github.com/MIC-DKFZ/napari-voxtell)&#160;\n\n</div>\n\n<img src=\"https://raw.githubusercontent.com/MIC-DKFZ/napari-voxtell/main/imgs/Logos/VoxTellPluginLogo.png\" alt=\"VoxTell Logo\"/>\n\n## Description\n\n**napari-voxtell** integrates [VoxTell](https://github.com/MIC-DKFZ/VoxTell), a 3D vision-language segmentation model, into the napari ecosystem. This plugin enables text-based prompting for volumetric medical image segmentation, offering an alternative to traditional interaction methods such as bounding boxes, point clicks, or manual brush strokes, used e.g. in our [nnInteractive plugin](https://github.com/MIC-DKFZ/napari-nninteractive).\n\nVoxTell accepts free-form text descriptions (e.g., \"liver\", \"aortic arch\", \"brain tumor\") to generate 3D segmentation masks. As an experimental research tool, napari-voxtell is designed to facilitate exploration and prototyping in medical image analysis workflows rather than production clinical use.\n\n**Note:** VoxTell is an ongoing research project and may produce variable results depending on anatomical region, imaging modality, and prompt specificity. Users should validate outputs carefully and not rely on this tool for clinical decision-making without expert review.\n\n## Features\n\n- \ud83d\udde3\ufe0f **Text-based prompting**: Segment anatomical structures and pathologies using natural language descriptions.\n- \ud83e\udde0 **Multi-modality support**: Compatible with CT, MRI, and PET volumetric data.\n- \ud83d\udd0c **Seamless napari integration**: Select image layers and visualize results directly within the napari viewer.\n- \u2699\ufe0f **Flexible model loading**: Switch between model versions or load custom checkpoints for experimentation.\n\n## Important: Image Orientation and Spacing\n\n- \u26a0\ufe0f **Image Orientation (Critical)**: For correct anatomical localization (e.g., distinguishing left from right), images **must be in RAS orientation**. VoxTell was trained on data reoriented using [this specific reader](https://github.com/MIC-DKFZ/nnUNet/blob/86606c53ef9f556d6f024a304b52a48378453641/nnunetv2/imageio/nibabel_reader_writer.py#L101). To make this robust, this plugin ships its own **VoxTell reader** that opens `.nii.gz` files through exactly that reader (see [Getting Started](#getting-started)), and it reorients results back to the image's original orientation on save. A quick way to spot a mismatch is if a simple prompt like \"liver\" fails and segments e.g. parts of the spleen instead.\n\n- **Image Spacing**: The model does not resample images to a standardized spacing for faster inference. Performance may degrade on images with very uncommon voxel spacings (e.g., super high-resolution brain MRI). In such cases, consider resampling the image to a more typical clinical spacing (e.g., 1.5\u00d71.5\u00d71.5 mm\u00b3) before segmentation.\n\n\n## Installation\n\n### 1. Create a virtual environment\n\nVoxTell supports Python 3.10+ and works with Conda, pip, or any other virtual environment. Here's an example using Conda:\n\n```\nconda create -n voxtell python=3.12\nconda activate voxtell\n```\n\n### 2. Install PyTorch\n\nInstall PyTorch compatible with your CUDA version. For example, for Ubuntu with a modern Nvidia GPU:\n\n```\npip install torch torchvision --index-url https://download.pytorch.org/whl/cu126\n```\n\nAny PyTorch >= 2.1.2 works except the 2.9.x series, which has a 3D-convolution memory\nregression ([pytorch#166122](https://github.com/pytorch/pytorch/issues/166122); also excluded by\nVoxTell and nnU-Net).\n\n*For other configurations (Mac, CPU, different CUDA versions), please refer to the [PyTorch Get Started](https://pytorch.org/get-started/previous-versions/) page.*\n\n### 3. Install napari-voxtell\n\nInstall the latest release from PyPI (this also installs\n[VoxTell](https://github.com/MIC-DKFZ/VoxTell) 0.1.2 or newer for local inference):\n\n```bash\npip install napari-voxtell\n```\n\nFor the development version (the `main` branch, which may contain unreleased changes), install\ndirectly from GitHub:\n\n```bash\npip install \"git+https://github.com/MIC-DKFZ/napari-voxtell.git\"\n```\n\nFor development, clone and install in editable mode (you can also use [uv](https://docs.astral.sh/uv/)):\n\n```\ngit clone https://github.com/MIC-DKFZ/napari-voxtell.git\ncd napari-voxtell\npip install -e .\n```\n\n> **Note:** Model weights are automatically downloaded from Hugging Face on first use. This may take a few minutes depending on your internet connection.\n\n## Getting Started\n\nYou can launch the plugin in three ways.\n\n> [!IMPORTANT]\n> When opening a `.nii.gz` file, choose the **VoxTell** reader (not `napari-nifti`). The VoxTell\n> reader reorients the volume to **RAS** using the same `NibabelIOWithReorient` reader the model was\n> trained with, which is required for correct left/right and organ localization. Volumes opened with\n> other readers may be mis-oriented and produce wrong-side / wrong-organ masks.\n\n**Option A: Start napari and activate manually**\n```\nnapari\n```\nThen go to **Plugins** > **napari-voxtell**.\n\n**Option B: Start napari with the widget open**\n```\nnapari -w napari-voxtell\n```\n\n**Option C: Open an image directly with the widget**\n```\nnapari path/to/your/image.nii.gz -w napari-voxtell\n```\n\n## Usage\n\n1. **Initialize the Model**: \n   - Open the VoxTell widget.\n   - Select your model version from the dropdown (or paste a local custom model path).\n   - Click **Initialize**. This downloads model weights on first use and takes some time while the model loads.\n2. **Select Input**:\n   - Choose the target image layer from the dropdown menu (opened with the **VoxTell** reader \u2014 see above).\n3. **Prompt**:\n   - Type a text description of each structure of interest (e.g., \"right kidney\", \"lung lesion\", \"brainstem\"), **one prompt per line**.\n   - Or pick a group from the **preset** dropdown and click **Add** to append it.\n4. **Choose output mode** (optional):\n   - Leave **Separate layer per prompt** off for one combined multi-label layer, or turn it on for one binary layer per prompt.\n   - Optionally enable **Keep largest only** and/or set an **Output name**.\n5. **Segment**:\n   - Click **Submit**. Results appear as new Labels layer(s); the in-widget colour legend maps each colour to its prompt.\n6. **Save** (optional):\n   - Use **Save segmentations as NIfTI** to merge all VoxTell layers of the selected image into one labelmap (label values follow prompt line order) in the image's original orientation, alongside a JSON legend.\n\n\n<p align=\"center\">\n    <img src=\"https://raw.githubusercontent.com/MIC-DKFZ/napari-voxtell/main/imgs/gui.png\" alt=\"napari-voxtell GUI\">\n</p>\n\nPlease carefully review all segmentation outputs. Model performance varies with anatomical complexity, imaging quality, spacing, and prompt clarity. This tool is intended for research exploration, not validated clinical workflows.\n\n\n## Remote inference (run the GUI on a laptop, the model on a workstation)\n\nThe plugin can run the napari GUI locally while inference runs on a remote GPU machine\n(workstation or cluster). Loading, display and saving stay identical to local mode \u2014 only\nthe inference is offloaded over HTTP.\n\n1. **On the GPU machine**, install the server and run it (see the VoxTell repo):\n   ```bash\n   pip install \"voxtell[server]\"\n   voxtell-server --host 127.0.0.1 --port 1527\n   ```\n2. **From your laptop**, forward the port over SSH (the server binds to localhost by default):\n   ```bash\n   ssh -N -L 1527:127.0.0.1:1527 your-workstation\n   ```\n3. **In the widget**, set **Inference Location \u2192 Remote server**, enter `http://127.0.0.1:1527`,\n   click **Connect**, then open an image and **Submit** as usual. The image is uploaded to the\n   server on the first Submit; the progress bar and **Cancel** work exactly as in local mode.\n\nFor a trusted LAN you can instead bind the server to `0.0.0.0` and set an API key\n(`voxtell-server --host 0.0.0.0 --api-key ...`, then paste the key into the widget).\n\n## Citation\n\nIf you use `napari-voxtell` in your research, please cite our paper:\n\n```bibtex\n@inproceedings{rokuss2026voxtell,\n      title={Voxtell: Free-text promptable universal 3d medical image segmentation},\n      author={Rokuss, Maximilian and Langenberg, Moritz and Kirchhoff, Yannick and Isensee, Fabian and Hamm, Benjamin and Ulrich, Constantin and Regnery, Sebastian and Bauer, Lukas and Katsigiannopulos, Efthimios and Norajitra, Tobias and Maier-Hein, Klaus},\n      booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},\n      pages={37538--37557},\n      year={2026}\n}\n```\n\n## License\n\nThis repository is licensed under the **Apache-2.0 License**.\n\n**Important:** The default model checkpoints downloaded by this plugin are licensed under **Creative Commons Attribution-NonCommercial-ShareAlike 4.0 (CC-BY-NC-SA 4.0)**. Please review the [Hugging Face Model Card](https://huggingface.co/mrokuss/VoxTell) for details regarding model usage and limitations.\n\n## Contributing\n\nContributions are welcome! Please feel free to submit a Pull Request or open an issue for bugs and feature requests.\n\n## \ud83d\udcec Contact\n\nSpecial shoutout to [Benjamin Hamm](https://github.com/hammb) who created the first version of this plugin. For questions, issues, or collaborations, please contact:\n\n\ud83d\udce7 [maximilian.rokuss@dkfz-heidelberg.de](mailto:maximilian.rokuss@dkfz-heidelberg.de) / [benjamin.hamm@dkfz-heidelberg.de](mailto:benjamin.hamm@dkfz-heidelberg.de)\n\n______________________________________________________________________\n\n## Acknowledgments\n\nThe remote (client/server) inference mode is inspired by MIC-DKFZ's\n[nnInteractive](https://github.com/MIC-DKFZ/nnInteractive) and\n[napari-nninteractive](https://github.com/MIC-DKFZ/napari-nninteractive) (Apache-2.0).\n\n<p align=\"left\">\n  <img src=\"https://raw.githubusercontent.com/MIC-DKFZ/napari-voxtell/main/imgs/Logos/DKFZ_Logo.png\" width=\"500\">\n</p>\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": " Apache License Version 2.0, January 2004 http://www.apache.org/licenses/  TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION  1. Definitions.  \"License\" shall mean the terms and conditions for use, reproduction, and distribution as defined by Sections 1 through 9 of this document.  \"Licensor\" shall mean the copyright owner or entity authorized by the copyright owner that is granting the License.  \"Legal Entity\" shall mean the union of the acting entity and all other entities that control, are controlled by, or are under common control with that entity. For the purposes of this definition, \"control\" means (i) the power, direct or indirect, to cause the direction or management of such entity, whether by contract or otherwise, or (ii) ownership of fifty percent (50%) or more of the outstanding shares, or (iii) beneficial ownership of such entity.  \"You\" (or \"Your\") shall mean an individual or Legal Entity exercising permissions granted by this License.  \"Source\" form shall mean the preferred form for making modifications, including but not limited to software source code, documentation source, and configuration files.  \"Object\" form shall mean any form resulting from mechanical transformation or translation of a Source form, including but not limited to compiled object code, generated documentation, and conversions to other media types.  \"Work\" shall mean the work of authorship, whether in Source or Object form, made available under the License, as indicated by a copyright notice that is included in or attached to the work (an example is provided in the Appendix below).  \"Derivative Works\" shall mean any work, whether in Source or Object form, that is based on (or derived from) the Work and for which the editorial revisions, annotations, elaborations, or other modifications represent, as a whole, an original work of authorship. For the purposes of this License, Derivative Works shall not include works that remain separable from, or merely link (or bind by name) to the interfaces of, the Work and Derivative Works thereof.  \"Contribution\" shall mean any work of authorship, including the original version of the Work and any modifications or additions to that Work or Derivative Works thereof, that is intentionally submitted to Licensor for inclusion in the Work by the copyright owner or by an individual or Legal Entity authorized to submit on behalf of the copyright owner. For the purposes of this definition, \"submitted\" means any form of electronic, verbal, or written communication sent to the Licensor or its representatives, including but not limited to communication on electronic mailing lists, source code control systems, and issue tracking systems that are managed by, or on behalf of, the Licensor for the purpose of discussing and improving the Work, but excluding communication that is conspicuously marked or otherwise designated in writing by the copyright owner as \"Not a Contribution.\"  \"Contributor\" shall mean Licensor and any individual or Legal Entity on behalf of whom a Contribution has been received by Licensor and subsequently incorporated within the Work.  2. Grant of Copyright License. Subject to the terms and conditions of this License, each Contributor hereby grants to You a perpetual, worldwide, non-exclusive, no-charge, royalty-free, irrevocable copyright license to reproduce, prepare Derivative Works of, publicly display, publicly perform, sublicense, and distribute the Work and such Derivative Works in Source or Object form.  3. Grant of Patent License. Subject to the terms and conditions of this License, each Contributor hereby grants to You a perpetual, worldwide, non-exclusive, no-charge, royalty-free, irrevocable (except as stated in this section) patent license to make, have made, use, offer to sell, sell, import, and otherwise transfer the Work, where such license applies only to those patent claims licensable by such Contributor that are necessarily infringed by their Contribution(s) alone or by combination of their Contribution(s) with the Work to which such Contribution(s) was submitted. If You institute patent litigation against any entity (including a cross-claim or counterclaim in a lawsuit) alleging that the Work or a Contribution incorporated within the Work constitutes direct or contributory patent infringement, then any patent licenses granted to You under this License for that Work shall terminate as of the date such litigation is filed.  4. Redistribution. You may reproduce and distribute copies of the Work or Derivative Works thereof in any medium, with or without modifications, and in Source or Object form, provided that You meet the following conditions:  (a) You must give any other recipients of the Work or Derivative Works a copy of this License; and  (b) You must cause any modified files to carry prominent notices stating that You changed the files; and  (c) You must retain, in the Source form of any Derivative Works that You distribute, all copyright, patent, trademark, and attribution notices from the Source form of the Work, excluding those notices that do not pertain to any part of the Derivative Works; and  (d) If the Work includes a \"NOTICE\" text file as part of its distribution, then any Derivative Works that You distribute must include a readable copy of the attribution notices contained within such NOTICE file, excluding those notices that do not pertain to any part of the Derivative Works, in at least one of the following places: within a NOTICE text file distributed as part of the Derivative Works; within the Source form or documentation, if provided along with the Derivative Works; or, within a display generated by the Derivative Works, if and wherever such third-party notices normally appear. The contents of the NOTICE file are for informational purposes only and do not modify the License. You may add Your own attribution notices within Derivative Works that You distribute, alongside or as an addendum to the NOTICE text from the Work, provided that such additional attribution notices cannot be construed as modifying the License.  You may add Your own copyright statement to Your modifications and may provide additional or different license terms and conditions for use, reproduction, or distribution of Your modifications, or for any such Derivative Works as a whole, provided Your use, reproduction, and distribution of the Work otherwise complies with the conditions stated in this License.  5. Submission of Contributions. Unless You explicitly state otherwise, any Contribution intentionally submitted for inclusion in the Work by You to the Licensor shall be under the terms and conditions of this License, without any additional terms or conditions. Notwithstanding the above, nothing herein shall supersede or modify the terms of any separate license agreement you may have executed with Licensor regarding such Contributions.  6. Trademarks. This License does not grant permission to use the trade names, trademarks, service marks, or product names of the Licensor, except as required for reasonable and customary use in describing the origin of the Work and reproducing the content of the NOTICE file.  7. Disclaimer of Warranty. Unless required by applicable law or agreed to in writing, Licensor provides the Work (and each Contributor provides its Contributions) on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied, including, without limitation, any warranties or conditions of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A PARTICULAR PURPOSE. You are solely responsible for determining the appropriateness of using or redistributing the Work and assume any risks associated with Your exercise of permissions under this License.  8. Limitation of Liability. In no event and under no legal theory, whether in tort (including negligence), contract, or otherwise, unless required by applicable law (such as deliberate and grossly negligent acts) or agreed to in writing, shall any Contributor be liable to You for damages, including any direct, indirect, special, incidental, or consequential damages of any character arising as a result of this License or out of the use or inability to use the Work (including but not limited to damages for loss of goodwill, work stoppage, computer failure or malfunction, or any and all other commercial damages or losses), even if such Contributor has been advised of the possibility of such damages.  9. Accepting Warranty or Additional Liability. While redistributing the Work or Derivative Works thereof, You may choose to offer, and charge a fee for, acceptance of support, warranty, indemnity, or other liability obligations and/or rights consistent with this License. However, in accepting such obligations, You may act only on Your own behalf and on Your sole responsibility, not on behalf of any other Contributor, and only if You agree to indemnify, defend, and hold each Contributor harmless for any liability incurred by, or claims asserted against, such Contributor by reason of your accepting any such warranty or additional liability.  END OF TERMS AND CONDITIONS  APPENDIX: How to apply the Apache License to your work.  To apply the Apache License to your work, attach the following boilerplate notice, with the fields enclosed by brackets \"{}\" replaced with your own identifying information. (Don't include the brackets!)  The text should be enclosed in the appropriate comment syntax for the file format. We also recommend that a file or class name and description of purpose be included on the same \"printed page\" as the copyright notice for easier identification within third-party archives.  Copyright [2025] [Division of Medical Image Computing, German Cancer Research Center (DKFZ), Heidelberg, Germany]  Licensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at  http://www.apache.org/licenses/LICENSE-2.0  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License. ",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-voxtell",
+    "package_url": "https://pypi.org/project/napari-voxtell/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-voxtell/",
+    "project_urls": {
+      "Code": "https://github.com/MIC-DKFZ/napari-voxtell",
+      "Homepage": "https://github.com/MIC-DKFZ/napari-voxtell"
+    },
+    "provides_extra": [
+      "testing"
+    ],
+    "release_url": "https://pypi.org/project/napari-voxtell/0.2.0/",
+    "requires_dist": [
+      "numpy",
+      "qtpy",
+      "napari[all]",
+      "napari-nifti",
+      "httpx",
+      "blosc2",
+      "voxtell>=0.1.2",
+      "tox; extra == \"testing\"",
+      "pytest; extra == \"testing\"",
+      "pytest-cov; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "napari; extra == \"testing\"",
+      "pyqt5; extra == \"testing\""
+    ],
+    "requires_python": ">=3.10",
+    "summary": "Voxtell - Text-promptable segmentation plugin for Napari",
+    "version": "0.2.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 41549867,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "mrokuss"
+      },
+      {
+        "role": "Maintainer",
+        "user": "moritzlangenberg"
+      }
+    ]
+  },
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "56a1736aca7f05232081aed391d56f89add316ed7b77de96ec7d170a90907c41"
+        },
+        "digests": {
+          "blake2b_256": "2b3b3adebab9fe4ddc77b2d6338a2d8838cf40ba1f43ac7ddde25cd5551762c3",
+          "md5": "176fadff17c87fa640422c29bc38f894",
+          "sha256": "c8dd2c49e297ded6bbd8aea9cf4d4729cc7745c9c21bd4ad974ba2a2ebbb9974"
+        },
+        "downloads": -1,
+        "filename": "napari_voxtell-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "176fadff17c87fa640422c29bc38f894",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 18781,
+        "upload_time": "2025-12-27T19:01:04",
+        "upload_time_iso_8601": "2025-12-27T19:01:04.664334Z",
+        "url": "https://files.pythonhosted.org/packages/2b/3b/3adebab9fe4ddc77b2d6338a2d8838cf40ba1f43ac7ddde25cd5551762c3/napari_voxtell-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "f94d3fb9030e084c868fa5e538dce9d07f05eedda0e25a6f1c2cb154602f3419",
+          "md5": "6c6eaa2fb1d486e538bde2372256f085",
+          "sha256": "0b980bbf990896f1bead7a3a455a43288c735cedf98b2c50184617ed47209470"
+        },
+        "downloads": -1,
+        "filename": "napari_voxtell-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "6c6eaa2fb1d486e538bde2372256f085",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 22959,
+        "upload_time": "2025-12-27T19:01:06",
+        "upload_time_iso_8601": "2025-12-27T19:01:06.108632Z",
+        "url": "https://files.pythonhosted.org/packages/f9/4d/3fb9030e084c868fa5e538dce9d07f05eedda0e25a6f1c2cb154602f3419/napari_voxtell-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "72a5e6231d0e3f35237bc21c942b11c31809aab7bdd82c137d9d2cde91dd2532"
+        },
+        "digests": {
+          "blake2b_256": "b6b0a0af70a30b148d53fddf5b7c7dbc3e81f70fb39da6755975b3a5e245567b",
+          "md5": "8226ed73d081f1309fa861ac21986753",
+          "sha256": "87d78c8daa2005c42309052f9669510705bb35fd9c595b610aef16623a3a6e63"
+        },
+        "downloads": -1,
+        "filename": "napari_voxtell-0.2.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "8226ed73d081f1309fa861ac21986753",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 96799,
+        "upload_time": "2026-09-28T13:07:30",
+        "upload_time_iso_8601": "2026-09-28T13:07:30.618958Z",
+        "url": "https://files.pythonhosted.org/packages/b6/b0/a0af70a30b148d53fddf5b7c7dbc3e81f70fb39da6755975b3a5e245567b/napari_voxtell-0.2.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "cac8e8f9bbda5bcb33bfe45b59a3e373eb9320c31ef2a0b4ca2930a615b5d99b",
+          "md5": "193121a5c0744e414f25173de6d4a0a3",
+          "sha256": "7f0724becfca1303daf7bf622c7151562caa69ab47c6c2050607d78e59dc68df"
+        },
+        "downloads": -1,
+        "filename": "napari_voxtell-0.2.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "193121a5c0744e414f25173de6d4a0a3",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 102495,
+        "upload_time": "2026-09-28T13:07:32",
+        "upload_time_iso_8601": "2026-09-28T13:07:32.580013Z",
+        "url": "https://files.pythonhosted.org/packages/ca/c8/e8f9bbda5bcb33bfe45b59a3e373eb9320c31ef2a0b4ca2930a615b5d99b/napari_voxtell-0.2.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "72a5e6231d0e3f35237bc21c942b11c31809aab7bdd82c137d9d2cde91dd2532"
+      },
+      "digests": {
+        "blake2b_256": "b6b0a0af70a30b148d53fddf5b7c7dbc3e81f70fb39da6755975b3a5e245567b",
+        "md5": "8226ed73d081f1309fa861ac21986753",
+        "sha256": "87d78c8daa2005c42309052f9669510705bb35fd9c595b610aef16623a3a6e63"
+      },
+      "downloads": -1,
+      "filename": "napari_voxtell-0.2.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "8226ed73d081f1309fa861ac21986753",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.10",
+      "size": 96799,
+      "upload_time": "2026-09-28T13:07:30",
+      "upload_time_iso_8601": "2026-09-28T13:07:30.618958Z",
+      "url": "https://files.pythonhosted.org/packages/b6/b0/a0af70a30b148d53fddf5b7c7dbc3e81f70fb39da6755975b3a5e245567b/napari_voxtell-0.2.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "cac8e8f9bbda5bcb33bfe45b59a3e373eb9320c31ef2a0b4ca2930a615b5d99b",
+        "md5": "193121a5c0744e414f25173de6d4a0a3",
+        "sha256": "7f0724becfca1303daf7bf622c7151562caa69ab47c6c2050607d78e59dc68df"
+      },
+      "downloads": -1,
+      "filename": "napari_voxtell-0.2.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "193121a5c0744e414f25173de6d4a0a3",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.10",
+      "size": 102495,
+      "upload_time": "2026-09-28T13:07:32",
+      "upload_time_iso_8601": "2026-09-28T13:07:32.580013Z",
+      "url": "https://files.pythonhosted.org/packages/ca/c8/e8f9bbda5bcb33bfe45b59a3e373eb9320c31ef2a0b4ca2930a615b5d99b/napari_voxtell-0.2.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
