@@ -1,0 +1,435 @@
+{
+  "info": {
+    "author": "David Zimmerman",
+    "author_email": "Gustavo Madeira Santana <fromweb1@gumadeiras.com>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 3 - Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Topic :: Scientific/Engineering :: Bio-Informatics",
+      "Topic :: Scientific/Engineering :: Image Processing",
+      "Topic :: Scientific/Engineering :: Visualization"
+    ],
+    "description": "# lobemap\n\nA [napari](https://napari.org) viewer for *Drosophila* antennal lobe\n(AL) glomerular atlases.\n\nSeveral groups have published glomerular parcellations of the AL, each\nfrom a different volume and each using its own names. lobemap puts them\nin one viewer so they can be looked at side by side: as 3D meshes, or as\nexact cross-sections on a slice through the underlying image.\n\nThe viewer opens a **coordinate space** \u2014 FAFB, the hemibrain, the male\nCNS, or the Grabe light-microscopy template. A space holds every atlas\nnative to it at once, together with its reference image and, in the three\nEM spaces, its neuropil geometry, so the parcellations of one volume can be\ndrawn over each other.\n\n## Installing\n\nPython 3.11 or 3.12. From PyPI:\n\n```bash\npip install lobemap\nlobemap fetch\n```\n\n`fetch` downloads the data, which is published separately rather than shipped in the package. An installed lobemap keeps it in the user cache directory (`~/Library/Caches/lobemap/data` on macOS, `~/.cache/lobemap/data` on Linux); `fetch` prints the location. Set `LOBEMAP_DATA`, or pass `--data-root`, to keep it somewhere else.\n\nUpgrading from 0.1: the data no longer ships in the package, and `lobemap view <space>` replaces `lobemap --atlas <name>`. [CHANGELOG.md](CHANGELOG.md) lists what changed and what was removed.\n\nFrom a source checkout, with [uv](https://docs.astral.sh/uv/), from the repository root:\n\n```bash\nuv sync\nuv run lobemap fetch\n```\n\nA checkout keeps its data in `registry/data`.\n\nViewing needs nothing more. Rebuilding data from source (`build`, `stain`, `ingest`) and moving geometry between spaces (`bridge`, and `check` or `reconcile` on an atlas outside its own space) need about 100 more packages, which `pip install \"lobemap[ingest]\"` adds. In a checkout, `uv sync` and `uv run` install them too, because the `ingest` group is a default; pass `--no-group ingest` to both to leave them out, as in `uv run --no-group ingest lobemap`.\n\nA full `fetch` is 2.5 GB and gets everything: the atlases, the neuropil sets, the Grabe confocal stack and label volume, and the three virtual stains described under [Data](#data) below. The stains are 2.4 GB of that, so if you would rather not wait for them:\n\n```bash\nuv run lobemap fetch --nostains\n```\n\nleaves them out and takes 76 MB. Every space still opens; the three EM spaces just open without their reference image, and running the full `fetch` later fills them in.\n\n## Quick start\n\n```bash\nuv run lobemap\n```\n\nThat opens FAFB, after fetching the 76 MB of core data if it is not on disk yet. To list the spaces and what each will put on screen:\n\n```bash\nuv run lobemap spaces\n```\n\n```bash\nuv run lobemap view JRCFIB2018F\n```\n\n`lobemap --help` lists the rest, including tools for checking the data\nagainst its own geometry (`check`), comparing atlases (`reconcile`) and\nmoving geometry between spaces (`bridge`).\n\n`lobemap` is installed into the project's virtual environment, so `uv run`\nis the simplest way to reach it. Activating the environment\n(`.venv/Scripts/Activate.ps1` on Windows, `source .venv/bin/activate`\nelsewhere) lets you drop the prefix. The commands work from any directory: a checkout reads its own `registry/`, and a package installed from PyPI carries a copy of the registry metadata. `--registry` or `LOBEMAP_REGISTRY` points at a different one.\n\n## What is included\n\n| space | atlas | glomeruli |\n|---|---|---|\n| FAFB14 | [Benton 2025](https://doi.org/10.1038/s44319-025-00476-8) (Dataset EV2) | 58 |\n| JRCFIB2018F (hemibrain) | neuPrint [hemibrain](https://doi.org/10.7554/eLife.57443) | 58 + 19 |\n| JRCFIB2018F | [Schlegel 2021](https://doi.org/10.7554/eLife.66018) S11, from receptor neurons | 59 |\n| JRCFIB2018F | [Schlegel 2021](https://doi.org/10.7554/eLife.66018) S12, from projection neurons | 58 |\n| JRCFIB2022M (male CNS) | neuPrint [male CNS](https://doi.org/10.1016/j.cell.2026.08.015) | 58 + 58 |\n| GRABE | [Grabe 2015](https://doi.org/10.1002/cne.23697) | 54 + 54 |\n\nThree gaps in the published data are worth knowing before comparing atlases:\n\n- The neuPrint hemibrain `VM2(R)` is counted above but is effectively missing: it is a 14 \u00b5m\u00b3 fragment, where VM2 is 1,342\u20133,259 \u00b5m\u00b3 in every other atlas that has one. Schlegel S12 has a complete VM2 in the same volume. `lobemap check` lists it as a known defect ([`registry/checks.toml`](registry/checks.toml)).\n- Grabe 2015 has no `VM6`. Its Amira material table names VM6 on both sides, but the published label volume (\"sure ones\" only) has no voxels for either, so 54 glomeruli per side are meshed rather than 55. The same table names the material lobemap reads as `VP2` `VP2_left_VM6andVC6` and `VP2_right_VM6andVC6`, and in affine fits to the male CNS and to Schlegel S12 it lies at VM6's position rather than VP2's. So Grabe's `VP2` may be VM6: the viewer names it `VP2 (VM6?)` in the table and on the slice, with each side's reason in the name's tooltip, while `registry/nomenclature.csv` still maps it to VP2.\n- In the male CNS neuropil set, `AME(L)` is about a quarter of the volume of `AME(R)` (4,172 against 16,608 \u00b5m\u00b3) after the watertight repair. Treat it as incomplete; the source mesh is not kept, so it is not known whether the ROI or the repair lost the rest.\n\nWhich one to reach for depends on what you are comparing against:\n\n- **GRABE** is the only atlas built from an intact, living brain, imaged\n  in vivo rather than dissected and fixed. Its glomerular shapes and the\n  geometry of its reference stack (`elav-nSyb::DsRed`, not nc82) are\n  therefore the closest match to in vivo imaging data. It is also the\n  oldest of the six and predates revisions to the fine structure of a few\n  glomeruli.\n- **FAFB14** (the FAFB volume, which FlyWire also reconstructs) is a complete female brain, dissected and\n  chemically fixed. Benton 2025\n  ([based on Bates 2020](https://doi.org/10.1016/j.cub.2020.06.042))\n  annotates its left AL comprehensively and to current nomenclature; the\n  right AL is unannotated.\n- **JRCFIB2018F** (hemibrain) is a dissected, fixed female. Three\n  independent annotations cover its right AL, and one of them also\n  covers a subset of the left. The right AL is partially truncated even\n  so: some of its 58 glomeruli extend past the imaged volume. All of the\n  hemibrain atlases have a few glomeruli with holes or multiple connected\n  components.\n- **JRCFIB2022M** (male CNS) has complete, current annotations for both\n  hemispheres, though the meshes are of variable quality, with several\n  glomeruli having holes or multiple pieces. The JRCFIB2022M specimen is\n  male rather than female, which may subtly affect the shape of a few\n  glomeruli, and is dissected and fixed like the other EM volumes.\n\nEach space also carries one reference image, and each EM space its brain\nneuropils. For Grabe, which is light microscopy and has no neuropil meshes,\nthe image is its own confocal stack. For the\nthree EM spaces it is a **virtual neuropil stain**: the density of\npredicted presynapses, binned and blurred into something that reads like an\nnc82 antibody stain, computed natively in each volume rather than warped in\nfrom light microscopy.\n\nGlomerulus names are scoped to a space, so switching space may change both\nthe list of glomeruli and their colors.\n\n## Data\n\nThe data the viewer opens is not committed. Its fourteen artifacts are published as assets of the [`data-v1` release](https://github.com/gumadeiras/lobemap/releases/tag/data-v1) \u2014 2.51 GB, of which the three virtual stains are 2.44 GB. What the repository does commit is the published source data some of them are built from, about 220 MB under [`registry/sources/`](registry/sources/README.md), and the registry metadata. Only the metadata ships in the package.\n\n`registry/manifest.toml` records where the artifacts are fetched from and the sha256 of every one, and `lobemap fetch` checks each download against it; a file that does not match is discarded rather than kept. `lobemap fetch --check` verifies what is on disk without downloading anything. Naming an asset fetches just that one:\n\n```bash\nuv run lobemap fetch --asset hemibrain_stain\n```\n\n`lobemap view` fetches before it opens a window: every missing artifact except the stains, up to 11 files and 76 MB, whichever space you open. So the explicit `fetch` above is a convenience rather than a requirement. It never fetches a stain, though: after `fetch --nostains` the EM spaces open without a reference image until you fetch one. A stain that *is* on disk is always shown.\n\nYou can also rebuild from source instead of downloading:\n\n```bash\nuv run lobemap build --list\n```\n\n```bash\nuv run lobemap build hemibrain_stain\n```\n\nEach stain needs several gigabytes downloaded from the published synapse releases, about 40 GB of scratch space, and a long run, so `build --all` skips them and they have to be asked for by name. Everything else is derived from sources that either ship in `registry/sources/` or are downloaded by the build; the neuPrint assets need a neuPrint token in `NEUPRINT_APPLICATION_CREDENTIALS`, and `fafb_neuropil` needs FlyWire access. `registry/recipes.toml` records exactly how each asset is built, and [`registry/data/README.md`](registry/data/README.md) describes each pipeline.\n\nA rebuilt asset is not byte-identical to the original \u2014 every pipeline stamps the date it ran \u2014 so compare its *content* hash, which the build prints, instead. `lobemap pack` writes the upload-ready copies if you are republishing.\n\n## Data licenses\n\nThe MIT License in [LICENSE](LICENSE) covers the lobemap code. It does not cover the data. Each data asset keeps the license of its source, recorded per asset in [`registry/assets.toml`](registry/assets.toml) as `source.license`, with the page that states it as `source.license_url`:\n\n| assets | license | stated at |\n|---|---|---|\n| `neuprint_hemibrain_glomeruli`, `neuprint_hemibrain_neuropil`, `hemibrain_stain` | CC BY 4.0 | [Janelia FlyEM hemibrain](https://www.janelia.org/project-team/flyem/hemibrain) |\n| `neuprint_cns_glomeruli`, `neuprint_cns_neuropil`, `malecns_stain` | CC BY 4.0 | [male CNS downloads](https://male-cns.janelia.org/download/) |\n| `schlegel2021_s11_glomeruli`, `schlegel2021_s12_glomeruli` | CC BY 4.0 | [Schlegel et al. 2021, eLife](https://elifesciences.org/articles/66018) |\n| `benton2025_glomeruli` | CC0 1.0 (the article itself is CC BY 4.0) | [Benton et al. 2025, EMBO Reports](https://europepmc.org/article/PMC/PMC12187929) |\n| `fafb_neuropil`, `fafb_stain` | CC BY-NC 4.0: attribution, no commercial use | [FlyWire guidelines](https://flywire.ai/guidelines) |\n| `grabe2015_glomeruli`, `grabe2015_labels`, `grabe2015_stack` | none published | [Grabe et al. 2015](https://doi.org/10.1002/cne.23697), [atlas page](https://www.ice.mpg.de/232714/vivo-3d-atlas) |\n\nThe Grabe 2015 assets are built from files reproduced from the paper and its in vivo atlas: the confocal stack, and the Amira label volume with its material table. Neither the journal nor the atlas page publishes terms for them, and lobemap grants none: the rights stay with the authors and the publisher.\n\nThe tracked source files under `registry/sources/` keep the terms of the same sources: Benton's Dataset EV1 and EV2 are CC0 1.0 and its figure panels CC BY 4.0; the Grabe files are reproduced from the paper as above, except the Grabe 2016 supplemental tables (`s1.png`, `s1_cont.png`, `s2.png`), which are [CC BY-NC-ND 4.0](https://doi.org/10.1016/j.celrep.2016.08.063); the Bates 2020 atlas figure is CC BY 4.0; and the JRC2018 Unisex template and ROI volumes from Virtual Fly Brain are [CC BY-NC-SA 4.0](https://www.virtualflybrain.org/reports/JRC2018). [`registry/reference/glomerulus_ground_truth.csv`](registry/reference/README.md) compiles values from published tables, and each value keeps the terms of its source.\n\nCC BY and CC BY-NC require attribution, so cite the paper behind each atlas you use; [docs/data-sources.md](docs/data-sources.md) has the citations. CC BY-NC data, which includes everything in FAFB14 except the Benton atlas, may not be used commercially.\n\n## In the viewer\n\nThe window has three columns. On the left, the **View** dock, tabbed with napari's **Layer settings**, sits above napari's **Layers** list, with napari's two rows of buttons above and below the list. The canvas is in the middle. On the right, **Brain regions** has a **Glomeruli** tab and, in every brain but GRABE, a **Neuropils** tab, each with a source menu and a sides menu over its table. The tabs of both columns look alike, and each row of tabs stands on a line of the open tab's color across its column, so the open tab joins the section it shows. The docks have no close button; the Window menu shows a hidden one again.\n\n### The View dock\n\nA control that works in one mode only stays in view in the other, disabled, and its tooltip says when it works. The mouse wheel changes a box or menu only after you click it or reach it with Tab, so scrolling over the dock changes nothing; the same holds for the panel's **Source**, **Sides** and **Driver line** menus. The wheel turns no tab of either column.\n\n- **Brain** opens another brain without restarting: FAFB (female, EM), Hemibrain (female, EM), Male CNS (EM) or Grabe 2015 (live, light microscopy). Its tooltip spells out the abbreviations and names the template the brain is shown in. Only brains with data on disk are listed.\n- **Show** switches between **3D**, which draws the meshes, and **Slice**, which draws one section at a time: the image, and exact mesh\u2013plane outlines that stay sharp at any zoom. **Fit to window** fits the brain to the window; in 3D it also turns back to the front view, dorsal side up, with the rotation applied, and frames the whole brain as that view shows it, turned, flipped and under perspective, with a hundredth of the window to spare on each side. It never moves the slice or the angles. The brain opens framed the same way, and napari refits it so whenever you enter 3D.\n- **Zoom** is how large the brain is drawn, in screen pixels per micrometer of the brain: napari's own zoom factor, the number its camera popup shows. Scrolling, Fit to window and the popup change it, and typing a number zooms to it, in 3D and in Slice view.\n- **Perspective** is the 3D camera's field of view, from `0\u00b0 (flat)`, the default, with no perspective, to 90\u00b0, the strongest. It works in 3D only; in Slice view it is disabled. Hovering, the corner arrows, Fit to window, the rotation and the flip are the same under perspective.\n- **Sections** chooses which sections the slider steps through. Each choice is named by its plane and the anatomical axis the slider steps along across it \u2014 frontal sections along anterior\u2013posterior, horizontal along dorsal\u2013ventral, sagittal along medial\u2013lateral \u2014 and by the angle between that axis and the image grid the sections follow, for example `Frontal (17.5\u00b0 off anterior\u2013posterior)` in FAFB. **Align to the anatomical axes**, off by default, cuts the sections square to those three axes instead, and the menu then reads `Frontal (anterior\u2013posterior)`. Both work in Slice view only; in 3D they are disabled. The menu is as wide as the longest choice of any brain, aligned or not, so no choice is cut short and the menu never changes width.\n- **Mirror the brain left to right** shows the brain as its mirror image about its mid-plane, to compare a left lobe with a right one. It is for display only: the data do not change, and the corner arrows follow it. In 3D the camera then faces the front view turned by the angles, as a new angle puts it, so the mirror and the flip together are a 180\u00b0 turn about the line of sight.\n- **Flip the picture upside down** turns the picture over on screen, top to bottom about the middle of the view, after the rotation and the mirror, in 3D and in Slice view. It is for display only: no slider, plane or layer moves, the corner arrows follow, names on the slice stay readable, the surfaces stay lit from outside, from the lower right, as the upright picture is lit from the upper right, whatever moves you make while it is on, and turning it off gives back the view exactly. With the mirror, a front view is turned 180\u00b0. Its only cost is the click: about 35 ms in Slice view and 4 ms in 3D. A slice step and a change between 3D and Slice view take as long upside down as upright.\n- **Rotate around** turns the view by three angles, from \u2212180\u00b0 to 180\u00b0, about the axes of the screen:\n  - **Line of sight**: positive turns the picture counterclockwise.\n  - **Vertical axis**: positive moves the near side to your right.\n  - **Horizontal axis**: positive brings the top toward you.\n\n  The rows are named by the screen's axes, not by x, y and z, which are the image's own axes and differ from the screen's once the slice axis changes. In 3D the camera turns from the front view, and no layer moves. Dragging still turns the camera freely and leaves the angles as they are; a new angle, or Fit to window, puts the camera back at the front view turned by the angles. In Slice view, a turn about the line of sight turns the section in the screen plane. A turn about the vertical or horizontal axis cuts a true oblique section: the image is resampled on the turned plane and the outlines are exact sections of the meshes on it, the slider steps along your line of sight and reads `depth`, and napari's x/y/z arrows are hidden, since no image axis is on screen. **Reset rotation** gives back exactly the unturned view; in 3D it also turns the camera back to the front view after a drag, even with the angles at 0\u00b0.\n- The corner shows the anatomy's arrows, each labeled with the pole it points at, one of `A`/`P`, `D`/`V` and `L`/`R`. In 3D they are turned in space, beside napari's arrows for the image's own axes `x`, `y` and `z`. In Slice view each is the projection of its pole's direction onto the section, at any rotation, alignment, mirror and flip; a pole within 20.5\u00b0 of the line of sight, whose arrow would be under 35% of its length, has none. napari's x/y arrows are not shown in Slice view, because the image grid is 5 to 31\u00b0 off the anatomy and the two sets of letters fell on top of each other. The legend under the controls says what the letters mean, in both views.\n\n0.1's controls map onto these as follows, for a frontal view:\n\n| 0.1 | now |\n|---|---|\n| Z/slice | Rotate around **Line of sight** |\n| Y/vertical | Rotate around **Vertical axis** |\n| X/horizontal | Rotate around **Horizontal axis** |\n| Mirror horizontal | **Mirror the brain left to right** |\n| Mirror vertical | **Flip the picture upside down** |\n| both mirrors, Benton's 0.1 default | both, which is a 180\u00b0 turn: the same as **Line of sight** 180\u00b0 |\n\n### napari's buttons\n\nnapari's buttons are where napari puts them, and each one either works in step with the View dock or is off and says why in its tooltip.\n\n- Under the layer list: **console**; **2D/3D**, the same as **Show**; **roll**, which steps to the next **Sections** choice in the menu's order, the first after the last, and is off in 3D, as Sections is; **transpose** and **grid**, both off; and **home**, the same as **Fit to window**, rotation and flip kept. Each pair follows the viewer, so using one updates the other.\n- A right-click on **2D/3D** opens napari's camera popup. Its up/down menu is **Flip the picture upside down**, its zoom is **Zoom**, and in 3D its perspective is **Perspective**; each shows the other's change. Its angle sliders turn the camera as dragging does: the **Rotate around** boxes keep their values, and Fit to window goes back to them. Its left/right menu, and in 3D its depth menu, are off, because either would show the brain mirrored with no control to say so: use **Mirror the brain left to right**, or flip the picture and turn it 180\u00b0 about the line of sight. Its **Sync 2D/3D camera** box is off too, and View > Toggle Synced 2D/3D Camera (\u2318U) says why and changes nothing: 3D and Slice view share one camera, so the zoom and the view the dock shows hold across a change of mode.\n- A right-click on **roll** lists the axes in the order the slice uses. Dragging an axis to the top slices along it, as **Sections** does; a drag that swaps the two axes on screen is undone, and a message says why.\n- **Transpose** would show the brain mirrored across the picture's diagonal and **grid** would draw the outlines apart from their image, with nothing in the View dock to show either, so both are off, with their right-click settings. So are their keys: \u2318T, \u2318\u2325T (napari's turn of every layer by 90\u00b0, also Option-click on transpose) and \u2318G show a message and do nothing, and so does any key you bind to them in napari's Preferences. View > Scene Axes stays off too and says why: napari draws those axes at the image's origin, outside the brain, and does not turn or mirror them with it.\n- Over the layer list: **new points**, **new shapes** and **new labels** layers, which are yours to draw in, and **delete**. lobemap's own layers carry napari's lock: delete, \u2318\u232b and \u2318\u2326 on the canvas, and \u232b and \u2326 in the layer list pass them by and say that they are part of the brain and can be hidden instead, and they stay locked if unlocked from the layer menu. Layers you add delete as usual. The layer menu's Duplicate and projections, which would copy one of lobemap's layers into a layer that follows neither the panel nor the mirror and the rotation, and Link Layers, which would hide an atlas in both modes, refuse lobemap's layers and say why; your own layers duplicate, project and link as usual.\n\n### The layer list\n\nlobemap lists its layers, and draws them, in one order, top first: each glomerulus atlas, the primary one first, then the neuropils, then the brain maps, the glomerulus label volume over the stain or the confocal image. Each atlas and neuropil set has two layers next to each other: `\u00b7 outlines`, drawn in Slice view, and `\u00b7 3D`. The order holds as parts are built, between 3D and Slice view and after a brain switch, and layers you add stay on top, where napari puts them.\n\nEvery layer is translucent and none is additive: each is laid over the layers under it, so a glomerulus keeps its own color over the stain and the neuropils, in 3D and in Slice view. The neuropils and the brain maps are drawn without depth, napari's `translucent_no_depth`, so nothing inside them is hidden. The neuropils open at 10% opacity, which leaves the stain readable through all of a brain's neuropils, and the glomeruli at 75%. A blending or opacity you set in **Layer settings** stays until you open another brain.\n\n### Switching brains\n\nA switch that succeeds keeps the mode, the angles, the alignment and the perspective, which mean the same on screen in every brain, and the section plane by its anatomy: frontal stays frontal, whichever image axis that is in the new brain. It clears the mirror and the flip, so a brain never opens reflected or upside down. Each brain opens its own tables, with its primary atlas checked.\n\nA switch that fails says why under the controls and leaves the brain you had exactly as it was: its checked rows, names, fills, searches, driver lines, open tab and sources, its slice and plane, the mode, the mirror, the flip, the angles, the alignment and the camera.\n\n### The tables\n\n- The panel has two tabs, **Glomeruli** and **Neuropils**; GRABE has Glomeruli only. **Source**, at the top of each tab, chooses which of the brain's atlases of that kind the table shows, with its citation under the menu: neuPrint, Schlegel (sensory) or Schlegel (projection) in the hemibrain, Benton 2025 in FAFB, neuPrint in the male CNS and Grabe 2015 in GRABE; for the neuropils, FlyWire in FAFB and neuPrint in the hemibrain and the male CNS. The menu and its citation sit in the same place in every brain, with one source or three, and the menu is as wide as its longest source. Choosing a source shows its table and never changes what is drawn; each source keeps its own checked rows, search and driver line.\n- **Sides**, at the right of the same row, chooses which sides of each row the boxes act on: **Both**, the default, **Left** or **Right**. With **Right**, ticking `Show` on DA1 shows the right DA1 and leaves the left as it was; `Label`, `Fill`, the header checkboxes and **Driver line** act on the chosen sides too. A neuropil across the midline is on either side. Each box shows its row on the chosen sides: ticked when every one is on, half ticked when some are, so a row whose right side alone is shown is half ticked under **Both** and ticked under **Right**. A row with none of the chosen sides, such as any row of Benton 2025's left lobe under **Right**, has its boxes disabled. Each tab has its own choice, and a failed brain switch keeps it.\n- Each row is one glomerulus or neuropil with every side the atlas has of it, and its boxes act on the sides **Sides** chooses, every side by default. Glomerulus tables have the columns `Show`, `Glomerulus`, `Label`, `Fill` and `Receptor`; neuropil tables have `Show`, `Neuropil`, `Label` and `Fill`. A missing value shows `\u2014` everywhere.\n- A checked row is a drawn compartment, every chosen side of it, in 3D and in Slice view. A brain opens with its primary atlas checked and everything else unchecked, and hiding a layer with napari's eye unchecks its rows. `Label` writes the name on the slice, as the table has it and without the side, `DA1` or `MB_PED`, since where it is shows the side; `Fill` fills its outline; they work in Slice view only, so in 3D their boxes are disabled.\n- The `Show`, `Label` and `Fill` headers each have one checkbox for all the rows listed, which are the rows the search keeps: ticked when every listed row is ticked, half ticked when some are. Clicking it ticks every listed row, or clears them all when all are ticked; the rows the search hides keep theirs. To show only the glomeruli a search finds, clear the `Show` header first, then search and tick it; the `Invert` button is gone. Under the table the count says how many rows are shown, as `58 of 58 shown`, and while a search hides rows, how many it lists too: `5 listed \u00b7 58 of 58 shown`. The search looks in the name of each side, as published too, and in the receptor, sensillum, organ and the other details of the table's kind; clicking any other column header sorts by it.\n- **Driver line**, under the search, shows only the glomeruli that a GAL4 or QF2 line labels, on the chosen sides, from the `sensory_neuron_lines` and `projection_neuron_lines` columns of `registry/reference/glomerulus_ground_truth.csv`. `Orco-GAL4 & GH146-GAL4` shows the glomeruli that both lines label. The menu lists the lines only and reads `None` while no line is what is shown; changing a row by hand sets it back to `None`.\n- Selecting a row fills the details under the table: first **Sides**, `Left`, `Right`, `Left and right` or `Midline`; then for a glomerulus its standard name, receptor, co-receptor, sensory neuron, sensillum and organ, with **Open in Virtual Fly Brain**, and for a neuropil its full name and **Name from**, the source of that name. A value the sides do not share is given for each side, a line each, as `Left: \u2026` and `Right: \u2026`, and a doubt that only some sides have is written after those sides in **Sides**; the name's tooltip gives each side's reason. The details area keeps its size, with room for the longest value in the table, so selecting another row changes only the text.\n- Hovering in the canvas names what is under the cursor in the status bar, for example `VA3 (left) \u2014 Benton 2025` or `AL, antennal lobe (right) \u2014 Neuropils (FlyWire)`, on its mesh in 3D and inside its outline in Slice view, and the name stays there while the cursor rests, whichever layer is active. Away from every compartment the status bar shows napari's own words for the active layer. Hovering moves nothing in the panel. A click that does not drag opens the row's tab, chooses its source, selects the row and fills the details; a drag turns or pans the view.\n- Only the primary atlas is built when a brain opens. The others are read in the background and are built, and join napari's layer list, the first time their table is shown: chosen in **Source**, or, for the neuropils, when their tab opens. A neuropil set that reaches past the rest of its brain waits in the layer list as a hidden `Neuropils (FlyWire) \u00b7 not loaded yet` layer, in the place its layer takes, so the sliders and the view are the same before and after it is built.\n\n### Layers\n\nEach layer is named by its atlas and what it draws: `Benton 2025 \u00b7 3D` for the meshes and `Benton 2025 \u00b7 outlines` for the sections. A neuropil set also says where its data come from, as in `Neuropils (FlyWire) \u00b7 3D` and `Neuropils (neuPrint) \u00b7 3D`. The images are `Neuropil stain (from synapses)`, `Confocal image (Grabe 2015)` and, off by default, `Glomerulus label volume (Grabe 2015)`. Each mesh layer's colormap is named after its atlas, as `Benton 2025 colors`, with the brain first where another brain has an atlas of that name, as `Male CNS neuPrint colors`; a brain's neuropils use `Hemibrain neuropil colors` and the like. Both the mesh and the outline layer stay in the list in either mode; the one the mode cannot draw is switched off. lobemap's layers are locked against napari's drawing and transform tools, which would move a mesh off its image, and against deletion; a layer you add yourself is not. A layer you add is not mirrored, flipped or turned with the brain: a point placed on a turned section keeps its place while the brain turns back, so after **Reset rotation** it can lie off the glomerulus it was placed on.\n\nEach glomerulus keeps one color across the atlases of its brain, in 3D, on the slice and on its name.\n\nA brain's reference image, the virtual stain or the Grabe confocal image, is shown in grayscale whenever it has been fetched. In 3D a virtual stain first shows a coarser level of its pyramid and sharpens, usually within a second, once the finest level that fits one GPU texture has been read in the background; later visits to 3D show that level at once. `--show` turns on something that starts off, in the first brain only: an asset id (`lobemap view FAFB14 --show fafb_neuropil`), an atlas id (`lobemap view JRCFIB2018F --show schlegel2021_s12`) or a role (`--show neuropil`). A name the brain does not have, or an unknown space, is refused with one line before any window opens. `--ndisplay 2` opens in Slice view.\n\n### Speed while turned\n\nAt 0\u00b0 nothing of the rotation runs. Once turned, a repeat step of the slider in Slice view takes 2\u20134 ms in every brain. The first visit to an oblique plane takes 5\u201324 ms, and about 40 ms in the hemibrain at a compound angle. Setting an oblique angle takes 55\u2013215 ms. While turned, the hemibrain peaks at about 2.3 GB of memory, against 1.15 GB unturned.\n\n## Documentation\n\n- [docs/data-sources.md](docs/data-sources.md) \u2014 where each dataset came from\n- [registry/data/README.md](registry/data/README.md) \u2014 how each data asset is rebuilt\n- [registry/sources/README.md](registry/sources/README.md) \u2014 the source data in the repository\n- [registry/reference/README.md](registry/reference/README.md) \u2014 the reference table and how it was built\n- [CHANGELOG.md](CHANGELOG.md) \u2014 what changed since 0.1.4, including what was removed\n\nlobemap 0.1, with its atlas selector, DoOR and Potter maps, and BANC and Virtual Fly Brain browsers, remains at tag [`v0.1.4`](https://github.com/gumadeiras/lobemap/tree/v0.1.4).\n\n## Authors\n\nGustavo Madeira Santana created lobemap and its 0.1 viewer, and assembled the source data and the reference table it builds on. David Zimmerman rewrote it around coordinate spaces for 0.2.\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": "drosophila, napari, neuroanatomy, visualization",
+    "license": null,
+    "license_expression": "MIT",
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "lobemap",
+    "package_url": "https://pypi.org/project/lobemap/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/lobemap/",
+    "project_urls": {
+      "Changelog": "https://github.com/gumadeiras/lobemap/blob/main/CHANGELOG.md",
+      "Homepage": "https://github.com/gumadeiras/lobemap",
+      "Source": "https://github.com/gumadeiras/lobemap"
+    },
+    "provides_extra": [
+      "ingest"
+    ],
+    "release_url": "https://pypi.org/project/lobemap/0.2.0/",
+    "requires_dist": [
+      "napari[bermuda,pyqt6]<0.10,>=0.9.2",
+      "numpy>=1.26",
+      "pandas>=2.2",
+      "scipy>=1.13",
+      "trimesh>=4.4",
+      "qtpy>=2.4",
+      "platformdirs>=4.2",
+      "tifffile>=2024.8",
+      "pynrrd>=1.0",
+      "zarr>=3",
+      "numcodecs>=0.12",
+      "dask>=2024.1",
+      "rtree>=1.3",
+      "pymeshfix>=0.17",
+      "py7zr>=0.21",
+      "navis>=1.12; extra == \"ingest\"",
+      "flybrains>=0.6; extra == \"ingest\"",
+      "fafbseg>=3.2; extra == \"ingest\"",
+      "neuprint-python>=0.6.3; extra == \"ingest\"",
+      "pyvista>=0.49; extra == \"ingest\"",
+      "h5py>=3.11; extra == \"ingest\"",
+      "requests>=2.32; extra == \"ingest\"",
+      "pytz>=2024.1; extra == \"ingest\"",
+      "scikit-image>=0.24; extra == \"ingest\"",
+      "pyarrow>=16; extra == \"ingest\"",
+      "cloud-volume>=12; extra == \"ingest\""
+    ],
+    "requires_python": "<3.13,>=3.11",
+    "summary": "napari viewer for Drosophila antennal lobe glomerular atlases across coordinate spaces",
+    "version": "0.2.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 41843106,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "gumadeiras"
+      }
+    ]
+  },
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "369f08b3db23d3e1c836b3f288ba0942d8ef824348c3f76e9601c41a78137125"
+        },
+        "digests": {
+          "blake2b_256": "b6d5dedb0145a8a3babc1e7dc3ec6773861574160854ebd2449d52dd04987daf",
+          "md5": "b0f8d10e922f76b66dfdab6688b2690d",
+          "sha256": "11645ba37e8a7035643c480b3306be0d88364b40f581756e32749d22fb6a548b"
+        },
+        "downloads": -1,
+        "filename": "lobemap-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "b0f8d10e922f76b66dfdab6688b2690d",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.11",
+        "size": 67788961,
+        "upload_time": "2026-05-10T23:03:24",
+        "upload_time_iso_8601": "2026-05-10T23:03:24.935066Z",
+        "url": "https://files.pythonhosted.org/packages/b6/d5/dedb0145a8a3babc1e7dc3ec6773861574160854ebd2449d52dd04987daf/lobemap-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "d16ece30db69f11fa167b51c183919baa48a45c313c5f3bd276e03b56f68efb1",
+          "md5": "a3f70cd0e8a84ec39827f86da972dbcb",
+          "sha256": "37b36ab9a9b3bd9f84922fa720fdaa304e81f669238e9a4dc8ad49d4ff1a94d2"
+        },
+        "downloads": -1,
+        "filename": "lobemap-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "a3f70cd0e8a84ec39827f86da972dbcb",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.11",
+        "size": 67511090,
+        "upload_time": "2026-05-10T23:03:42",
+        "upload_time_iso_8601": "2026-05-10T23:03:42.210864Z",
+        "url": "https://files.pythonhosted.org/packages/d1/6e/ce30db69f11fa167b51c183919baa48a45c313c5f3bd276e03b56f68efb1/lobemap-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "80b1b5c7008b3d322c4f97c94b801aa08b6adc91a774c026a22455f4a213949f"
+        },
+        "digests": {
+          "blake2b_256": "4bef3b20bf1df799de723bfdafafbcd336676961e44fc6cf0d2634ed8051c9ad",
+          "md5": "d1f4eee3f2dd62b0f842089de92a54bc",
+          "sha256": "2e08c33b9e0c33db6bba2ee54b8aefef6f23f3f34e9fc5615c673228dbe83cc3"
+        },
+        "downloads": -1,
+        "filename": "lobemap-0.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "d1f4eee3f2dd62b0f842089de92a54bc",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.11",
+        "size": 67788991,
+        "upload_time": "2026-05-10T23:19:52",
+        "upload_time_iso_8601": "2026-05-10T23:19:52.334160Z",
+        "url": "https://files.pythonhosted.org/packages/4b/ef/3b20bf1df799de723bfdafafbcd336676961e44fc6cf0d2634ed8051c9ad/lobemap-0.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "c057fa171e5410d2d75d40f8f215a6d1fecad32a97f62abb33bf09ad23a64b5a",
+          "md5": "b17d3f8ae4969720769167d94aee750e",
+          "sha256": "efc29abec0ea6101663037e6f9b4eb8555e4a09cf1dcd4a5e323b4ef30c23962"
+        },
+        "downloads": -1,
+        "filename": "lobemap-0.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "b17d3f8ae4969720769167d94aee750e",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.11",
+        "size": 67510388,
+        "upload_time": "2026-05-10T23:20:11",
+        "upload_time_iso_8601": "2026-05-10T23:20:11.028711Z",
+        "url": "https://files.pythonhosted.org/packages/c0/57/fa171e5410d2d75d40f8f215a6d1fecad32a97f62abb33bf09ad23a64b5a/lobemap-0.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.2": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "7074fcd51432cec7aa013ebbfa017a215ab65db804b4ed305a1b39c31b372077"
+        },
+        "digests": {
+          "blake2b_256": "1021b7b917f8972c9d91ea9223d01d02060f4e205208d5442e5f052318b65fe1",
+          "md5": "cb5ef11b0469643afc2d7ed86a3ad7fa",
+          "sha256": "1fcc05fab179e2d670529c168b60009bed335449fca8c38d103aa0e10cd7aefd"
+        },
+        "downloads": -1,
+        "filename": "lobemap-0.1.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "cb5ef11b0469643afc2d7ed86a3ad7fa",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.11",
+        "size": 67788959,
+        "upload_time": "2026-05-11T05:51:57",
+        "upload_time_iso_8601": "2026-05-11T05:51:57.911653Z",
+        "url": "https://files.pythonhosted.org/packages/10/21/b7b917f8972c9d91ea9223d01d02060f4e205208d5442e5f052318b65fe1/lobemap-0.1.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "8047a83f5ea226cadf8f056565e8cad816b930bc8b97f144509b638ff1590b3e",
+          "md5": "ea92210fd19c3dc118eec1f8666f4dba",
+          "sha256": "33db44f9248e82adb13aa68763d148a837f0220666096c9ad8adcbf824216f33"
+        },
+        "downloads": -1,
+        "filename": "lobemap-0.1.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "ea92210fd19c3dc118eec1f8666f4dba",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.11",
+        "size": 67506946,
+        "upload_time": "2026-05-11T05:52:02",
+        "upload_time_iso_8601": "2026-05-11T05:52:02.148791Z",
+        "url": "https://files.pythonhosted.org/packages/80/47/a83f5ea226cadf8f056565e8cad816b930bc8b97f144509b638ff1590b3e/lobemap-0.1.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.3": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "5d27ef400613221680821c4a72b3d1baf4ae0b0b4c533f51b2ff05df46dbb878"
+        },
+        "digests": {
+          "blake2b_256": "8f59393697a5f0ef305757ea79e9c326ac8f43d823e673eb81a7eae6ba83f76a",
+          "md5": "b5f127f06cea2e85e380597f2d4e5617",
+          "sha256": "7d301301cb153c210e66ffa211abaa85d0112d2dec61fa35a803c2fbdb11cf41"
+        },
+        "downloads": -1,
+        "filename": "lobemap-0.1.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "b5f127f06cea2e85e380597f2d4e5617",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.11",
+        "size": 67790098,
+        "upload_time": "2026-05-17T01:22:09",
+        "upload_time_iso_8601": "2026-05-17T01:22:09.611033Z",
+        "url": "https://files.pythonhosted.org/packages/8f/59/393697a5f0ef305757ea79e9c326ac8f43d823e673eb81a7eae6ba83f76a/lobemap-0.1.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "5145c213ed077cf76ba49d7913bc1021a35f97e1560ba196eb378934ab32c995",
+          "md5": "d8947bf9446c7670585f8de9dd2a8736",
+          "sha256": "3544235203d2994d0557ca80929d4a09dc8bef9a99477c4e4351493ec85a87b3"
+        },
+        "downloads": -1,
+        "filename": "lobemap-0.1.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d8947bf9446c7670585f8de9dd2a8736",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.11",
+        "size": 67508687,
+        "upload_time": "2026-05-17T01:22:13",
+        "upload_time_iso_8601": "2026-05-17T01:22:13.729187Z",
+        "url": "https://files.pythonhosted.org/packages/51/45/c213ed077cf76ba49d7913bc1021a35f97e1560ba196eb378934ab32c995/lobemap-0.1.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.4": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "748f1a7f6e05daacd47fe02a61a6d7bf2c1db948a2691ebf1b63d3fb63120cce"
+        },
+        "digests": {
+          "blake2b_256": "a756b7594db5e619128cc23162ec5e25a9aaf67e5bd3ffdc938e0c6e0616db12",
+          "md5": "310cd8310b004312d4560fb5540f99b4",
+          "sha256": "01a7eb41a60ed3136510ab7b2bf84ce6395361d182aeeed5e63fdac7083ccb7e"
+        },
+        "downloads": -1,
+        "filename": "lobemap-0.1.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "310cd8310b004312d4560fb5540f99b4",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.11",
+        "size": 67793036,
+        "upload_time": "2026-08-20T21:15:55",
+        "upload_time_iso_8601": "2026-08-20T21:15:55.668860Z",
+        "url": "https://files.pythonhosted.org/packages/a7/56/b7594db5e619128cc23162ec5e25a9aaf67e5bd3ffdc938e0c6e0616db12/lobemap-0.1.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "c88ad0ab5cadebb5e4a39f453adf1516544071bb4f90e6b7c4f70cc4809acc80",
+          "md5": "d79376f956e8d6f6bb9bebf7bb6d38df",
+          "sha256": "e87bac6e17d843f5be71dcb273dbe3f9c9eba95134de0976447214768bc22b9a"
+        },
+        "downloads": -1,
+        "filename": "lobemap-0.1.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d79376f956e8d6f6bb9bebf7bb6d38df",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.11",
+        "size": 67502714,
+        "upload_time": "2026-08-20T21:15:59",
+        "upload_time_iso_8601": "2026-08-20T21:15:59.045795Z",
+        "url": "https://files.pythonhosted.org/packages/c8/8a/d0ab5cadebb5e4a39f453adf1516544071bb4f90e6b7c4f70cc4809acc80/lobemap-0.1.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "def4c72bad87d527e49fc01f12d3b7d1a6526e3eedfa0457c78d461e0ec11005"
+        },
+        "digests": {
+          "blake2b_256": "3d8a2991fe59bca7240cb2fc22b12162d110b8eedf69a6807f15b13519ed2489",
+          "md5": "d97c727378d9dca5ea8ac42a067aecbc",
+          "sha256": "1443e8c5ecb3d920cc96c16102b69d0d40d98723cc22d2b2aca09591d79dc5a9"
+        },
+        "downloads": -1,
+        "filename": "lobemap-0.2.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "d97c727378d9dca5ea8ac42a067aecbc",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.11",
+        "size": 343766,
+        "upload_time": "2026-10-05T15:09:08",
+        "upload_time_iso_8601": "2026-10-05T15:09:08.384036Z",
+        "url": "https://files.pythonhosted.org/packages/3d/8a/2991fe59bca7240cb2fc22b12162d110b8eedf69a6807f15b13519ed2489/lobemap-0.2.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "031b74b4eb516342033ba9a2b15489634330d767ff2cc3de88f25f014034b897",
+          "md5": "e76e6bd0ea747b0316cdbce371fdd49a",
+          "sha256": "0623425efa5d9d2539fe44b261596d281a9b85e4602c79aea8979edd82d70d9f"
+        },
+        "downloads": -1,
+        "filename": "lobemap-0.2.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e76e6bd0ea747b0316cdbce371fdd49a",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.11",
+        "size": 570965,
+        "upload_time": "2026-10-05T15:09:10",
+        "upload_time_iso_8601": "2026-10-05T15:09:10.087024Z",
+        "url": "https://files.pythonhosted.org/packages/03/1b/74b4eb516342033ba9a2b15489634330d767ff2cc3de88f25f014034b897/lobemap-0.2.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "def4c72bad87d527e49fc01f12d3b7d1a6526e3eedfa0457c78d461e0ec11005"
+      },
+      "digests": {
+        "blake2b_256": "3d8a2991fe59bca7240cb2fc22b12162d110b8eedf69a6807f15b13519ed2489",
+        "md5": "d97c727378d9dca5ea8ac42a067aecbc",
+        "sha256": "1443e8c5ecb3d920cc96c16102b69d0d40d98723cc22d2b2aca09591d79dc5a9"
+      },
+      "downloads": -1,
+      "filename": "lobemap-0.2.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "d97c727378d9dca5ea8ac42a067aecbc",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": "<3.13,>=3.11",
+      "size": 343766,
+      "upload_time": "2026-10-05T15:09:08",
+      "upload_time_iso_8601": "2026-10-05T15:09:08.384036Z",
+      "url": "https://files.pythonhosted.org/packages/3d/8a/2991fe59bca7240cb2fc22b12162d110b8eedf69a6807f15b13519ed2489/lobemap-0.2.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "031b74b4eb516342033ba9a2b15489634330d767ff2cc3de88f25f014034b897",
+        "md5": "e76e6bd0ea747b0316cdbce371fdd49a",
+        "sha256": "0623425efa5d9d2539fe44b261596d281a9b85e4602c79aea8979edd82d70d9f"
+      },
+      "downloads": -1,
+      "filename": "lobemap-0.2.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "e76e6bd0ea747b0316cdbce371fdd49a",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": "<3.13,>=3.11",
+      "size": 570965,
+      "upload_time": "2026-10-05T15:09:10",
+      "upload_time_iso_8601": "2026-10-05T15:09:10.087024Z",
+      "url": "https://files.pythonhosted.org/packages/03/1b/74b4eb516342033ba9a2b15489634330d767ff2cc3de88f25f014034b897/lobemap-0.2.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
