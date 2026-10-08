@@ -16,7 +16,7 @@
       "Programming Language :: Python :: 3.12",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "# Simple napari CCI annotator\n\n## Installation\n\nFrom the repository root, install the plugin and napari into a Python 3.10\u20133.12 environment:\n\n```bash\npython -m pip install -e \".[all]\"\nnapari\n```\n\nIn napari, open **Plugins \u2192 CCI Annotator \u2192 Simple CCI Annotator Plugin**.\n\n## What it does\n\nThe plugin helps you run YOLO detection or instance segmentation on microscopy images, correct predictions, and save training annotations. It also supports tiled inference on large images, batch prediction of image folders, and retraining from saved annotations.\n\n## Quick start\n\n1. Choose **Bounding-box detection** or **Instance segmentation**, then create a project in an empty folder. Use **Open Project** to return to an existing one.\n2. Open an image in napari. Set the channel mapping, optional filter, and normalization, then use **Preview RGB Conversion** to check the pixels used for prediction and training.\n3. Select a compatible YOLO model and click **Predict Current RGB Plane**. Edit the resulting boxes or instance mask as needed.\n4. To save training data, select a 512\u00d7512 or 1024\u00d71024 training crop, correct it, and click **Add Crop + Corrections**. The first saved annotation locks the project's image conversion and training patch size.\n5. Use **Save Current Output** to export a full-size prediction without adding it to the training annotations. For a whole folder, use **Batch image prediction** after the project settings are locked.\n\nInference tiles default to the selected training crop size. You can set another tile size in the prediction controls.\n\n## Output\n\nTraining annotations are stored in the project folder. Detection annotations use YOLO `.txt` labels; segmentation annotations use instance-mask TIFF files and JSON metadata.\n\nBatch prediction accepts `.tif`, `.tiff`, `.ome.tif`, `.ome.tiff`, `.png`, and `.bmp` files directly inside the selected input folder. It processes every nonspatial TIFF plane and each PNG or BMP image. Grayscale, RGB, and RGBA PNG/BMP files are supported when their channel layout matches the project's locked settings. Results go to `<input folder>/Prediction/` by default, or to an output folder you choose. Each run includes `analysis_metadata.json` with the settings and file records needed to trace its results.\n\n## More guidance\n\n- [GUI tutorial](TUTORIAL.md): annotation, batch prediction, and retraining steps.\n- [Python API examples](API_EXAMPLES.md): project creation, training, and headless inference without napari or Qt.\n- [Remaining work](docs/REMAINING_WORK.md): validation and the older plugin's retirement checklist.\n\nThis project is released under the [MIT license](LICENSE).\n",
+    "description": "# Simple napari CCI annotator\n\n## Installation\n\nIn a specific environment, install napari (tested with version 0.7 and 0.8)\n\n```shell\nconda create -n napari -c conda-forge napari pyqt --yes\nconda activate napari\nnapari\n```\n\nIn napari, open **Plugins \u2192 Simple CCI Annotator Plugin**. Or search for the CCI plugin.\n\nNapari provide standalone installers for Windows, macOS, and Linux. You can install the plugin from the napari store.\n\nAnother way to install is with pip:\n\n```bash\npip install simple-napari-cci-annotator\n```\n\nThe code is on [Githb](https://github.com/CCI-GU-Sweden/simple-napari-cci-annotator).\n\nFrom the repository root, install the plugin and napari into a Python 3.10\u20133.12 environment:\n\n```bash\npython -m pip install -e \".[all]\"\nnapari\n```\n\n### GPU (NVIDIA CUDA) \u2014 recommended if you have an NVIDIA GPU\n\nCheck your maximum supported CUDA version first:\n\n```shell\nnvidia-smi\n```\n\nThen pick a compatible wheel index (`cu124` = CUDA 12.4, `cu126` = 12.6, etc.). Check the [PyTorch installation selector](https://pytorch.org/get-started/locally/) for the appropriate build.\n\nThen run:\n\n```shell\nconda create -n napari-gpu -c conda-forge napari pyqt --yes\nconda activate napari-gpu\npip install torch torchvision --index-url https://download.pytorch.org/whl/cu124\npip install ultralytics\npip install simple-napari-cci-annotator\n```\n\nQuick smoke test:\n\n```shell\npython -c \"import numpy, scipy, torch, cv2; from ultralytics import YOLO; print(numpy.__version__, scipy.__version__, torch.__version__, cv2.__version__)\"\n```\n\n## What it does\n\nThe plugin helps you run YOLO detection or instance segmentation on microscopy images, correct predictions, and save training annotations. It also supports tiled inference on large images, batch prediction of image folders, and retraining from saved annotations.\n\n## Quick start\n\n1. Choose **Bounding-box detection** or **Instance segmentation**, then create a project in an empty folder. Use **Open Project** to return to an existing one.\n2. Open an image in napari. Set the channel mapping, optional filter, and normalization, then use **Preview RGB Conversion** to check the pixels used for prediction and training.\n3. Select a compatible YOLO model and click **Predict Current RGB Plane**. Edit the resulting boxes or instance mask as needed.\n4. To save training data, select a 512\u00d7512 or 1024\u00d71024 training crop, correct it, and click **Add Crop + Corrections**. The first saved annotation locks the project's image conversion and training patch size.\n5. Use **Save Current Output** to export a full-size prediction without adding it to the training annotations. For a whole folder, use **Batch image prediction** after the project settings are locked.\n\nInference tiles default to the selected training crop size. You can set another tile size in the prediction controls.\n\n## Output\n\nTraining annotations are stored in the project folder. Detection annotations use YOLO `.txt` labels; segmentation annotations use instance-mask TIFF files and JSON metadata.\n\nBatch prediction accepts `.tif`, `.tiff`, `.ome.tif`, `.ome.tiff`, `.png`, and `.bmp` files directly inside the selected input folder. It processes every nonspatial TIFF plane and each PNG or BMP image. Grayscale, RGB, and RGBA PNG/BMP files are supported when their channel layout matches the project's locked settings. Results go to `<input folder>/Prediction/` by default, or to an output folder you choose. Each run includes `analysis_metadata.json` with the settings and file records needed to trace its results.\n\n## More guidance\n\n- [GUI tutorial](TUTORIAL.md): annotation, batch prediction, and retraining steps.\n- [Python API examples](API_EXAMPLES.md): project creation, training, and headless inference without napari or Qt.\n- [Remaining work](docs/REMAINING_WORK.md): validation and the older plugin's retirement checklist.\n\nThis project is released under the [MIT license](LICENSE).\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -46,7 +46,7 @@
       "all",
       "testing"
     ],
-    "release_url": "https://pypi.org/project/simple-napari-cci-annotator/0.10.3/",
+    "release_url": "https://pypi.org/project/simple-napari-cci-annotator/0.10.4/",
     "requires_dist": [
       "dask[array]",
       "numpy",
@@ -67,11 +67,11 @@
     ],
     "requires_python": ">=3.10",
     "summary": "Plugin to easly test a yolo model and retrain it",
-    "version": "0.10.3",
+    "version": "0.10.4",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 41958237,
+  "last_serial": 41962996,
   "ownership": {
     "organization": null,
     "roles": [
@@ -325,30 +325,78 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.10.4": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "972566ec9e68b655a1a05f87101f5ad98a6136bb06ff6a067cfb958d7362a3d5"
+        },
+        "digests": {
+          "blake2b_256": "c1962b2f435ed2dc655a1359cb4190f20a5f7b3f21eb0253b157ba0409e446a6",
+          "md5": "91a148c68353f53226a2e7022f0f77c1",
+          "sha256": "f5d4aed856784e1b79e164f008a453cdb280a523b559995826ce44e6e9c0290e"
+        },
+        "downloads": -1,
+        "filename": "simple_napari_cci_annotator-0.10.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "91a148c68353f53226a2e7022f0f77c1",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 11071414,
+        "upload_time": "2026-10-08T09:16:57",
+        "upload_time_iso_8601": "2026-10-08T09:16:57.462088Z",
+        "url": "https://files.pythonhosted.org/packages/c1/96/2b2f435ed2dc655a1359cb4190f20a5f7b3f21eb0253b157ba0409e446a6/simple_napari_cci_annotator-0.10.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "71c835622c9617067c6bfddfd92b8d0728164654bce7f55af946a44a38a8deb8",
+          "md5": "59eff7880612e9caa62ad28aaecfd6a2",
+          "sha256": "e184376a605e1f705b8dd30307bf11ced90ee76332e4228e3a28e783af812759"
+        },
+        "downloads": -1,
+        "filename": "simple_napari_cci_annotator-0.10.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "59eff7880612e9caa62ad28aaecfd6a2",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 11116724,
+        "upload_time": "2026-10-08T09:16:59",
+        "upload_time_iso_8601": "2026-10-08T09:16:59.934279Z",
+        "url": "https://files.pythonhosted.org/packages/71/c8/35622c9617067c6bfddfd92b8d0728164654bce7f55af946a44a38a8deb8/simple_napari_cci_annotator-0.10.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": null,
       "core-metadata": {
-        "sha256": "a5773525cd1e6288d9e61a6f8c12e4a6ac43d5300cb856eb9712db1315c342d5"
+        "sha256": "972566ec9e68b655a1a05f87101f5ad98a6136bb06ff6a067cfb958d7362a3d5"
       },
       "digests": {
-        "blake2b_256": "baf76257761e6c344cd43668bf07ff529004204b8a7063677f8305813e0883f5",
-        "md5": "6321c54a7632aab94b0bb6875c3393ae",
-        "sha256": "cf194df54411aaad92284490fc425419246d7bbb82bbde95c2710dbcbef436f3"
+        "blake2b_256": "c1962b2f435ed2dc655a1359cb4190f20a5f7b3f21eb0253b157ba0409e446a6",
+        "md5": "91a148c68353f53226a2e7022f0f77c1",
+        "sha256": "f5d4aed856784e1b79e164f008a453cdb280a523b559995826ce44e6e9c0290e"
       },
       "downloads": -1,
-      "filename": "simple_napari_cci_annotator-0.10.3-py3-none-any.whl",
+      "filename": "simple_napari_cci_annotator-0.10.4-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "6321c54a7632aab94b0bb6875c3393ae",
+      "md5_digest": "91a148c68353f53226a2e7022f0f77c1",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.10",
-      "size": 11069819,
-      "upload_time": "2026-10-08T07:15:14",
-      "upload_time_iso_8601": "2026-10-08T07:15:14.317199Z",
-      "url": "https://files.pythonhosted.org/packages/ba/f7/6257761e6c344cd43668bf07ff529004204b8a7063677f8305813e0883f5/simple_napari_cci_annotator-0.10.3-py3-none-any.whl",
+      "size": 11071414,
+      "upload_time": "2026-10-08T09:16:57",
+      "upload_time_iso_8601": "2026-10-08T09:16:57.462088Z",
+      "url": "https://files.pythonhosted.org/packages/c1/96/2b2f435ed2dc655a1359cb4190f20a5f7b3f21eb0253b157ba0409e446a6/simple_napari_cci_annotator-0.10.4-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
@@ -356,21 +404,21 @@
       "comment_text": null,
       "core-metadata": false,
       "digests": {
-        "blake2b_256": "3ad08a3a07dcfb91ade5bd46d287ae3646399477fa8a6b4027d96cf2b78e313a",
-        "md5": "140df74f2ef5b313fa90a88079505d5e",
-        "sha256": "7590beb531656336124e7322e0802e23d850f8b708be17fea4d1df0839b2cd60"
+        "blake2b_256": "71c835622c9617067c6bfddfd92b8d0728164654bce7f55af946a44a38a8deb8",
+        "md5": "59eff7880612e9caa62ad28aaecfd6a2",
+        "sha256": "e184376a605e1f705b8dd30307bf11ced90ee76332e4228e3a28e783af812759"
       },
       "downloads": -1,
-      "filename": "simple_napari_cci_annotator-0.10.3.tar.gz",
+      "filename": "simple_napari_cci_annotator-0.10.4.tar.gz",
       "has_sig": false,
-      "md5_digest": "140df74f2ef5b313fa90a88079505d5e",
+      "md5_digest": "59eff7880612e9caa62ad28aaecfd6a2",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.10",
-      "size": 11112946,
-      "upload_time": "2026-10-08T07:15:16",
-      "upload_time_iso_8601": "2026-10-08T07:15:16.974422Z",
-      "url": "https://files.pythonhosted.org/packages/3a/d0/8a3a07dcfb91ade5bd46d287ae3646399477fa8a6b4027d96cf2b78e313a/simple_napari_cci_annotator-0.10.3.tar.gz",
+      "size": 11116724,
+      "upload_time": "2026-10-08T09:16:59",
+      "upload_time_iso_8601": "2026-10-08T09:16:59.934279Z",
+      "url": "https://files.pythonhosted.org/packages/71/c8/35622c9617067c6bfddfd92b8d0728164654bce7f55af946a44a38a8deb8/simple_napari_cci_annotator-0.10.4.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
