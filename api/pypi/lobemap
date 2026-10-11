@@ -1,0 +1,483 @@
+{
+  "info": {
+    "author": "David Zimmerman",
+    "author_email": "Gustavo Madeira Santana <fromweb1@gumadeiras.com>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 3 - Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Topic :: Scientific/Engineering :: Bio-Informatics",
+      "Topic :: Scientific/Engineering :: Image Processing",
+      "Topic :: Scientific/Engineering :: Visualization"
+    ],
+    "description": "# lobemap\n\nlobemap shows the published maps of the *Drosophila* antennal lobe side by side, in one viewer.\n\nThe antennal lobe is the first olfactory center of the fly brain. It is made of small, round compartments called *glomeruli* (one: *glomerulus*). Several groups have published a *glomerular atlas*: a 3D shape and a name for each glomerulus. The atlases come from different brains, and each one uses its own names. lobemap puts these atlases in one window, so you can compare them in 3D or one section at a time. It is built on the [napari](https://napari.org) image viewer.\n\n## Demo\n\n![Colored glomeruli of an antennal lobe atlas, turning in 3D](https://raw.githubusercontent.com/gumadeiras/lobemap/main/docs/images/turntable.gif)\n\n*The glomeruli of one atlas in 3D. Each glomerulus has its own color.*\n\n![A section through the antennal lobe, with the outline, fill and name of each glomerulus on the image](https://raw.githubusercontent.com/gumadeiras/lobemap/main/docs/images/slice-outlines.png)\n\n*Slice view: each glomerulus is an exact outline on the image, with an optional fill and name.*\n\n![The hemibrain in 3D, with its neuropil stain, its neuropils, and the panel that lists the glomeruli](https://raw.githubusercontent.com/gumadeiras/lobemap/main/docs/images/hemibrain-3d.png)\n\n*The hemibrain in 3D, with its stain and neuropils. The panel on the right lists the glomeruli.*\n\n## Install\n\nlobemap needs Python 3.11 or 3.12.\n\n```bash\npip install lobemap\nlobemap fetch\n```\n\nThe first command installs the viewer. The second downloads the data, 2.5 GB, into your user cache folder, and prints where it put it. [Data](https://github.com/gumadeiras/lobemap/blob/main/docs/data.md#where-the-data-goes) explains how to keep it somewhere else.\n\nTo download only 76 MB, use `lobemap fetch --nostains`. All four brains still open, but the three electron microscopy (EM) brains open without their background image. Run `lobemap fetch` later to add it.\n\n## Quick start\n\nList the brains and what each one shows:\n\n```bash\nlobemap spaces\n```\n\nOpen one brain, here the hemibrain:\n\n```bash\nlobemap view JRCFIB2018F\n```\n\n`lobemap` alone opens FAFB. If the data is not on your computer yet, `lobemap view` first downloads the 76 MB it needs.\n\nThe window shows the **View** controls on the left, the brain in the middle, and the **Brain regions** panel on the right. Things to try first:\n\n- **Turn the brain.** In 3D, drag the brain with the mouse. To set exact angles, use **Rotate around**.\n- **Look at sections.** Set **Show** to **Slice**, then move the slider under the image. Each glomerulus is an outline on the image. Tick its `Label` or `Fill` box to name or fill it. In **Rotate around**, a turn about the **Vertical axis** or the **Horizontal axis** cuts an *oblique section*: a section at an angle to the image's own planes.\n- **Show or hide glomeruli.** In **Brain regions**, tick or clear the `Show` box of each glomerulus. Search by name or receptor, or choose a **Driver line** to show only the glomeruli that a GAL4 or QF2 line labels. Click a glomerulus to see its receptor, sensillum and other details.\n- **Compare atlases.** The hemibrain has three atlases of the same lobe. Choose one in **Source**, then tick its glomeruli. All the atlases you tick are drawn together, and a glomerulus has the same color in each. To see an atlas of another brain, choose that brain in **Brain**.\n- **Mirror or flip.** **Mirror the brain left to right** helps you compare a left lobe with a right one. **Flip the picture upside down** turns the picture over. Both change the display only, not the data.\n\n## What's inside\n\nEach atlas was drawn in one brain volume. lobemap calls that volume a *coordinate space*: all its atlases share the same coordinates, so they line up and can be drawn over each other. The viewer calls a space a *brain*, and commands name it by its id.\n\n| Brain | Id | Atlas | Glomeruli |\n|---|---|---|---|\n| FAFB: a whole female brain, EM | `FAFB14` | [Benton et al. 2025](https://doi.org/10.1038/s44319-025-00476-8) | 58, left lobe |\n| Hemibrain: part of a female brain, EM | `JRCFIB2018F` | neuPrint hemibrain, [Scheffer et al. 2020](https://doi.org/10.7554/eLife.57443) | 58 right, 19 left |\n| | | [Schlegel et al. 2021](https://doi.org/10.7554/eLife.66018), from sensory neurons | 59, right lobe |\n| | | [Schlegel et al. 2021](https://doi.org/10.7554/eLife.66018), from projection neurons | 58, right lobe |\n| Male CNS: a male brain and nerve cord, EM | `JRCFIB2022M` | neuPrint male CNS, [Berg et al. 2026](https://doi.org/10.1016/j.cell.2026.08.015) | 58 per lobe |\n| Grabe 2015: a living brain, light microscopy | `GRABE` | [Grabe et al. 2015](https://doi.org/10.1002/cne.23697) | 54 per lobe |\n\nThe three EM brains also show their *neuropils*, the named regions of the brain, and a *virtual neuropil stain*: an image made from synapse positions that looks like an nc82 antibody stain. Grabe 2015 shows its own confocal image.\n\n[The brains and atlases](https://github.com/gumadeiras/lobemap/blob/main/docs/atlases.md) says which atlas fits which comparison, and lists known gaps in the published data.\n\n## Learn more\n\n- [Using the viewer](https://github.com/gumadeiras/lobemap/blob/main/docs/viewer.md): every control, the panel, the layers, and speed.\n- [The brains and atlases](https://github.com/gumadeiras/lobemap/blob/main/docs/atlases.md): what each atlas is, which one to use, and known gaps in the data.\n- [Data](https://github.com/gumadeiras/lobemap/blob/main/docs/data.md): download, storage, checks, rebuilding from source, and data licenses.\n- [Data sources](https://github.com/gumadeiras/lobemap/blob/main/docs/data-sources.md): where each dataset came from, and what lobemap does to it.\n- [Commands](https://github.com/gumadeiras/lobemap/blob/main/docs/cli.md): every `lobemap` command and option.\n- [Upgrading from 0.1](https://github.com/gumadeiras/lobemap/blob/main/docs/upgrading.md): what changed, and what was removed.\n- [Development](https://github.com/gumadeiras/lobemap/blob/main/docs/development.md): work from the source code, run the tests, and release.\n- [Changelog](https://github.com/gumadeiras/lobemap/blob/main/CHANGELOG.md): what changed in each version.\n\n## Data licenses and citation\n\nIf you use an atlas, cite the paper it came from. [Data sources](https://github.com/gumadeiras/lobemap/blob/main/docs/data-sources.md) gives the citations.\n\nThe lobemap code is under the [MIT License](https://github.com/gumadeiras/lobemap/blob/main/LICENSE). The data is not: each dataset keeps the license of its source.\n\n- **CC BY 4.0:** the neuPrint hemibrain and male CNS data, Schlegel 2021, and the hemibrain and male CNS stains.\n- **CC0 1.0:** the Benton 2025 atlas.\n- **CC BY-NC 4.0, no commercial use:** the FAFB neuropils and stain, from FlyWire.\n- **No published terms:** the Grabe 2015 files. The rights stay with the authors and the publisher.\n\n[Data licenses](https://github.com/gumadeiras/lobemap/blob/main/docs/data.md#data-licenses) has the full table.\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": "drosophila, napari, neuroanatomy, visualization",
+    "license": null,
+    "license_expression": "MIT",
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "lobemap",
+    "package_url": "https://pypi.org/project/lobemap/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/lobemap/",
+    "project_urls": {
+      "Changelog": "https://github.com/gumadeiras/lobemap/blob/main/CHANGELOG.md",
+      "Homepage": "https://github.com/gumadeiras/lobemap",
+      "Source": "https://github.com/gumadeiras/lobemap"
+    },
+    "provides_extra": [
+      "ingest"
+    ],
+    "release_url": "https://pypi.org/project/lobemap/0.2.1/",
+    "requires_dist": [
+      "napari[bermuda,pyqt6]<0.10,>=0.9.2",
+      "numpy>=1.26",
+      "pandas>=2.2",
+      "scipy>=1.13",
+      "trimesh>=4.4",
+      "qtpy>=2.4",
+      "platformdirs>=4.2",
+      "tifffile>=2024.8",
+      "pynrrd>=1.0",
+      "zarr>=3",
+      "numcodecs>=0.12",
+      "dask>=2024.1",
+      "rtree>=1.3",
+      "pymeshfix>=0.17",
+      "py7zr>=0.21",
+      "navis>=1.12; extra == \"ingest\"",
+      "flybrains>=0.6; extra == \"ingest\"",
+      "fafbseg>=3.2; extra == \"ingest\"",
+      "neuprint-python>=0.6.3; extra == \"ingest\"",
+      "pyvista>=0.49; extra == \"ingest\"",
+      "h5py>=3.11; extra == \"ingest\"",
+      "requests>=2.32; extra == \"ingest\"",
+      "pytz>=2024.1; extra == \"ingest\"",
+      "scikit-image>=0.24; extra == \"ingest\"",
+      "pyarrow>=16; extra == \"ingest\"",
+      "cloud-volume>=12; extra == \"ingest\""
+    ],
+    "requires_python": "<3.13,>=3.11",
+    "summary": "napari viewer for Drosophila antennal lobe glomerular atlases across coordinate spaces",
+    "version": "0.2.1",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 41846221,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "gumadeiras"
+      }
+    ]
+  },
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "369f08b3db23d3e1c836b3f288ba0942d8ef824348c3f76e9601c41a78137125"
+        },
+        "digests": {
+          "blake2b_256": "b6d5dedb0145a8a3babc1e7dc3ec6773861574160854ebd2449d52dd04987daf",
+          "md5": "b0f8d10e922f76b66dfdab6688b2690d",
+          "sha256": "11645ba37e8a7035643c480b3306be0d88364b40f581756e32749d22fb6a548b"
+        },
+        "downloads": -1,
+        "filename": "lobemap-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "b0f8d10e922f76b66dfdab6688b2690d",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.11",
+        "size": 67788961,
+        "upload_time": "2026-05-10T23:03:24",
+        "upload_time_iso_8601": "2026-05-10T23:03:24.935066Z",
+        "url": "https://files.pythonhosted.org/packages/b6/d5/dedb0145a8a3babc1e7dc3ec6773861574160854ebd2449d52dd04987daf/lobemap-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "d16ece30db69f11fa167b51c183919baa48a45c313c5f3bd276e03b56f68efb1",
+          "md5": "a3f70cd0e8a84ec39827f86da972dbcb",
+          "sha256": "37b36ab9a9b3bd9f84922fa720fdaa304e81f669238e9a4dc8ad49d4ff1a94d2"
+        },
+        "downloads": -1,
+        "filename": "lobemap-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "a3f70cd0e8a84ec39827f86da972dbcb",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.11",
+        "size": 67511090,
+        "upload_time": "2026-05-10T23:03:42",
+        "upload_time_iso_8601": "2026-05-10T23:03:42.210864Z",
+        "url": "https://files.pythonhosted.org/packages/d1/6e/ce30db69f11fa167b51c183919baa48a45c313c5f3bd276e03b56f68efb1/lobemap-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "80b1b5c7008b3d322c4f97c94b801aa08b6adc91a774c026a22455f4a213949f"
+        },
+        "digests": {
+          "blake2b_256": "4bef3b20bf1df799de723bfdafafbcd336676961e44fc6cf0d2634ed8051c9ad",
+          "md5": "d1f4eee3f2dd62b0f842089de92a54bc",
+          "sha256": "2e08c33b9e0c33db6bba2ee54b8aefef6f23f3f34e9fc5615c673228dbe83cc3"
+        },
+        "downloads": -1,
+        "filename": "lobemap-0.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "d1f4eee3f2dd62b0f842089de92a54bc",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.11",
+        "size": 67788991,
+        "upload_time": "2026-05-10T23:19:52",
+        "upload_time_iso_8601": "2026-05-10T23:19:52.334160Z",
+        "url": "https://files.pythonhosted.org/packages/4b/ef/3b20bf1df799de723bfdafafbcd336676961e44fc6cf0d2634ed8051c9ad/lobemap-0.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "c057fa171e5410d2d75d40f8f215a6d1fecad32a97f62abb33bf09ad23a64b5a",
+          "md5": "b17d3f8ae4969720769167d94aee750e",
+          "sha256": "efc29abec0ea6101663037e6f9b4eb8555e4a09cf1dcd4a5e323b4ef30c23962"
+        },
+        "downloads": -1,
+        "filename": "lobemap-0.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "b17d3f8ae4969720769167d94aee750e",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.11",
+        "size": 67510388,
+        "upload_time": "2026-05-10T23:20:11",
+        "upload_time_iso_8601": "2026-05-10T23:20:11.028711Z",
+        "url": "https://files.pythonhosted.org/packages/c0/57/fa171e5410d2d75d40f8f215a6d1fecad32a97f62abb33bf09ad23a64b5a/lobemap-0.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.2": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "7074fcd51432cec7aa013ebbfa017a215ab65db804b4ed305a1b39c31b372077"
+        },
+        "digests": {
+          "blake2b_256": "1021b7b917f8972c9d91ea9223d01d02060f4e205208d5442e5f052318b65fe1",
+          "md5": "cb5ef11b0469643afc2d7ed86a3ad7fa",
+          "sha256": "1fcc05fab179e2d670529c168b60009bed335449fca8c38d103aa0e10cd7aefd"
+        },
+        "downloads": -1,
+        "filename": "lobemap-0.1.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "cb5ef11b0469643afc2d7ed86a3ad7fa",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.11",
+        "size": 67788959,
+        "upload_time": "2026-05-11T05:51:57",
+        "upload_time_iso_8601": "2026-05-11T05:51:57.911653Z",
+        "url": "https://files.pythonhosted.org/packages/10/21/b7b917f8972c9d91ea9223d01d02060f4e205208d5442e5f052318b65fe1/lobemap-0.1.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "8047a83f5ea226cadf8f056565e8cad816b930bc8b97f144509b638ff1590b3e",
+          "md5": "ea92210fd19c3dc118eec1f8666f4dba",
+          "sha256": "33db44f9248e82adb13aa68763d148a837f0220666096c9ad8adcbf824216f33"
+        },
+        "downloads": -1,
+        "filename": "lobemap-0.1.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "ea92210fd19c3dc118eec1f8666f4dba",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.11",
+        "size": 67506946,
+        "upload_time": "2026-05-11T05:52:02",
+        "upload_time_iso_8601": "2026-05-11T05:52:02.148791Z",
+        "url": "https://files.pythonhosted.org/packages/80/47/a83f5ea226cadf8f056565e8cad816b930bc8b97f144509b638ff1590b3e/lobemap-0.1.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.3": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "5d27ef400613221680821c4a72b3d1baf4ae0b0b4c533f51b2ff05df46dbb878"
+        },
+        "digests": {
+          "blake2b_256": "8f59393697a5f0ef305757ea79e9c326ac8f43d823e673eb81a7eae6ba83f76a",
+          "md5": "b5f127f06cea2e85e380597f2d4e5617",
+          "sha256": "7d301301cb153c210e66ffa211abaa85d0112d2dec61fa35a803c2fbdb11cf41"
+        },
+        "downloads": -1,
+        "filename": "lobemap-0.1.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "b5f127f06cea2e85e380597f2d4e5617",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.11",
+        "size": 67790098,
+        "upload_time": "2026-05-17T01:22:09",
+        "upload_time_iso_8601": "2026-05-17T01:22:09.611033Z",
+        "url": "https://files.pythonhosted.org/packages/8f/59/393697a5f0ef305757ea79e9c326ac8f43d823e673eb81a7eae6ba83f76a/lobemap-0.1.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "5145c213ed077cf76ba49d7913bc1021a35f97e1560ba196eb378934ab32c995",
+          "md5": "d8947bf9446c7670585f8de9dd2a8736",
+          "sha256": "3544235203d2994d0557ca80929d4a09dc8bef9a99477c4e4351493ec85a87b3"
+        },
+        "downloads": -1,
+        "filename": "lobemap-0.1.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d8947bf9446c7670585f8de9dd2a8736",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.11",
+        "size": 67508687,
+        "upload_time": "2026-05-17T01:22:13",
+        "upload_time_iso_8601": "2026-05-17T01:22:13.729187Z",
+        "url": "https://files.pythonhosted.org/packages/51/45/c213ed077cf76ba49d7913bc1021a35f97e1560ba196eb378934ab32c995/lobemap-0.1.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.4": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "748f1a7f6e05daacd47fe02a61a6d7bf2c1db948a2691ebf1b63d3fb63120cce"
+        },
+        "digests": {
+          "blake2b_256": "a756b7594db5e619128cc23162ec5e25a9aaf67e5bd3ffdc938e0c6e0616db12",
+          "md5": "310cd8310b004312d4560fb5540f99b4",
+          "sha256": "01a7eb41a60ed3136510ab7b2bf84ce6395361d182aeeed5e63fdac7083ccb7e"
+        },
+        "downloads": -1,
+        "filename": "lobemap-0.1.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "310cd8310b004312d4560fb5540f99b4",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.11",
+        "size": 67793036,
+        "upload_time": "2026-08-20T21:15:55",
+        "upload_time_iso_8601": "2026-08-20T21:15:55.668860Z",
+        "url": "https://files.pythonhosted.org/packages/a7/56/b7594db5e619128cc23162ec5e25a9aaf67e5bd3ffdc938e0c6e0616db12/lobemap-0.1.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "c88ad0ab5cadebb5e4a39f453adf1516544071bb4f90e6b7c4f70cc4809acc80",
+          "md5": "d79376f956e8d6f6bb9bebf7bb6d38df",
+          "sha256": "e87bac6e17d843f5be71dcb273dbe3f9c9eba95134de0976447214768bc22b9a"
+        },
+        "downloads": -1,
+        "filename": "lobemap-0.1.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d79376f956e8d6f6bb9bebf7bb6d38df",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.11",
+        "size": 67502714,
+        "upload_time": "2026-08-20T21:15:59",
+        "upload_time_iso_8601": "2026-08-20T21:15:59.045795Z",
+        "url": "https://files.pythonhosted.org/packages/c8/8a/d0ab5cadebb5e4a39f453adf1516544071bb4f90e6b7c4f70cc4809acc80/lobemap-0.1.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "def4c72bad87d527e49fc01f12d3b7d1a6526e3eedfa0457c78d461e0ec11005"
+        },
+        "digests": {
+          "blake2b_256": "3d8a2991fe59bca7240cb2fc22b12162d110b8eedf69a6807f15b13519ed2489",
+          "md5": "d97c727378d9dca5ea8ac42a067aecbc",
+          "sha256": "1443e8c5ecb3d920cc96c16102b69d0d40d98723cc22d2b2aca09591d79dc5a9"
+        },
+        "downloads": -1,
+        "filename": "lobemap-0.2.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "d97c727378d9dca5ea8ac42a067aecbc",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.11",
+        "size": 343766,
+        "upload_time": "2026-10-05T15:09:08",
+        "upload_time_iso_8601": "2026-10-05T15:09:08.384036Z",
+        "url": "https://files.pythonhosted.org/packages/3d/8a/2991fe59bca7240cb2fc22b12162d110b8eedf69a6807f15b13519ed2489/lobemap-0.2.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "031b74b4eb516342033ba9a2b15489634330d767ff2cc3de88f25f014034b897",
+          "md5": "e76e6bd0ea747b0316cdbce371fdd49a",
+          "sha256": "0623425efa5d9d2539fe44b261596d281a9b85e4602c79aea8979edd82d70d9f"
+        },
+        "downloads": -1,
+        "filename": "lobemap-0.2.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e76e6bd0ea747b0316cdbce371fdd49a",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.11",
+        "size": 570965,
+        "upload_time": "2026-10-05T15:09:10",
+        "upload_time_iso_8601": "2026-10-05T15:09:10.087024Z",
+        "url": "https://files.pythonhosted.org/packages/03/1b/74b4eb516342033ba9a2b15489634330d767ff2cc3de88f25f014034b897/lobemap-0.2.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "5166bbba03d03268799737d30f9b8030004130d815f04d06c65cc569474c0803"
+        },
+        "digests": {
+          "blake2b_256": "555c7c2e8b398c3a5ac299ec3e997ba09d22dd84871e31a0c5a4a3fe1b66cb1d",
+          "md5": "3a5d4a6bdbe1c8d5c7d3725b59eea331",
+          "sha256": "39f11e4a0e8c659f1cfc16801172ed732099da0753994228717a3c2889e4f853"
+        },
+        "downloads": -1,
+        "filename": "lobemap-0.2.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "3a5d4a6bdbe1c8d5c7d3725b59eea331",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.11",
+        "size": 334520,
+        "upload_time": "2026-10-05T16:24:39",
+        "upload_time_iso_8601": "2026-10-05T16:24:39.463447Z",
+        "url": "https://files.pythonhosted.org/packages/55/5c/7c2e8b398c3a5ac299ec3e997ba09d22dd84871e31a0c5a4a3fe1b66cb1d/lobemap-0.2.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "904811549ad9ca92716d6b4908f88c9020f33e3f4a7bce0ce57762e011c6740b",
+          "md5": "afa419d127dae50ec4268e81aafd506f",
+          "sha256": "a49ecf029dda72ebef3d3dc3b6ad24e30752f7c4aebe0959a3f0c9647ed44df1"
+        },
+        "downloads": -1,
+        "filename": "lobemap-0.2.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "afa419d127dae50ec4268e81aafd506f",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.11",
+        "size": 541801,
+        "upload_time": "2026-10-05T16:24:41",
+        "upload_time_iso_8601": "2026-10-05T16:24:41.221954Z",
+        "url": "https://files.pythonhosted.org/packages/90/48/11549ad9ca92716d6b4908f88c9020f33e3f4a7bce0ce57762e011c6740b/lobemap-0.2.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "5166bbba03d03268799737d30f9b8030004130d815f04d06c65cc569474c0803"
+      },
+      "digests": {
+        "blake2b_256": "555c7c2e8b398c3a5ac299ec3e997ba09d22dd84871e31a0c5a4a3fe1b66cb1d",
+        "md5": "3a5d4a6bdbe1c8d5c7d3725b59eea331",
+        "sha256": "39f11e4a0e8c659f1cfc16801172ed732099da0753994228717a3c2889e4f853"
+      },
+      "downloads": -1,
+      "filename": "lobemap-0.2.1-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "3a5d4a6bdbe1c8d5c7d3725b59eea331",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": "<3.13,>=3.11",
+      "size": 334520,
+      "upload_time": "2026-10-05T16:24:39",
+      "upload_time_iso_8601": "2026-10-05T16:24:39.463447Z",
+      "url": "https://files.pythonhosted.org/packages/55/5c/7c2e8b398c3a5ac299ec3e997ba09d22dd84871e31a0c5a4a3fe1b66cb1d/lobemap-0.2.1-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "904811549ad9ca92716d6b4908f88c9020f33e3f4a7bce0ce57762e011c6740b",
+        "md5": "afa419d127dae50ec4268e81aafd506f",
+        "sha256": "a49ecf029dda72ebef3d3dc3b6ad24e30752f7c4aebe0959a3f0c9647ed44df1"
+      },
+      "downloads": -1,
+      "filename": "lobemap-0.2.1.tar.gz",
+      "has_sig": false,
+      "md5_digest": "afa419d127dae50ec4268e81aafd506f",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": "<3.13,>=3.11",
+      "size": 541801,
+      "upload_time": "2026-10-05T16:24:41",
+      "upload_time_iso_8601": "2026-10-05T16:24:41.221954Z",
+      "url": "https://files.pythonhosted.org/packages/90/48/11549ad9ca92716d6b4908f88c9020f33e3f4a7bce0ce57762e011c6740b/lobemap-0.2.1.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

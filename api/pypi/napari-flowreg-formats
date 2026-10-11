@@ -1,0 +1,201 @@
+{
+  "info": {
+    "author": null,
+    "author_email": "Philipp Flotho <Philipp.Flotho@uni-saarland.de>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 3 - Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Scientific/Engineering :: Bio-Informatics",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "[![PyPI - Version](https://img.shields.io/pypi/v/napari-flowreg-formats)](https://pypi.org/project/napari-flowreg-formats/)\n[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/napari-flowreg-formats)](https://pypi.org/project/napari-flowreg-formats/)\n[![PyPI - License](https://img.shields.io/pypi/l/napari-flowreg-formats)](LICENSE.txt)\n[![PyPI - Downloads](https://img.shields.io/pypi/dm/napari-flowreg-formats)](https://pypistats.org/packages/napari-flowreg-formats)\n[![PyPI Downloads](https://static.pepy.tech/personalized-badge/napari-flowreg-formats?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=all+time+downloads)](https://pepy.tech/projects/napari-flowreg-formats)[![Tests](https://github.com/FlowRegSuite/napari-flowreg-formats/actions/workflows/test.yml/badge.svg)](https://github.com/FlowRegSuite/napari-flowreg-formats/actions/workflows/test.yml)\n[![Documentation Status](https://readthedocs.org/projects/napari-flowreg-formats/badge/?version=latest)](https://napari-flowreg-formats.readthedocs.io/en/latest/?badge=latest)\n\n# <img src=\"https://raw.githubusercontent.com/FlowRegSuite/napari-flowreg-formats/HEAD/img/flowreglogo.png\" alt=\"FlowReg logo\" height=\"64\"> napari-FlowReg-Formats\n\nThis repository contains the file format support for the Flow-Registration toolbox in napari. It reads and writes the microscopy formats used across the FlowRegSuite through the `pyflowreg` and `flowreg3d` I/O layers, so a recording that opens here opens identically in the motion correction pipeline.\n\n**Everything works out of the box.** Drag a recording into napari and it opens: **TIFF** (including **ScanImage**, **OME-TIFF**, **ImageJ hyperstacks** and **BigTIFF**), **HDF5**, **MATLAB MAT** in both the classic and the **v7.3** container, and **Sutter MDF**. **MAT and HDF5 videos work in both 2D and 3D**, including multi-channel recordings, volumetric time series, and the MATLAB axis order that older Flow-Registration data is written in. The structure is detected from the file itself, so no configuration is needed for the common cases.\n\nRecordings load lazily, so a volumetric stack larger than memory can be inspected frame by frame. An import dialog covers what automatic detection cannot settle on its own: 2D against 3D interpretation, axis order, which datasets are channels, and folding a flat ScanImage page sequence into `(T, Z, Y, X)` volumes.\n\nThe publication for the underlying toolbox can be found [here](https://doi.org/10.1002/jbio.202100330) and the project website with video results [here](https://www.snnu.uni-saarland.de/flow-registration/).\n\n**[Read the Documentation](https://napari-flowreg-formats.readthedocs.io/)**\n\n**Related projects**\n- PyFlowReg: https://github.com/FlowRegSuite/pyflowreg\n- flowreg3D: https://github.com/FlowRegSuite/flowreg3d\n- napari motion correction plugin: https://github.com/FlowRegSuite/napari-flowreg\n- Original Flow-Registration repo: https://github.com/FlowRegSuite/flow_registration\n- ImageJ/Fiji plugin: https://github.com/FlowRegSuite/flow_registration_IJ\n\n![Fig1](https://raw.githubusercontent.com/FlowRegSuite/napari-flowreg-formats/HEAD/img/bg.jpg)\n\n## Installation via pip and conda\n\nTo install the plugin via conda, you can create a new environment and install `napari` along with the plugin:\n\n    conda create -n flowreg -c conda-forge python=3.11\n    conda activate flowreg\n\nYou can then install `napari-flowreg-formats` via [pip]:\n\n    pip install napari[all] napari-flowreg-formats\n\nor directly from the GitHub repository:\n\n    pip install git+https://github.com/FlowRegSuite/napari-flowreg-formats.git\n\n`napari` is not a runtime dependency of this package, following napari plugin practice, so install it alongside as shown above.\n\nThe plugin depends on `pyflowreg` and `flowreg3d`, which are currently published as pre-releases. The dependency specifiers name those pre-releases explicitly, so a plain `pip install` resolves them and no `--pre` flag is needed.\n\n## Supported formats\n\n| Family | Extensions | 2D | 3D | Lazy | Auto-detected |\n|---|---|---|---|---|---|\n| **TIFF** | `.tif` `.tiff` | **yes** | **yes** | **yes** | series axes, ImageJ hyperstack structure |\n| **BigTIFF** | `.btf` `.tf8` `.tf2` | **yes** | **yes** | **yes** | as above, without the 4 GB limit |\n| **OME-TIFF** | `.ome.tif` `.ome.tiff` | **yes** | **yes** | **yes** | OME axes, physical pixel size |\n| **ScanImage TIFF** | `.tif` | **yes** | **yes** | **yes** | slices per volume, frames per slice, channels, z step, frame rate |\n| **HDF5** | `.h5` `.hdf5` `.hdf` | **yes** | **yes** | **yes** | dataset discovery, writer provenance, stored axis order |\n| **MATLAB MAT** | `.mat` (v5/v7 and v7.3) | **yes** | **yes** | v7.3 only | variable discovery, MATLAB axis order and dimension reversal |\n| **Sutter MDF** | `.mdf` | **yes** | \u2014 | no | acquisition metadata; **Windows only** |\n\nExtension matching is case-insensitive, so `.TIF`, `.H5` and `.MAT` work as written. See the [supported formats reference](https://napari-flowreg-formats.readthedocs.io/en/latest/supported_formats.html) for the full matrix, including the formats this plugin deliberately leaves to others.\n\n## Usage\n\nDrag a recording into napari. For extensions that napari's built-in reader also claims, such as `.tif` and `.h5`, napari shows a reader chooser; select **FlowReg Formats** and tick the box to remember that choice for the extension.\n\nFor explicit control over dimensions, channels and TIFF reshaping, open **File > FlowReg Import** or **Plugins > FlowReg Formats > FlowReg Import**. The dialog reports the detected structure, lets you override every field, and loads off the Qt event loop so the viewer stays responsive.\n\n![FlowReg Import dialog in napari](https://raw.githubusercontent.com/FlowRegSuite/napari-flowreg-formats/HEAD/img/import-gui.png)\n\nAbove, a flat ScanImage page sequence has been probed: the volume structure was read from the acquisition metadata, the recording was identified as a volumetric time series, and the 16 slices per volume were filled in automatically. **Load** applies it; **Copy as Python** emits the equivalent script.\n\nLayers are written back with **File > Save Selected Layers**, or through **File > FlowReg Export** for control over the dataset naming pattern, MATLAB axis order, the MAT container version and compression. Selected layers become the channels of one recording.\n\n![FlowReg Export dialog in napari](https://raw.githubusercontent.com/FlowRegSuite/napari-flowreg-formats/HEAD/img/export-gui.png)\n\nThe same import is available from a script, with no GUI:\n\n```python\nimport napari\nfrom napari_flowreg_formats import ImportSpec, load\n\nviewer = napari.Viewer()\n\n# automatic: the structure is detected from the file\nviewer.open(\"recording.tif\", plugin=\"napari-flowreg-formats\")\n\n# explicit: fold a flat ScanImage page sequence into volumes\nfor data, meta, layer_type in load(\n    \"scanimage_volumes.tif\",\n    ImportSpec(is_3d=True, slices_per_volume=30, frames_per_slice=1, lazy=\"always\"),\n):\n    viewer._add_layer_from_data(data, meta, layer_type)\n\nnapari.run()\n```\n\nThe **Copy as Python** button in the import dialog emits exactly this call for the settings currently on screen, so an interactive import is always reproducible.\n\nTwo synthetic sample recordings are available under **File > Open Sample > FlowReg Formats**, so the plugin can be tried without any data on disk.\n\n## Citation\n\nDetails on the original method and video results can be found [here](https://www.snnu.uni-saarland.de/flow-registration/).\n\nIf you use parts of this code or the plugin for your work, please cite\n\n> \"Pyflowreg,\" (in preparation), 2025.\n\nand\n\n> P. Flotho, S. Nomura, B. Kuhn and D. J. Strauss, \"Software for Non-Parametric Image Registration of 2-Photon Imaging Data,\" J Biophotonics, 2022. [doi:https://doi.org/10.1002/jbio.202100330](https://doi.org/10.1002/jbio.202100330)\n\nBibTeX entry\n```\n@article{flotea2022a,\n    author = {Flotho, P. and Nomura, S. and Kuhn, B. and Strauss, D. J.},\n    title = {Software for Non-Parametric Image Registration of 2-Photon Imaging Data},\n    year = {2022},\n  journal = {J Biophotonics},\n  doi = {https://doi.org/10.1002/jbio.202100330}\n}\n```\n\n## License\n\nDistributed under the MIT License. See [LICENSE.txt](LICENSE.txt).\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": null,
+    "license_expression": "MIT",
+    "license_files": [
+      "LICENSE.txt"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-flowreg-formats",
+    "package_url": "https://pypi.org/project/napari-flowreg-formats/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-flowreg-formats/",
+    "project_urls": {
+      "Documentation": "https://napari-flowreg-formats.readthedocs.io/",
+      "Homepage": "https://github.com/FlowRegSuite/napari-flowreg-formats",
+      "Source": "https://github.com/FlowRegSuite/napari-flowreg-formats",
+      "Tracker": "https://github.com/FlowRegSuite/napari-flowreg-formats/issues"
+    },
+    "provides_extra": [
+      "testing",
+      "dev",
+      "docs"
+    ],
+    "release_url": "https://pypi.org/project/napari-flowreg-formats/0.1.0a1/",
+    "requires_dist": [
+      "pyflowreg>=0.1.0a9",
+      "flowreg3d>=0.1.0a1",
+      "numpy>=1.24",
+      "scipy>=1.10",
+      "h5py>=3.10",
+      "tifffile>=2024.9.0",
+      "dask[array]>=2023.5.0",
+      "qtpy",
+      "pytest>=7.0; extra == \"testing\"",
+      "pytest-cov>=4.0; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "npe2>=0.7; extra == \"testing\"",
+      "cloudpickle; extra == \"testing\"",
+      "tomli>=2.0.0; python_version < \"3.11\" and extra == \"testing\"",
+      "napari[pyqt6]; extra == \"testing\"",
+      "napari[pyqt6]>=0.4.18; extra == \"dev\"",
+      "pre-commit; extra == \"dev\"",
+      "ruff; extra == \"dev\"",
+      "build; extra == \"dev\"",
+      "twine; extra == \"dev\"",
+      "sphinx~=7.3; extra == \"docs\"",
+      "myst-parser; extra == \"docs\"",
+      "linkify-it-py; extra == \"docs\"",
+      "sphinx-copybutton; extra == \"docs\"",
+      "sphinx-design; extra == \"docs\"",
+      "sphinxcontrib-bibtex; extra == \"docs\"",
+      "pydata-sphinx-theme; extra == \"docs\"",
+      "sphinx-autodoc-typehints; extra == \"docs\""
+    ],
+    "requires_python": ">=3.10",
+    "summary": "napari reader and writer plugin for 2-photon microscopy formats (TIFF/ScanImage, HDF5, MAT, MDF)",
+    "version": "0.1.0a1",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 39811955,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "phflot"
+      }
+    ]
+  },
+  "releases": {
+    "0.1.0a1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "da15bcaedacc63956a4dc3332c6c0dd8644b43ea4c64ab955ff107d41a5e48fb"
+        },
+        "digests": {
+          "blake2b_256": "33852227c601ccf437d2152cafbfa8059e49e2ce01ff98a62626d88c3c637bcf",
+          "md5": "aa3e6bceab85222ad9ebc9b9e76cc6c2",
+          "sha256": "fb09496a552615831dc602508b487560de1aec7a4c75355779209ea938ddcb45"
+        },
+        "downloads": -1,
+        "filename": "napari_flowreg_formats-0.1.0a1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "aa3e6bceab85222ad9ebc9b9e76cc6c2",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 85838,
+        "upload_time": "2026-08-08T01:14:15",
+        "upload_time_iso_8601": "2026-08-08T01:14:15.075801Z",
+        "url": "https://files.pythonhosted.org/packages/33/85/2227c601ccf437d2152cafbfa8059e49e2ce01ff98a62626d88c3c637bcf/napari_flowreg_formats-0.1.0a1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "6d41d245da5541155bc84a8ca4b23c13f0722e13e11e9d8f6e1bccb09c0c27f0",
+          "md5": "762cf7bef72e3995f15b65a42fed448d",
+          "sha256": "95b1fc514e88fc84d92dc661a43dfb105f7fb847a7729f02eb9721b046d89a5b"
+        },
+        "downloads": -1,
+        "filename": "napari_flowreg_formats-0.1.0a1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "762cf7bef72e3995f15b65a42fed448d",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 2133548,
+        "upload_time": "2026-08-08T01:14:16",
+        "upload_time_iso_8601": "2026-08-08T01:14:16.516079Z",
+        "url": "https://files.pythonhosted.org/packages/6d/41/d245da5541155bc84a8ca4b23c13f0722e13e11e9d8f6e1bccb09c0c27f0/napari_flowreg_formats-0.1.0a1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "da15bcaedacc63956a4dc3332c6c0dd8644b43ea4c64ab955ff107d41a5e48fb"
+      },
+      "digests": {
+        "blake2b_256": "33852227c601ccf437d2152cafbfa8059e49e2ce01ff98a62626d88c3c637bcf",
+        "md5": "aa3e6bceab85222ad9ebc9b9e76cc6c2",
+        "sha256": "fb09496a552615831dc602508b487560de1aec7a4c75355779209ea938ddcb45"
+      },
+      "downloads": -1,
+      "filename": "napari_flowreg_formats-0.1.0a1-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "aa3e6bceab85222ad9ebc9b9e76cc6c2",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.10",
+      "size": 85838,
+      "upload_time": "2026-08-08T01:14:15",
+      "upload_time_iso_8601": "2026-08-08T01:14:15.075801Z",
+      "url": "https://files.pythonhosted.org/packages/33/85/2227c601ccf437d2152cafbfa8059e49e2ce01ff98a62626d88c3c637bcf/napari_flowreg_formats-0.1.0a1-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "6d41d245da5541155bc84a8ca4b23c13f0722e13e11e9d8f6e1bccb09c0c27f0",
+        "md5": "762cf7bef72e3995f15b65a42fed448d",
+        "sha256": "95b1fc514e88fc84d92dc661a43dfb105f7fb847a7729f02eb9721b046d89a5b"
+      },
+      "downloads": -1,
+      "filename": "napari_flowreg_formats-0.1.0a1.tar.gz",
+      "has_sig": false,
+      "md5_digest": "762cf7bef72e3995f15b65a42fed448d",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.10",
+      "size": 2133548,
+      "upload_time": "2026-08-08T01:14:16",
+      "upload_time_iso_8601": "2026-08-08T01:14:16.516079Z",
+      "url": "https://files.pythonhosted.org/packages/6d/41/d245da5541155bc84a8ca4b23c13f0722e13e11e9d8f6e1bccb09c0c27f0/napari_flowreg_formats-0.1.0a1.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
