@@ -1,0 +1,143 @@
+{
+  "name": "microglia-analyzer",
+  "display_name": "Microglia Analyzer",
+  "visibility": "public",
+  "icon": "",
+  "categories": [
+    "Annotation",
+    "Segmentation",
+    "Acquisition"
+  ],
+  "schema_version": "0.2.1",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "microglia-analyzer.microglia_analyzer",
+        "title": "Microglia Analyzer",
+        "python_name": "microglia_analyzer._widget:MicrogliaAnalyzerWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "microglia-analyzer.annotations_helper",
+        "title": "Annotations Helper",
+        "python_name": "microglia_analyzer._widget_annotations_helper:AnnotationsWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "microglia-analyzer.tiles_creator",
+        "title": "Tiles Creator",
+        "python_name": "microglia_analyzer._widget_tiles:TilesCreatorWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "microglia-analyzer.tiles_creator",
+        "display_name": "Tiles Creator",
+        "autogenerate": false
+      },
+      {
+        "command": "microglia-analyzer.annotations_helper",
+        "display_name": "Annotations Helper",
+        "autogenerate": false
+      },
+      {
+        "command": "microglia-analyzer.microglia_analyzer",
+        "display_name": "Microglia Analyzer",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "microglia-analyzer",
+    "version": "2.1.1",
+    "dynamic": [
+      "license-file"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "A Napari plugin allowing to detect and segment microglia on fluorescent images.",
+    "description": "# Microglia Analyzer\n\n![GitHub License](https://img.shields.io/github/license/MontpellierRessourcesImagerie/microglia-analyzer)\n![Python Version](https://img.shields.io/badge/Python-3.9|3.10|3.11-blue?logo=python)\n![Unit tests](https://img.shields.io/github/actions/workflow/status/MontpellierRessourcesImagerie/microglia-analyzer/test_and_deploy.yml?logo=pytest&label=tests)\n\n# What is it?\n\nA Napari plugin that allows for the segmentation and classification of microglia on 2D fluorescent images.\nZ-stacks and time series are not handled.\n\n- Segments the microglia with a UNet2D model.\n- Creates classified bounding-boxes with a YOLOv5.\n- Attributes a class to each cell.\n- Extracts graph information about the cells.\n    \nWe end up with a \".csv\" (separated with tabulations instead of commas) file containing all these metrics.\n\n- 🐛 Found a bug?: https://github.com/MontpellierRessourcesImagerie/microglia-analyzer/issues\n- 🔍 Need some help?: mri-cia@mri.cnrs.fr\n\n# 01. How to install/upgrade it?\n\n## Install\n\n| Action      | Command                                                                                               |\n|-------------|-------------------------------------------------------------------------------------------------------|\n| **Install** | `pip install git+https://github.com/MontpellierRessourcesImagerie/microglia-analyzer.git napari[all]` |\n| **Upgrade** | `pip install --upgrade git+https://github.com/MontpellierRessourcesImagerie/microglia-analyzer.git`   |\n\n\n# 02. How to use it?\n\nFor more details, check the [detailed documentation](https://montpellierressourcesimagerie.github.io/microglia-analyzer).\n\n# A. Open the widget\n\n- First of all, you need all your images to be converted to TIFF, and placed in the same folder.\n- Once Napari is opened, you can visit your plugins list. It should contain a `Microglia Analyzer` entry.\n    - `Tiles Creator` allows you to create patches to annotate if you ever want to retrain the UNet or the YOLOv5.\n    - `Annotations Helper` allows you to define and create classified bounding-boxes exported under the YOLOv5 format as well as masks. This widget is meant to help you create some ground-truth data.\n    - `Microglia Analyzer` contains the whole analysis workflow.\n\n# B. Load your images\n\n- Click the `📁 Sources folder` button and navigate to the folder containing your TIFF images before pressing OK.\n- In the drop-down menu below, you can choose the image on which you want to run the analysis.\n- In the \"Calibration\" field, you just have to provide the size of your pixels in physical unit and confirm. Your image may look small after this step, so you may want to press the button with a little picture of home in the lower-left corner of Napari's window.\n\n# C. Segment your microglia\n\n- Press the `🔍 Segment` button and wait for the labeled microglia to show up.\n- The first time, this step may take a little longer as the plugin must download the deep-learning model from MRI's server.\n- You can adjust the area of the smallest tolerated object either before or after the segmentation, both ways work.\n- At this point, each individual microglia should be represented by its own color.\n- We focused the segmentation on the \"graph\" produced by microglia, so the soma won't look thicker than any other part of the microglia.\n\n# D. Classify your microglia\n\n- Click the `Classify` button.\n- Once again, a model has to be downloaded from MRI's server.\n- By the end of this step, you should have a colored bounding-box around each tolerated microglia.\n- The color indicates which class it belongs to (amoeboid, intermediate ou homeostatic).\n- The color code should show up in the array below the classification button.\n- If you wish, you can adjust the prediction threshold (\"how sure the model is about what it sees\")\n\n# E. Measure your microglia\n\n- If you click on the `📊 Measure` button, the skeleton of each microglia should appear.\n- The measures are generated and stored in a `.tsv` file located in the `controls` sub-folder (auto-generated in your images' folder)\n\n# F. Analyze the whole folder\n\n- Once you got to that point, each parameter is correctly set (as you just used them for an image), so you click the `▶ Run batch` to apply them to the whole folder.\n- The button should now indicate `■ Kill batch (i/N)`. You can click it to interrupt the execution. `i` is the rank of the current image, and `N` is the number of images detected in the folder.\n- By the end of the run, the button should be normal again, and a `results.tsv` file should be located in the `controls` folder.\n\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": null,
+    "download_url": null,
+    "author": null,
+    "author_email": "\"Clément H. BENEDETTI\" <clement.benedetti@mri.cnrs.fr>",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "The MIT License (MIT)\n\nCopyright (c) 2024 Clément H. BENEDETTI\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in\nall copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\nTHE SOFTWARE.\n",
+    "classifier": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: MIT License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.9",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "requires_dist": [
+      "numpy",
+      "qtpy",
+      "scikit-image",
+      "opencv-python-headless",
+      "pint",
+      "tifffile",
+      "torch",
+      "tensorflow",
+      "skan",
+      "ultralytics",
+      "yolov5",
+      "tox; extra == \"testing\"",
+      "pytest; extra == \"testing\"",
+      "pytest-cov; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "napari; extra == \"testing\"",
+      "pyqt6; extra == \"testing\"",
+      "qtpy; extra == \"testing\"",
+      "sphinx_rtd_theme; extra == \"testing\"",
+      "myst_parser; extra == \"testing\"",
+      "sphinx_tabs; extra == \"testing\""
+    ],
+    "requires_python": ">=3.9",
+    "requires_external": null,
+    "project_url": [
+      "Bug Tracker, https://github.com/MontpellierRessourcesImagerie/microglia-analyzer/issues",
+      "Documentation, https://github.com/MontpellierRessourcesImagerie/microglia-analyzer#README.md",
+      "Source Code, https://github.com/MontpellierRessourcesImagerie/microglia-analyzer",
+      "User Support, https://github.com/MontpellierRessourcesImagerie/microglia-analyzer/issues"
+    ],
+    "provides_extra": [
+      "testing"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}

@@ -1,0 +1,178 @@
+{
+  "info": {
+    "author": "Arrojo e Drigo Lab, Vanderbilt University",
+    "author_email": null,
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 4 - Beta",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Scientific/Engineering :: Image Recognition"
+    ],
+    "description": "# napari-quantem\r\n\r\nOrganelle segmentation for electron microscopy in [napari](https://napari.org), using the QuantEM\r\nand OmniEM vision-transformer models.\r\n\r\n## What it does\r\n\r\nEight pretrained models \u2014 **mitochondria, endoplasmic reticulum, nucleus and lipid droplets**, each\r\nin two sizes (QuantEM ViT-B, 86M parameters; OmniEM ViT-L, 302M) \u2014 plus the tools to correct their\r\noutput and adapt them to your own data.\r\n\r\n| Widget | |\r\n|---|---|\r\n| **Segment** | Run a model over a 2-D image or a stack. Sliding 512 px windows at 25 % overlap with Hann blending \u2014 the same procedure used for the published benchmarks. |\r\n| **Fine-tune** | Correct the segmentation inside a region you draw, then adapt the model to it. Only the decoder head trains, which the manuscript found works about as well as heavier methods and takes seconds rather than minutes. |\r\n| **Proofread** | Split, merge, delete, filter by size, remove border-touching objects, and morphological clean-up \u2014 uses napari's own painting tools. |\r\n| **Measure** | Per-object morphometrics and per-image summaries into the layer's feature table, plus CSV export. |\r\n| **Batch** | Run a folder of images and write labels and one combined measurements CSV. |\r\n| **Models** | What is cached, what a download would cost, and what hardware is available. |\r\n\r\n## Using it\r\n\r\n**File \u2192 Open Sample \u2192 QuantEM \u2192 Mouse pancreatic islet (SEM, 5 nm/px)** loads a small example image that ships with the plugin. Open **QuantEM: Segment**, optionally set the pixel size to **5**, and run. (The model itself downloads on first use; see *Model files* below.)\r\n\r\n## Installing\r\n\r\nIf you do not already have napari:\r\n\r\n```bash\r\npip install \"napari-quantem[all]\"\r\n```\r\n\r\nIf napari is already installed then just get the plugin:\r\n\r\n```bash\r\npip install napari-quantem\r\n```\r\n\r\nPyTorch is a dependency. If you do not want the larger CUDA version installed automatically, install the CPU build separately first:\r\n\r\n```bash\r\npip install torch --index-url https://download.pytorch.org/whl/cpu\r\n```\r\n\r\nA GPU is not required. Segmentation runs well on CPU for moderate images, particularly on the ViT-B sized models, though fine-tuning is significantly slower for CPU-only. \r\n\r\n## Model files\r\n\r\nWeights are downloaded once, on first use, and cached.\r\n\r\nEncoder parameters are shared where the models share them, so a second organelle model usually is much smaller to download than the first. \r\n\r\n## Pixel size\r\n\r\nThe plugin does not guess pixel size. If you supply one,\r\nimages are resampled to the resolution the model was trained at (8 nm/px for mitochondria and lipid\r\ndroplets, 25 nm/px for nuclei; ER runs at native resolution). If you leave it blank, nothing is\r\nrescaled.\r\n\r\nSupplying a pixel size usually has moderate to insignificant effects when native resolution is ~0.5x-2x the resampling defaults (8nm for mitochondria and lipid droplets, 25nm for nuclei). Large upsampling to this resolution can have variable results, and outputs should be examined; downsampling into this range is likely to improve results for very high resolution images. \r\n\r\n## Fine-tuning: draw the region you actually annotated\r\n\r\nThe fine-tuning widget asks for a **reviewed region** \u2014 a rectangle or polygon you draw. Inside it, labels are taken as complete. Outside it, they are treated as *unknown*, not as background.\r\n\r\nThe recommended loop is to segment, look for areas where the model is wrong, draw a region around one of\r\nthose places, fix the labels inside it, and adapt. With three or more regions you can run a\r\nleave-one-region-out check for a genuinely held-out accuracy figure. Larger regions will give better results. \r\n\r\n## Citing\r\n\r\nAcree C, *et al.* *QuantEM: An optimized platform of vision transformer-based models for segmentation and analysis of electron microscopy data.* bioRxiv 2026.\r\n[https://www.biorxiv.org/content/10.64898/2026.08.06.743293v1](https://www.biorxiv.org/content/10.64898/2026.08.06.743293v1)\r\n\r\n## Licence\r\n\r\nBSD-3-Clause \u2014 see [`LICENSE`](LICENSE).\r\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": "napari, electron microscopy, segmentation, organelle, mitochondria",
+    "license": null,
+    "license_expression": "BSD-3-Clause",
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-quantem",
+    "package_url": "https://pypi.org/project/napari-quantem/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-quantem/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/ArrojoDrigoLab/QuantEM/issues",
+      "Homepage": "https://github.com/ArrojoDrigoLab/QuantEM",
+      "Source Code": "https://github.com/ArrojoDrigoLab/QuantEM",
+      "User Support": "https://github.com/ArrojoDrigoLab/QuantEM/issues"
+    },
+    "provides_extra": [
+      "all",
+      "testing"
+    ],
+    "release_url": "https://pypi.org/project/napari-quantem/0.1.0/",
+    "requires_dist": [
+      "quantem-core~=0.1.0",
+      "napari>=0.7",
+      "magicgui>=0.8",
+      "qtpy",
+      "numpy>=1.24",
+      "napari[all]; extra == \"all\"",
+      "pytest; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "napari[pyqt6]; extra == \"testing\""
+    ],
+    "requires_python": ">=3.11",
+    "summary": "QuantEM & OmniEM vision-transformer organelle segmentation for electron microscopy",
+    "version": "0.1.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 39860685,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "acreechristopher"
+      }
+    ]
+  },
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "6c4daf2a923be19983ebd6e5fedddfa135337857228291bbd8392d18b6db64f6"
+        },
+        "digests": {
+          "blake2b_256": "58be669a39782cee987abfa90a37d9efadabe588375a6cafdf3f45ed0728aaa9",
+          "md5": "5b1762cde4527fcf0fb6ef3f71a5f518",
+          "sha256": "aa09906fd6296e7cfd54d17456bfc04aedc3cdc3d42f013c4ec73494e92c4bbc"
+        },
+        "downloads": -1,
+        "filename": "napari_quantem-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "5b1762cde4527fcf0fb6ef3f71a5f518",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 615201,
+        "upload_time": "2026-08-10T01:20:36",
+        "upload_time_iso_8601": "2026-08-10T01:20:36.989767Z",
+        "url": "https://files.pythonhosted.org/packages/58/be/669a39782cee987abfa90a37d9efadabe588375a6cafdf3f45ed0728aaa9/napari_quantem-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "15d264f8954d128e1251bac323ce8bb400d3eea37d9937fb8103a3a3e8655b5f",
+          "md5": "4cf3cf08e16097d71d3ffc2ca61c3db2",
+          "sha256": "e9207f779f3dc3c91e5cc7bf7cf3a4773fdf2aa931fb95b0e25fde88c9c17fc4"
+        },
+        "downloads": -1,
+        "filename": "napari_quantem-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "4cf3cf08e16097d71d3ffc2ca61c3db2",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 610158,
+        "upload_time": "2026-08-10T01:20:38",
+        "upload_time_iso_8601": "2026-08-10T01:20:38.435432Z",
+        "url": "https://files.pythonhosted.org/packages/15/d2/64f8954d128e1251bac323ce8bb400d3eea37d9937fb8103a3a3e8655b5f/napari_quantem-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "6c4daf2a923be19983ebd6e5fedddfa135337857228291bbd8392d18b6db64f6"
+      },
+      "digests": {
+        "blake2b_256": "58be669a39782cee987abfa90a37d9efadabe588375a6cafdf3f45ed0728aaa9",
+        "md5": "5b1762cde4527fcf0fb6ef3f71a5f518",
+        "sha256": "aa09906fd6296e7cfd54d17456bfc04aedc3cdc3d42f013c4ec73494e92c4bbc"
+      },
+      "downloads": -1,
+      "filename": "napari_quantem-0.1.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "5b1762cde4527fcf0fb6ef3f71a5f518",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.11",
+      "size": 615201,
+      "upload_time": "2026-08-10T01:20:36",
+      "upload_time_iso_8601": "2026-08-10T01:20:36.989767Z",
+      "url": "https://files.pythonhosted.org/packages/58/be/669a39782cee987abfa90a37d9efadabe588375a6cafdf3f45ed0728aaa9/napari_quantem-0.1.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "15d264f8954d128e1251bac323ce8bb400d3eea37d9937fb8103a3a3e8655b5f",
+        "md5": "4cf3cf08e16097d71d3ffc2ca61c3db2",
+        "sha256": "e9207f779f3dc3c91e5cc7bf7cf3a4773fdf2aa931fb95b0e25fde88c9c17fc4"
+      },
+      "downloads": -1,
+      "filename": "napari_quantem-0.1.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "4cf3cf08e16097d71d3ffc2ca61c3db2",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.11",
+      "size": 610158,
+      "upload_time": "2026-08-10T01:20:38",
+      "upload_time_iso_8601": "2026-08-10T01:20:38.435432Z",
+      "url": "https://files.pythonhosted.org/packages/15/d2/64f8954d128e1251bac323ce8bb400d3eea37d9937fb8103a3a3e8655b5f/napari_quantem-0.1.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

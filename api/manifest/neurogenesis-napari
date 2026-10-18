@@ -1,0 +1,124 @@
+{
+  "name": "neurogenesis-napari",
+  "display_name": "TUM.ai Neurogenesis Toolkit",
+  "visibility": "public",
+  "icon": "",
+  "categories": [],
+  "schema_version": "0.2.1",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "neurogenesis-napari.normalize_and_denoise_widget",
+        "title": "Normalize and Denoise",
+        "python_name": "neurogenesis_napari.widgets.normalize_and_denoise:normalize_and_denoise_widget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "neurogenesis-napari.segment_dapi_widget",
+        "title": "Segment",
+        "python_name": "neurogenesis_napari.widgets.segment:segment_widget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "neurogenesis-napari.classify_widget",
+        "title": "Segment and Classify",
+        "python_name": "neurogenesis_napari.widgets.segment_and_classify:segment_and_classify_widget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "neurogenesis-napari.normalize_and_denoise_widget",
+        "display_name": "Normalize and Denoise",
+        "autogenerate": false
+      },
+      {
+        "command": "neurogenesis-napari.segment_dapi_widget",
+        "display_name": "Segment",
+        "autogenerate": false
+      },
+      {
+        "command": "neurogenesis-napari.classify_widget",
+        "display_name": "Segment and Classify",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "neurogenesis-napari",
+    "version": "0.1.0a2",
+    "dynamic": null,
+    "platform": null,
+    "supported_platform": null,
+    "summary": "A napari plugin to segment and classify cells.",
+    "description": "# TUM.ai Neurogenesis Napari Plugin\n\n[![License MIT](https://img.shields.io/pypi/l/neurogenesis-napari.svg?color=green)](https://github.com/tum-ai/neurogenesis_napari/blob/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/neurogenesis-napari.svg?color=green)](https://pypi.org/project/neurogenesis-napari)\n[![Python Version](https://img.shields.io/pypi/pyversions/neurogenesis-napari.svg?color=green)](https://python.org)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/neurogenesis-napari)](https://napari-hub.org/plugins/neurogenesis-napari)\n\nA napari plugin for automated nuclear segmentation and neural cell type classification in neurogenesis research. Supports classification of astrocytes, neurons, oligodendrocyte precursor cells (OPCs), and dead cells from multi-channel fluorescence microscopy images.\n\n## Key Features\n\n| Widget | Function | Input | Output |\n|--------|----------|-------|---------|\n| **Normalize + Denoise** | Color normalization and denoising | Bright-field image | Processed image |\n| **Segment** | Nuclear segmentation | DAPI/nuclear stain | Masks, centroids, bounding boxes |\n| **Segment + Classify** | End-to-end cell analysis | 4-channel images | Cell segmentation + classification |\n\n## Quick Start\n\n### Installation\n\n```bash\npip install neurogenesis-napari\n```\n\nOr install through napari:\n1. Open napari\n2. Go to `Plugins` \u2192 `Install/Uninstall Plugins`\n3. Search for \"TUM.ai Neurogenesis Toolkit\"\n4. Click Install\n\n### Basic Usage\n\n1. Load your images into napari\n2. Select the appropriate widget from the `Plugins` menu\n3. Choose your image layers from the dropdown menus\n4. Click the action button to process\n\nModel weights are automatically downloaded on first use.\n\n---\n\n## Widget Documentation\n\n### Normalize + Denoise\n\nStandardizes color variations and reduces noise in bright-field microscopy images.\n\n#### Usage\n1. Load a bright-field image into napari\n2. Open `Plugins` \u2192 `Normalize and Denoise`\n3. Select your bright-field image from the **BF** dropdown\n4. Click **\"Normalize + Denoise\"**\n\n#### What it does\n- **Color Normalization**: Histogram matching against an internal reference to standardize appearance across different acquisitions\n- **Denoising**: Removes noise while preserving cellular structures using Cellpose\n- **Output**: Creates a new layer named `{original_name}_denoised`\n\n---\n\n### Segment\n\nDetects and segments individual cell nuclei from DAPI-stained images using Cellpose.\n\n#### Usage\n1. Load a DAPI/nuclear staining image into napari\n2. Open `Plugins` \u2192 `Segment`\n3. Select your DAPI image from the **DAPI** dropdown\n4. Optionally adjust:\n   - **GPU**: Enable for faster processing (if CUDA available)\n   - **Model**: Choose Cellpose model (`cyto3` default)\n5. Click **\"Segment\"**\n\n#### What it does\n- **Segmentation**: Uses Cellpose to identify individual nuclei\n- **Creates 3 new layers**:\n  - `{name}_masks`: Segmentation masks for each nucleus\n  - `{name}_centroids`: Center points of detected nuclei\n  - `{name}_bboxes`: Bounding boxes (polygons) around each nucleus\n\n---\n\n### Segment + Classify\n\nEnd-to-end pipeline that segments nuclei and classifies neural cell types in multi-channel fluorescence images.\n\n#### Usage\n1. Load a **4-channel image** into napari as separate layers:\n   - **DAPI**: Nuclear staining (DAPI/Hoechst)\n   - **Tuj1**: \u03b2-III-tubulin (neuronal marker)\n   - **RFP**: Red fluorescent protein marker\n   - **BF**: Bright-field\n2. Open `Plugins` \u2192 `Segment and Classify`\n3. Select each channel from the respective dropdowns\n4. Choose **Reuse cached segmentation**:\n   - **True** (default): Reuse previous segmentation if available (faster)\n   - **False**: Perform fresh segmentation\n5. Click **\"Segment + Classify\"**\n\n#### How it works\n1. **Segmentation**: Cellpose-based nuclear segmentation on DAPI channel\n2. **Feature extraction**: Variational Autoencoder (VAE) extracts features from 4-channel patches around each nucleus\n3. **Classification**: Nearest-centroid classifier assigns cell types based on learned centroids\n\n#### Output\nCreates colored polygon overlays for each detected cell:\n- Astrocytes (magenta)\n- Neurons (cyan)\n- OPCs - Oligodendrocyte Precursor Cells (lime)\n- Dead Cells (gray)\n\nThe classification results can be manually corrected through an interactive interface. Select any cell and use keyboard shortcuts to reassign its type: Shift+A (Astrocyte), Shift+N (Neuron), Shift+O (OPC), Shift+D (Dead Cell).\n\n---\n\n---\n\n## Technical Details\n\n### Supported Image Formats\n- `.czi` (Zeiss microscopy files, via napari-czifile2)\n- `.tiff`, `.tif`\n- `.png`, `.jpg`\n\n### Cell Classification Model\n- **Feature extraction**: Variational Autoencoder (VAE) with 2304-dimensional latent space\n- **Classifier**: Scikit-learn Nearest Centroid\n- **Input**: 224\u00d7224 pixel patches from 4 channels (DAPI, BF, Tuj1, RFP)\n- **Output**: 4 cell type classes\n\n### Requirements\n- Python \u2265 3.10\n- CUDA-capable GPU (optional, for faster processing)\n- Model weights are automatically downloaded on first use via Hugging Face Hub\n\n---\n\n## Citation\n\nIf you use this plugin in your research, please cite:\n\n```\nTUM.ai Neurogenesis Napari Plugin\nTechnical University of Munich\nhttps://github.com/tum-ai/neurogenesis_napari\n```\n\n---\n\n## License\n\nMIT License - see [LICENSE](LICENSE) file for details.\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": null,
+    "download_url": null,
+    "author": null,
+    "author_email": "\"TUM.ai\" <contact@tum-ai.com>",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "The MIT License (MIT)\n\nCopyright (c) 2025 TUM.ai\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in\nall copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\nTHE SOFTWARE.",
+    "classifier": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: MIT License",
+      "Operating System :: MacOS :: MacOS X",
+      "Operating System :: Microsoft :: Windows",
+      "Operating System :: OS Independent",
+      "Operating System :: POSIX :: Linux",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "requires_dist": [
+      "cellpose==3.1.1.2",
+      "huggingface-hub>=0.33.0",
+      "magicgui",
+      "napari-czifile2",
+      "napari[pyqt5]",
+      "numpy==1.26.4",
+      "opencv-python==4.11.0.86",
+      "pandas==2.3.0",
+      "qtpy",
+      "sam2==1.1.0",
+      "scikit-image==0.25.2",
+      "scikit-learn==1.2.2",
+      "tifffile<=2023.4.12",
+      "torch==2.7.1"
+    ],
+    "requires_python": ">=3.10",
+    "requires_external": null,
+    "project_url": [
+      "Repository, https://github.com/tum-ai/neurogenesis_napari"
+    ],
+    "provides_extra": null,
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}
