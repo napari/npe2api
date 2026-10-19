@@ -1,0 +1,183 @@
+{
+  "info": {
+    "author": "Anna Moeller",
+    "author_email": null,
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 3 - Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-maskel-ibex-preprocessing\n\n<p align=\"center\">\n  <img src=\"https://raw.githubusercontent.com/uderhardtlab/napari-maskel-ibex-preprocessing/main/src/napari_maskel_ibex_preprocessing/resources/logo_preprocessing.png\" alt=\"MaSkel IBEX preprocessing logo\" width=\"400\">\n</p>\n\n[![PyPI](https://img.shields.io/pypi/v/napari-maskel-ibex-preprocessing.svg)](https://pypi.org/project/napari-maskel-ibex-preprocessing)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-maskel-ibex-preprocessing)](https://napari-hub.org/plugins/napari-maskel-ibex-preprocessing)\n[![tests](https://github.com/uderhardtlab/napari-maskel-ibex-preprocessing/actions/workflows/tests.yml/badge.svg)](https://github.com/uderhardtlab/napari-maskel-ibex-preprocessing/actions/workflows/tests.yml)\n[![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](https://github.com/uderhardtlab/napari-maskel-ibex-preprocessing/blob/main/LICENSE)\n\nnapari plugin and batch runner for light-sheet data of mouse peritoneum. It does three things:\n\n- finds the **outer surface of the muscle layer** from the TOM20 channel;\n- builds a **CD34 fibroblast mask**;\n- keeps only the CD34 above the muscle (the **submesothelial fibroblasts**) and exports binary TIFFs, e.g. for Imaris or as input for MASKEL.\n\nThe algorithms are in `napari_maskel_ibex_preprocessing.core` and use only numpy/scipy (no napari). Both the napari widget and the command-line runner use them.\n\n## Installation\n\nInto an existing napari environment (Python \u2265 3.9), either in napari via *Plugins > Install/Uninstall Plugins*, or:\n\n```\npip install napari-maskel-ibex-preprocessing\n```\n\nUse `pip install \"napari-maskel-ibex-preprocessing[napari]\"` to install napari as well.\n\nFor development, from a clone of this repository:\n\n```\npip install -e \".[testing]\"\npytest tests\n```\n\n## Input\n\nA converted `.h5` file with one dataset per channel, `Channel_0`, `Channel_1`, \u2026, each `(Z, Y, X)`. `Channel_0` carries the attribute `element_size_um` (voxel size `(dz, dy, dx)` in \u00b5m).\n\nAn Imaris `.ims` file can be converted with `maskel-ibex-ims2h5 sample.ims`, or by the batch runner automatically.\n\nAssumed geometry:\n- the tissue is imaged en face, with the **mesothelium at high z** and the muscle at low z;\n- muscle is present under the whole field of view;\n- the fibres are roughly parallel.\n\n## napari\n\n1. Open the `.h5` (*File > Open*; choose this plugin's reader if asked). Every channel becomes an image layer with the correct voxel size.\n2. Open *Plugins > MASKEL IBEX preprocessing > Muscle surface and CD34 filtering*.\n3. Choose the **muscle channel** (TOM20) and the **CD34 channel**. For files from the reader, Channel_0 and Channel_3 are pre-selected.\n4. For fast tuning, draw a **rectangle** in a Shapes layer (2D view) and choose that layer as the *region*. Every step has *Run on region* (seconds to a minute) and *Run on full volume* (minutes). Both run in the background.\n   - **1 Muscle surface:** muscle mask, surface, height map `h` and the **signed distance map** `d = (z \u2212 h)\u00b7dz` (\u00b5m; > 0 = mesothelium side).\n   - **2 CD34 mask:** CD34 mask, thresholded by hysteresis with a local, noise-based low threshold.\n   - **3 Distance filter:** keeps CD34 components \u2265 the minimum volume, then the part with `d >` cutoff \u2192 **fibroblast mask**.\n5. **Export** (needs the full-volume results; TIFFs in the original image shape, uint8 0/255, voxel size in the metadata, optional ZIP compression):\n   - *distance mask*: 1 where `d >` threshold (given in \u00b5m or in z slices), else 0;\n   - *fibroblast mask*;\n   - optionally all results as a steps `.h5`.\n\nResults computed on a region use Otsu thresholds and noise statistics of that region only. They can therefore differ slightly from the same area of a full-volume run.\n\n## Batch\n\n```\nmaskel-ibex-batch D:\\data\\sample.ims\nmaskel-ibex-batch D:\\data\\round1 --dry-run\nmaskel-ibex-batch D:\\data\\round1 --dist-threshold -4 --dist-unit um\n```\n\n- **Input:** a file or a folder. A folder means every `.h5` / `.ims` in it.\n- **Parameters:** the defaults below.\n- **Output per sample:**\n  - `<stem>_layers.h5`, `<stem>_cd34.h5`, `<stem>_submeso_cd34.h5`: intermediate steps;\n  - `<stem>_tif\\\u2026_fibroblast_mask.tif` and `\u2026_distance_gt<T>.tif`;\n  - a log file.\n- `--force` recomputes, `--uncompressed` writes plain TIFFs.\n\n## Steps and default parameters (`core/params.py`)\n\n| Step | Operation | Default |\n|---|---|---|\n| 1 | TOM20 block means (valid pixels only) | 4 \u00d7 4 px |\n| 1 | normalized Gaussian | \u03c3 (2, 5, 5) \u00b5m |\n| 1 | muscle = above the lowest 3-class multi-Otsu threshold; small objects removed | < 5000 \u00b5m\u00b3 |\n| 1 | fibre filter: binary opening with a line along the measured fibre direction (structure tensor) | 30 \u00b5m |\n| 1 | `h` = highest muscle z; empty columns from the nearest column; grey closing | disk 9.2 \u00b5m |\n| 2 | tissue = Otsu on log of the summed channels (2 \u00d7 2 blocks) | smoothing 5 \u00b5m |\n| 2 | CD34 normalized Gaussian minus background | \u03c3 (1, 0.5, 0.5) \u00b5m; background 15 \u00b5m |\n| 2 | seeds = above Otsu within tissue | |\n| 2 | noise = tissue outside the Otsu mask, in the band \u221210 \u2264 d \u2264 30 \u00b5m; per block median + k \u00b7 robust SD | blocks 272 \u00b5m, k = 4 |\n| 2 | hysteresis: components of the low-threshold mask that contain a seed; small objects removed | < 20 \u00b5m\u00b3 |\n| 3 | 26-connected components of the whole CD34 mask; keep those \u2265 the minimum volume, then `d >` cutoff | 500 \u00b5m\u00b3; \u22124 \u00b5m |\n\nThe defaults were validated on `LSM 2026-07-20_B6-12w-naive_co1-s1-r1` (naive, round 1).\n\n## Development and releases\n\n- **Every push and pull request:** `.github/workflows/tests.yml` runs the tests on Windows, Linux and macOS with Python 3.9\u20133.12. It also builds the package and checks it with `twine check`.\n- **Release:** set the new `version` in `pyproject.toml` and in `src/napari_maskel_ibex_preprocessing/__init__.py`, commit, then push a tag with the same version:\n  ```\n  git tag v0.1.0\n  git push origin v0.1.0\n  ```\n  `.github/workflows/release.yml` builds the package, checks that the tag matches the version, and publishes to PyPI through trusted publishing.\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": null,
+    "license_expression": "BSD-3-Clause",
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-maskel-ibex-preprocessing",
+    "package_url": "https://pypi.org/project/napari-maskel-ibex-preprocessing/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-maskel-ibex-preprocessing/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/uderhardtlab/napari-maskel-ibex-preprocessing/issues",
+      "Documentation": "https://github.com/uderhardtlab/napari-maskel-ibex-preprocessing#readme",
+      "Source Code": "https://github.com/uderhardtlab/napari-maskel-ibex-preprocessing",
+      "User Support": "https://github.com/uderhardtlab/napari-maskel-ibex-preprocessing/issues"
+    },
+    "provides_extra": [
+      "napari",
+      "testing"
+    ],
+    "release_url": "https://pypi.org/project/napari-maskel-ibex-preprocessing/0.1.0/",
+    "requires_dist": [
+      "numpy>=1.22",
+      "scipy>=1.8",
+      "scikit-image>=0.20",
+      "h5py>=3.6",
+      "tifffile>=2022.8",
+      "dask[array]>=2022.1",
+      "matplotlib>=3.5",
+      "magicgui>=0.7",
+      "qtpy",
+      "napari[all]>=0.4.19; extra == \"napari\"",
+      "pytest; extra == \"testing\""
+    ],
+    "requires_python": ">=3.9",
+    "summary": "napari plugin: muscle surface from TOM20, CD34 fibroblast mask, distance filtering and TIFF export for light-sheet peritoneum (IBEX) data",
+    "version": "0.1.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 42438450,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "anna_moeller"
+      }
+    ]
+  },
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "247dfa877b7e13a8f18aee0e7adeab6be1088ce2586460e2d48bd2de1784ecf5"
+        },
+        "digests": {
+          "blake2b_256": "6e5f46b27820ca8d432a189b6f847ff85b23fb3b0608e252eb7fac9e1a307749",
+          "md5": "e95a54e344e28952b198237d1088d01f",
+          "sha256": "0d5f0f70a82b7ce938aaafdbdca4f6e5a69c798697056b2d56d1f0dbc83c6a12"
+        },
+        "downloads": -1,
+        "filename": "napari_maskel_ibex_preprocessing-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "e95a54e344e28952b198237d1088d01f",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 151825,
+        "upload_time": "2026-10-19T11:59:02",
+        "upload_time_iso_8601": "2026-10-19T11:59:02.113586Z",
+        "url": "https://files.pythonhosted.org/packages/6e/5f/46b27820ca8d432a189b6f847ff85b23fb3b0608e252eb7fac9e1a307749/napari_maskel_ibex_preprocessing-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "f81c1fe99d818a164bbe7a4553881c64d82c269221f2e759d206a2c9407ae574",
+          "md5": "bafaecaa8ecc758270cc6e3b9b6ae3f9",
+          "sha256": "fa0e6d952c24a8706e13753df1e91dd2b777f96e581b0ad0a5b77c20a3a6f82c"
+        },
+        "downloads": -1,
+        "filename": "napari_maskel_ibex_preprocessing-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "bafaecaa8ecc758270cc6e3b9b6ae3f9",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 151036,
+        "upload_time": "2026-10-19T11:59:03",
+        "upload_time_iso_8601": "2026-10-19T11:59:03.806161Z",
+        "url": "https://files.pythonhosted.org/packages/f8/1c/1fe99d818a164bbe7a4553881c64d82c269221f2e759d206a2c9407ae574/napari_maskel_ibex_preprocessing-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "247dfa877b7e13a8f18aee0e7adeab6be1088ce2586460e2d48bd2de1784ecf5"
+      },
+      "digests": {
+        "blake2b_256": "6e5f46b27820ca8d432a189b6f847ff85b23fb3b0608e252eb7fac9e1a307749",
+        "md5": "e95a54e344e28952b198237d1088d01f",
+        "sha256": "0d5f0f70a82b7ce938aaafdbdca4f6e5a69c798697056b2d56d1f0dbc83c6a12"
+      },
+      "downloads": -1,
+      "filename": "napari_maskel_ibex_preprocessing-0.1.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "e95a54e344e28952b198237d1088d01f",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.9",
+      "size": 151825,
+      "upload_time": "2026-10-19T11:59:02",
+      "upload_time_iso_8601": "2026-10-19T11:59:02.113586Z",
+      "url": "https://files.pythonhosted.org/packages/6e/5f/46b27820ca8d432a189b6f847ff85b23fb3b0608e252eb7fac9e1a307749/napari_maskel_ibex_preprocessing-0.1.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "f81c1fe99d818a164bbe7a4553881c64d82c269221f2e759d206a2c9407ae574",
+        "md5": "bafaecaa8ecc758270cc6e3b9b6ae3f9",
+        "sha256": "fa0e6d952c24a8706e13753df1e91dd2b777f96e581b0ad0a5b77c20a3a6f82c"
+      },
+      "downloads": -1,
+      "filename": "napari_maskel_ibex_preprocessing-0.1.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "bafaecaa8ecc758270cc6e3b9b6ae3f9",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.9",
+      "size": 151036,
+      "upload_time": "2026-10-19T11:59:03",
+      "upload_time_iso_8601": "2026-10-19T11:59:03.806161Z",
+      "url": "https://files.pythonhosted.org/packages/f8/1c/1fe99d818a164bbe7a4553881c64d82c269221f2e759d206a2c9407ae574/napari_maskel_ibex_preprocessing-0.1.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
