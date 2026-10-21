@@ -12,15 +12,15 @@
       "Operating System :: OS Independent",
       "Programming Language :: Python",
       "Programming Language :: Python :: 3",
-      "Programming Language :: Python :: 3.10",
       "Programming Language :: Python :: 3.11",
       "Programming Language :: Python :: 3.12",
       "Programming Language :: Python :: 3.13",
+      "Programming Language :: Python :: 3.14",
       "Topic :: Scientific/Engineering :: Artificial Intelligence",
       "Topic :: Scientific/Engineering :: Image Recognition",
       "Topic :: Software Development :: Testing"
     ],
-    "description": "\n[![License](https://img.shields.io/pypi/l/napari-convpaint.svg?color=green)](https://github.com/guiwitz/napari-convpaint/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-convpaint.svg?color=green)](https://pypi.org/project/napari-convpaint)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-convpaint.svg?color=green)](https://python.org)\n[![tests](https://github.com/guiwitz/napari-convpaint/workflows/tests/badge.svg)](https://github.com/guiwitz/napari-convpaint/actions)\n[![codecov](https://codecov.io/gh/guiwitz/napari-convpaint/branch/main/graph/badge.svg)](https://codecov.io/gh/guiwitz/napari-convpaint)\n\n\n![overview conv-paint](/images/overview_github.png)\nThis tool, that comes both as a napari plugin and an intuitive Python API, can be used to segment objects or structures in images based on a few examples for the classes provided by the user in form of scribbles onto the image.\n\nFollowing an idea similar to other tools like ilastik, its main strength lies in its capability to use features from basically any model that creates meaningful features describing an image: from neural networks like VGG16 to foundational ViTs such as DINOV2, but also popular models such as Ilastik or Cellpose. This enables the segmentation of virtually any type of image, from simple to complex - without the need of switching and learning new tools.\n\n**Find more information and tutorials in the [docs](https://guiwitz.github.io/napari-convpaint/), the recording of the [presentation at I2K 2025 conference](https://www.youtube.com/watch?v=zoxaWo9J4nE) or read the [paper](https://doi.org/10.1016/j.crmeth.2026.101335).**\n\n![overview conv-paint](/images/network_github.png)\n\n## Installation\n\nYou can install `napari-convpaint` via [pip]:\n\n    pip install napari-convpaint\n\n*Note: If you are running into an error that vispy requires a certain C++ version, you can install vispy via `conda install vispy` and then install `napari-convpaint` via `pip` to avoid this.*\n\nTo install the latest development version:\n\n    pip install git+https://github.com/guiwitz/napari-convpaint.git\n\nThe plugin is also available on the [napari plugin hub](https://napari-hub.org/plugins/napari-convpaint.html), and can be installed via the napari plugin system (`Plugins`>`Install/Uninstall plugins..`> search for `napari-convpaint`).\n\n\n## Example use case: Tracking shark body parts in a movie\nThese are the scribble annotations provided for training:\n![](./images/shark_annot.png)\n\nAnd this is the resulting Convpaint segmentation:\n<video src=\"https://github.com/user-attachments/assets/6a2be1fe-25cc-4af1-9f50-aab9bc4123d9\"></video>\n\nCheck out the [documentation](https://guiwitz.github.io/napari-convpaint/book/Landing.html) or the [paper](https://doi.org/10.1016/j.crmeth.2026.101335) for more usecases!\n\n## API\n\nYou can use the Convpaint API in a fashion very similar to the napari plugin. The `ConvpaintModel` class combines a feature extractor and a classifier model, and holds all the parameters defining the model.\n\nInitialize a `ConvpaintModel` object, train its classifier and use it to segment an image:\n\n```Python\ncp_model = ConvpaintModel(\"dino\") # alternatively use vgg, cellpose or gaussian\ncp_model.train(image, annotations)\nsegmentation = cp_model.segment(image)\n```\n\nThere are many other options, such as predicting all classes as separate *probabilities* (see below). Please refer to the [documentation](https://guiwitz.github.io/napari-convpaint/book/Convpaint_api_introduction.html) for more details.\n\n```Python\nprobas = cp_model.predict_probas(image)\n```\n\n## License\n\nDistributed under the terms of the [BSD-3] license, \"napari-convpaint\" is free and open source software, except for the code in the `jafar/` directory, which is adapted from an [Apache License 2.0\u2013licensed project](https://github.com/PaulCouairon/JAFAR), see `jafar/LICENSE`.\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[file an issue]: https://github.com/guiwitz/napari-convpaint/issues\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n\n## Authors\n\nThe idea behind this napari plugin was first developed by [Lucien Hinderling](https://hinderling.github.io) in the group of [Olivier Pertz](https://www.pertzlab.net/), at the Institute of Cell Biology, University of Bern. Pertz lab obtained a CZI napari plugin development grant with the title [\"Democratizing Image Analysis with an Easy-to-Train Classifier\"](https://chanzuckerberg.com/science/programs-resources/imaging/napari/democratizing-image-analysis-with-an-easy-to-train-classifier/) which supported the adaptation of the initial concept as a napari plugin called napari-convpaint. The plugin has been developed by [Guillaume Witz<sup>1</sup>](https://guiwitz.github.io/blog/about/), [Roman Schwob<sup>1,2</sup>](https://github.com/quasar1357) and Lucien Hinderling<sup>2</sup> with much appreciated assistance of [Benjamin Gr\u00e4del<sup>2</sup>](https://x.com/benigraedel), [Maciej Dobrzy\u0144ski<sup>2</sup>](https://macdobry.net), Mykhailo Vladymyrov<sup>1</sup> and Ana Stojiljkovi\u0107<sup>1</sup>.\n\n<sup>1</sup>[Data Science Lab](https://www.dsl.unibe.ch/), University of Bern \\\n<sup>2</sup>[Pertz Lab](https://www.pertzlab.net/), Institute of Cell Biology, University of Bern \n\n## Cite Convpaint\n\nIf you find Convpaint useful in your research, please consider citing our work. Please also cite any Feature Extractor you have used within Convpaint, such as [ilastik](https://github.com/ilastik/ilastik-napari), [cellpose](https://cellpose.readthedocs.io/en/latest/), [DINOv2](https://github.com/facebookresearch/dinov2) or [JAFAR](https://github.com/PaulCouairon/JAFAR).\n\nConvpaint:\n```bibtex\n@article{Hinderling2026,\n\tauthor = {Hinderling, Lucien and Schwob, Roman and Witz, Guillaume and Stojiljkovi\u0107, Ana and Dobrzy\u0144ski, Maciej and Vladymyrov, Mykhailo and Frei, Jo\u00ebl and Gr\u00e4del, Benjamin and Frismantiene, Agne and Pertz, Olivier},\n\ttitle = {Convpaint\u2014Interactive pixel classification using pretrained neural networks},\n\tdoi = {10.1016/j.crmeth.2026.101335},\n\tjournal = {Cell Reports Methods},\n\tpublisher = {Elsevier BV},\n\tvolume = {6},\n\tnumber = {3},\n\tpages = {101335},\n\tyear = {2026},\n\tmonth = mar,\n}\n```\nSuggested citations for feature extractors:\n```bibtex\n@article {Berg2019,\n\tauthor = {Berg, Stuart and Kutra, Dominik and Kroeger, Thorben and Straehle, Christoph N. and Kausler, Bernhard X. and Haubold, Carsten and Schiegg, Martin and Ales, Janez and Beier, Thorsten and Rudy, Markus and Eren, Kemal and Cervantes, Jaime I. and Xu, Buote and Beuttenmueller, Fynn and Wolny, Adrian and Zhang, Chong and Koethe, Ullrich and Hamprecht, Fred A. and Kreshuk, Anna},\n\ttitle = {ilastik: interactive machine learning for (bio)image analysis.},\n\tissn = {1548-7105},\n\turl = {https://doi.org/10.1038/s41592-019-0582-9},\n\tdoi = {10.1038/s41592-019-0582-9},\n\tjournal = {Nature Methods},\n\tpublisher = {Springer Nature},\n\tyear = {2019},\n\tjournal = {Nature Methods},\n}\n```\n```bibtex\n@article {Stringer2021,\n\tauthor = {Stringer, Carsen and Wang, Tim and Michaelos, Michalis and Pachitariu Marius},\n\ttitle = {Cellpose: a generalist algorithm for cellular segmentation.},\n\telocation-id = {s41592-020-01018-x},\n\tdoi = {10.1038/s41592-020-01018-x},\n\tjournal = {Nature Methods},\n\tpublisher = {Springer Nature},\n\tyear = {2021},\n}\n```\n```bibtex\n@article {oquab2024dinov2learningrobustvisual,\n      title={DINOv2: Learning Robust Visual Features without Supervision}, \n      author={Maxime Oquab and Timoth\u00e9e Darcet and Th\u00e9o Moutakanni and Huy Vo and Marc Szafraniec and Vasil Khalidov and Pierre Fernandez and Daniel Haziza and Francisco Massa and Alaaeldin El-Nouby and Mahmoud Assran and Nicolas Ballas and Wojciech Galuba and Russell Howes and Po-Yao Huang and Shang-Wen Li and Ishan Misra and Michael Rabbat and Vasu Sharma and Gabriel Synnaeve and Hu Xu and Herv\u00e9 Jegou and Julien Mairal and Patrick Labatut and Armand Joulin and Piotr Bojanowski},\n      year={2024},\n      eprint={2304.07193},\n      archivePrefix={arXiv},\n      primaryClass={cs.CV},\n      url={https://arxiv.org/abs/2304.07193}\n}\n\n```\n```bibtex\n@misc{couairon2025jafar,\n      title={JAFAR: Jack up Any Feature at Any Resolution}, \n      author={Paul Couairon and Loick Chambon and Louis Serrano and Jean-Emmanuel Haugeard and Matthieu Cord and Nicolas Thome},\n      year={2025},\n      eprint={2506.11136},\n      archivePrefix={arXiv},\n      primaryClass={cs.CV},\n      url={https://arxiv.org/abs/2506.11136}, \n}\n```\n",
+    "description": "\n[![License](https://img.shields.io/pypi/l/napari-convpaint.svg?color=green)](https://github.com/guiwitz/napari-convpaint/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-convpaint.svg?color=green)](https://pypi.org/project/napari-convpaint)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-convpaint.svg?color=green)](https://python.org)\n[![tests](https://github.com/guiwitz/napari-convpaint/workflows/tests/badge.svg)](https://github.com/guiwitz/napari-convpaint/actions)\n[![codecov](https://codecov.io/gh/guiwitz/napari-convpaint/branch/main/graph/badge.svg)](https://codecov.io/gh/guiwitz/napari-convpaint)\n\n\n![overview conv-paint](/images/overview_github.png)\nThis tool, that comes both as a napari plugin and an intuitive Python API, can be used to segment objects or structures in images based on a few examples for the classes provided by the user in form of scribbles onto the image.\n\nFollowing an idea similar to other tools like ilastik, its main strength lies in its capability to use features from basically any model that creates meaningful features describing an image: from neural networks like VGG16 to foundational ViTs such as DINOV2, but also popular models such as Ilastik or Cellpose. This enables the segmentation of virtually any type of image, from simple to complex - without the need of switching and learning new tools.\n\n**Find more information and tutorials in the [docs](https://guiwitz.github.io/napari-convpaint/), the recording of the [presentation at I2K 2025 conference](https://www.youtube.com/watch?v=zoxaWo9J4nE) or read the [paper](https://doi.org/10.1016/j.crmeth.2026.101335).**\n\n![overview conv-paint](/images/network_github.png)\n\n## Installation\n\nYou can install `napari-convpaint` via [pip]:\n\n    pip install napari-convpaint\n\n*Note: If you are running into an error that vispy requires a certain C++ version, you can install vispy via `conda install vispy` and then install `napari-convpaint` via `pip` to avoid this.*\n\nTo install the latest development version:\n\n    pip install git+https://github.com/guiwitz/napari-convpaint.git\n\nThe plugin is also available on the [napari plugin hub](https://napari-hub.org/plugins/napari-convpaint.html), and can be installed via the napari plugin system (`Plugins`>`Install/Uninstall plugins..`> search for `napari-convpaint`).\n\n\n## Example use case: Tracking shark body parts in a movie\nThese are the scribble annotations provided for training:\n![](./images/shark_annot.png)\n\nAnd this is the resulting Convpaint segmentation:\n<video src=\"https://github.com/user-attachments/assets/6a2be1fe-25cc-4af1-9f50-aab9bc4123d9\"></video>\n\nCheck out the [documentation](https://guiwitz.github.io/napari-convpaint/book/Landing.html) or the [paper](https://doi.org/10.1016/j.crmeth.2026.101335) for more usecases!\n\n## API\n\nYou can use the Convpaint API in a fashion very similar to the napari plugin. The `ConvpaintModel` class combines a feature extractor and a classifier model, and holds all the parameters defining the model.\n\nInitialize a `ConvpaintModel` object, train its classifier and use it to segment an image:\n\n```Python\ncp_model = ConvpaintModel(\"dinov2\") # alternatively use vgg, cellpose or gaussian\ncp_model.train(image, annotations)\nsegmentation = cp_model.segment(image)\n```\n\nThere are many other options, such as predicting all classes as separate *probabilities* (see below). Please refer to the [documentation](https://guiwitz.github.io/napari-convpaint/book/Convpaint_api_introduction.html) for more details.\n\n```Python\nprobas = cp_model.predict_probas(image)\n```\n\n## License\n\nDistributed under the terms of the [BSD-3] license, \"napari-convpaint\" is free and open source software, except for the code in the `jafar/` directory, which is adapted from an [Apache License 2.0\u2013licensed project](https://github.com/PaulCouairon/JAFAR), see `jafar/LICENSE`.\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[Cookiecutter]: https://github.com/audreyr/cookiecutter\n[@napari]: https://github.com/napari\n[MIT]: http://opensource.org/licenses/MIT\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[GNU GPL v3.0]: http://www.gnu.org/licenses/gpl-3.0.txt\n[GNU LGPL v3.0]: http://www.gnu.org/licenses/lgpl-3.0.txt\n[Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0\n[Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt\n[cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin\n\n[file an issue]: https://github.com/guiwitz/napari-convpaint/issues\n\n[napari]: https://github.com/napari/napari\n[tox]: https://tox.readthedocs.io/en/latest/\n[pip]: https://pypi.org/project/pip/\n[PyPI]: https://pypi.org/\n\n## Authors\n\nThe idea behind this napari plugin was first developed by [Lucien Hinderling](https://hinderling.github.io) in the group of [Olivier Pertz](https://www.pertzlab.net/), at the Institute of Cell Biology, University of Bern. Pertz lab obtained a CZI napari plugin development grant with the title [\"Democratizing Image Analysis with an Easy-to-Train Classifier\"](https://chanzuckerberg.com/science/programs-resources/imaging/napari/democratizing-image-analysis-with-an-easy-to-train-classifier/) which supported the adaptation of the initial concept as a napari plugin called napari-convpaint. The plugin has been developed by [Guillaume Witz<sup>1</sup>](https://guiwitz.github.io/blog/about/), [Roman Schwob<sup>1,2</sup>](https://github.com/quasar1357) and Lucien Hinderling<sup>2</sup> with much appreciated assistance of [Benjamin Gr\u00e4del<sup>2</sup>](https://x.com/benigraedel), [Maciej Dobrzy\u0144ski<sup>2</sup>](https://macdobry.net), Mykhailo Vladymyrov<sup>1</sup> and Ana Stojiljkovi\u0107<sup>1</sup>.\n\n<sup>1</sup>[Data Science Lab](https://www.dsl.unibe.ch/), University of Bern \\\n<sup>2</sup>[Pertz Lab](https://www.pertzlab.net/), Institute of Cell Biology, University of Bern \n\n## Cite Convpaint\n\nIf you find Convpaint useful in your research, please consider citing our work. Please also cite any Feature Extractor you have used within Convpaint, such as [ilastik](https://github.com/ilastik/ilastik-napari), [cellpose](https://cellpose.readthedocs.io/en/latest/), [DINOv2](https://github.com/facebookresearch/dinov2) or [JAFAR](https://github.com/PaulCouairon/JAFAR).\n\nConvpaint:\n```bibtex\n@article{Hinderling2026,\n\tauthor = {Hinderling, Lucien and Schwob, Roman and Witz, Guillaume and Stojiljkovi\u0107, Ana and Dobrzy\u0144ski, Maciej and Vladymyrov, Mykhailo and Frei, Jo\u00ebl and Gr\u00e4del, Benjamin and Frismantiene, Agne and Pertz, Olivier},\n\ttitle = {Convpaint\u2014Interactive pixel classification using pretrained neural networks},\n\tdoi = {10.1016/j.crmeth.2026.101335},\n\tjournal = {Cell Reports Methods},\n\tpublisher = {Elsevier BV},\n\tvolume = {6},\n\tnumber = {3},\n\tpages = {101335},\n\tyear = {2026},\n\tmonth = mar,\n}\n```\nSuggested citations for feature extractors:\n```bibtex\n@article {Berg2019,\n\tauthor = {Berg, Stuart and Kutra, Dominik and Kroeger, Thorben and Straehle, Christoph N. and Kausler, Bernhard X. and Haubold, Carsten and Schiegg, Martin and Ales, Janez and Beier, Thorsten and Rudy, Markus and Eren, Kemal and Cervantes, Jaime I. and Xu, Buote and Beuttenmueller, Fynn and Wolny, Adrian and Zhang, Chong and Koethe, Ullrich and Hamprecht, Fred A. and Kreshuk, Anna},\n\ttitle = {ilastik: interactive machine learning for (bio)image analysis.},\n\tissn = {1548-7105},\n\turl = {https://doi.org/10.1038/s41592-019-0582-9},\n\tdoi = {10.1038/s41592-019-0582-9},\n\tjournal = {Nature Methods},\n\tpublisher = {Springer Nature},\n\tyear = {2019},\n\tjournal = {Nature Methods},\n}\n```\n```bibtex\n@article {Stringer2021,\n\tauthor = {Stringer, Carsen and Wang, Tim and Michaelos, Michalis and Pachitariu Marius},\n\ttitle = {Cellpose: a generalist algorithm for cellular segmentation.},\n\telocation-id = {s41592-020-01018-x},\n\tdoi = {10.1038/s41592-020-01018-x},\n\tjournal = {Nature Methods},\n\tpublisher = {Springer Nature},\n\tyear = {2021},\n}\n```\n```bibtex\n@article {oquab2024dinov2learningrobustvisual,\n      title={DINOv2: Learning Robust Visual Features without Supervision}, \n      author={Maxime Oquab and Timoth\u00e9e Darcet and Th\u00e9o Moutakanni and Huy Vo and Marc Szafraniec and Vasil Khalidov and Pierre Fernandez and Daniel Haziza and Francisco Massa and Alaaeldin El-Nouby and Mahmoud Assran and Nicolas Ballas and Wojciech Galuba and Russell Howes and Po-Yao Huang and Shang-Wen Li and Ishan Misra and Michael Rabbat and Vasu Sharma and Gabriel Synnaeve and Hu Xu and Herv\u00e9 Jegou and Julien Mairal and Patrick Labatut and Armand Joulin and Piotr Bojanowski},\n      year={2024},\n      eprint={2304.07193},\n      archivePrefix={arXiv},\n      primaryClass={cs.CV},\n      url={https://arxiv.org/abs/2304.07193}\n}\n\n```\n```bibtex\n@misc{couairon2025jafar,\n      title={JAFAR: Jack up Any Feature at Any Resolution}, \n      author={Paul Couairon and Loick Chambon and Louis Serrano and Jean-Emmanuel Haugeard and Matthieu Cord and Nicolas Thome},\n      year={2025},\n      eprint={2506.11136},\n      archivePrefix={arXiv},\n      primaryClass={cs.CV},\n      url={https://arxiv.org/abs/2506.11136}, \n}\n```\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -58,7 +58,7 @@
       "ilastik",
       "qt"
     ],
-    "release_url": "https://pypi.org/project/napari-convpaint/1.1.0/",
+    "release_url": "https://pypi.org/project/napari-convpaint/1.2.0/",
     "requires_dist": [
       "catboost>=1.2.8",
       "dask",
@@ -75,7 +75,7 @@
       "scikit-learn",
       "scikit-image",
       "tifffile",
-      "timm",
+      "timm>=1.0.20",
       "torch",
       "torchvision>=0.13.0",
       "zarr",
@@ -88,13 +88,13 @@
       "ilastik-napari; extra == \"ilastik\"",
       "pyqt5; extra == \"qt\""
     ],
-    "requires_python": ">=3.10",
+    "requires_python": ">=3.11",
     "summary": "A plugin for segmentation by pixel classification using pre-trained neural networks for feature extraction",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 38317561,
+  "last_serial": 42530409,
   "ownership": {
     "organization": null,
     "roles": [
@@ -1138,30 +1138,78 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "1.2.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "6fa58402b62bcb136a66667d2174e937d9f3a12fdd0a29126f8c34957e310336"
+        },
+        "digests": {
+          "blake2b_256": "17e7858fbfd5f6f33cc53cbd8eca7caad288341f64d5034123f50b7787899571",
+          "md5": "681204ed0df1e2fa9b01024ac4bacbe4",
+          "sha256": "8355e0a29cfa6398800ca223cd606b24727cffc2bb1a96d93dedccec24be0ff8"
+        },
+        "downloads": -1,
+        "filename": "napari_convpaint-1.2.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "681204ed0df1e2fa9b01024ac4bacbe4",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 482475,
+        "upload_time": "2026-10-21T07:36:33",
+        "upload_time_iso_8601": "2026-10-21T07:36:33.515211Z",
+        "url": "https://files.pythonhosted.org/packages/17/e7/858fbfd5f6f33cc53cbd8eca7caad288341f64d5034123f50b7787899571/napari_convpaint-1.2.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "01038ee5c89e87e3d89be40c4142287ca6d76d7929eae595bd2fa2276470a48e",
+          "md5": "5c198e0576aae755342ce06946bfd30c",
+          "sha256": "8c27f4bdbe0b376e8d87d43a53703b1b950da8a35974c63da87d1cb1b8716d14"
+        },
+        "downloads": -1,
+        "filename": "napari_convpaint-1.2.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "5c198e0576aae755342ce06946bfd30c",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 32170522,
+        "upload_time": "2026-10-21T07:36:35",
+        "upload_time_iso_8601": "2026-10-21T07:36:35.916052Z",
+        "url": "https://files.pythonhosted.org/packages/01/03/8ee5c89e87e3d89be40c4142287ca6d76d7929eae595bd2fa2276470a48e/napari_convpaint-1.2.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": null,
       "core-metadata": {
-        "sha256": "df47256e4ae4fd527dd32057a9376ba92085c7d2f5da5b46a8f1fbbbc19369b1"
+        "sha256": "6fa58402b62bcb136a66667d2174e937d9f3a12fdd0a29126f8c34957e310336"
       },
       "digests": {
-        "blake2b_256": "cc154ab681415f322062a98eeb7097653ab7ece11bf9ed6fba2db2cb16af6859",
-        "md5": "9596b193d2c79e1f7d08de30ba6eb44c",
-        "sha256": "0616b6b1db77c74eae979ba67c4f42020d05d9eab3344b097158a563df15ae05"
+        "blake2b_256": "17e7858fbfd5f6f33cc53cbd8eca7caad288341f64d5034123f50b7787899571",
+        "md5": "681204ed0df1e2fa9b01024ac4bacbe4",
+        "sha256": "8355e0a29cfa6398800ca223cd606b24727cffc2bb1a96d93dedccec24be0ff8"
       },
       "downloads": -1,
-      "filename": "napari_convpaint-1.1.0-py3-none-any.whl",
+      "filename": "napari_convpaint-1.2.0-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "9596b193d2c79e1f7d08de30ba6eb44c",
+      "md5_digest": "681204ed0df1e2fa9b01024ac4bacbe4",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
-      "requires_python": ">=3.10",
-      "size": 472319,
-      "upload_time": "2026-06-23T15:22:01",
-      "upload_time_iso_8601": "2026-06-23T15:22:01.715848Z",
-      "url": "https://files.pythonhosted.org/packages/cc/15/4ab681415f322062a98eeb7097653ab7ece11bf9ed6fba2db2cb16af6859/napari_convpaint-1.1.0-py3-none-any.whl",
+      "requires_python": ">=3.11",
+      "size": 482475,
+      "upload_time": "2026-10-21T07:36:33",
+      "upload_time_iso_8601": "2026-10-21T07:36:33.515211Z",
+      "url": "https://files.pythonhosted.org/packages/17/e7/858fbfd5f6f33cc53cbd8eca7caad288341f64d5034123f50b7787899571/napari_convpaint-1.2.0-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
@@ -1169,21 +1217,21 @@
       "comment_text": null,
       "core-metadata": false,
       "digests": {
-        "blake2b_256": "f516f95d459b385baf2f2986e2b9e64b58d6bc280edc72439b4d774c08246986",
-        "md5": "66806c5c078da0fe9f4c214775d474f4",
-        "sha256": "18c05d2e6b025972c40ba051c341afc0dc958f5b8e1a57ee23f54e96b4cb8d70"
+        "blake2b_256": "01038ee5c89e87e3d89be40c4142287ca6d76d7929eae595bd2fa2276470a48e",
+        "md5": "5c198e0576aae755342ce06946bfd30c",
+        "sha256": "8c27f4bdbe0b376e8d87d43a53703b1b950da8a35974c63da87d1cb1b8716d14"
       },
       "downloads": -1,
-      "filename": "napari_convpaint-1.1.0.tar.gz",
+      "filename": "napari_convpaint-1.2.0.tar.gz",
       "has_sig": false,
-      "md5_digest": "66806c5c078da0fe9f4c214775d474f4",
+      "md5_digest": "5c198e0576aae755342ce06946bfd30c",
       "packagetype": "sdist",
       "python_version": "source",
-      "requires_python": ">=3.10",
-      "size": 32159497,
-      "upload_time": "2026-06-23T15:22:04",
-      "upload_time_iso_8601": "2026-06-23T15:22:04.921430Z",
-      "url": "https://files.pythonhosted.org/packages/f5/16/f95d459b385baf2f2986e2b9e64b58d6bc280edc72439b4d774c08246986/napari_convpaint-1.1.0.tar.gz",
+      "requires_python": ">=3.11",
+      "size": 32170522,
+      "upload_time": "2026-10-21T07:36:35",
+      "upload_time_iso_8601": "2026-10-21T07:36:35.916052Z",
+      "url": "https://files.pythonhosted.org/packages/01/03/8ee5c89e87e3d89be40c4142287ca6d76d7929eae595bd2fa2276470a48e/napari_convpaint-1.2.0.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
