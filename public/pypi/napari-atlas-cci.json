@@ -17,7 +17,7 @@
       "Programming Language :: Python :: 3.12",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "# napari atlas cci\n\nNapari plugin to give a GUI interface to the cci atlas tool.\n\nThis is a wrapper around the [cci atlas](https://github.com/CCI-GU-Sweden/ATLAS) package.\n\n## Installation\n\nA standalone version of napari is available at [napari.org](https://napari.org/dev/tutorials/fundamentals/installation_bundle_conda.html), and the plugin is available on the [napari hub](https://napari-hub.org/plugins/napari-omero-downloader-cci.html). Just follow the installation instruction from napari. You can install the plugin from the plugin manager.\n\nIt is also possible to install the plugin from [source code](https://github.com/CCI-GU-Sweden/napari-atlas-cci) or from pip with `pip install napari-atlas-cci`. In this case, be sure to isolate the installation in a dedicated environment with napari.\n\n## How to use\n\nBrowse and load an atlas project. An atlas project is composed of a series of S_ folder, each containing 1 or multiple tiff images.\n\n![Initial status](assets/Unprocessed_folder.png)\n\n### 2D stitching\n\nFor 2D stitching, it is possible to process one, multiple or all S_ folder. This will stitch images in a S_ folder in one tiff image. The number of images being processes at the same time is dependent to the number of core in your PC. Be carefull on RAM consumption.\n\n![On going stitching](assets/Stitching_ongoing.png)\n\nAfter processing, you can select one S_ folder and display the image in Napari.\n\n### Z alignement\n\nIt is only possible to process to the z-alignement if all S_ folder has been stitched.\nThe alignement is required to run first a on downsampled image. This downsampling factor can be control in the Options.\n\nOnce the initial alignement is completed, a preview image is display. Please confirm that the alignement is correct through the z volume.\n\n![Initial align preview](<assets/Initial align preview.png>)\n\nTo adjust alignment, choose a correction mode and click **Enter Correction**.\nThe default, **Trace: one point per plane**, creates a single **Reference Points**\nlayer. Follow the same feature through consecutive Z planes, placing one point\nper plane, consistently forward or backward. Points are used in the order you\nenter them: `[P0, P1, P2]` creates the pairs `P0 \u2192 P1` and `P1 \u2192 P2`.\n\nA gap in Z starts a separate trace. For example, points on planes\n`[2, 3, 4, 8, 9, 10]` create four pairs, never a pair from plane 4 to plane 8.\nEach trace needs at least two points. There can be only one reference point per\nplane across all traces. Duplicate planes, isolated points, and invalid ordering\nare rejected before correction starts; edit the points and try again.\n\nFor the original workflow, choose **Explicit point pairs**. This creates\n**Reference Points** and **Adjustable Points**. Place matching landmarks in the\nsame order in both layers, with each reference point one Z slice before its\nadjustable point. Both layers must contain the same number of points. The mode\nselector determines which workflow is used; tracing ignores any existing\nAdjustable Points layer.\n\nOnce done, click on the \"Apply correction\" button. It will reprocess the downsample image, then display the corrected zstack. Check that the correction happen.\n\nWIP: Small video Youtube to display alignement correction.\n\nOnce the data is aligned, it can be processed for the \"Final Z Alignement\". This step can be time consuming based on the size of the dataset, so please, be patient.\n\n![Final alignment](assets/Final_align_view.png)\n\n### Options and saved preferences\n\nThe **Options...** dialog includes lower and upper saturation percentiles for\nalignment processing. Defaults are **1.0** and **99.95**; values must satisfy\n`0 \u2264 lower < upper \u2264 100`. They apply to saved previews, previews regenerated\nafter manual correction, and full-resolution aligned outputs. Changing them\ndoes not modify outputs that have already been generated.\n\nClick **OK** to apply and save the Options values; **Cancel** leaves them\nunchanged. Thread count, maximum stitching shift, alignment downsampling,\nCZI compression, and both percentiles are restored next time the plugin opens.\nAxial pixel size and its explicit unit are also saved when the edit is finished\nor the unit changes. Thread count is limited to one fewer than the available CPU\ncores (with a minimum of one).\n\nPreferences are saved as readable JSON in\n`<Qt GenericConfigLocation>/napari-atlas-cci/settings.json`, under the user's\nAppData directory on Windows. They apply across projects on that computer.\nMissing preferences use the defaults; invalid files produce feedback and fall\nback to defaults. Upload tokens and project paths are excluded. This implements\nlocal user preferences alongside [#12](https://github.com/CCI-GU-Sweden/napari-atlas-cci/issues/12);\nportable project configurations and historical run snapshots described in\n[#14](https://github.com/CCI-GU-Sweden/napari-atlas-cci/issues/14) remain separate work.\n\n### Export and upload\n\nAll intermediate files are stored in the root folder of the Atlas project. Individual planes are stored as tiff images, will the alignement is stored as a pickle pandas table. The z aligned files (both the downsample and the final ones) are saved in a ome-zarr format.\n\nFor easier data manipulation, it is possible to export the final alignement as a czi file. The other option is to upload the data on [Webknossos](https://webknossos.org/), which is great for both visualization and fine z-alignement. To do this upload, it is required to have a account on webknossos and to indicate your token for the upload.\n\n![Upload to webknossos](assets/upload_to_wkn.png)\n\n![webknossos ulpoad success](<assets/webknossos upload.png>)\n\n## Troubleshooting\n\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n",
+    "description": "# napari atlas cci\n\nNapari plugin to give a GUI interface to the cci atlas tool.\n\nThis is a wrapper around the [cci atlas](https://github.com/CCI-GU-Sweden/ATLAS) package.\n\n## Installation\n\nA standalone version of napari is available at [napari.org](https://napari.org/dev/tutorials/fundamentals/installation_bundle_conda.html), and the plugin is available on the [napari hub](https://napari-hub.org/plugins/napari-omero-downloader-cci.html). Just follow the installation instruction from napari. You can install the plugin from the plugin manager.\n\nIt is also possible to install the plugin from [source code](https://github.com/CCI-GU-Sweden/napari-atlas-cci) or from pip with `pip install napari-atlas-cci`. In this case, be sure to isolate the installation in a dedicated environment with napari.\n\n## How to use\n\nBrowse and load an atlas project. An atlas project is composed of a series of S_ folder, each containing 1 or multiple tiff images.\n\n![Initial status](assets/Unprocessed_folder.png)\n\n### 2D stitching\n\nFor 2D stitching, it is possible to process one, multiple or all S_ folder. This will stitch images in a S_ folder in one tiff image. The number of images being processes at the same time is dependent to the number of core in your PC. Be carefull on RAM consumption.\n\n![On going stitching](assets/Stitching_ongoing.png)\n\nAfter processing, you can select one S_ folder and display the image in Napari.\n\n### Z alignement\n\nIt is only possible to process to the z-alignement if all S_ folder has been stitched.\nThe alignement is required to run first a on downsampled image. This downsampling factor can be control in the Options.\n\nOnce the initial alignement is completed, a preview image is display. Please confirm that the alignement is correct through the z volume.\n\n![Initial align preview](<assets/Initial align preview.png>)\n\nTo adjust alignment, choose a correction mode and click **Enter Correction**.\nThe default, **Trace: one point per plane**, creates a single **Reference Points**\nlayer. Follow the same feature through consecutive Z planes, placing one point\nper plane, consistently forward or backward. Points are used in the order you\nenter them: `[P0, P1, P2]` creates the pairs `P0 \u2192 P1` and `P1 \u2192 P2`.\n\nA gap in Z starts a separate trace. For example, points on planes\n`[2, 3, 4, 8, 9, 10]` create four pairs, never a pair from plane 4 to plane 8.\nEach trace needs at least two points. There can be only one reference point per\nplane across all traces. Duplicate planes, isolated points, and invalid ordering\nare rejected before correction starts; edit the points and try again.\n\nFor the original workflow, choose **Explicit point pairs**. This creates\n**Reference Points** and **Adjustable Points**. Place matching landmarks in the\nsame order in both layers, with each reference point one Z slice before its\nadjustable point. Both layers must contain the same number of points. The mode\nselector determines which workflow is used; tracing ignores any existing\nAdjustable Points layer.\n\nOnce done, click on the \"Apply correction\" button. It will reprocess the downsample image, then display the corrected zstack. Check that the correction happen.\n\nWIP: Small video Youtube to display alignement correction.\n\nOnce the data is aligned, it can be processed for the \"Final Z Alignement\". This step can be time consuming based on the size of the dataset, so please, be patient.\n\n![Final alignment](assets/Final_align_view.png)\n\n### Options and saved preferences\n\nThe **Options...** dialog includes lower and upper saturation percentiles for\nalignment processing. Defaults are **1.0** and **99.95**; values must satisfy\n`0 \u2264 lower < upper \u2264 100`. They apply to saved previews, previews regenerated\nafter manual correction, and full-resolution aligned outputs. Changing them\ndoes not modify outputs that have already been generated.\n\nClick **OK** to apply and save the Options values; **Cancel** leaves them\nunchanged. Thread count, maximum stitching shift, alignment downsampling,\nCZI compression, and both percentiles are restored next time the plugin opens.\nAxial pixel size and its explicit unit are also saved when the edit is finished\nor the unit changes. Thread count is limited to one fewer than the available CPU\ncores (with a minimum of one).\n\nPreferences are saved as readable JSON in\n`<Qt GenericConfigLocation>/napari-atlas-cci/settings.json`, under the user's\nAppData directory on Windows. They apply across projects on that computer.\nMissing preferences use the defaults; invalid files produce feedback and fall\nback to defaults. Upload tokens and project paths are excluded. This implements\nlocal user preferences alongside [#12](https://github.com/CCI-GU-Sweden/napari-atlas-cci/issues/12);\nportable project configurations and historical run snapshots described in\n[#14](https://github.com/CCI-GU-Sweden/napari-atlas-cci/issues/14) remain separate work.\n\n### Export and upload\n\nAll intermediate files are stored in the root folder of the Atlas project. Individual planes are stored as tiff images, will the alignement is stored as a pickle pandas table. The z aligned files (both the downsample and the final ones) are saved in a ome-zarr format.\n\nFor easier data manipulation, it is possible to export the final alignement as a czi file. The other option is to upload the data on [Webknossos](https://webknossos.org/), which is great for both visualization and fine z-alignement. To do this upload, it is required to have a account on webknossos and to indicate your token for the upload.\n\n![Upload to webknossos](assets/upload_to_wkn.png)\n\n![webknossos ulpoad success](<assets/webknossos upload.png>)\n\nAfter fine alignment in WebKnossos, use **Download from webknossos...** at the\nbottom of the plugin. Enter your token, the new aligned dataset's ID or full\ndataset URL, an output filename, and the destination folder (defaults to the\ncurrent project). No local aligned output is required to use this button.\n\nThe download reads the full-resolution `color` layer one Z plane at a time and\nwrites that plane as CZI tiles of at most 1024 \u00d7 1024 pixels. All channels are\npreserved, XY axes are converted to CZI order, and voxel sizes are copied from\nthe remote dataset. Source bounding-box offsets are rebased to CZI coordinates\nstarting at zero. CZI compression follows **Options...** at download start.\nAn existing destination file is never overwritten; choose a new filename.\nIf a transfer fails after writing starts, a partial CZI may remain at that path.\n\nLocal **Export to CZI** uses the same tiled writer and reads one aligned Zarr\nplane at a time, without loading the entire volume. Downloads run in the existing\nbackground export worker, with an activity indicator and completion/error\nnotifications. Tokens are used for the request and are not saved in preferences.\n\n## Troubleshooting\n\n\n## Contributing\n\nContributions are very welcome. Tests can be run with [tox], please ensure\nthe coverage at least stays the same before you submit a pull request.\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -48,7 +48,7 @@
       "testing",
       "dev"
     ],
-    "release_url": "https://pypi.org/project/napari-atlas-cci/1.1.7/",
+    "release_url": "https://pypi.org/project/napari-atlas-cci/1.1.8/",
     "requires_dist": [
       "numpy",
       "qtpy",
@@ -69,11 +69,11 @@
     ],
     "requires_python": "<3.13,>=3.11",
     "summary": "A plugin that allows napari to run atlas stitching and alignement tool",
-    "version": "1.1.7",
+    "version": "1.1.8",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 42581965,
+  "last_serial": 42596622,
   "ownership": {
     "organization": null,
     "roles": [
@@ -659,30 +659,78 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "1.1.8": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "e84e668029a00b36e816de00aa8b747f5d9404ca146afc9b3c1e27b403777682"
+        },
+        "digests": {
+          "blake2b_256": "ccaf2eb04f4e67483af00f7542d5017e355e193f7846372012ded8a3b368f60b",
+          "md5": "fb32e2a0ee84e84c5dab65f227d84cc2",
+          "sha256": "1466ccaf30cf9aa941c0afa7a8d999ef96b1a49428ef356c53cb3008e8af0863"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.1.8-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "fb32e2a0ee84e84c5dab65f227d84cc2",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.11",
+        "size": 32378,
+        "upload_time": "2026-10-22T14:09:47",
+        "upload_time_iso_8601": "2026-10-22T14:09:47.590019Z",
+        "url": "https://files.pythonhosted.org/packages/cc/af/2eb04f4e67483af00f7542d5017e355e193f7846372012ded8a3b368f60b/napari_atlas_cci-1.1.8-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "dcfd511e9153cf460d9ecba893388e545dd70158a3730041595e3fa781ec536a",
+          "md5": "787570f329d76fa90507b79fd348380e",
+          "sha256": "924629481cb05dfbdb1f718a9aa7bae894832ecd0be7176b542d6a2bb878579e"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.1.8.tar.gz",
+        "has_sig": false,
+        "md5_digest": "787570f329d76fa90507b79fd348380e",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.11",
+        "size": 2312686,
+        "upload_time": "2026-10-22T14:09:48",
+        "upload_time_iso_8601": "2026-10-22T14:09:48.934710Z",
+        "url": "https://files.pythonhosted.org/packages/dc/fd/511e9153cf460d9ecba893388e545dd70158a3730041595e3fa781ec536a/napari_atlas_cci-1.1.8.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": null,
       "core-metadata": {
-        "sha256": "1bbb0adbf592f86ff6548573ba417b45f20a26ff0b8400df92f70a7a93c0020a"
+        "sha256": "e84e668029a00b36e816de00aa8b747f5d9404ca146afc9b3c1e27b403777682"
       },
       "digests": {
-        "blake2b_256": "e64f16585e5d2994d44909092b2f2b4d7144923821fc586ce502e8b3b9e5d709",
-        "md5": "97e887610edeee85acdafae5a1e6fa57",
-        "sha256": "bc4f396a7c8ef5528058f53b885649581d8943ea328311cb4268351b5dac223c"
+        "blake2b_256": "ccaf2eb04f4e67483af00f7542d5017e355e193f7846372012ded8a3b368f60b",
+        "md5": "fb32e2a0ee84e84c5dab65f227d84cc2",
+        "sha256": "1466ccaf30cf9aa941c0afa7a8d999ef96b1a49428ef356c53cb3008e8af0863"
       },
       "downloads": -1,
-      "filename": "napari_atlas_cci-1.1.7-py3-none-any.whl",
+      "filename": "napari_atlas_cci-1.1.8-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "97e887610edeee85acdafae5a1e6fa57",
+      "md5_digest": "fb32e2a0ee84e84c5dab65f227d84cc2",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": "<3.13,>=3.11",
-      "size": 29436,
-      "upload_time": "2026-10-22T07:58:33",
-      "upload_time_iso_8601": "2026-10-22T07:58:33.331720Z",
-      "url": "https://files.pythonhosted.org/packages/e6/4f/16585e5d2994d44909092b2f2b4d7144923821fc586ce502e8b3b9e5d709/napari_atlas_cci-1.1.7-py3-none-any.whl",
+      "size": 32378,
+      "upload_time": "2026-10-22T14:09:47",
+      "upload_time_iso_8601": "2026-10-22T14:09:47.590019Z",
+      "url": "https://files.pythonhosted.org/packages/cc/af/2eb04f4e67483af00f7542d5017e355e193f7846372012ded8a3b368f60b/napari_atlas_cci-1.1.8-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
@@ -690,21 +738,21 @@
       "comment_text": null,
       "core-metadata": false,
       "digests": {
-        "blake2b_256": "2a74b29bc6e50e6ce54a25ca5d6789abec1cf5f55fe93e8fc3b52addf4e7a189",
-        "md5": "9114eed8f5db0012797e8ac5afd10903",
-        "sha256": "f4a23d17665baf35e009f5de88b7da5466afea19709f75da9119705a8e96d300"
+        "blake2b_256": "dcfd511e9153cf460d9ecba893388e545dd70158a3730041595e3fa781ec536a",
+        "md5": "787570f329d76fa90507b79fd348380e",
+        "sha256": "924629481cb05dfbdb1f718a9aa7bae894832ecd0be7176b542d6a2bb878579e"
       },
       "downloads": -1,
-      "filename": "napari_atlas_cci-1.1.7.tar.gz",
+      "filename": "napari_atlas_cci-1.1.8.tar.gz",
       "has_sig": false,
-      "md5_digest": "9114eed8f5db0012797e8ac5afd10903",
+      "md5_digest": "787570f329d76fa90507b79fd348380e",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": "<3.13,>=3.11",
-      "size": 2307423,
-      "upload_time": "2026-10-22T07:58:34",
-      "upload_time_iso_8601": "2026-10-22T07:58:34.784389Z",
-      "url": "https://files.pythonhosted.org/packages/2a/74/b29bc6e50e6ce54a25ca5d6789abec1cf5f55fe93e8fc3b52addf4e7a189/napari_atlas_cci-1.1.7.tar.gz",
+      "size": 2312686,
+      "upload_time": "2026-10-22T14:09:48",
+      "upload_time_iso_8601": "2026-10-22T14:09:48.934710Z",
+      "url": "https://files.pythonhosted.org/packages/dc/fd/511e9153cf460d9ecba893388e545dd70158a3730041595e3fa781ec536a/napari_atlas_cci-1.1.8.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
