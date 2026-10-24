@@ -1,0 +1,96 @@
+{
+  "name": "napari-flopa",
+  "display_name": "FLOPA",
+  "visibility": "public",
+  "icon": null,
+  "categories": [],
+  "schema_version": "0.3.0",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-flopa.make_flim_widget",
+        "title": "Open FLIM Analysis",
+        "python_name": "napari_flopa.ui.main_widget:FlimWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "napari-flopa.make_flim_widget",
+        "display_name": "FLIM Analysis",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configurations": {}
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "napari-flopa",
+    "version": "0.1.1",
+    "dynamic": [
+      "license-file"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "Flim (fluorescence lifetime) image data opening, processing and analysis",
+    "description": "# napari-flopa\n\n[![License MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)\n[![npe2](https://img.shields.io/badge/plugin-npe2-blue)](https://napari.org/stable/plugins/index.html)\n[![PyPI](https://img.shields.io/pypi/v/napari-flopa.svg?color=green)](https://pypi.org/project/napari-flopa)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-flopa.svg?color=green)](https://python.org)\n\n\n> **Work in progress** — the plugin is functional but under active development. Expect breaking changes between versions.\n\nA [napari] plugin for opening, processing and analysing FLIM (Fluorescence Lifetime Imaging Microscopy) data from `.ptu` files.\n\n## Features\n\n- **Process PTU** — reconstruct `.ptu` files into xarray datasets (photon count, mean arrival time, phasor, TCSPC histogram); supports multi-frame, multi-sequence and multi-detector data\n- **FLIM View** — interactive display with histogram contrast sliders for intensity and lifetime; FLIM RGB composite; export to TIFF\n- **Phasor** — phasor plot with calibration, smoothing, per-object or per-pixel scatter, monoexponential lifetime semi-circle overlay\n- **Decay** — TCSPC decay plot with aggregation, normalisation and log scale\n- **Batch** — process a folder of `.ptu` files (opt. with masks) with a shared scan config and export images, phasor tables and decay tables; config saved/loaded as json\n\n## Requirements\n\n- Python ≥ 3.11\n- [napari] with a Qt backend\n\n## Installation\n\nInstall into the environment where napari runs. Pick one:\n\n\n**From PyPI**\n\n```bash\npip install napari-flopa            # plugin only, for an existing napari install\npip install \"napari-flopa[all]\"     # plugin + napari + Qt\n```\n\nUse the plain (non-`[all]`) form when you already have napari installed.\n\n**From source**\n\n```bash\ngit clone https://github.com/cockovaz/napari-flopa\ncd napari-flopa\npip install -e \".[all]\"      # editable install, napari + Qt included\n```\n\nThe `napari_flopa.core` package (I/O, reconstruction, image and phasor maths) imports\nno GUI libraries, so it can be used from a plain script or notebook without napari.\n\n## Getting started\n\n**1. Open the plugin.** Start napari and choose **Plugins → FLOPA → FLIM Analysis**.\n\n**2. Load a file.** In the **File** tab, click **Load Demo** for the bundled demo\ndataset, or **Read PTU…** for your own. The header is parsed and the scan parameters\nare filled in; the coloured dot beside each field says where its value came from —\nfile metadata, a default, an estimate, or your own edit.\n\n**3. Set the scan geometry.** Frames, lines, pixels, sequences and accumulations must match how the image\nwas actually acquired, because the raw file is a stream of photon and marker events\nwith no image shape of its own. The header supplies what it knows; fill in the rest.\n**Analyze Markers** inspects the marker events and suggests dimensions.\n\n**4. Reconstruct.** Pick what to compute under **Output**:\n\n- *Intensity* — photon-count image only, the fastest\n- *Int. + τ* — adds the mean arrival time (lifetime) image\n- *All* — adds phasor coordinates and the TCSPC decay (enables the\n  **Phasor** and **Decay** tabs)\n\n**5. Look at the result.** The **FLIM View** dock opens at the bottom, with a\nhistogram for Intensity and one for Lifetime. Each has two sliders: the **cyan** one\nsets the display contrast, the **red** one a threshold range. **→ Generate Int./Lt.\nMask** turns that range into a napari Labels layer. Intensity, lifetime and the FLIM RGB composite can be exported from here.\n\n**6. Analyse.** **Phasor** plots g/s per object or per pixel — apply a calibration\nfactor, pick a Labels layer to colour by object or to restrict the plot to a region.\n**Decay** plots the TCSPC curves, with **From View** to follow the frame/detector\ncurrently shown in FLIM View.\n\n**7. Reuse the settings.** Use **Batch** tab to run a whole folder of `.ptu` files with identical settings.\n\n## Data model\n\nReading and reconstructing `.ptu` files is done by **[tttrkit]** (imported as\n`tttrkit.ptuio`), a separate package developed alongside this plugin. It is a\nnormal dependency and is installed automatically — see [tttrkit] for the raw\nTTTR parsing, scan reconstruction and phasor maths that sit underneath the GUI.\n\nReconstruction produces a single `xarray.Dataset` holding up to five variables.\n\nFour of them are images and share the dimensions\n`(frame, sequence, line, pixel, channel)`: `photon_count`, `mean_arrival_time`,\n`phasor_g` and `phasor_s`. Here `line` and `pixel` are the spatial axes and\n`channel` is the detector axis.\n\nThe fifth, `tcspc_histogram`, is the global decay: its\ndimensions are `(frame, channel, tcspc_channel)` with no spatial axes.\n\n\n\n## Roadmap\n\nPlanned updates:\n\n- **Interactive phasor** — lasso a region of the plot and paint the matching pixels\n  back into the image as a napari Labels layer\n- **Decay fitting** — extract lifetimes from the TCSPC curves\n- **Region-wise decay** — curves per mask and per object, not only per frame/detector\n- **Wider import support** — `.ptu` from further scanning systems, and other formats\n  (`.sdt`, …)\n\n\n\n## License\n\nDistributed under the terms of the [MIT] license.\n`napari-flopa` is free and open source software.\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[tttrkit]: https://github.com/panekdal/tttrkit\n[MIT]: http://opensource.org/licenses/MIT\n[file an issue]: https://github.com/cockovaz/napari-flopa/issues\n[issues]: https://github.com/cockovaz/napari-flopa/issues\n[pip]: https://pypi.org/project/pip/\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": null,
+    "download_url": null,
+    "author": null,
+    "author_email": "Zuzana Cockova <cockovaz@natur.cuni.cz>",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "The MIT License (MIT)\n\nCopyright (c) 2025 Zuzana Cockova\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in\nall copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\nTHE SOFTWARE.\n",
+    "classifier": [
+      "Development Status :: 3 - Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "License :: OSI Approved :: MIT License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "requires_dist": [
+      "numpy",
+      "qtpy",
+      "xarray",
+      "scipy",
+      "matplotlib>3.6",
+      "superqt",
+      "tttrkit",
+      "napari[all]; extra == \"all\""
+    ],
+    "requires_python": ">=3.11",
+    "requires_external": null,
+    "project_url": [
+      "Homepage, https://github.com/cockovaz/napari-flopa",
+      "Bug Tracker, https://github.com/cockovaz/napari-flopa/issues",
+      "Source Code, https://github.com/cockovaz/napari-flopa"
+    ],
+    "provides_extra": [
+      "all"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}
