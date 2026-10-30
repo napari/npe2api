@@ -14,7 +14,7 @@
       "Programming Language :: Python :: 3.13",
       "Programming Language :: Python :: 3.14"
     ],
-    "description": "# napari-cellposesam <img src=\"docs/_static/favicon.ico\" width=\"50\" title=\"cellpose\" alt=\"cellpose\" align=\"right\" vspace = \"50\">\n\n[![Documentation Status](https://readthedocs.org/projects/napari-cellposesam/badge/?version=latest)](https://napari-cellposesam.readthedocs.io/en/latest/)\n[![tests](https://github.com/jeskowagner/napari-cellposesam/actions/workflows/test_and_deploy.yml/badge.svg)](https://github.com/jeskowagner/napari-cellposesam/actions)\n[![PyPI version](https://img.shields.io/pypi/v/napari-cellposesam)](https://pypi.org/project/napari-cellposesam/)\n[![Python version](https://img.shields.io/pypi/pyversions/napari-cellposesam)](https://pypi.org/project/napari-cellposesam/)\n[![License](https://img.shields.io/pypi/l/napari-cellposesam.svg?color=green)](https://github.com/jeskowagner/napari-cellposesam/raw/main/LICENSE)\n[![website](https://img.shields.io/website?url=https%3A%2F%2Fwww.cellpose.org)](https://www.cellpose.org)\n\nA [napari] plugin for cell segmentation with [cellpose], including Cellpose-SAM (cellpose 4).\n\nThis is a fork of [MouseLand/cellpose-napari](https://github.com/MouseLand/cellpose-napari), the original plugin by Carsen Stringer. It adds:\n\n- support for Cellpose-SAM (`cpsam`) and Cellpose3 models in the same\n  environment and UI\n- z/channel axis selection for 3D and 4D images\n- compatibility with new napari versions\n\nThe cellpose code was written by Carsen Stringer and Marius Pachitariu. To learn about Cellpose, read the [**paper**](https://t.co/kBMXmPp3Yn?amp=1) or watch this [**talk**](https://t.co/JChCsTD0SK?amp=1).\n\nFor problems with this plugin, open an [issue](https://github.com/jeskowagner/napari-cellposesam/issues). For problems with cellpose itself, open an [issue](https://github.com/MouseLand/cellpose/issues) on the cellpose repo.\n\nIf you use this plugin, please cite the [cellpose paper](https://www.nature.com/articles/s41592-020-01018-x), the Cellpose3 paper if you use the Cellpose3 models, and the Cellpose-SAM paper if you use the `cpsam` models (see the [cellpose repo](https://github.com/MouseLand/cellpose) for the references):\n\n```bibtex\n@article{stringer2021cellpose,\n  title={Cellpose: a generalist algorithm for cellular segmentation},\n  author={Stringer, Carsen and Wang, Tim and Michaelos, Michalis and Pachitariu, Marius},\n  journal={Nature Methods},\n  volume={18},\n  number={1},\n  pages={100--106},\n  year={2021},\n  publisher={Nature Publishing Group}\n}\n```\n\n![napari-cellposesam segmenting the 2D sample image](https://raw.githubusercontent.com/jeskowagner/napari-cellposesam/main/docs/_static/gui.png)\n\n## Installation\n\nRequires Python 3.11 or newer. We recommend a fresh environment, e.g. with conda:\n\n```\nconda create -n napari-cellposesam python=3.12\nconda activate napari-cellposesam\n```\n\nInstall napari and the plugin with pip:\n\n```\npip install \"napari[all]\" napari-cellposesam\n```\n\nOr install the plugin from the napari plugin manager (Plugins > Install/Uninstall Plugins).\n\nTo install the latest development version from GitHub:\n\n```\npip install git+https://github.com/jeskowagner/napari-cellposesam\n```\n\nIf you have issues installing cellpose, see the [cellpose installation docs](https://cellpose.readthedocs.io/en/latest/installation.html).\n\n### Cellpose3 models\n\nThe plugin installs cellpose 4, which provides the Cellpose-SAM and CPDINO models. The Cellpose3 models (`cyto3`, `nuclei`, etc.) are in the same model list. They need cellpose 3, which the plugin offers to download the first time you run one. It downloads cellpose 3.1.1.3 into a private folder without touching the installed cellpose, and installs [numba](https://numba.pydata.org) if it is missing. The plugin then picks the right cellpose version for each model, including custom models.\n\nThe private copy is in `~/.cellpose/napari-cellposesam/cellpose-3.1.1.3-format1/_cellpose3` (`~` is your user folder, also on Windows). To keep it elsewhere, set the environment variable `NAPARI_CELLPOSESAM_CACHE` to a folder that then takes the place of `~/.cellpose/napari-cellposesam`. To reset it, delete `~/.cellpose/napari-cellposesam` (or the folder `NAPARI_CELLPOSESAM_CACHE` names): the plugin offers to download cellpose 3 again the next time you run a Cellpose3 model.\n\nTo run the same download ahead of time, so that napari never prompts:\n\n```\npython -m napari_cellposesam fetch-cellpose3\n```\n\nThe download goes to the home folder of whoever runs the command. For an environment shared by several users, set `NAPARI_CELLPOSESAM_CACHE` to a shared folder, both when running the command and for everyone who uses the environment. Users only need read access to it.\n\nBoth need internet access and pip in the environment. If the environment has no pip, as in some uv-created ones, the plugin asks you to install it first.\n\nDon't install `cellpose-napari` next to this plugin. It lists the Cellpose3\nmodels, but with cellpose 4 installed it ignores the selected model and runs\nCellpose-SAM, thus breaking it.\n\n### GPU\n\ncellpose runs on CPU, NVIDIA GPUs (CUDA) and Apple silicon (MPS). The plugin uses a GPU automatically if torch can see one, for both the cellpose 4 and the Cellpose3 models.\n\n- **Apple silicon:** nothing to do, the torch from PyPI supports MPS.\n- **NVIDIA on Linux:** the torch from PyPI is a CUDA build, so it usually works as installed.\n- **NVIDIA on Windows:** the torch from PyPI is CPU-only. In a fresh environment, install torch and torchvision from the PyTorch index first, with the CUDA version the [PyTorch selector](https://pytorch.org/get-started/locally/) gives for your driver, then napari and the plugin, e.g.:\n\n  ```\n  pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126\n  pip install \"napari[all]\" napari-cellposesam\n  ```\n\n  If the plugin is already installed, reinstall torch and torchvision together instead:\n\n  ```\n  pip install --force-reinstall --no-deps torch torchvision --index-url https://download.pytorch.org/whl/cu126\n  ```\n\nCheck that torch sees the GPU:\n\n```\npython -c \"import torch; print('cuda', torch.cuda.is_available(), 'mps', torch.backends.mps.is_available())\"\n```\n\n### Optional: CPDINO models\n\nThe CPDINO models need [DINOv3](https://github.com/facebookresearch/dinov3), which is not on PyPI and so is not installed automatically. The plugin offers to install it when you run segmentation with a CPDINO model, or install it yourself:\n\n```\npip install git+https://github.com/facebookresearch/dinov3\n```\n\nWithout it, cellpose logs a `Could not import CPDINO` warning on startup. This is harmless if you don't use those models.\n\n### Upgrading\n\n```\npip install --upgrade napari-cellposesam cellpose\n```\n\nIf you installed a CUDA build of torch, upgrade torch the same way you installed it, or pip may replace it with the CPU-only build.\n\nComing from 0.1.x with a separate cellpose 3 environment (`cellpose<4`): from 0.2.0 that environment is no longer needed, since one environment runs both the Cellpose3 and the cellpose 4 models. Upgrading it with the command above moves it to cellpose 4, and the plugin downloads cellpose 3 the first time you run a Cellpose3 model.\n\n## Usage\n\nOpen napari with the plugin docked:\n\n```\nnapari -w napari-cellposesam\n```\n\nSample data is available under File > Open Sample > napari-cellposesam.\n\nDetailed usage is described in the [documentation](https://napari-cellposesam.readthedocs.io/).\n\n## Contributing\n\nContributions are welcome. For development, clone the repo and install it in editable mode with the test dependencies:\n\n```\npip install -e \".[testing]\"\npytest\n```\n\n## License\n\nDistributed under the terms of the [BSD-3] license, \"napari-cellposesam\" is free and open source software.\n\n## Dependencies\n\nnapari-cellposesam relies on:\n- [napari](https://napari.org)\n- [magicgui](https://napari.org/magicgui/)\n- [cellpose], which in turn uses [torch](https://pytorch.org/), [numpy](https://numpy.org/), [scipy](https://scipy.org/), [opencv](https://opencv.org/) and others\n- [numba](https://numba.pydata.org), which the plugin installs the first time you run a Cellpose3 model\n\n[napari]: https://github.com/napari/napari\n[cellpose]: https://github.com/MouseLand/cellpose\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n",
+    "description": "# napari-cellposesam <img src=\"docs/_static/favicon.ico\" width=\"50\" title=\"cellpose\" alt=\"cellpose\" align=\"right\" vspace = \"50\">\n\n[![Documentation Status](https://readthedocs.org/projects/napari-cellposesam/badge/?version=latest)](https://napari-cellposesam.readthedocs.io/en/latest/)\n[![tests](https://github.com/DBI-INFRA/napari-cellposesam/actions/workflows/test_and_deploy.yml/badge.svg)](https://github.com/DBI-INFRA/napari-cellposesam/actions)\n[![PyPI version](https://img.shields.io/pypi/v/napari-cellposesam)](https://pypi.org/project/napari-cellposesam/)\n[![Python version](https://img.shields.io/pypi/pyversions/napari-cellposesam)](https://pypi.org/project/napari-cellposesam/)\n[![License](https://img.shields.io/pypi/l/napari-cellposesam.svg?color=green)](https://github.com/DBI-INFRA/napari-cellposesam/raw/main/LICENSE)\n[![website](https://img.shields.io/website?url=https%3A%2F%2Fwww.cellpose.org)](https://www.cellpose.org)\n\nA [napari] plugin for cell segmentation with [cellpose], including Cellpose-SAM (cellpose 4).\n\nThis is a fork of [MouseLand/cellpose-napari](https://github.com/MouseLand/cellpose-napari), the original plugin by Carsen Stringer. It adds:\n\n- support for Cellpose-SAM (`cpsam`) and Cellpose3 models in the same\n  environment and UI\n- z/channel axis selection for 3D and 4D images\n- compatibility with new napari versions\n\nThe cellpose code was written by Carsen Stringer and Marius Pachitariu. To learn about Cellpose, read the [**paper**](https://t.co/kBMXmPp3Yn?amp=1) or watch this [**talk**](https://t.co/JChCsTD0SK?amp=1).\n\nFor problems with this plugin, open an [issue](https://github.com/DBI-INFRA/napari-cellposesam/issues). For problems with cellpose itself, open an [issue](https://github.com/MouseLand/cellpose/issues) on the cellpose repo.\n\nIf you use this plugin, please cite the [cellpose paper](https://www.nature.com/articles/s41592-020-01018-x), the Cellpose3 paper if you use the Cellpose3 models, and the Cellpose-SAM paper if you use the `cpsam` models (see the [cellpose repo](https://github.com/MouseLand/cellpose) for the references):\n\n```bibtex\n@article{stringer2021cellpose,\n  title={Cellpose: a generalist algorithm for cellular segmentation},\n  author={Stringer, Carsen and Wang, Tim and Michaelos, Michalis and Pachitariu, Marius},\n  journal={Nature Methods},\n  volume={18},\n  number={1},\n  pages={100--106},\n  year={2021},\n  publisher={Nature Publishing Group}\n}\n```\n\n![napari-cellposesam segmenting the 2D sample image](https://raw.githubusercontent.com/DBI-INFRA/napari-cellposesam/main/docs/_static/gui.png)\n\n## Installation\n\n### Installer\n\nThe installer sets up napari and napari-cellposesam with the PyTorch build for your computer, and adds a desktop shortcut that opens napari with the plugin. You do not need Python or conda.\n\n- **Windows:** download `napari-cellposesam-setup.exe` from the newest [release](https://github.com/DBI-INFRA/napari-cellposesam/releases) and run it.\n- **macOS and Linux:** open a terminal and run:\n\n  ```\n  curl -LsSf https://raw.githubusercontent.com/DBI-INFRA/napari-cellposesam/main/installer/install.sh | sh\n  ```\n\nThe installer offers to download the Cellpose-SAM model (about 1.2 GB) while it installs. The model goes to `~/.cellpose/models`, where any cellpose install finds it, so uninstalling keeps it.\n\n[installer/README.md](installer/README.md) has the other ways to install, and how to update and uninstall.\n\n### pip\n\nRequires Python 3.11 or newer. We recommend a fresh environment, e.g. with conda:\n\n```\nconda create -n napari-cellposesam python=3.12\nconda activate napari-cellposesam\n```\n\nInstall napari and the plugin with pip:\n\n```\npip install \"napari[all]\" napari-cellposesam\n```\n\nOr install the plugin from the napari plugin manager (Plugins > Install/Uninstall Plugins).\n\nTo install the latest development version from GitHub:\n\n```\npip install git+https://github.com/DBI-INFRA/napari-cellposesam\n```\n\nIf you have issues installing cellpose, see the [cellpose installation docs](https://cellpose.readthedocs.io/en/latest/installation.html).\n\n### Cellpose3 models\n\nThe plugin installs cellpose 4, which provides the Cellpose-SAM and CPDINO models. The Cellpose3 models (`cyto3`, `nuclei`, etc.) are in the same model list. They need cellpose 3, which the plugin offers to download the first time you run one. It downloads cellpose 3.1.1.3 into a private folder without touching the installed cellpose, and installs [numba](https://numba.pydata.org) if it is missing. The plugin then picks the right cellpose version for each model, including custom models.\n\nThe private copy is in `~/.cellpose/napari-cellposesam/cellpose-3.1.1.3-format1/_cellpose3` (`~` is your user folder, also on Windows). To keep it elsewhere, set the environment variable `NAPARI_CELLPOSESAM_CACHE` to a folder that then takes the place of `~/.cellpose/napari-cellposesam`. To reset it, delete `~/.cellpose/napari-cellposesam` (or the folder `NAPARI_CELLPOSESAM_CACHE` names): the plugin offers to download cellpose 3 again the next time you run a Cellpose3 model.\n\nTo run the same download ahead of time, so that napari never prompts:\n\n```\npython -m napari_cellposesam fetch-cellpose3\n```\n\nThe download goes to the home folder of whoever runs the command. For an environment shared by several users, set `NAPARI_CELLPOSESAM_CACHE` to a shared folder, both when running the command and for everyone who uses the environment. Users only need read access to it.\n\nBoth need internet access and pip in the environment. If the environment has no pip, as in some uv-created ones, the plugin asks you to install it first.\n\nDon't install `cellpose-napari` next to this plugin. It lists the Cellpose3\nmodels, but with cellpose 4 installed it ignores the selected model and runs\nCellpose-SAM, thus breaking it.\n\n### GPU\n\ncellpose runs on CPU, NVIDIA GPUs (CUDA) and Apple silicon (MPS). The plugin uses a GPU automatically if torch can see one, for both the cellpose 4 and the Cellpose3 models.\n\n- **Apple silicon:** nothing to do, the torch from PyPI supports MPS.\n- **NVIDIA on Linux:** the torch from PyPI is a CUDA build, so it usually works as installed.\n- **NVIDIA on Windows:** the torch from PyPI is CPU-only. In a fresh environment, install torch and torchvision from the PyTorch index first, with the CUDA version the [PyTorch selector](https://pytorch.org/get-started/locally/) gives for your driver, then napari and the plugin, e.g.:\n\n  ```\n  pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126\n  pip install \"napari[all]\" napari-cellposesam\n  ```\n\n  If the plugin is already installed, reinstall torch and torchvision together instead:\n\n  ```\n  pip install --force-reinstall --no-deps torch torchvision --index-url https://download.pytorch.org/whl/cu126\n  ```\n\nCheck that torch sees the GPU:\n\n```\npython -c \"import torch; print('cuda', torch.cuda.is_available(), 'mps', torch.backends.mps.is_available())\"\n```\n\n### Optional: CPDINO models\n\nThe CPDINO models need [DINOv3](https://github.com/facebookresearch/dinov3), which is not on PyPI and so is not installed automatically. The plugin offers to install it when you run segmentation with a CPDINO model, or install it yourself:\n\n```\npip install git+https://github.com/facebookresearch/dinov3\n```\n\nWithout it, cellpose logs a `Could not import CPDINO` warning on startup. This is harmless if you don't use those models.\n\n### Upgrading\n\n```\npip install --upgrade napari-cellposesam cellpose\n```\n\nIf you installed a CUDA build of torch, upgrade torch the same way you installed it, or pip may replace it with the CPU-only build.\n\nComing from 0.1.x with a separate cellpose 3 environment (`cellpose<4`): from 0.2.0 that environment is no longer needed, since one environment runs both the Cellpose3 and the cellpose 4 models. Upgrading it with the command above moves it to cellpose 4, and the plugin downloads cellpose 3 the first time you run a Cellpose3 model.\n\n## Usage\n\nOpen napari with the plugin docked:\n\n```\nnapari -w napari-cellposesam\n```\n\nSample data is available under File > Open Sample > napari-cellposesam.\n\nDetailed usage is described in the [documentation](https://napari-cellposesam.readthedocs.io/).\n\n## Contributing\n\nContributions are welcome. For development, clone the repo and install it in editable mode with the test dependencies:\n\n```\npip install -e \".[testing]\"\npytest\n```\n\n## License\n\nDistributed under the terms of the [BSD-3] license, \"napari-cellposesam\" is free and open source software.\n\n## Dependencies\n\nnapari-cellposesam relies on:\n- [napari](https://napari.org)\n- [magicgui](https://napari.org/magicgui/)\n- [cellpose], which in turn uses [torch](https://pytorch.org/), [numpy](https://numpy.org/), [scipy](https://scipy.org/), [opencv](https://opencv.org/) and others\n- [numba](https://numba.pydata.org), which the plugin installs the first time you run a Cellpose3 model\n\n[napari]: https://github.com/napari/napari\n[cellpose]: https://github.com/MouseLand/cellpose\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -40,15 +40,15 @@
     "platform": null,
     "project_url": "https://pypi.org/project/napari-cellposesam/",
     "project_urls": {
-      "Bug Tracker": "https://github.com/jeskowagner/napari-cellposesam/issues",
-      "Homepage": "https://github.com/jeskowagner/napari-cellposesam",
-      "Source Code": "https://github.com/jeskowagner/napari-cellposesam"
+      "Bug Tracker": "https://github.com/DBI-INFRA/napari-cellposesam/issues",
+      "Homepage": "https://github.com/DBI-INFRA/napari-cellposesam",
+      "Source Code": "https://github.com/DBI-INFRA/napari-cellposesam"
     },
     "provides_extra": [
       "docs",
       "testing"
     ],
-    "release_url": "https://pypi.org/project/napari-cellposesam/0.2.3/",
+    "release_url": "https://pypi.org/project/napari-cellposesam/0.3.0/",
     "requires_dist": [
       "napari>=0.6",
       "magicgui",
@@ -69,11 +69,11 @@
     ],
     "requires_python": ">=3.11",
     "summary": "napari plugin for cellpose and Cellpose-SAM segmentation",
-    "version": "0.2.3",
+    "version": "0.3.0",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 42642832,
+  "last_serial": 42975167,
   "ownership": {
     "organization": null,
     "roles": [
@@ -419,30 +419,78 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.3.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "74866203f01ec3d43f9ba20c038034f30c12628604e7ae99454c24fd6655bab0"
+        },
+        "digests": {
+          "blake2b_256": "0a3194e46c858303af801f6ce89a2c204fccad63f093a7a4e29fabbf758cbe29",
+          "md5": "1d04957549190d473f7a01d12a1fd71b",
+          "sha256": "4421e6f2a12c45cedd6a5fa64dd599256bfc9cbe0b590bfa44e667c8babc5ed9"
+        },
+        "downloads": -1,
+        "filename": "napari_cellposesam-0.3.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "1d04957549190d473f7a01d12a1fd71b",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 24827,
+        "upload_time": "2026-10-30T15:53:05",
+        "upload_time_iso_8601": "2026-10-30T15:53:05.790654Z",
+        "url": "https://files.pythonhosted.org/packages/0a/31/94e46c858303af801f6ce89a2c204fccad63f093a7a4e29fabbf758cbe29/napari_cellposesam-0.3.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "02942696ae3521bb85a8d435cc38ef57ad9e0653838aa46af5c6cb5a63983c63",
+          "md5": "668ed313957ec9dbe65d493e55ecfb30",
+          "sha256": "a88b89b1a4ece2b1cbcede4e1439f37ccd25bb94ad988bac6752598fd086fe27"
+        },
+        "downloads": -1,
+        "filename": "napari_cellposesam-0.3.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "668ed313957ec9dbe65d493e55ecfb30",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 431364,
+        "upload_time": "2026-10-30T15:53:07",
+        "upload_time_iso_8601": "2026-10-30T15:53:07.696583Z",
+        "url": "https://files.pythonhosted.org/packages/02/94/2696ae3521bb85a8d435cc38ef57ad9e0653838aa46af5c6cb5a63983c63/napari_cellposesam-0.3.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": null,
       "core-metadata": {
-        "sha256": "2fb25ba159c6c46aec67d59f3a046f4832f15dd32a806d19a2950a7c0cf7407d"
+        "sha256": "74866203f01ec3d43f9ba20c038034f30c12628604e7ae99454c24fd6655bab0"
       },
       "digests": {
-        "blake2b_256": "7b9010cf137a17a428881180be98b6972ac25830ca8d43329a51efd01231eb70",
-        "md5": "8c8b89272afbb2b455e2144c95f42ee0",
-        "sha256": "5fb6a9ae1d302a5d2fbe46727a8803290cc658744446142a730856a7856251f3"
+        "blake2b_256": "0a3194e46c858303af801f6ce89a2c204fccad63f093a7a4e29fabbf758cbe29",
+        "md5": "1d04957549190d473f7a01d12a1fd71b",
+        "sha256": "4421e6f2a12c45cedd6a5fa64dd599256bfc9cbe0b590bfa44e667c8babc5ed9"
       },
       "downloads": -1,
-      "filename": "napari_cellposesam-0.2.3-py3-none-any.whl",
+      "filename": "napari_cellposesam-0.3.0-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "8c8b89272afbb2b455e2144c95f42ee0",
+      "md5_digest": "1d04957549190d473f7a01d12a1fd71b",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.11",
-      "size": 23306,
-      "upload_time": "2026-10-23T13:11:22",
-      "upload_time_iso_8601": "2026-10-23T13:11:22.521571Z",
-      "url": "https://files.pythonhosted.org/packages/7b/90/10cf137a17a428881180be98b6972ac25830ca8d43329a51efd01231eb70/napari_cellposesam-0.2.3-py3-none-any.whl",
+      "size": 24827,
+      "upload_time": "2026-10-30T15:53:05",
+      "upload_time_iso_8601": "2026-10-30T15:53:05.790654Z",
+      "url": "https://files.pythonhosted.org/packages/0a/31/94e46c858303af801f6ce89a2c204fccad63f093a7a4e29fabbf758cbe29/napari_cellposesam-0.3.0-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
@@ -450,21 +498,21 @@
       "comment_text": null,
       "core-metadata": false,
       "digests": {
-        "blake2b_256": "36057527c830bd77f1b74f72f17b8741e8e922cabe2a16b4de106c57370ce083",
-        "md5": "441ccd4741a96257beae61fdeffafefb",
-        "sha256": "4c234f5c7819026a1060bb891838603859bc6640eed303e591ef88b59ff030a1"
+        "blake2b_256": "02942696ae3521bb85a8d435cc38ef57ad9e0653838aa46af5c6cb5a63983c63",
+        "md5": "668ed313957ec9dbe65d493e55ecfb30",
+        "sha256": "a88b89b1a4ece2b1cbcede4e1439f37ccd25bb94ad988bac6752598fd086fe27"
       },
       "downloads": -1,
-      "filename": "napari_cellposesam-0.2.3.tar.gz",
+      "filename": "napari_cellposesam-0.3.0.tar.gz",
       "has_sig": false,
-      "md5_digest": "441ccd4741a96257beae61fdeffafefb",
+      "md5_digest": "668ed313957ec9dbe65d493e55ecfb30",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.11",
-      "size": 345246,
-      "upload_time": "2026-10-23T13:11:23",
-      "upload_time_iso_8601": "2026-10-23T13:11:23.960702Z",
-      "url": "https://files.pythonhosted.org/packages/36/05/7527c830bd77f1b74f72f17b8741e8e922cabe2a16b4de106c57370ce083/napari_cellposesam-0.2.3.tar.gz",
+      "size": 431364,
+      "upload_time": "2026-10-30T15:53:07",
+      "upload_time_iso_8601": "2026-10-30T15:53:07.696583Z",
+      "url": "https://files.pythonhosted.org/packages/02/94/2696ae3521bb85a8d435cc38ef57ad9e0653838aa46af5c6cb5a63983c63/napari_cellposesam-0.3.0.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
