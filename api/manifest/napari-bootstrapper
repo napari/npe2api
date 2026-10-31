@@ -1,0 +1,160 @@
+{
+  "name": "napari-bootstrapper",
+  "display_name": "Bootstrapper",
+  "visibility": "public",
+  "icon": "napari_bootstrapper.resources:icon.svg",
+  "categories": [
+    "Annotation",
+    "Segmentation",
+    "Dataset"
+  ],
+  "schema_version": "0.3.0",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-bootstrapper.make_cremi_sample_data",
+        "title": "cremi_c",
+        "python_name": "napari_bootstrapper:make_cremi_sample_data",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-bootstrapper.make_fluo_c2dl_huh7_sample_data",
+        "title": "fluo_c2dl_huh7",
+        "python_name": "napari_bootstrapper:make_fluo_c2dl_huh7_sample_data",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-bootstrapper.proofreading",
+        "title": "Create Proofreading widget",
+        "python_name": "napari_bootstrapper.post._merge_split_widget:ProofreadingWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-bootstrapper.Widget",
+        "title": "Bootstrapper",
+        "python_name": "napari_bootstrapper.widget:Widget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "napari-bootstrapper.Widget",
+        "display_name": "Bootstrapper",
+        "autogenerate": false,
+        "default_dock_area": "right",
+        "tabify": false
+      },
+      {
+        "command": "napari-bootstrapper.proofreading",
+        "display_name": "Proofreading",
+        "autogenerate": false,
+        "default_dock_area": "right",
+        "tabify": false
+      }
+    ],
+    "sample_data": [
+      {
+        "command": "napari-bootstrapper.make_cremi_sample_data",
+        "key": "napari-bootstrapper-cremi",
+        "display_name": "cremi_c"
+      },
+      {
+        "command": "napari-bootstrapper.make_fluo_c2dl_huh7_sample_data",
+        "key": "napari-bootstrapper-fluo_c2dl_huh7",
+        "display_name": "fluo_c2dl_huh7"
+      }
+    ],
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configurations": {}
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "napari-bootstrapper",
+    "version": "1.0.1",
+    "dynamic": [
+      "license-file"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "A napari plugin that generates dense ground truth from sparse labels",
+    "description": "<picture>\n  <source media=\"(prefers-color-scheme: dark)\" srcset=\"https://raw.githubusercontent.com/ucsdmanorlab/napari-bootstrapper/main/src/napari_bootstrapper/resources/logo-dark.svg\">\n  <img alt=\"Bootstrapper\" src=\"https://raw.githubusercontent.com/ucsdmanorlab/napari-bootstrapper/main/src/napari_bootstrapper/resources/logo.svg\" width=\"252\">\n</picture>\n\n# napari-bootstrapper\n\n[![License BSD-3](https://img.shields.io/pypi/l/napari-bootstrapper.svg?color=green)](https://github.com/ucsdmanorlab/napari-bootstrapper/raw/main/LICENSE)\n[![PyPI](https://img.shields.io/pypi/v/napari-bootstrapper.svg?color=green)](https://pypi.org/project/napari-bootstrapper)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-bootstrapper.svg?color=green)](https://python.org)\n[![tests](https://github.com/ucsdmanorlab/napari-bootstrapper/workflows/tests/badge.svg)](https://github.com/ucsdmanorlab/napari-bootstrapper/actions)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-bootstrapper)](https://napari-hub.org/plugins/napari-bootstrapper)\n\nDense 3D segmentation from sparse 2D labels, in napari.\nYou label a few objects on a few sections and train a 2D model on them, and a pretrained 3D model turns its predictions into a 3D segmentation.\nThe method is from [_Sparse Annotation is Sufficient for Bootstrapping Dense Segmentation_](https://www.biorxiv.org/content/10.1101/2024.06.14.599135v2).\n\n<img alt=\"Labels on one section of CREMI C, a 2D model training, and the 3D segmentation that results\" src=\"https://raw.githubusercontent.com/ucsdmanorlab/napari-bootstrapper/main/docs/hero.webp\" width=\"100%\">\n\nThe full video is on the [project page](https://ucsdmanorlab.github.io/sparsity/#code).\n\n## Install\n\n```bash\nconda create -n bootstrapper python=3.12 -y\nconda activate bootstrapper\npip install napari-bootstrapper pyqt5\n```\n\n## Run\n\n```bash\nnapari -w napari-bootstrapper Bootstrapper\n```\n\nTo try it on example data, open File > Open Sample and pick `cremi_c` (EM) or `fluo_c2dl_huh7` (2D + time).\nVideo walkthroughs of both are on YouTube: [CREMI C](https://www.youtube.com/watch?v=n0KkhZ-oBTs) and [Fluo-C2DL-Huh7](https://www.youtube.com/watch?v=vThjwJR_RNg).\n\n## Use\n\n1. Data: choose the image and the labels, then click Make mask. Draw labels with the napari brush or with [micro-sam](https://github.com/computational-cell-analytics/micro-sam).\n2. 2D model: choose a task and click Train. The tasks predict affinities (`2d_affs`), local shape descriptors (`2d_lsd`), or both (`2d_mtlsd`).\n3. 3D model: click Download to get the pretrained model for that task.\n4. Segmentation: click Start.\n\nEach Advanced Config button opens the settings for its step.\nModels and checkpoints are saved in `~/.napari_bootstrapper`.\n\nTo fix the result, open the Proofreading widget (`napari -w napari-bootstrapper Proofreading`).\nIt can merge, split, delete, dilate, erode, open, close and fill holes, on one section or in 3D, and it can filter objects by size.\nUndo reverts the last edit.\n\nFor large volumes, 3D models and block-wise processing, use the [Bootstrapper CLI](https://github.com/ucsdmanorlab/bootstrapper).\n\n## Develop\n\n```bash\npip install -e \".[testing]\"\nQT_QPA_PLATFORM=offscreen pytest -m \"not network\"\n```\n\nLeave out `-m \"not network\"` to also download and test the published checkpoints.\nReport bugs on the [issue tracker](https://github.com/ucsdmanorlab/napari-bootstrapper/issues).\n\n## Cite\n\n```bibtex\n@article {Thiyagarajan2024.06.14.599135,\n\tauthor = {Thiyagarajan, Vijay Venu and Sheridan, Arlo and Harris, Kristen M. and Manor, Uri},\n\ttitle = {Sparse Annotation is Sufficient for Bootstrapping Dense Segmentation},\n\tyear = {2024},\n\tdoi = {10.1101/2024.06.14.599135},\n\tURL = {https://www.biorxiv.org/content/10.1101/2024.06.14.599135v2},\n}\n```\n\n## Acknowledgements\n\nThe plugin structure comes from [napari-cellulus](https://github.com/funkelab/napari-cellulus), and the Proofreading widget is modeled on [empanada-napari](https://github.com/volume-em/empanada-napari).\nThe edits use [fastmorph](https://github.com/seung-lab/fastmorph), [fastremap](https://github.com/seung-lab/fastremap) and [cc3d](https://github.com/seung-lab/connected-components-3d).\n\nFunded by the Chan Zuckerberg Initiative Imaging Scientist Award ([10.37921/694870itnyzk](https://doi.org/10.37921/694870itnyzk)) from the Chan Zuckerberg Initiative DAF, an advised fund of Silicon Valley Community Foundation (funder DOI 10.13039/100014989), and by the NSF NeuroNex Technology Hub Award (1707356) and NeuroNex2 Award (2014862).\n\n![image](https://github.com/ucsdmanorlab/bootstrapper/assets/64760651/4b4a6029-e1ba-42bb-ab8b-d9357cc46239)\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": null,
+    "download_url": null,
+    "author": "Vijay Venu Thiyagarajan",
+    "author_email": "vvenu@utexas.edu",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "Copyright (c) 2025, Vijay Venu Thiyagarajan\nAll rights reserved.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n\n* Redistributions of source code must retain the above copyright notice, this\n  list of conditions and the following disclaimer.\n\n* Redistributions in binary form must reproduce the above copyright notice,\n  this list of conditions and the following disclaimer in the documentation\n  and/or other materials provided with the distribution.\n\n* Neither the name of copyright holder nor the names of its\n  contributors may be used to endorse or promote products derived from\n  this software without specific prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\"\nAND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\nIMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\nDISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE\nFOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\nDAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR\nSERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER\nCAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,\nOR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\nOF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n",
+    "classifier": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "requires_dist": [
+      "numpy",
+      "scipy",
+      "scikit-image>=0.26",
+      "torch",
+      "zarr<3",
+      "numba",
+      "gunpowder<1.5",
+      "magicgui",
+      "qtpy",
+      "pyqtgraph",
+      "matplotlib",
+      "napari",
+      "tqdm",
+      "requests",
+      "tifffile",
+      "mwatershed",
+      "fastmorph[spherical]",
+      "connected-components-3d",
+      "fastremap",
+      "tox; extra == \"testing\"",
+      "pytest; extra == \"testing\"",
+      "pytest-cov; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "napari; extra == \"testing\"",
+      "pyqt5; extra == \"testing\"",
+      "lsd-lite>=1.0.1; extra == \"testing\""
+    ],
+    "requires_python": ">=3.12",
+    "requires_external": null,
+    "project_url": null,
+    "provides_extra": [
+      "testing"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}

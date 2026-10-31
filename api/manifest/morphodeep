@@ -1,0 +1,130 @@
+{
+  "name": "morphodeep",
+  "display_name": "MorphoDeep",
+  "visibility": "public",
+  "icon": null,
+  "categories": [],
+  "schema_version": "0.1.0",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "morphodeep.napari.morphodeep_widget",
+        "title": "MorphoDeep prediction",
+        "python_name": "morphodeep.napari._widget:morphodeep_widget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "morphodeep.napari.finetune_widget",
+        "title": "MorphoDeep fine tuning",
+        "python_name": "morphodeep.napari._finetune_widget:finetune_widget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "morphodeep.napari.morphodeep_widget",
+        "display_name": "Predict instances",
+        "autogenerate": false,
+        "default_dock_area": "right",
+        "tabify": false
+      },
+      {
+        "command": "morphodeep.napari.finetune_widget",
+        "display_name": "Fine tune model",
+        "autogenerate": false,
+        "default_dock_area": "right",
+        "tabify": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configurations": {}
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "morphodeep",
+    "version": "0.1",
+    "dynamic": [
+      "license-file"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "Instance segmentation of membranes in 2D and 3D microscopy images",
+    "description": "# MorphoDeep\n\nMorphoDeep segments individual cells in grayscale microscopy images of membranes. It supports 2D images and 3D volumes and returns an integer label image: `0` is background, and each positive value identifies one cell. The package provides a command-line interface, a Python API, and napari widgets for prediction and fine tuning.\n\n## Install\n\nMorphoDeep 0.1 supports Python 3.10 and 3.11. Install the library with:\n\n```bash\npython -m pip install morphodeep\n```\n\nTo use the napari widgets, install the optional graphical dependencies:\n\n```bash\npython -m pip install 'morphodeep[napari]'\n```\n\nTensorFlow 2.15 is installed as a package dependency. GPU setup depends on the operating system and hardware; consult the [TensorFlow installation guide](https://www.tensorflow.org/install) if GPU support is needed.\n\n## Predict cell instances\n\nPass a grayscale TIFF image or volume to the command-line tool:\n\n```bash\nmorphodeep predict image.tif image_instances.tif --mode 2D\nmorphodeep predict volume.tif volume_instances.tif --mode 3D --size 128\n```\n\nThe dimension can be inferred from the TIFF file. The default model size is 256 in 2D and 128 in 3D; a 256 model is also available in 3D. Predictions use overlapping patches by default. Use `--no-patches` for whole-image inference, `--weights path/to/model.h5` for custom weights, and `--overwrite` to replace an output file.\n\nIn Python:\n\n```python\nfrom morphodeep.napari.model import run_instance_segmentation\n\nlabels = run_instance_segmentation(image, mode=\"2D\", net_size=256)\n```\n\nThe result has the same shape as the input and contains integer instance labels.\n\n### Pretrained weights\n\nThe three pretrained models are hosted separately in the [MorphoDeep weights dataset on Figshare](https://doi.org/10.6084/m9.figshare.34245426):\n\n| Mode | Model | File |\n| --- | --- | --- |\n| 2D, size 256 | DUNNET | `DUNNET_256.13331.h5` |\n| 3D, size 128 | JUNNET | `JUNNET_128.6228.h5` |\n| 3D, size 256 | JUNNET | `JUNNET_256.2020.h5` |\n\nMorphoDeep downloads the selected file on first use, verifies its SHA-256 digest, and caches it for later offline use. The weights are not included in the Python package. To use files already on disk, pass `--weights` to prediction or set `MORPHODEEP_WEIGHTS_DIR` to a directory containing the published filenames, either directly or under `2D/` and `3D/` subdirectories.\n\n## Fine tune on your own data\n\nProvide grayscale TIFF images and corresponding instance masks in separate directories. Files are paired by name before the extension, and images and masks must have the same shape. In each mask, `0` is background and each positive integer identifies one cell.\n\n```bash\nmorphodeep finetune --images data/images --masks data/masks \\\n  --output runs/my_cells --mode 2D --epochs 20\n```\n\nUse `--mode 3D` for volumes. At least two image and mask pairs are required. By default, whole images are split reproducibly into training and validation sets. Related images, such as slices from the same volume, should use independent validation directories via `--validation-images` and `--validation-masks`. The best weights are written to `runs/my_cells/best.weights.h5` and can be used for prediction:\n\n```bash\nmorphodeep predict image.tif image_instances.tif \\\n  --weights runs/my_cells/best.weights.h5\n```\n\nFine tuning is also available through `morphodeep.training.fine_tune` and the **Fine tune model** napari widget. The **Predict instances** widget accepts the resulting file in its **Custom weights** field.\n\n## Documentation and research code\n\nThe `docs/` directory contains installation, prediction, fine-tuning, napari, and Python API guides. From a source checkout, build the documentation with:\n\n```bash\npython -m pip install -e '.[docs]'\npython -m mkdocs build --strict\n```\n\nThe historical training and data preparation workflow is documented in `docs/research/legacy_training.md`. It is separate from the supported `morphodeep finetune` command and may require research-cluster resources.\n\n## Source and issues\n\nThe [source code](https://codeberg.org/FaureEmmanuel/MorphoDeep) and [issue tracker](https://codeberg.org/FaureEmmanuel/MorphoDeep/issues) are on Codeberg. Read the [full documentation](https://faureemmanuel.codeberg.page/MorphoDeep/) for the installation guide, examples, and Python API.\n\n## License\n\nMorphoDeep is distributed under the [GNU LGPL v3.0 license](https://www.gnu.org/licenses/lgpl-3.0.html). The Figshare weights dataset has its own [CC BY 4.0 license](https://doi.org/10.6084/m9.figshare.34245426).\n",
+    "description_content_type": "text/markdown",
+    "keywords": "image analysis,bioimage,segmentation,instance-segmentation,deep learning,unet,napari plugin,microscopy",
+    "home_page": null,
+    "download_url": null,
+    "author": null,
+    "author_email": "Emmanuel Faure <emmanuel.faure@lirmm.fr>",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": null,
+    "classifier": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "requires_dist": [
+      "numpy",
+      "tqdm",
+      "tensorflow==2.15.0",
+      "scikit-image",
+      "matplotlib",
+      "nibabel",
+      "scipy",
+      "h5py",
+      "paramiko",
+      "scp",
+      "pandas",
+      "appdirs",
+      "tifffile",
+      "napari>=0.4.19; extra == \"napari\"",
+      "magicgui>=0.6.0; extra == \"napari\"",
+      "PyQt5; extra == \"napari\"",
+      "qtpy>=2.0.0; extra == \"napari\"",
+      "colorcet>=3; extra == \"figures\"",
+      "imageio>=2; extra == \"figures\"",
+      "mkdocs<2,>=1.6; extra == \"docs\"",
+      "mkdocs-material<10,>=9.5; extra == \"docs\"",
+      "mkdocstrings[python]<1,>=0.27; extra == \"docs\""
+    ],
+    "requires_python": "<3.12,>=3.10",
+    "requires_external": null,
+    "project_url": [
+      "Homepage, https://codeberg.org/FaureEmmanuel/MorphoDeep",
+      "Source code, https://codeberg.org/FaureEmmanuel/MorphoDeep",
+      "Documentation, https://faureemmanuel.codeberg.page/MorphoDeep/",
+      "Issues, https://codeberg.org/FaureEmmanuel/MorphoDeep/issues",
+      "Model weights, https://doi.org/10.6084/m9.figshare.34245426"
+    ],
+    "provides_extra": [
+      "napari",
+      "figures",
+      "docs"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}
