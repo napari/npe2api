@@ -1,0 +1,218 @@
+{
+  "info": {
+    "author": null,
+    "author_email": "Karol Gotkowski <karol.gotkowski@dkfz.de>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 4 - Beta",
+      "Framework :: napari",
+      "License :: OSI Approved :: MIT License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-bboxes\n\n<p align=\"center\">\n  <a href=\"https://pypi.org/project/napari-bboxes/\"><img src=\"https://img.shields.io/pypi/v/napari-bboxes?logo=pypi&color=brightgreen\" alt=\"PyPI\" align=\"middle\" /></a>\n  <a href=\"https://pypi.org/project/napari-bboxes/\"><img src=\"https://img.shields.io/pypi/pyversions/napari-bboxes?logo=python\" alt=\"Python Version\" align=\"middle\" /></a>\n  <a href=\"https://github.com/Karol-G/napari-bboxes/actions\"><img src=\"https://img.shields.io/github/actions/workflow/status/Karol-G/napari-bboxes/test_and_deploy.yml?branch=main&logo=github\" alt=\"Tests\" align=\"middle\" /></a>\n  <a href=\"https://github.com/Karol-G/napari-bboxes/blob/main/LICENSE\"><img src=\"https://img.shields.io/github/license/Karol-G/napari-bboxes\" alt=\"License\" align=\"middle\" /></a>\n</p>\n\nAxis-aligned 2-D and 3-D bounding boxes (detections, annotations) as [napari](https://napari.org) layers that you\ncan see **in every 2-D plane and in 3-D**, aligned with the image they belong to.\n\nnapari's own layers cannot do this for 3-D boxes: a Shapes rectangle lives in one plane, and a Surface mesh shows\nnothing in 2-D slices (only faces lying entirely in the slice are drawn). napari-bboxes draws a 3-D box as a\none-voxel **outline** on the image grid, computed on demand: an axial, coronal or sagittal slice shows the rectangle\nwhere it cuts the box, and the 3-D view shows only the box **edges**, so the content inside stays visible. The array\ncosts no memory.\n\n```bash\npip install napari-bboxes\n```\n\n## Usage\n\n```python\nimport napari\nfrom napari_bboxes import add_bboxes\n\nviewer = napari.Viewer()\nimage = viewer.add_image(ct, affine=ct_affine)\nadd_bboxes(\n    viewer,\n    mins=[[40, 60, 70], [10, 20, 30]],      # inclusive corners in index coordinates of the image grid\n    maxs=[[60, 90, 110], [18, 35, 44]],\n    labels=[1, 2],                          # class per box\n    scores=[0.97, 0.41],                    # optional\n    names={1: \"tumor\", 2: \"node\"},          # optional display names\n    colors={1: (230, 60, 60)},              # optional; other classes get palette colours\n    grid_shape=ct.shape,\n    affine=image.affine.affine_matrix,      # same index -> world transform as the image: boxes align with it\n)\nnapari.run()\n```\n\n- **3-D boxes** become a Labels layer: each box has its own number, coloured by class, and hovering shows\n  `name (label) score`. With labels or scores, a second layer shows that text on screen: in 2-D above the top-left\n  corner of every box the current slice cuts (it follows the slice, the plane and 2-D/3-D switches), in 3-D at a\n  box corner. `text=False` turns it off.\n- **2-D boxes** become a Shapes layer of rectangles, with the same text next to each box.\n- `bbox_layers(...)` returns the same as layer data tuples `(data, kwargs, layer_type)`, for napari readers.\n- `BoxShells(shape, bounds, mode)` is the lazy outline array on its own. `mode=\"auto\"` (default) draws the box\n  surface for 2-D slices and the edges for the 3-D view; `\"faces\"` or `\"edges\"` force one of them.\n\nCoordinates are array indices of a grid (voxel centres, inclusive bounds). Boxes in world or physical coordinates\nare converted by the caller: map the corners through the inverse of the image affine and take the bounding box.\n\nUsed by [napari-mlarray](https://github.com/MIC-DKFZ/napari-mlarray) for the boxes stored in MLArray files.\n\n## Development\n\n```bash\npip install -e \".[test]\"\npytest\n```\n\n## License\n\nMIT\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": "napari, bounding box, object detection, medical imaging",
+    "license": "The MIT License (MIT)\n        \n        Copyright (c) 2026 Division of Medical Image Computing, German Cancer Research Center (DKFZ), Heidelberg, Germany\n        \n        Permission is hereby granted, free of charge, to any person obtaining a copy\n        of this software and associated documentation files (the \"Software\"), to deal\n        in the Software without restriction, including without limitation the rights\n        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n        copies of the Software, and to permit persons to whom the Software is\n        furnished to do so, subject to the following conditions:\n        \n        The above copyright notice and this permission notice shall be included in\n        all copies or substantial portions of the Software.\n        \n        THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\n        THE SOFTWARE.\n        ",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-bboxes",
+    "package_url": "https://pypi.org/project/napari-bboxes/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-bboxes/",
+    "project_urls": {
+      "Homepage": "https://github.com/Karol-G/napari-bboxes"
+    },
+    "provides_extra": [
+      "test"
+    ],
+    "release_url": "https://pypi.org/project/napari-bboxes/0.1.1/",
+    "requires_dist": [
+      "numpy",
+      "napari>=0.6",
+      "pytest; extra == \"test\""
+    ],
+    "requires_python": ">=3.10",
+    "summary": "Axis-aligned 2-D and 3-D bounding boxes as napari layers, visible in every plane and in 3-D.",
+    "version": "0.1.1",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 43293589,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "Karol-G"
+      }
+    ]
+  },
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "c9c3f977e362278ddd2934a07b8e8c1cb6358da7a18fe13413c2ccef8adf206b"
+        },
+        "digests": {
+          "blake2b_256": "ee381e691554aaa8d104906e535d205fdd85c0362bc9cea5db136f089162a33a",
+          "md5": "2cf8e70f1b186972d901aa0c689b7e18",
+          "sha256": "3ae4ae65b671e9f1ee3d2b014c8bd32743b96eb69828bf7065400d09956406db"
+        },
+        "downloads": -1,
+        "filename": "napari_bboxes-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "2cf8e70f1b186972d901aa0c689b7e18",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 9057,
+        "upload_time": "2026-11-06T13:35:19",
+        "upload_time_iso_8601": "2026-11-06T13:35:19.982068Z",
+        "url": "https://files.pythonhosted.org/packages/ee/38/1e691554aaa8d104906e535d205fdd85c0362bc9cea5db136f089162a33a/napari_bboxes-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "003e3c46c4dab3e50d08297d5713714948c72a93caab14bb2b4230bfae3fbf3f",
+          "md5": "ffabff7bd669f925347f5e23c0cbf568",
+          "sha256": "45f38432a5527c9d5c334be0566209afc777d07250c5c047e396fd5688ec487a"
+        },
+        "downloads": -1,
+        "filename": "napari_bboxes-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "ffabff7bd669f925347f5e23c0cbf568",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 12412,
+        "upload_time": "2026-11-06T13:35:21",
+        "upload_time_iso_8601": "2026-11-06T13:35:21.123297Z",
+        "url": "https://files.pythonhosted.org/packages/00/3e/3c46c4dab3e50d08297d5713714948c72a93caab14bb2b4230bfae3fbf3f/napari_bboxes-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "e15b44e8c5acd9437517b3dff83f34c610552e6018b97efb8e8ca3bd1819bc3c"
+        },
+        "digests": {
+          "blake2b_256": "cb3da2fcf89d6efc8dfeca3f8585f130b05b5d0144a3bac35f1897cac9459fba",
+          "md5": "eb037c340b7d9db57be2b3065174b67e",
+          "sha256": "e78210fe80d9aafa9f2b5d550aac23b5556b6e7e405d80e42d35a8638580b0c1"
+        },
+        "downloads": -1,
+        "filename": "napari_bboxes-0.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "eb037c340b7d9db57be2b3065174b67e",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 11355,
+        "upload_time": "2026-11-06T14:00:36",
+        "upload_time_iso_8601": "2026-11-06T14:00:36.686161Z",
+        "url": "https://files.pythonhosted.org/packages/cb/3d/a2fcf89d6efc8dfeca3f8585f130b05b5d0144a3bac35f1897cac9459fba/napari_bboxes-0.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "c8fef0b74ee89acb90e0634db967c448c7849ea67192eb3fe74a89acfcd61c39",
+          "md5": "a623dc1a7b0c399944486ccbf59932a2",
+          "sha256": "e6ff0d113aad1d0b909fe69ddf8bb285e59d52a03b5466f21579bb94c4c1c49e"
+        },
+        "downloads": -1,
+        "filename": "napari_bboxes-0.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "a623dc1a7b0c399944486ccbf59932a2",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 16046,
+        "upload_time": "2026-11-06T14:00:38",
+        "upload_time_iso_8601": "2026-11-06T14:00:38.042295Z",
+        "url": "https://files.pythonhosted.org/packages/c8/fe/f0b74ee89acb90e0634db967c448c7849ea67192eb3fe74a89acfcd61c39/napari_bboxes-0.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "e15b44e8c5acd9437517b3dff83f34c610552e6018b97efb8e8ca3bd1819bc3c"
+      },
+      "digests": {
+        "blake2b_256": "cb3da2fcf89d6efc8dfeca3f8585f130b05b5d0144a3bac35f1897cac9459fba",
+        "md5": "eb037c340b7d9db57be2b3065174b67e",
+        "sha256": "e78210fe80d9aafa9f2b5d550aac23b5556b6e7e405d80e42d35a8638580b0c1"
+      },
+      "downloads": -1,
+      "filename": "napari_bboxes-0.1.1-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "eb037c340b7d9db57be2b3065174b67e",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.10",
+      "size": 11355,
+      "upload_time": "2026-11-06T14:00:36",
+      "upload_time_iso_8601": "2026-11-06T14:00:36.686161Z",
+      "url": "https://files.pythonhosted.org/packages/cb/3d/a2fcf89d6efc8dfeca3f8585f130b05b5d0144a3bac35f1897cac9459fba/napari_bboxes-0.1.1-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "c8fef0b74ee89acb90e0634db967c448c7849ea67192eb3fe74a89acfcd61c39",
+        "md5": "a623dc1a7b0c399944486ccbf59932a2",
+        "sha256": "e6ff0d113aad1d0b909fe69ddf8bb285e59d52a03b5466f21579bb94c4c1c49e"
+      },
+      "downloads": -1,
+      "filename": "napari_bboxes-0.1.1.tar.gz",
+      "has_sig": false,
+      "md5_digest": "a623dc1a7b0c399944486ccbf59932a2",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.10",
+      "size": 16046,
+      "upload_time": "2026-11-06T14:00:38",
+      "upload_time_iso_8601": "2026-11-06T14:00:38.042295Z",
+      "url": "https://files.pythonhosted.org/packages/c8/fe/f0b74ee89acb90e0634db967c448c7849ea67192eb3fe74a89acfcd61c39/napari_bboxes-0.1.1.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
