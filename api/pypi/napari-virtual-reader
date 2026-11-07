@@ -1,0 +1,226 @@
+{
+  "info": {
+    "author": null,
+    "author_email": "Sebastian Rhode <sebrhode@gmail.com>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 3 - Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Programming Language :: Python :: 3.14",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-virtual-reader\n\n**Experimental software - Alpha status.** APIs and behavior may change without\nnotice. Validate results independently before relying on them for analysis.\n\nOpen image files as lazy, reference-backed OME-Zarr in napari. No pixel\nconversion, copied image data, or intermediate archive is required.\n\nThe plugin uses refkv directly. It does not depend on czitools, pylibCZIrw,\nor the napari-czitools plugin.\n\n<img src=\"https://raw.githubusercontent.com/sebi06/napari-virtual-reader/main/_images/czi_virtual_omezarr1.png\" alt=\"Alt Text\" style=\"width:80%; height:auto;\">\n\n## Install\n\nPython 3.12 or newer is required. Install into the environment running napari:\n\n```powershell\npython -m pip install napari-virtual-reader\n```\n\nA working Qt backend is required. For a fresh environment:\n\n```powershell\npython -m pip install \"napari[pyqt6]\" napari-virtual-reader\nnapari\n```\n\nRestart napari after installation. The package registers an npe2 reader and\nwidget through its `napari.manifest` entry point; no manual registration is\nrequired. Check **Plugins > Plugin Manager** for **napari-virtual-reader**.\n\n## Open an image\n\nIn napari, choose **Plugins > napari-virtual-reader > Open Data as virtual OME-ZARR**,\nselect the input, and click **Open**. Preparation runs in a background worker; napari\nprovides its normal layer, contrast, time, and Z controls.\n\n<img src=\"https://raw.githubusercontent.com/sebi06/napari-virtual-reader/main/_images/reader_plugin.png\" alt=\"Alt Text\" style=\"width:50%; height:auto;\">\n\nYou can also use **File > Open** or drop a file on the napari canvas and choose\nthe napari-virtual-reader reader. Drop a file on the plugin dock to select it without\nopening it yet.\n\n```python\nimport napari\n\nviewer = napari.Viewer()\nviewer.open(\"image.czi\", plugin=\"napari-virtual-reader\")\nnapari.run()\n```\n\nRaw images are virtualized in memory through `refkv.zarrify.zarrify`. Existing\n`.vzip` archives are opened directly. Original image files must remain available\nand unchanged for as long as their layers are used. Nothing is written beside\nthe source by default.\n\n### Save a VZIP Archive\n\nIn **Plugins > napari-virtual-reader > Open Data as virtual OME-ZARR**, select an image and enable\n**Save VZIP archive** before clicking **Open**. Choose the destination in the\nsave dialog; the suggested filename is a sibling `.vzip`. Saving runs in the\nbackground, and the resulting image still opens lazily with the metadata panel.\nThe status shows the saved filename, with its full path available on hover.\n\nSaving stores references to the original image, not converted pixel data.\nThe archive covers the complete source, including all scenes and pyramid levels.\nExisting destinations require explicit replacement confirmation; failed writes\nleave the old archive intact. Cancelling the save dialog cancels the open action.\nThe save option is disabled for inputs that are already VZIP archives.\nFile/Open and canvas drops remain in-memory operations without automatic saving.\n\n## Metadata Inspector\n\nThe **Virtual Zarr metadata** dock opens on the right when using the refkv reader\nthrough File/Open or drag-and-drop, without opening the plugin widget first.\nIt also appears with **Plugins > napari-virtual-reader > Open Data as virtual OME-ZARR**.\nBoth workflows share one inspector that follows the selected image layer.\n\n- **Zarr structure** shows expandable groups and arrays, including original\n  shapes, dtypes, attributes, chunk grids and codec configuration.\n- **Metadata** shows the selected layer's OME metadata, source and channel\n  information, plus original scene transforms for stacked CZI images.\n- A filter finds matching properties; selecting a row shows its complete,\n  selectable value below the tree.\n\n<img src=\"https://raw.githubusercontent.com/sebi06/napari-virtual-reader/main/_images/czi_virtual_omezarr2.png\" alt=\"Alt Text\" style=\"width:80%; height:auto;\">\n\nThe inspector uses a metadata-only snapshot collected in the background. It\ndoes not scan pixel data or reconstruct the source hierarchy from displayed\nlayer shapes. Selecting an unrelated layer clears the inspector.\n\n## Scope\n\n- CZI, TIFF/OME-TIFF, and other refkv-supported files that expose OME image series.\n  Reader registration includes common microscopy and volumetric image extensions;\n  actual support is determined by refkv's parser and the file's metadata/codecs.\n- One layer per channel. Compatible CZI scenes are stacked lazily along a leading\n  **S** axis, in numeric series order. This also applies to CZI-derived\n  VZIP archives. Other formats retain separate series layers.\n- CZI stacking requires matching axes, shapes, dtypes, physical scales and\n  pyramid levels. Incompatible scenes remain separate without cropping or\n  resampling. Scene-dependent stage origins are replaced by local coordinates\n  on the stacked layer; original origins and metadata remain available in\n  the layer's `metadata[\"scenes\"]` list.\n- Stored multiscale pyramids, OME axis ordering, physical scale/origin, channel\n  names, colors, and display windows.\n- Regular and rectilinear chunk grids, without scanning complete lazy arrays\n  for contrast limits. Files without display windows use dtype bounds (0-1 for\n  floating point); adjust contrast in napari as needed.\n- OME-Zarr 0.4 and 0.5 image metadata, including nested image hierarchies.\n\nThis is deliberately not a replacement for every refkv dataset interface:\nnon-image tables, audio, arbitrary tensors, remote inputs, and stores without\nOME image metadata are outside this first version. There are no custom dimension\nsliders or CZI-specific options.\n\n## Development\n\n```powershell\ngit clone https://github.com/sebi06/napari-virtual-reader.git\ncd napari-virtual-reader\npython -m pip install -e \".[testing]\"\npython -m pytest\npython -m ruff check .\n```\n\nInstall a Qt backend as above if the development environment does not already\nprovide one. Development installs register the same napari plugin as PyPI installs.\n\n## Releases\n\nGitHub Actions tests pull requests and pushes to `main`. Publishing runs only\nafter the test matrix passes on a release tag in the form `vX.Y.Z`.\n\nSet `project.version` in `pyproject.toml` to the intended release version before\ntagging; tags do not change the package version. PyPI requires a new\nversion for every upload. Manual workflow runs test and build without publishing.\n\nSee the [changelog](CHANGELOG.md) for the change history and the\n[release notes](_release_notes/) for release-specific features, validation, and\nlimitations. Published tags and release details are available on\n[GitHub Releases](https://github.com/sebi06/napari-virtual-reader/releases).\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": null,
+    "home_page": null,
+    "keywords": "napari, ome-zarr, plugin, virtual",
+    "license": null,
+    "license_expression": "BSD-3-Clause",
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-virtual-reader",
+    "package_url": "https://pypi.org/project/napari-virtual-reader/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-virtual-reader/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/sebi06/napari-virtual-reader/issues",
+      "Documentation": "https://github.com/sebi06/napari-virtual-reader#readme",
+      "Homepage": "https://github.com/sebi06/napari-virtual-reader",
+      "Source Code": "https://github.com/sebi06/napari-virtual-reader"
+    },
+    "provides_extra": [
+      "testing"
+    ],
+    "release_url": "https://pypi.org/project/napari-virtual-reader/0.0.2/",
+    "requires_dist": [
+      "dask[array]>=2024.1",
+      "napari>=0.10.0",
+      "numpy>=2",
+      "qtpy>=2.4",
+      "refkv[images,zarr]>=0.2.0",
+      "superqt>=0.7",
+      "zarr>=3.4",
+      "pytest-qt>=4.4; extra == \"testing\"",
+      "pytest>=8; extra == \"testing\"",
+      "ruff>=0.9; extra == \"testing\"",
+      "tifffile; extra == \"testing\""
+    ],
+    "requires_python": ">=3.12",
+    "summary": "Experimental napari plugin for lazy virtual OME-Zarr images via refkv",
+    "version": "0.0.2",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 43283911,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "sebi06"
+      }
+    ]
+  },
+  "releases": {
+    "0.0.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "c180ed17b4241f25003e56620ea9d3a15f6b23ee8815a7be0337bf00417799ca"
+        },
+        "digests": {
+          "blake2b_256": "e01b1de40d219aeac2db4587adbd481b763e7dcb1e1b413a481261e2e1389a82",
+          "md5": "9c2365548e5bf3bfc46f059c40fe836b",
+          "sha256": "4d9e6fdab2abd11e9ec1d21571d3a45166e2daea68221d9b51f27509c5946341"
+        },
+        "downloads": -1,
+        "filename": "napari_virtual_reader-0.0.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "9c2365548e5bf3bfc46f059c40fe836b",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.12",
+        "size": 16215,
+        "upload_time": "2026-11-05T15:19:32",
+        "upload_time_iso_8601": "2026-11-05T15:19:32.978720Z",
+        "url": "https://files.pythonhosted.org/packages/e0/1b/1de40d219aeac2db4587adbd481b763e7dcb1e1b413a481261e2e1389a82/napari_virtual_reader-0.0.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "2fdae80fb0cd38bfe778c24c05181fd8bda018cfc3b8398c1cb2d43b728bed82",
+          "md5": "c879e409653da27032d3803f73a8ffaf",
+          "sha256": "5429bfc276e96e5b18a32998ca07ba40b1765829c7da26791b2420faa931ff56"
+        },
+        "downloads": -1,
+        "filename": "napari_virtual_reader-0.0.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "c879e409653da27032d3803f73a8ffaf",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.12",
+        "size": 21206,
+        "upload_time": "2026-11-05T15:19:34",
+        "upload_time_iso_8601": "2026-11-05T15:19:34.199565Z",
+        "url": "https://files.pythonhosted.org/packages/2f/da/e80fb0cd38bfe778c24c05181fd8bda018cfc3b8398c1cb2d43b728bed82/napari_virtual_reader-0.0.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.2": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "b4ded911210ba53a18ac374aaa6b7ecaf32074ca492cf194bd909e05bb95a3cd"
+        },
+        "digests": {
+          "blake2b_256": "b1dbcd8eadd677f1bbec3b20b9b77f2f04f4d14c92e1a904188dd9b3292432dc",
+          "md5": "38ccf0da4381d75ada7bb9f48a9c20d4",
+          "sha256": "a94dce6b49e9457e2cc8cad8e31ea351ae61b1bb6ff1b9b66ac43350f1c85a85"
+        },
+        "downloads": -1,
+        "filename": "napari_virtual_reader-0.0.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "38ccf0da4381d75ada7bb9f48a9c20d4",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.12",
+        "size": 16217,
+        "upload_time": "2026-11-06T09:29:51",
+        "upload_time_iso_8601": "2026-11-06T09:29:51.392684Z",
+        "url": "https://files.pythonhosted.org/packages/b1/db/cd8eadd677f1bbec3b20b9b77f2f04f4d14c92e1a904188dd9b3292432dc/napari_virtual_reader-0.0.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "2438c273f6de402f1fc976475717a730d32736cdceb0eef1c594c0596268f0b8",
+          "md5": "9273d46549990dfd89e5c9355512cfcc",
+          "sha256": "0861d2a67721ade7e6bb17018f01327719107ca83f6cfb26ba642aa3ac722f0e"
+        },
+        "downloads": -1,
+        "filename": "napari_virtual_reader-0.0.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "9273d46549990dfd89e5c9355512cfcc",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.12",
+        "size": 1419572,
+        "upload_time": "2026-11-06T09:29:52",
+        "upload_time_iso_8601": "2026-11-06T09:29:52.652504Z",
+        "url": "https://files.pythonhosted.org/packages/24/38/c273f6de402f1fc976475717a730d32736cdceb0eef1c594c0596268f0b8/napari_virtual_reader-0.0.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "b4ded911210ba53a18ac374aaa6b7ecaf32074ca492cf194bd909e05bb95a3cd"
+      },
+      "digests": {
+        "blake2b_256": "b1dbcd8eadd677f1bbec3b20b9b77f2f04f4d14c92e1a904188dd9b3292432dc",
+        "md5": "38ccf0da4381d75ada7bb9f48a9c20d4",
+        "sha256": "a94dce6b49e9457e2cc8cad8e31ea351ae61b1bb6ff1b9b66ac43350f1c85a85"
+      },
+      "downloads": -1,
+      "filename": "napari_virtual_reader-0.0.2-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "38ccf0da4381d75ada7bb9f48a9c20d4",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.12",
+      "size": 16217,
+      "upload_time": "2026-11-06T09:29:51",
+      "upload_time_iso_8601": "2026-11-06T09:29:51.392684Z",
+      "url": "https://files.pythonhosted.org/packages/b1/db/cd8eadd677f1bbec3b20b9b77f2f04f4d14c92e1a904188dd9b3292432dc/napari_virtual_reader-0.0.2-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "2438c273f6de402f1fc976475717a730d32736cdceb0eef1c594c0596268f0b8",
+        "md5": "9273d46549990dfd89e5c9355512cfcc",
+        "sha256": "0861d2a67721ade7e6bb17018f01327719107ca83f6cfb26ba642aa3ac722f0e"
+      },
+      "downloads": -1,
+      "filename": "napari_virtual_reader-0.0.2.tar.gz",
+      "has_sig": false,
+      "md5_digest": "9273d46549990dfd89e5c9355512cfcc",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.12",
+      "size": 1419572,
+      "upload_time": "2026-11-06T09:29:52",
+      "upload_time_iso_8601": "2026-11-06T09:29:52.652504Z",
+      "url": "https://files.pythonhosted.org/packages/24/38/c273f6de402f1fc976475717a730d32736cdceb0eef1c594c0596268f0b8/napari_virtual_reader-0.0.2.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

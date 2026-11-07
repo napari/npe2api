@@ -1,0 +1,323 @@
+{
+  "info": {
+    "author": null,
+    "author_email": "Joel Selvaraj <jsbrq@missouri.edu>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 4 - Beta",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "Operating System :: Microsoft :: Windows",
+      "Operating System :: POSIX :: Linux",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Programming Language :: Python :: 3.14",
+      "Topic :: Scientific/Engineering :: Bio-Informatics",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "<img src=\"https://raw.githubusercontent.com/jianlin-cheng/ETSAM/main/ETSAM_icon.svg\" alt=\"ETSAM membrane icon\" width=\"200\" height=\"160\" />\n\n# ETSAM Plugin for napari\n\nThe **napari-etsam** plugin runs ETSAM inside [napari](https://napari.org), a free image viewer for multi-dimensional data. You open a tomogram, install and activate plugin, click **Segment membranes**. The membrane mask appears as an new label layer that you can refine, inspect and save.\n\n> **Note**\n> On first start, if ETSAM is missing, click **Install ETSAM** to set it up in its own environment (or install it beforehand using the [ETSAM installer](https://jianlin-cheng.github.io/ETSAM/installation)).\n\n![ETSAM membrane segmentation overlaid on a tomogram in napari](https://raw.githubusercontent.com/jianlin-cheng/ETSAM/main/docs/public/napari/napari-result.png)\n\n*ETSAM membrane mask (yellow) on EMD-4949 in napari, with the ETSAM panel on the right.*\n\n## Requirements\n\n| | Minimum | Recommended |\n| --- | --- | --- |\n| GPU | NVIDIA GPU with 2 GB VRAM | NVIDIA GPU with 4 GB+ VRAM |\n| RAM | 4 GB | 8 GB |\n| Operating system | **Linux or Windows, with an NVIDIA GPU** | |\n\n## Installation\n\n### 1. Install the plugin\n\n**From napari (recommended):**\n\n1. Install napari if you don't have it yet. The [napari bundle](https://napari.org/stable/tutorials/fundamentals/installation_bundle_conda.html) is the easiest option.\n2. In napari, open **Plugins \u25b8 Install/Uninstall Plugins\u2026**.\n3. Search for **ETSAM**, click **Install** next to *napari-etsam*, and restart napari.\n\n**With pip**, in napari's Python environment:\n\n```bash\npip install napari-etsam\n```\n\n> **Tip**\n> To install the plugin from a checkout of the [ETSAM repository](https://github.com/jianlin-cheng/ETSAM) instead, use the Python of napari's environment:\n>\n> ```bash\n> /path/to/napari/python -m pip install ./ETSAM/external_plugins/napari-etsam\n> ```\n\n### 2. First start: click Install ETSAM\n\nETSAM itself runs in its own environment, separate from napari. When you open the ETSAM panel, the plugin checks whether ETSAM is installed. If it is missing on a supported computer, the panel shows an **Install ETSAM** button. Click it to start the [ETSAM installer](https://jianlin-cheng.github.io/ETSAM/installation/#method-1-etsam-installer-recommended). Opening the panel does not start an installation.\n\nInstallation downloads about **5 GB** and may take **10\u201315 minutes**. Keep napari open until it finishes; the panel shows progress. The installer puts ETSAM into `~/etsam_env` (on Windows, `%USERPROFILE%\\etsam_env`). Subsequent use starts immediately.\n\nETSAM requires **Linux or Windows and an NVIDIA GPU**. macOS is not supported. Contributions are welcome to extend hardware/software support.\n\n## Segmenting a Tomogram\n\n1. **Open the panel**: **Plugins \u25b8 ETSAM Membrane Segmentation (napari-etsam)**.\n2. **Open a tomogram**: drag and drop an `.mrc` file onto napari, or click **Open\u2026** in the panel. The new layer is selected as the *Tomogram* automatically.\n3. Optionally, tick **Clean up mask** or **Closely spaced membranes** (see [Options](#options)).\n4. Click **Segment membranes**. The progress bar follows ETSAM through Stage 1 and Stage 2 slice by slice, then through clean-up. Click **Cancel** to stop at any time.\n\n![ETSAM progress in napari](https://raw.githubusercontent.com/jianlin-cheng/ETSAM/main/docs/public/napari/napari-progress.png)\n\n*Progress is reported per slice for each stage, with an estimate of the time remaining.*\n\n5. When finished, a **`<tomogram> membranes`** label layer is added on top of the tomogram, and the panel shows the run time and the fraction of voxels classified as membrane.\n6. **Refine**: move the **Threshold** slider. The mask updates instantly, and clean-up is re-applied in the background if enabled. Lower values find more (and fainter) membrane; higher values give fewer false positives. **Reset** returns to the default `-0.25`. You can also correct the mask by hand with napari's label tools (paint, erase, fill).\n7. **Save**: click **Save mask\u2026** (the mask at the current threshold, including manual edits) or **Save logits\u2026** (raw membrane scores). Files are written as `.mrc` with the tomogram's voxel size, so they overlay directly in ChimeraX, IMOD or other tools. *File \u25b8 Save Selected Layers\u2026* with a `.mrc` file name works too.\n\n## Options\n\nThe main options are in the panel. The rest are under **Advanced settings**.\n\n<img src=\"https://raw.githubusercontent.com/jianlin-cheng/ETSAM/main/docs/public/napari/napari-advanced.png\" alt=\"ETSAM advanced settings in napari\" width=\"420\">\n\n| Option | Command-line equivalent | Description |\n| --- | --- | --- |\n| Threshold | `--logit-threshold` | Binarization threshold of the Stage 2 logits (default `-0.25`). Adjustable live after a run. |\n| Closely spaced membranes | `--split-processing` | Segments the four Y/X quadrants separately with a denser prompt grid; separates closely apposed membranes. About 4\u00d7 slower. |\n| Clean up mask | `--post-process` | Removes thin noise blobs and cuts short bridges between parallel membranes, with the default [post-processing](https://jianlin-cheng.github.io/ETSAM/advanced/#post-processing-with-etsam-postprocess) settings. Compare with the raw result, because it can remove small real membranes. |\n| Normalization | `--normalize-method` | Try *Softplus* if membranes are missed with the default. |\n| Stage 1 / Stage 2 prompt | `--stage1-prompt`, `--stage2-prompt` | Prompting strategies; see [Advanced Usage](https://jianlin-cheng.github.io/ETSAM/advanced/#prompt-methods). |\n\nThe plugin and the `etsam` command produce the same results for the same settings.\n\n## Troubleshooting\n\nWhen something goes wrong, the panel shows a red box with the problem and a suggested fix. **Show details** displays the full error, and **Copy error report** copies it with your system information (versions, GPU) for a [GitHub issue](https://github.com/jianlin-cheng/ETSAM/issues).\n\n<img src=\"https://raw.githubusercontent.com/jianlin-cheng/ETSAM/main/docs/public/napari/napari-error.png\" alt=\"ETSAM error panel in napari\" width=\"420\">\n\n| Message | What to do |\n| --- | --- |\n| *No tomogram selected* | Open an `.mrc` file first (drag and drop, *File \u25b8 Open* or **Open\u2026**). |\n| *This layer cannot be segmented* | ETSAM needs a single 3D grayscale volume (Z, Y, X). Select the tomogram layer rather than a 2D image, RGB image or a time series. |\n| *Installing ETSAM failed: \u2026 requires an NVIDIA GPU* | The installer supports NVIDIA GPUs only. Install ETSAM yourself as described in [Installation](https://jianlin-cheng.github.io/ETSAM/installation/#method-2-conda-environment-from-source). |\n| *Installing ETSAM failed: \u2026 the folder already exists* | An earlier installation was interrupted. Delete the `etsam` folder in your home folder and reopen the panel. |\n| *ETSAM is not installed* | This computer is not supported by the installer. Install ETSAM yourself (see [Installation](#installation)), or set `ETSAM_PYTHON`. |\n| *ETSAM is not installed in the environment \u2026* | That environment lacks ETSAM. Run step 3 of the conda installation (`pip install --no-deps -e .` in the ETSAM folder). |\n| *ETSAM \u2026 is older than this plugin* | The plugin needs an ETSAM at least as new as itself. Click **Update ETSAM**: it installs the latest ETSAM release again (about 3 GB download, 10\u201315 minutes). An ETSAM you installed from source must be updated the same way (`git pull`, then `pip install --no-deps -e .`). |\n| *Running on CPU (no GPU: this will be slow)* although the computer has an NVIDIA GPU | Update the NVIDIA driver, and check that PyTorch in the `etsam` environment can use the GPU (see [Verify the Installation](https://jianlin-cheng.github.io/ETSAM/installation/#4-verify-the-installation)). |\n| *The GPU is busy* | Another program keeps ETSAM from using the GPU. Close other programs that use the GPU, or restart napari. |\n| *Out of memory* | Close other programs (especially ones using the GPU) and try again, or bin the tomogram (fewer slices need less RAM). |\n| *Could not download the ETSAM model weights* | Check your internet connection or proxy and retry. Offline machines: copy `etsam_stage1_v1.pt` and `etsam_stage2_v1.pt` into the weights folder (see [Model Weights](https://jianlin-cheng.github.io/ETSAM/installation/)). |\n| Empty or incomplete mask | Lower the threshold, try *Softplus* normalization, a `grid` Stage 1 prompt, or *Closely spaced membranes*. See [Troubleshooting](https://jianlin-cheng.github.io/ETSAM/troubleshooting/#empty-or-incomplete-membrane-predictions). |\n| *ETSAM stopped unexpectedly* | Report it with **Copy error report**. |\n\n## Uninstalling\n\nRemove the plugin with **Plugins \u25b8 Install/Uninstall Plugins \u25b8 napari-etsam \u25b8 Uninstall**, or `pip uninstall napari-etsam`. To remove ETSAM completely, refer uninstall section in [Installation](https://jianlin-cheng.github.io/ETSAM/installation/#3-uninstall-etsam) guide.\n\n# Cite:\n\nSelvaraj, J., Cheng, J. ETSAM: effectively segmenting cell membranes in cryo-electron tomograms. *Nat Commun* (2026). [https://doi.org/10.1038/s41467-026-77962-7](https://doi.org/10.1038/s41467-026-77962-7)\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": "napari, cryo-ET, tomography, membrane segmentation, SAM2",
+    "license": null,
+    "license_expression": "MIT",
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-etsam",
+    "package_url": "https://pypi.org/project/napari-etsam/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-etsam/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/jianlin-cheng/ETSAM/issues",
+      "Documentation": "https://jianlin-cheng.github.io/ETSAM/napari/",
+      "Homepage": "https://github.com/jianlin-cheng/ETSAM",
+      "Source Code": "https://github.com/jianlin-cheng/ETSAM/tree/main/external_plugins/napari-etsam"
+    },
+    "provides_extra": [
+      "all"
+    ],
+    "release_url": "https://pypi.org/project/napari-etsam/2.0.1/",
+    "requires_dist": [
+      "mrcfile>=1.5",
+      "numpy",
+      "qtpy",
+      "superqt>=0.6",
+      "napari[all]; extra == \"all\""
+    ],
+    "requires_python": ">=3.11",
+    "summary": "Segment cell membranes in cryo-ET tomograms with ETSAM, inside napari",
+    "version": "2.0.1",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 42625219,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "joelselvaraj"
+      }
+    ]
+  },
+  "releases": {
+    "1.1.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "4957c0f1271f5a9474dc9845a1121b2285df6445b61d3df6077a63eaaa76d9ff"
+        },
+        "digests": {
+          "blake2b_256": "2a5b684aefb847c0c9dc18c3b5762e204089a243d1aaeda66a3d302db449889d",
+          "md5": "61cffba1eba4ed07bdb3c26505b32238",
+          "sha256": "c37577d203b894f276528fde5f6a400ac7794326e58898d6facf3e2887faf94e"
+        },
+        "downloads": -1,
+        "filename": "napari_etsam-1.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "61cffba1eba4ed07bdb3c26505b32238",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 24975,
+        "upload_time": "2026-10-11T13:47:13",
+        "upload_time_iso_8601": "2026-10-11T13:47:13.159642Z",
+        "url": "https://files.pythonhosted.org/packages/2a/5b/684aefb847c0c9dc18c3b5762e204089a243d1aaeda66a3d302db449889d/napari_etsam-1.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "deeff2417626facec1d64aba34e0f39d5547d082ece89f1e2d277221d58c42f4",
+          "md5": "87320812c41adbb988ce3034737db88a",
+          "sha256": "f929022ac9a277d86c3c04d09d54552a38e29ad9009bc61aff8d851959f82943"
+        },
+        "downloads": -1,
+        "filename": "napari_etsam-1.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "87320812c41adbb988ce3034737db88a",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 26953,
+        "upload_time": "2026-10-11T13:47:14",
+        "upload_time_iso_8601": "2026-10-11T13:47:14.612478Z",
+        "url": "https://files.pythonhosted.org/packages/de/ef/f2417626facec1d64aba34e0f39d5547d082ece89f1e2d277221d58c42f4/napari_etsam-1.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.1.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "3f2d645a933fa04db682ccd6418767582b9fa5760d8dd39bbb3178223cfac47e"
+        },
+        "digests": {
+          "blake2b_256": "fa8a243d31b4b2829f4e8ebe8a2425896e8e9aaae4bdfa6dfcca950070d2b1fe",
+          "md5": "c52cb248a54743b6ffb34f79166b923b",
+          "sha256": "9a2a2e89f98f363ddd3ef8a60a5dfb509ee44ad9c92c23038307d886d985df9a"
+        },
+        "downloads": -1,
+        "filename": "napari_etsam-1.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "c52cb248a54743b6ffb34f79166b923b",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 29708,
+        "upload_time": "2026-10-21T21:00:24",
+        "upload_time_iso_8601": "2026-10-21T21:00:24.019661Z",
+        "url": "https://files.pythonhosted.org/packages/fa/8a/243d31b4b2829f4e8ebe8a2425896e8e9aaae4bdfa6dfcca950070d2b1fe/napari_etsam-1.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "f251057fe39354f1e484b8a9a6b88a9bf62cc66f56cc7c350bb226e5092e018d",
+          "md5": "e7dc9edaadc4f0941d4cbbfd423c0188",
+          "sha256": "f257534fe445af7e892e88434ddea0492974bcb5bc111af363f08c4cc9dd2ab3"
+        },
+        "downloads": -1,
+        "filename": "napari_etsam-1.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e7dc9edaadc4f0941d4cbbfd423c0188",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 32199,
+        "upload_time": "2026-10-21T21:00:25",
+        "upload_time_iso_8601": "2026-10-21T21:00:25.493321Z",
+        "url": "https://files.pythonhosted.org/packages/f2/51/057fe39354f1e484b8a9a6b88a9bf62cc66f56cc7c350bb226e5092e018d/napari_etsam-1.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "2.0.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "63b0dd0b9429dc9ddb82d47c8077df98787234c539ce87e5c3a6074d5a2fbc8d"
+        },
+        "digests": {
+          "blake2b_256": "c81aa91223d979995f79eec24206c8469f63b53b555209b570f2413efe3c5f40",
+          "md5": "de1be864c67f13b56098c56fcf670dc5",
+          "sha256": "84120c2c9944e91913b2f4eee0ee069106ad42fb7abbd52e4fdae22b6c1b2c21"
+        },
+        "downloads": -1,
+        "filename": "napari_etsam-2.0.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "de1be864c67f13b56098c56fcf670dc5",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 30158,
+        "upload_time": "2026-10-22T19:58:39",
+        "upload_time_iso_8601": "2026-10-22T19:58:39.075739Z",
+        "url": "https://files.pythonhosted.org/packages/c8/1a/a91223d979995f79eec24206c8469f63b53b555209b570f2413efe3c5f40/napari_etsam-2.0.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "1c31273c834417bfc502385a2c5966d4bf8aef7d52ffa86f0ccb6c6d735b289e",
+          "md5": "eb0d37f96556041db6cb4679f7bcb0f5",
+          "sha256": "8bc6a31a335c308b0f91bec31fc4fbbf1e3fb916a1494ac19f9c39c469e4af68"
+        },
+        "downloads": -1,
+        "filename": "napari_etsam-2.0.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "eb0d37f96556041db6cb4679f7bcb0f5",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 32782,
+        "upload_time": "2026-10-22T19:58:40",
+        "upload_time_iso_8601": "2026-10-22T19:58:40.492184Z",
+        "url": "https://files.pythonhosted.org/packages/1c/31/273c834417bfc502385a2c5966d4bf8aef7d52ffa86f0ccb6c6d735b289e/napari_etsam-2.0.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "2.0.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "681a0bdc10193c5763d2699424432d54257bdb95045e4f5b31d014e21ef95dae"
+        },
+        "digests": {
+          "blake2b_256": "d121704d7a6c7b29e54df7a68dcc204795c173de9128cea3d5c20832c0d973ca",
+          "md5": "7417a18d73e9435a657c6c86c87a344a",
+          "sha256": "2017cd10b51ff87cdfde781d2409dcb4f76146af7aa1d8967ba29b88b0fbdbac"
+        },
+        "downloads": -1,
+        "filename": "napari_etsam-2.0.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "7417a18d73e9435a657c6c86c87a344a",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 32081,
+        "upload_time": "2026-10-23T04:21:46",
+        "upload_time_iso_8601": "2026-10-23T04:21:46.562931Z",
+        "url": "https://files.pythonhosted.org/packages/d1/21/704d7a6c7b29e54df7a68dcc204795c173de9128cea3d5c20832c0d973ca/napari_etsam-2.0.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "9820ea5a3bf5aa0db5d3e921f659d4245a2bec40d417f0fcdcbd9564c873080d",
+          "md5": "8d38eadab0f4ba137dee864d45dfdf0b",
+          "sha256": "fc65ea5465659e458f1cfaf6a30c03a27aa6fae10ac6573bd97ab96a6cbf786f"
+        },
+        "downloads": -1,
+        "filename": "napari_etsam-2.0.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "8d38eadab0f4ba137dee864d45dfdf0b",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 34718,
+        "upload_time": "2026-10-23T04:21:47",
+        "upload_time_iso_8601": "2026-10-23T04:21:47.715335Z",
+        "url": "https://files.pythonhosted.org/packages/98/20/ea5a3bf5aa0db5d3e921f659d4245a2bec40d417f0fcdcbd9564c873080d/napari_etsam-2.0.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "681a0bdc10193c5763d2699424432d54257bdb95045e4f5b31d014e21ef95dae"
+      },
+      "digests": {
+        "blake2b_256": "d121704d7a6c7b29e54df7a68dcc204795c173de9128cea3d5c20832c0d973ca",
+        "md5": "7417a18d73e9435a657c6c86c87a344a",
+        "sha256": "2017cd10b51ff87cdfde781d2409dcb4f76146af7aa1d8967ba29b88b0fbdbac"
+      },
+      "downloads": -1,
+      "filename": "napari_etsam-2.0.1-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "7417a18d73e9435a657c6c86c87a344a",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.11",
+      "size": 32081,
+      "upload_time": "2026-10-23T04:21:46",
+      "upload_time_iso_8601": "2026-10-23T04:21:46.562931Z",
+      "url": "https://files.pythonhosted.org/packages/d1/21/704d7a6c7b29e54df7a68dcc204795c173de9128cea3d5c20832c0d973ca/napari_etsam-2.0.1-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "9820ea5a3bf5aa0db5d3e921f659d4245a2bec40d417f0fcdcbd9564c873080d",
+        "md5": "8d38eadab0f4ba137dee864d45dfdf0b",
+        "sha256": "fc65ea5465659e458f1cfaf6a30c03a27aa6fae10ac6573bd97ab96a6cbf786f"
+      },
+      "downloads": -1,
+      "filename": "napari_etsam-2.0.1.tar.gz",
+      "has_sig": false,
+      "md5_digest": "8d38eadab0f4ba137dee864d45dfdf0b",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.11",
+      "size": 34718,
+      "upload_time": "2026-10-23T04:21:47",
+      "upload_time_iso_8601": "2026-10-23T04:21:47.715335Z",
+      "url": "https://files.pythonhosted.org/packages/98/20/ea5a3bf5aa0db5d3e921f659d4245a2bec40d417f0fcdcbd9564c873080d/napari_etsam-2.0.1.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

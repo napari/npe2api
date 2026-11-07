@@ -1,0 +1,116 @@
+{
+  "name": "samcell-napari",
+  "display_name": "samcell-napari",
+  "visibility": "public",
+  "icon": "",
+  "categories": [],
+  "schema_version": "0.1.1",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "samcell-napari.widget",
+        "title": "Create SAMCell Segmentation Widget",
+        "python_name": "samcell_napari:samcell_widget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "samcell-napari.data.sample_2d",
+        "title": "Sample 2D Image",
+        "python_name": "samcell_napari._sample_data:sample_2d",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "samcell-napari.widget",
+        "display_name": "SAMCell Segmentation",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": [
+      {
+        "command": "samcell-napari.data.sample_2d",
+        "key": "sample_2d",
+        "display_name": "Sample Cell Image (2D)"
+      }
+    ],
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "samcell-napari",
+    "version": "1.1.3",
+    "dynamic": [
+      "license-file"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "A napari plugin for cell segmentation with SAMCell 1.0",
+    "description": "# samcell-napari\n\n[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)\n[![PyPI](https://img.shields.io/pypi/v/samcell-napari)](https://pypi.org/project/samcell-napari/)\n\nA napari plugin for cell segmentation using the Segment Anything Model (SAM) foundation model.\n\n![SAMCell Segmentation Example](https://github.com/saahilsanganeriya/samcell-napari/raw/main/docs/images/samcell-napari.jpg)\n\n## Description\n\nSAMCell-napari provides an intuitive interface for segmenting cells in microscopy images using deep learning. It leverages the power of the Segment Anything Model (SAM) adapted specifically for biological cell segmentation, providing accurate results with minimal tuning.\n\n### Key Features:\n- Simple, user-friendly interface within napari\n- Compatible with SAMCell models in multiple formats (`.pt`, `.bin`, `.safetensors`)\n- Support for both SAM-ViT-Base and SAM-ViT-Large model architectures\n- Adjustable segmentation parameters for fine-tuning\n- Real-time visualization of results\n- Distance map visualization for analyzing cell proximity\n- Full integration with napari's layer system\n- Enhanced sliding window algorithm with advanced blending for seamless segmentation of large images\n\n### What's New in v1.0.0:\n- Support for multiple model file formats (`.pt`, `.bin`, `.safetensors`)\n- Improved sliding window algorithm with smooth blending between crops\n- Better handling of small images and edge cases\n- Enhanced error recovery and logging\n- Multiple threshold testing capability\n- Optimized default thresholds for better segmentation results\n- Support for both SAM-ViT-Base and SAM-ViT-Large model variants\n\n## Installation\n\nYou can install `samcell-napari` via [pip]:\n\n```bash\npip install samcell-napari\n```\n\nTo install latest development version:\n\n```bash\npip install git+https://github.com/saahilsanganeriya/samcell-napari.git\n```\n\n## Usage\n\n1. Start napari\n   ```bash\n   napari\n   ```\n\n2. Load your image in napari\n\n3. Open the SAMCell plugin:\n   ```\n   Plugins > samcell-napari > SAMCell Segmentation\n   ```\n\n4. Provide the path to your SAMCell model file (supports `.pt`, `.bin`, or `.safetensors` formats)\n   - You can download pre-trained models from the [official SAMCell release page](https://github.com/saahilsanganeriya/SAMCell/releases/tag/v1)\n\n5. Adjust parameters if needed:\n   - Cell peak threshold: Higher values detect fewer cells (default: 0.47)\n   - Cell fill threshold: Lower values create larger cells (default: 0.09)\n   - Crop size: Size of image crops for processing (default: 256)\n\n6. Click \"Run Segmentation\"\n\n7. View the segmentation results in napari as a Labels layer\n\n## Requirements\n\n- Python 3.8 or higher\n- napari 0.4.14 or higher\n- PyTorch 1.9 or higher\n- transformers 4.20.0 or higher\n- CUDA-capable GPU recommended for faster processing\n\n## Model Compatibility\n\nThe plugin is compatible with SAMCell model files in multiple formats:\n- PyTorch model files (`.pt`)\n- Binary model files (`.bin`) - including the standard `pytorch_model.bin`\n- SafeTensors files (`.safetensors`) - a safer alternative to PyTorch's pickle-based format\n\nThe plugin supports models based on:\n- SAM-ViT-Base architecture - Primary model type\n- SAM-ViT-Large architecture - Fallback if a model doesn't load with base architecture\n\nPre-trained models can be downloaded from the [official SAMCell release page](https://github.com/saahilsanganeriya/SAMCell/releases/tag/v1).\n\nRecommended models include:\n- SAMCell1.0-Cellpose-cyto: Trained on the Cellpose cytoplasm dataset\n- SAMCell1.0-livecell: Trained on the LiveCELL dataset\n\nThese models are part of the release assets for the paper \"SAMCell: Generalized Label-Free Biological Cell Segmentation with Segment Anything\".\n\n## How It Works\n\nSAMCell operates using an enhanced sliding window approach to process large images:\n\n1. The image is divided into overlapping crops with intelligent handling of image boundaries\n2. Each crop is processed through a SAM-based model\n3. A distance map is created, representing cell centers and boundaries\n4. The crops are stitched back together with smooth blending for seamless transitions\n5. The distance map is processed to extract individual cell masks using watershed segmentation\n6. Results are displayed in napari as labels\n\n## Technical Details\n\n### Model Type Detection\n\nThe plugin intelligently determines the appropriate SAM model architecture:\n1. First tries to load the model with SAM-ViT-Base architecture\n2. If that fails, automatically falls back to SAM-ViT-Large\n3. This ensures maximum compatibility with various pre-trained models\n\n### Sliding Window Algorithm\n\nThe plugin uses an advanced sliding window algorithm that:\n- Handles images of any size, including those smaller than the crop size\n- Creates appropriate overlaps between crops to ensure no cells are missed\n- Uses a cosine-based blending mask to create smooth transitions between crops\n- Fills any potential gaps using nearest neighbor interpolation\n\n### Multiple Threshold Testing\n\nFor researchers who want to optimize segmentation parameters, the plugin includes a batch processing capability to test multiple threshold combinations at once (available via the API).\n\n## Contributing\n\nContributions are very welcome! Please feel free to submit a Pull Request.\n\n## License\n\nDistributed under the MIT License. See `LICENSE` for more information.\n\n## Citation\n\nIf you use this plugin in your research, please cite:\n\n```\n@article{samcell2023,\n  title={SAMCell: Generalized Label-Free Biological Cell Segmentation with Segment Anything},\n  author={...},\n  journal={...},\n  year={2023}\n}\n``` \n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": "https://github.com/saahilsanganeriya/samcell-napari",
+    "download_url": null,
+    "author": "Saahil Sanganeriya",
+    "author_email": "saahilsanganeria666@gmail.com",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": null,
+    "classifier": [
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Programming Language :: Python :: 3.10",
+      "License :: OSI Approved :: MIT License",
+      "Operating System :: OS Independent",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "Topic :: Scientific/Engineering :: Bio-Informatics",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "requires_dist": [
+      "napari>=0.4.14",
+      "numpy>=1.21.0",
+      "torch>=1.9",
+      "transformers>=4.26.0",
+      "scikit-image>=0.19.0",
+      "opencv-python>=4.5.0",
+      "scipy>=1.7.0",
+      "pandas>=1.3.0",
+      "tqdm>=4.60.0",
+      "safetensors>=0.3.0",
+      "timm>=0.6.0",
+      "openpyxl>=3.0.0",
+      "safetensors>=0.3.0; extra == \"safetensors\"",
+      "black; extra == \"dev\"",
+      "pytest; extra == \"dev\"",
+      "pytest-cov; extra == \"dev\""
+    ],
+    "requires_python": ">=3.8",
+    "requires_external": null,
+    "project_url": [
+      "Bug Tracker, https://github.com/saahilsanganeriya/samcell-napari/issues"
+    ],
+    "provides_extra": [
+      "safetensors",
+      "dev"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}

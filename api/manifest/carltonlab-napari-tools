@@ -1,0 +1,127 @@
+{
+  "name": "carltonlab-napari-tools",
+  "display_name": "Carltonlab Count Tool",
+  "visibility": "public",
+  "icon": null,
+  "categories": [],
+  "schema_version": "0.3.0",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "carltonlab-napari-tools.make_count_tool_widget",
+        "title": "Make Count Tool Widget",
+        "python_name": "carltonlab_napari_tools:CarltonLabCountTool",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "carltonlab-napari-tools.make_count_tool_widget",
+        "display_name": "CarltonLab Count Tool",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configurations": {}
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "carltonlab-napari-tools",
+    "version": "0.1.0a1",
+    "dynamic": [
+      "license-file"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "A napari plugin for manual and automated foci counting in microscopy images, developed for RAD-51 foci in C. elegans gonads.",
+    "description": "# carltonlab-napari-tools\n\n[![License BSD-3](https://img.shields.io/github/license/carltonlab/carltonlab-napari-tools.svg?color=green)](https://github.com/carltonlab/carltonlab-napari-tools/blob/main/LICENSE)\n[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)\n[![tests](https://github.com/carltonlab/carltonlab-napari-tools/actions/workflows/test_and_deploy.yml/badge.svg)](https://github.com/carltonlab/carltonlab-napari-tools/actions/workflows/test_and_deploy.yml)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/carltonlab-napari-tools)](https://napari-hub.org/plugins/carltonlab-napari-tools)\n[![npe2](https://img.shields.io/badge/plugin-npe2-blue?link=https://napari.org/stable/plugins/index.html)](https://napari.org/stable/plugins/index.html)\n[![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-purple.json)](https://github.com/copier-org/copier)\n\n## About the plugin\n\nWork in progress, please expect bugs V0.1.0\n\nThis napari plugin is a tool designed to computationally count the number of foci in microscopy of\n_C. elegans_ gonads. It has two operational methods, manual and automatic counting. It uses\n[ndevio](https://github.com/ndev-kit/ndevio) to extract the required metadata and\n[multiview-stitcher](https://github.com/multiview-stitcher/multiview-stitcher) to stitch the gonad\ntiles into a single image.\n\n<p align=\"center\">\n  <img src=\"https://raw.githubusercontent.com/carltonlab/carltonlab-napari-tools/main/docs/images/stitched_image_example.png\" alt=\"Example of a stitched gonad image\">\n</p>\n\nThe tool was designed for RAD-51 foci counting in 4D images (CZYX) since it is the most common assay\nfor quantification of DSBs in _C. elegans_ but can be used to count other foci in any image.\n\nIt features multi-gonad project creation where all genotypes and gonads are mixed after individual\nnuclei are selected (manual or automatic) and are scored in a blind manner to minimize human bias.\n\nWe recommend using the automatic process, which uses a trained `cellpose` model to segment the\nnuclei. By default, it uses our trained model:\n<https://bioimage.io/#/artifacts/sneaky-panda>.\n\n<p align=\"center\">\n  <img src=\"https://raw.githubusercontent.com/carltonlab/carltonlab-napari-tools/main/docs/images/meiotic_nuclei_segmentation_model_v1.png\" alt=\"Example of meiotic nuclei segmentation\">\n</p>\n\nFor the automatic counting, it uses `spotiflow` with a default model and then point filtering\nbased on user provided parameters such as expected foci volume, channel (usually DAPI)\nco-localization and more.\n\nIt'll export the data as plots that can be organized by genotype similar to the conventional RAD-51\nscoring figures commonly used in papers.\n\n<p align=\"center\">\n  <img src=\"https://raw.githubusercontent.com/carltonlab/carltonlab-napari-tools/main/docs/images/plot_example.svg\" alt=\"Example of generated foci-counting plots\">\n</p>\n\nIt also writes all the intermediate files for troubleshooting, data archive and manual inspection.\nFormats are `OME-Zarr` for tiles and stitched images, `TIFF` files for cropped nuclei, `CSV` files\nfor foci coordinates and feature tables. All which are easy to inspect even without the tool.\n\nYou can also do the entire counting and refinement of the data using the manual process.\n\n## Installation\n\n### Install from PyPI or napari Hub\n\nInstall the plugin in napari:\n\n- In napari, open **Plugins → Install/Uninstall Plugins…**, search for\n  `carltonlab-napari-tools`, select it, and click **Install**. Restart napari if\n  prompted.\n- If **Install/Uninstall Plugins…** isn't available, install the\n  [napari plugin manager](https://napari.org/napari-plugin-manager/) in the\n  same environment as napari.\n- Or, in the Python environment used by napari, run:\n\n  ```sh\n  python -m pip install carltonlab-napari-tools\n  ```\n\nThe commands above install the plugin's base dependencies. For automatic\nsegmentation, install the matching extra in the same Python environment:\n\nFor CPU:\n\n```sh\npython -m pip install \"carltonlab-napari-tools[full-cpu]\"\n```\n\nFor CUDA 12:\n\n```sh\npython -m pip install \"carltonlab-napari-tools[full-cuda12]\"\n```\n\nDepending on your system, you may need a different PyTorch build for CUDA.\n\n### Install from source\n\nClone the repository and enter its directory:\n\n```sh\ngit clone git@github.com:carltonlab/carltonlab-napari-tools.git\ncd carltonlab-napari-tools\n```\n\nSelect what segmentation you'll be using (Automatic workflow only).\n\nFor the manual workflow, install napari and Qt without the segmentation\nmodels:\n\n```sh\nuv sync --extra all\n```\n\nFor automatic segmentation on CPU, use:\n\n```sh\nuv sync --extra full-cpu\n```\n\nFor automatic segmentation with CUDA 12, use:\n\n```sh\nuv sync --extra full-cuda12\n```\n\nWe highly recommend using a GPU for the segmentation. Depending on the setup, you might need to\ninstall a different `PyTorch` version.\n\nFor our workflow, with approximately 2 × 50 × 1024 × 1024 (CZYX) images,\nsegmentation and foci counting use about 6 GB\nof VRAM.\n\n## Running\n\nLaunch napari from the environment where you installed the plugin:\n\n- If you installed it through napari's plugin manager, pip, or conda, launch\n  napari as you normally do.\n- If you installed from source using uv, run this from the repository directory:\n\n```sh\nuv run napari\n```\n\nThen, use the Plugins menu to launch the tool.\n\n## Contributing\n\nContributions are very welcome.\n\n## Acknowledgements\n\nThis plugin uses [ndevio](https://github.com/ndev-kit/ndevio) for image metadata\nand [multiview-stitcher](https://github.com/multiview-stitcher/multiview-stitcher)\nfor image stitching.\n\nIf you use `multiview-stitcher` in published research, cite its\n[Zenodo record](https://doi.org/10.5281/zenodo.13151252).\n\n## License\n\nDistributed under the terms of the\n[BSD-3](https://opensource.org/licenses/BSD-3-Clause) license,\n\"carltonlab-napari-tools\" is free and open source software\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": null,
+    "download_url": null,
+    "author": null,
+    "author_email": "Carlos Rodriguez <carlosmariorr90@hotmail.com>",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "Copyright (c) 2025, Carlos Rodriguez\nAll rights reserved.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n\n* Redistributions of source code must retain the above copyright notice, this\n  list of conditions and the following disclaimer.\n\n* Redistributions in binary form must reproduce the above copyright notice,\n  this list of conditions and the following disclaimer in the documentation\n  and/or other materials provided with the distribution.\n\n* Neither the name of copyright holder nor the names of its\n  contributors may be used to endorse or promote products derived from\n  this software without specific prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\"\nAND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\nIMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\nDISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE\nFOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\nDAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR\nSERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER\nCAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,\nOR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\nOF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n",
+    "classifier": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Programming Language :: Python :: 3.14",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "requires_dist": [
+      "napari",
+      "numpy",
+      "matplotlib",
+      "magicgui",
+      "qtpy",
+      "scikit-image",
+      "ndevio",
+      "bioio-tifffile",
+      "bioio-dv",
+      "multiview-stitcher>=0.1.37",
+      "mrc",
+      "tifffile",
+      "pandas>=2.2.3",
+      "scipy",
+      "dask",
+      "platformdirs",
+      "superqt",
+      "zarr",
+      "bioimageio-spec>=0.5.14.2",
+      "napari[all]; extra == \"all\"",
+      "cellpose; extra == \"segmentation\"",
+      "spotiflow; extra == \"segmentation\"",
+      "torch; extra == \"segmentation\"",
+      "cupy-cuda12x; extra == \"gpu-cuda12\"",
+      "napari[all]; extra == \"full-cpu\"",
+      "cellpose; extra == \"full-cpu\"",
+      "spotiflow; extra == \"full-cpu\"",
+      "torch; extra == \"full-cpu\"",
+      "napari[all]; extra == \"full-cuda12\"",
+      "cellpose; extra == \"full-cuda12\"",
+      "spotiflow; extra == \"full-cuda12\"",
+      "torch; extra == \"full-cuda12\"",
+      "cupy-cuda12x; extra == \"full-cuda12\""
+    ],
+    "requires_python": ">=3.11",
+    "requires_external": null,
+    "project_url": [
+      "Bug Tracker, https://github.com/carltonlab/carltonlab-napari-tools/issues",
+      "Documentation, https://github.com/carltonlab/carltonlab-napari-tools#README.md",
+      "Source Code, https://github.com/carltonlab/carltonlab-napari-tools",
+      "User Support, https://github.com/carltonlab/carltonlab-napari-tools/issues"
+    ],
+    "provides_extra": [
+      "all",
+      "segmentation",
+      "gpu-cuda12",
+      "full-cpu",
+      "full-cuda12"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}

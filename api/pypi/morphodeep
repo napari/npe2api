@@ -1,0 +1,291 @@
+{
+  "info": {
+    "author": null,
+    "author_email": "Emmanuel Faure <emmanuel.faure@lirmm.fr>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# MorphoDeep\n\nMorphoDeep segments individual cells in grayscale microscopy images of membranes. It supports 2D images and 3D volumes and returns an integer label image: `0` is background, and each positive value identifies one cell. The package provides a command-line interface, a Python API, and napari widgets for prediction and fine tuning.\n\n## Install\n\nMorphoDeep 0.1 supports Python 3.10 and 3.11. Install the library with:\n\n```bash\npython -m pip install morphodeep\n```\n\nTo use the napari widgets, install the optional graphical dependencies:\n\n```bash\npython -m pip install 'morphodeep[napari]'\n```\n\nTensorFlow 2.15 is installed as a package dependency. GPU setup depends on the operating system and hardware; consult the [TensorFlow installation guide](https://www.tensorflow.org/install) if GPU support is needed.\n\n## Predict cell instances\n\nPass a grayscale TIFF image or volume to the command-line tool:\n\n```bash\nmorphodeep predict image.tif image_instances.tif --mode 2D\nmorphodeep predict volume.tif volume_instances.tif --mode 3D --size 128\n```\n\nThe dimension can be inferred from the TIFF file. The default model size is 256 in 2D and 128 in 3D; a 256 model is also available in 3D. Predictions use overlapping patches by default. Use `--no-patches` for whole-image inference, `--weights path/to/model.h5` for custom weights, and `--overwrite` to replace an output file.\n\nIn Python:\n\n```python\nfrom morphodeep.napari.model import run_instance_segmentation\n\nlabels = run_instance_segmentation(image, mode=\"2D\", net_size=256)\n```\n\nThe result has the same shape as the input and contains integer instance labels.\n\n### Pretrained weights\n\nThe three pretrained models are hosted separately in the [MorphoDeep weights dataset on Figshare](https://doi.org/10.6084/m9.figshare.34245426):\n\n| Mode | Model | File |\n| --- | --- | --- |\n| 2D, size 256 | DUNNET | `DUNNET_256.13331.h5` |\n| 3D, size 128 | JUNNET | `JUNNET_128.6228.h5` |\n| 3D, size 256 | JUNNET | `JUNNET_256.2020.h5` |\n\nMorphoDeep downloads the selected file on first use, verifies its SHA-256 digest, and caches it for later offline use. The weights are not included in the Python package. To use files already on disk, pass `--weights` to prediction or set `MORPHODEEP_WEIGHTS_DIR` to a directory containing the published filenames, either directly or under `2D/` and `3D/` subdirectories.\n\n## Fine tune on your own data\n\nProvide grayscale TIFF images and corresponding instance masks in separate directories. Files are paired by name before the extension, and images and masks must have the same shape. In each mask, `0` is background and each positive integer identifies one cell.\n\n```bash\nmorphodeep finetune --images data/images --masks data/masks \\\n  --output runs/my_cells --mode 2D --epochs 20\n```\n\nUse `--mode 3D` for volumes. At least two image and mask pairs are required. By default, whole images are split reproducibly into training and validation sets. Related images, such as slices from the same volume, should use independent validation directories via `--validation-images` and `--validation-masks`. The best weights are written to `runs/my_cells/best.weights.h5` and can be used for prediction:\n\n```bash\nmorphodeep predict image.tif image_instances.tif \\\n  --weights runs/my_cells/best.weights.h5\n```\n\nFine tuning is also available through `morphodeep.training.fine_tune` and the **Fine tune model** napari widget. The **Predict instances** widget accepts the resulting file in its **Custom weights** field.\n\n## Documentation and research code\n\nThe `docs/` directory contains installation, prediction, fine-tuning, napari, and Python API guides. From a source checkout, build the documentation with:\n\n```bash\npython -m pip install -e '.[docs]'\npython -m mkdocs build --strict\n```\n\nThe historical training and data preparation workflow is documented in `docs/research/legacy_training.md`. It is separate from the supported `morphodeep finetune` command and may require research-cluster resources.\n\n## Source and issues\n\nThe [source code](https://codeberg.org/FaureEmmanuel/MorphoDeep) and [issue tracker](https://codeberg.org/FaureEmmanuel/MorphoDeep/issues) are on Codeberg. Read the [full documentation](https://faureemmanuel.codeberg.page/MorphoDeep/) for the installation guide, examples, and Python API.\n\n## License\n\nMorphoDeep is distributed under the [GNU LGPL v3.0 license](https://www.gnu.org/licenses/lgpl-3.0.html). The Figshare weights dataset has its own [CC BY 4.0 license](https://doi.org/10.6084/m9.figshare.34245426).\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": "image analysis, bioimage, segmentation, instance-segmentation, deep learning, unet, napari plugin, microscopy",
+    "license": null,
+    "license_expression": "LGPL-3.0-only",
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "morphodeep",
+    "package_url": "https://pypi.org/project/morphodeep/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/morphodeep/",
+    "project_urls": {
+      "Documentation": "https://faureemmanuel.codeberg.page/MorphoDeep/",
+      "Homepage": "https://codeberg.org/FaureEmmanuel/MorphoDeep",
+      "Issues": "https://codeberg.org/FaureEmmanuel/MorphoDeep/issues",
+      "Model weights": "https://doi.org/10.6084/m9.figshare.34245426",
+      "Source code": "https://codeberg.org/FaureEmmanuel/MorphoDeep"
+    },
+    "provides_extra": [
+      "napari",
+      "figures",
+      "docs"
+    ],
+    "release_url": "https://pypi.org/project/morphodeep/0.1/",
+    "requires_dist": [
+      "numpy",
+      "tqdm",
+      "tensorflow==2.15.0",
+      "scikit-image",
+      "matplotlib",
+      "nibabel",
+      "scipy",
+      "h5py",
+      "paramiko",
+      "scp",
+      "pandas",
+      "appdirs",
+      "tifffile",
+      "napari>=0.4.19; extra == \"napari\"",
+      "magicgui>=0.6.0; extra == \"napari\"",
+      "PyQt5; extra == \"napari\"",
+      "qtpy>=2.0.0; extra == \"napari\"",
+      "colorcet>=3; extra == \"figures\"",
+      "imageio>=2; extra == \"figures\"",
+      "mkdocs<2,>=1.6; extra == \"docs\"",
+      "mkdocs-material<10,>=9.5; extra == \"docs\"",
+      "mkdocstrings[python]<1,>=0.27; extra == \"docs\""
+    ],
+    "requires_python": "<3.12,>=3.10",
+    "summary": "Instance segmentation of membranes in 2D and 3D microscopy images",
+    "version": "0.1",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 42313789,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "MorphoNet"
+      }
+    ]
+  },
+  "releases": {
+    "0.0.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "dcaccff201eb3301204dc7b44a05d4d7d0582ce2b97b8fc95a59247df8be640b"
+        },
+        "digests": {
+          "blake2b_256": "26275b84a28227b1727832230e08c8545704b3e8519f424331b9e72889dad792",
+          "md5": "67867a04b3f76ee19aa691122985c63a",
+          "sha256": "8c5efbfb5ff70e285bc9cae9d1946dd747ce4ae6613eb1fbd223c599f2bc099d"
+        },
+        "downloads": -1,
+        "filename": "morphodeep-0.0.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "67867a04b3f76ee19aa691122985c63a",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 145664,
+        "upload_time": "2025-12-08T21:25:15",
+        "upload_time_iso_8601": "2025-12-08T21:25:15.550625Z",
+        "url": "https://files.pythonhosted.org/packages/26/27/5b84a28227b1727832230e08c8545704b3e8519f424331b9e72889dad792/morphodeep-0.0.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "c239eca1ba38a74b6cdefd1ec95bb105b5789071fd972022ed2354c0afb4b7c4",
+          "md5": "c6f819a8eb4ac93c500304745a677321",
+          "sha256": "247e19f2d6d11a891a7129cc172dbe7f01026910b3ea0d1d2b8e8386c834d009"
+        },
+        "downloads": -1,
+        "filename": "morphodeep-0.0.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "c6f819a8eb4ac93c500304745a677321",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 117482,
+        "upload_time": "2025-12-08T21:25:18",
+        "upload_time_iso_8601": "2025-12-08T21:25:18.204771Z",
+        "url": "https://files.pythonhosted.org/packages/c2/39/eca1ba38a74b6cdefd1ec95bb105b5789071fd972022ed2354c0afb4b7c4/morphodeep-0.0.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.0.2.dev1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "5ca2e2ffbc4db249751412667ad409af0f7712ae2d475bc9a5b718502ceb5d49"
+        },
+        "digests": {
+          "blake2b_256": "5bc60bb01e489735603a73b39ec0ac7e004dc45b7bd88ebd2b61fee360f4cb9e",
+          "md5": "7459944438b5c105feb67125478e9c4f",
+          "sha256": "2bf79eab1b391fdb1e2ce6ac8b6d31722b156f84fc4a5e997a253e390fb050d0"
+        },
+        "downloads": -1,
+        "filename": "morphodeep-0.0.2.dev1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "7459944438b5c105feb67125478e9c4f",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 18718,
+        "upload_time": "2025-12-08T12:47:08",
+        "upload_time_iso_8601": "2025-12-08T12:47:08.698487Z",
+        "url": "https://files.pythonhosted.org/packages/5b/c6/0bb01e489735603a73b39ec0ac7e004dc45b7bd88ebd2b61fee360f4cb9e/morphodeep-0.0.2.dev1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "6585e6a5a58aeb6726fa4d961be66c844b3e7fd9566343f11d267ca80e31a928",
+          "md5": "392b4babae693486b19aaec0d2555ed3",
+          "sha256": "f08115c070a0119e23e75d724240ebd74b7861428bf06ddbdbb24f56f712fdbc"
+        },
+        "downloads": -1,
+        "filename": "morphodeep-0.0.2.dev1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "392b4babae693486b19aaec0d2555ed3",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 27035,
+        "upload_time": "2025-12-08T12:47:10",
+        "upload_time_iso_8601": "2025-12-08T12:47:10.194724Z",
+        "url": "https://files.pythonhosted.org/packages/65/85/e6a5a58aeb6726fa4d961be66c844b3e7fd9566343f11d267ca80e31a928/morphodeep-0.0.2.dev1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "452c4b9d9b8728b518743a5d0549f90591ad7271fcc898fca2e4f21399d04621"
+        },
+        "digests": {
+          "blake2b_256": "a5923a1b7dfba6497196420062a41383dfbf55be98746132af1db4cd6c966ae7",
+          "md5": "484c1abaf0253a08a75bb27039701f88",
+          "sha256": "e7013c7e617440a29c9c8636c65c32cfecc6b7dc33cac76ca04f9e54eae9b4b6"
+        },
+        "downloads": -1,
+        "filename": "morphodeep-0.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "484c1abaf0253a08a75bb27039701f88",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.12,>=3.10",
+        "size": 80641,
+        "upload_time": "2026-10-16T09:17:42",
+        "upload_time_iso_8601": "2026-10-16T09:17:42.833596Z",
+        "url": "https://files.pythonhosted.org/packages/a5/92/3a1b7dfba6497196420062a41383dfbf55be98746132af1db4cd6c966ae7/morphodeep-0.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "4f1c8ba6e94857cce3841b00a0633e04345f268e874405e13ec95154dbf3b98f",
+          "md5": "8dc8a676fb503bd144ffd36fa2555c59",
+          "sha256": "85aedef332287313088abe1ed8b386c2bbb4587eaff02d43f1a63c9370bdf6e8"
+        },
+        "downloads": -1,
+        "filename": "morphodeep-0.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "8dc8a676fb503bd144ffd36fa2555c59",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.12,>=3.10",
+        "size": 83255,
+        "upload_time": "2026-10-16T09:17:43",
+        "upload_time_iso_8601": "2026-10-16T09:17:43.994290Z",
+        "url": "https://files.pythonhosted.org/packages/4f/1c/8ba6e94857cce3841b00a0633e04345f268e874405e13ec95154dbf3b98f/morphodeep-0.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "452c4b9d9b8728b518743a5d0549f90591ad7271fcc898fca2e4f21399d04621"
+      },
+      "digests": {
+        "blake2b_256": "a5923a1b7dfba6497196420062a41383dfbf55be98746132af1db4cd6c966ae7",
+        "md5": "484c1abaf0253a08a75bb27039701f88",
+        "sha256": "e7013c7e617440a29c9c8636c65c32cfecc6b7dc33cac76ca04f9e54eae9b4b6"
+      },
+      "downloads": -1,
+      "filename": "morphodeep-0.1-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "484c1abaf0253a08a75bb27039701f88",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": "<3.12,>=3.10",
+      "size": 80641,
+      "upload_time": "2026-10-16T09:17:42",
+      "upload_time_iso_8601": "2026-10-16T09:17:42.833596Z",
+      "url": "https://files.pythonhosted.org/packages/a5/92/3a1b7dfba6497196420062a41383dfbf55be98746132af1db4cd6c966ae7/morphodeep-0.1-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "4f1c8ba6e94857cce3841b00a0633e04345f268e874405e13ec95154dbf3b98f",
+        "md5": "8dc8a676fb503bd144ffd36fa2555c59",
+        "sha256": "85aedef332287313088abe1ed8b386c2bbb4587eaff02d43f1a63c9370bdf6e8"
+      },
+      "downloads": -1,
+      "filename": "morphodeep-0.1.tar.gz",
+      "has_sig": false,
+      "md5_digest": "8dc8a676fb503bd144ffd36fa2555c59",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": "<3.12,>=3.10",
+      "size": 83255,
+      "upload_time": "2026-10-16T09:17:43",
+      "upload_time_iso_8601": "2026-10-16T09:17:43.994290Z",
+      "url": "https://files.pythonhosted.org/packages/4f/1c/8ba6e94857cce3841b00a0633e04345f268e874405e13ec95154dbf3b98f/morphodeep-0.1.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
