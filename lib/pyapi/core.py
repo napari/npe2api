@@ -6,18 +6,18 @@ Currently, it's not used anywhere, just for local interactive convenience.
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import TypedDict
-
     from npe2 import PluginManifest
 
     Version = str
     PluginName = str
 
-    class Plugins(TypedDict):
+    @dataclass
+    class Plugins:
         active: dict[PluginName, list[Version]]
         withdrawn: dict[PluginName, list[Version]]
         deleted: dict[PluginName, list[Version]]
