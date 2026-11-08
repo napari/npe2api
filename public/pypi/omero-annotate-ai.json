@@ -1,0 +1,1053 @@
+{
+  "info": {
+    "author": null,
+    "author_email": "Maarten Paul <m.w.paul@lacdr.leidenuniv.nl>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 3 - Alpha",
+      "Environment :: Console",
+      "Environment :: Other Environment",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: Implementation :: CPython",
+      "Topic :: Scientific/Engineering :: Artificial Intelligence",
+      "Topic :: Scientific/Engineering :: Bio-Informatics",
+      "Topic :: Scientific/Engineering :: Image Processing",
+      "Topic :: Scientific/Engineering :: Medical Science Apps."
+    ],
+    "description": "# OMERO Annotate.AI\n\n[![PyPI version](https://img.shields.io/pypi/v/omero-annotate-ai)](https://pypi.org/project/omero-annotate-ai/)\n[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/omero-annotate-ai/README.html)\n[![Python versions](https://img.shields.io/pypi/pyversions/omero-annotate-ai)](https://pypi.org/project/omero-annotate-ai/)\n[![CI/CD](https://github.com/Leiden-Cell-Observatory/omero_annotate_ai/actions/workflows/ci.yml/badge.svg)](https://github.com/Leiden-Cell-Observatory/omero_annotate_ai/actions)\n[![Documentation](https://github.com/Leiden-Cell-Observatory/omero_annotate_ai/actions/workflows/docs.yml/badge.svg)](https://leiden-cell-observatory.github.io/omero_annotate_ai/)\n[![Pixi Badge](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/prefix-dev/pixi/main/assets/badge/v0.json)](https://pixi.sh)\n[![License](https://img.shields.io/github/license/Leiden-Cell-Observatory/omero_annotate_ai)](https://github.com/Leiden-Cell-Observatory/omero_annotate_ai/blob/main/LICENSE)\n\n<picture>\n  <source media=\"(prefers-color-scheme: dark)\" srcset=\"docs/images/logo-dark.svg\">\n  <img src=\"docs/images/logo.svg\" alt=\"OMERO Annotate.AI logo\" width=\"120\" align=\"right\">\n</picture>\n\n**Reproducible AI-assisted annotation of OMERO data, from image selection to training-ready datasets.**\n\nPick images from an OMERO project, dataset, plate or screen. Annotate them in napari with\n[micro-SAM](https://github.com/computational-cell-analytics/micro-sam) or prepare them for\n[Cellpose](https://www.cellpose.org). The masks, ROIs and a tracking table go back to OMERO.\nEvery run is described by one YAML file, so you can resume it, repeat it or share it.\n<br clear=\"right\">\n\n![micro-SAM segmentation of a Cell Painting field in napari](docs/images/napari_microsam.jpg)\n<sub>micro-SAM (`vit_b_lm`) instance segmentation of nuclei in a Cell Painting field from the BioImage Archive (S-BIAD855), shown in napari.</sub>\n\n## How it works\n\n```mermaid\nflowchart LR\n    A[OMERO<br/>project \u00b7 dataset \u00b7 plate \u00b7 screen] --> B[Select images<br/>train / val / test split]\n    B --> C[Annotate in napari<br/>micro-SAM or Cellpose]\n    C --> D[Back to OMERO<br/>masks \u00b7 ROIs \u00b7 tracking table]\n    D --> E[Training data<br/>micro-SAM \u00b7 BiaPy \u00b7 DL4MicEverywhere]\n    D --> F[BioImage Archive<br/>MIFA export]\n```\n\n- **Jupyter widgets** to connect to OMERO and create a training set or open one to continue, no code needed.\n- **Resumable and crash-safe:** each mask is saved locally, uploaded with a tag and then recorded in the tracking table, so an interrupted run continues where it stopped without duplicate uploads; pixel digests flag files that changed afterwards.\n- **Review and correct** earlier annotations with their saved masks; record a note per session.\n- **Flexible sampling:** timepoints, z-slices, 3D volumes, random patches, and filtering plate wells on their key-value pairs.\n- **Training-ready output:** one folder layout for micro-SAM, BiaPy and DL4MicEverywhere, with images and labels paired by name.\n- **FAIR by default:** the config carries study and method metadata and exports to the BioImage Archive (MIFA).\n- **Local-only storage** (`storage: local`) for data you cannot write to, such as public [IDR](https://idr.openmicroscopy.org) OME-Zarr.\n\n## Jupyter widgets\n\n<table>\n  <tr>\n    <td width=\"45%\"><img src=\"docs/images/widget_connect.png\" alt=\"OMERO connection widget\"></td>\n    <td width=\"55%\"><img src=\"docs/images/widget_container.png\" alt=\"Choosing an OMERO container in the workflow widget\"></td>\n  </tr>\n  <tr>\n    <td><sub>Connect to any OMERO server.</sub></td>\n    <td><sub>Choose a project, dataset, plate or screen.</sub></td>\n  </tr>\n</table>\n\n## napari plugin (experimental)\n\nAnnotate in your own napari window: **Plugins \u2192 OMERO Annotate AI \u2192 Annotate training\nset** (install with `pip install \"omero-annotate-ai[napari]\"`). It opens existing\ntraining sets on OMERO or in a local folder, saves each accepted image straight away,\nand can review annotated images starting from their saved masks. See the\n[napari plugin guide](https://leiden-cell-observatory.github.io/omero_annotate_ai/napari-plugin/).\n\n## Installation\n\n```bash\n# Recommended: pixi\npixi init myproject && cd myproject\npixi add micro_sam jupyterlab\npixi add --pypi \"omero-annotate-ai[notebooks]\"\n\n# Or: conda + pip\nconda install -c conda-forge micro_sam jupyterlab\npip install \"omero-annotate-ai[notebooks]\"\n\n# Or: pip only (micro-SAM and napari from PyPI)\npip install \"omero-annotate-ai[microsam,notebooks]\" jupyterlab\n```\n\nSee the [installation guide](https://leiden-cell-observatory.github.io/omero_annotate_ai/installation/) for details and troubleshooting.\n\n## Quick start\n\n**With widgets** (in Jupyter):\n\n```python\nfrom omero_annotate_ai import create_omero_connection_widget, create_workflow_widget\n\nconn_widget = create_omero_connection_widget()\nconn_widget.display()\nconn = conn_widget.get_connection()\n\nworkflow_widget = create_workflow_widget(connection=conn)\nworkflow_widget.display()  # New training set, or Open one to continue\n\nts = workflow_widget.training_set()\nworkflow_widget.annotate(note=\"nuclei only, small debris skipped\")\n```\n\n**From a YAML config** (scripts, batch runs, or repeating a run):\n\n```python\nfrom omero_annotate_ai import TrainingSet, load_config\n\nconfig = load_config(\"annotation_config.yaml\")\nts = TrainingSet.create(config, conn)\nts.annotate()\n```\n\n**Continue later** (after closing napari, or a crash): open the set by its table ID and\nannotate what is left; anything a crash left half-done is repaired first.\n\n```python\nts = TrainingSet.open(12345, conn)\nts.extend(train_n=10)  # optional: add images to the same table\nts.annotate(note=\"second round\")\n```\n\nEach training set keeps its files in one folder: images, masks, `config.yaml` (with the\nsessions and their notes) and a local copy of the tracking table. By default that is\n`~/omero_annotate_ai/<server>/<table id>_<name>/`; set `OMERO_ANNOTATE_AI_HOME` (or pass\n`home=` to `TrainingSet.create` / `open`) to keep the sets elsewhere.\n`ts.review()` reopens annotated images with their masks to correct them.\nOpen the same set on another computer to carry on there; two people can even annotate\nit at the same time, because each session claims the images it shows (your own claims,\ne.g. after a dropped connection, never block you).\n`create_pipeline(config, conn).run_full_micro_sam_workflow()` from 0.4 still works but\nis deprecated.\n\nThe [configuration guide](https://leiden-cell-observatory.github.io/omero_annotate_ai/configuration/) lists every option.\n\n## Example notebooks\n\n| | Jupyter | marimo |\n|---|---|---|\n| Annotate with micro-SAM or Cellpose | [widget workflow](notebooks/jupyter/annotation/omero-annotate-ai-annotation-widget.ipynb) | [annotation](notebooks/marimo/omero-annotate-ai-annotation.py) |\n| Run from YAML (OMERO or OME-Zarr) | | [from YAML](notebooks/marimo/annotate-from-yaml.py) |\n| Train micro-SAM | | [micro-SAM](notebooks/marimo/omero-training-microsam.py) |\n| Export for BiaPy / DL4MicEverywhere | [export](notebooks/jupyter/training/omero-training-export.ipynb) | |\n| Export to the BioImage Archive | [BIA export](notebooks/jupyter/export_annotations/omero-table-to-bioimage-archive.ipynb) | |\n| Try it on public data | | [IDR OME-Zarr demo](notebooks/marimo/idr-zarr-demo.py) |\n\n## Documentation\n\nUpgrading from 0.4? The [release notes](https://leiden-cell-observatory.github.io/omero_annotate_ai/release-notes/) list the changes and how to migrate.\n\nFull documentation: **https://leiden-cell-observatory.github.io/omero_annotate_ai/**\n([micro-SAM tutorial](https://leiden-cell-observatory.github.io/omero_annotate_ai/tutorials/microsam-annotation-pipeline/),\n[API reference](https://leiden-cell-observatory.github.io/omero_annotate_ai/api/)).\n\n## Contributing\n\n```bash\ngit clone https://github.com/Leiden-Cell-Observatory/omero_annotate_ai.git\ncd omero_annotate_ai\npixi install                         # default env: everything to run the notebooks\npixi run -e dev install-hooks        # once per clone: ruff + notebook-output hooks\npixi run -e dev pytest tests/        # dev env adds test, lint and type-check tools\n```\n\nIssues and pull requests are welcome on [GitHub](https://github.com/Leiden-Cell-Observatory/omero_annotate_ai/issues).\n\n## Contact and acknowledgements\n\n**Maarten Paul**, m.w.paul@lacdr.leidenuniv.nl\n\nDeveloped at the [Leiden Cell Observatory](https://github.com/Leiden-Cell-Observatory) within the\n[NL-BioImaging](https://github.com/NL-BioImaging) infrastructure, funded by NWO.\n\n## License\n\nGNU General Public License v2.0 or later (GPL-2.0-or-later); see [LICENSE](LICENSE).\nThe package builds on [omero-py](https://github.com/ome/omero-py) (GPL-2.0-or-later) and\n[ezomero](https://github.com/TheJacksonLaboratory/ezomero) (GPL-2.0), so it uses a compatible\nlicense. Releases up to and including 0.4.x were published under Apache-2.0.\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": "omero, microscopy, segmentation, ai, annotation, sam, micro-sam",
+    "license": null,
+    "license_expression": "GPL-2.0-or-later",
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": "Maarten Paul <m.w.paul@lacdr.leidenuniv.nl>",
+    "name": "omero-annotate-ai",
+    "package_url": "https://pypi.org/project/omero-annotate-ai/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/omero-annotate-ai/",
+    "project_urls": {
+      "Changelog": "https://github.com/Leiden-Cell-Observatory/omero_annotate_ai/releases",
+      "Documentation": "https://leiden-cell-observatory.github.io/omero_annotate_ai/",
+      "Homepage": "https://github.com/Leiden-Cell-Observatory/omero_annotate_ai",
+      "Issues": "https://github.com/Leiden-Cell-Observatory/omero_annotate_ai/issues",
+      "Repository": "https://github.com/Leiden-Cell-Observatory/omero_annotate_ai.git"
+    },
+    "provides_extra": [
+      "notebooks",
+      "microsam",
+      "napari",
+      "dev",
+      "docs",
+      "zarr",
+      "provenance",
+      "all"
+    ],
+    "release_url": "https://pypi.org/project/omero-annotate-ai/0.5.1/",
+    "requires_dist": [
+      "numpy>=1.21.0",
+      "pandas>=1.3.0",
+      "imageio>=2.9.0",
+      "dask>=2021.6.0",
+      "pyyaml>=6.0",
+      "pydantic>=2.0.0",
+      "typing-extensions>=4.0.0",
+      "ezomero>=3.1.0",
+      "opencv-python",
+      "tifffile",
+      "ipywidgets>=7.6.0; extra == \"notebooks\"",
+      "ipykernel; extra == \"notebooks\"",
+      "pixi-kernel<0.7,>=0.6.6; extra == \"notebooks\"",
+      "marimo<0.20,>=0.19.2; extra == \"notebooks\"",
+      "keyring>=23.0.0; extra == \"notebooks\"",
+      "micro-sam>=1.8; extra == \"microsam\"",
+      "micro-sam<1.9,>=1.8; extra == \"napari\"",
+      "qtpy>=2.4; extra == \"napari\"",
+      "pytest>=6.0; extra == \"dev\"",
+      "pytest-cov>=2.0; extra == \"dev\"",
+      "ruff>=0.17; extra == \"dev\"",
+      "pyright>=1.1.414; extra == \"dev\"",
+      "zensical>=0.0.73; extra == \"docs\"",
+      "mkdocstrings>=1.0.8; extra == \"docs\"",
+      "mkdocstrings-python>=1.18; extra == \"docs\"",
+      "griffe-pydantic>=1.1.7; extra == \"docs\"",
+      "ome-zarr>=0.16; extra == \"zarr\"",
+      "iscc-lib<0.8,>=0.7; extra == \"provenance\"",
+      "omero-annotate-ai[microsam,notebooks,provenance,zarr]; extra == \"all\""
+    ],
+    "requires_python": ">=3.11",
+    "summary": "OMERO integration for AI-powered image annotation and segmentation workflows",
+    "version": "0.5.1",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 43364462,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "maartenpaul"
+      }
+    ]
+  },
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "6fe1fa99d0e1f11b0e675170998c390548361136ce4daf7b5c0b6a7d5eba518d"
+        },
+        "digests": {
+          "blake2b_256": "fddb005c0a9a296dffbdc637d6b7b3e93e60c33582ed3bb96f54429c55b6e4e2",
+          "md5": "fec157ab5cd292ef1e7043dd6ee50f15",
+          "sha256": "977d2a1e73652babb43bf0939e74122e92030a200bcb61fbe6042279b5577d8f"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "fec157ab5cd292ef1e7043dd6ee50f15",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 85633,
+        "upload_time": "2025-09-25T21:36:54",
+        "upload_time_iso_8601": "2025-09-25T21:36:54.793747Z",
+        "url": "https://files.pythonhosted.org/packages/fd/db/005c0a9a296dffbdc637d6b7b3e93e60c33582ed3bb96f54429c55b6e4e2/omero_annotate_ai-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "4bd0fa5982ddb15d51086157173e772be1619fbc7b34bdffec75cb864b96b326",
+          "md5": "e4fe8e0c39b92a970831f3cdd3f53ae4",
+          "sha256": "6701a5bb5e33160f268ed62f2efb3dc6c8c2b50cf86e47d387bf1e49fcdc8528"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e4fe8e0c39b92a970831f3cdd3f53ae4",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 96155,
+        "upload_time": "2025-09-25T21:36:56",
+        "upload_time_iso_8601": "2025-09-25T21:36:56.474890Z",
+        "url": "https://files.pythonhosted.org/packages/4b/d0/fa5982ddb15d51086157173e772be1619fbc7b34bdffec75cb864b96b326/omero_annotate_ai-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "a53f69546e05fce1d17f9bf8b029534d06c4390327777191f969cf1113d108d2"
+        },
+        "digests": {
+          "blake2b_256": "deb7149bac861c2c36add6f231a8322e8ad0a1e7bd61126178221b71ed780ce9",
+          "md5": "71cf92a41dbeaef7bf93305cc3079afb",
+          "sha256": "cd602ca31795a944f50ae063e21a34dd1b12827366ea186eff9ec7878d9f44e4"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "71cf92a41dbeaef7bf93305cc3079afb",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 85642,
+        "upload_time": "2025-09-30T20:45:29",
+        "upload_time_iso_8601": "2025-09-30T20:45:29.696672Z",
+        "url": "https://files.pythonhosted.org/packages/de/b7/149bac861c2c36add6f231a8322e8ad0a1e7bd61126178221b71ed780ce9/omero_annotate_ai-0.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "e1bda758d01e3791e1ae71489fa02f1163a1d82f58f7168bd1c396401ebfd187",
+          "md5": "d74cd6aae528ac08c9a45b463106581f",
+          "sha256": "f33dc7a88020c361941bfb1da771aff7ce3695f4551e521e8f201cddd32f4ddd"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d74cd6aae528ac08c9a45b463106581f",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 96154,
+        "upload_time": "2025-09-30T20:45:31",
+        "upload_time_iso_8601": "2025-09-30T20:45:31.707008Z",
+        "url": "https://files.pythonhosted.org/packages/e1/bd/a758d01e3791e1ae71489fa02f1163a1d82f58f7168bd1c396401ebfd187/omero_annotate_ai-0.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.2": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "e0762e2988e7a003a6d1dbb95a2c64ef003c14be8bb18a96b089c577eedc9ccb"
+        },
+        "digests": {
+          "blake2b_256": "d06c3a47d254a565d25e11000e89219e12b255d4647d0355996443f063e950a9",
+          "md5": "1c92da3d9184b4a4586e5bbc6e718d43",
+          "sha256": "0736f4052bd39401c3f04b8b476d21c2a61a0889b475372758bc0d7842a8fff2"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.1.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "1c92da3d9184b4a4586e5bbc6e718d43",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 88348,
+        "upload_time": "2025-10-13T11:48:21",
+        "upload_time_iso_8601": "2025-10-13T11:48:21.890117Z",
+        "url": "https://files.pythonhosted.org/packages/d0/6c/3a47d254a565d25e11000e89219e12b255d4647d0355996443f063e950a9/omero_annotate_ai-0.1.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "cf40efcfb7020f21e1ae8322bb5ff468f6d5d305ac74d45dba1c65a700736866",
+          "md5": "5c2cac761bb55b8321e726c43fe09852",
+          "sha256": "7a0ae90d981312ce0cd520ec0cf2f5ad94bc8ba2af518ce3e93d51afa2c7ceb4"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.1.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "5c2cac761bb55b8321e726c43fe09852",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 100387,
+        "upload_time": "2025-10-13T11:48:23",
+        "upload_time_iso_8601": "2025-10-13T11:48:23.091294Z",
+        "url": "https://files.pythonhosted.org/packages/cf/40/efcfb7020f21e1ae8322bb5ff468f6d5d305ac74d45dba1c65a700736866/omero_annotate_ai-0.1.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "be900438c00a862da8075981f5e65e03dce0fa0b2c61f3955b4e38759f1089ec"
+        },
+        "digests": {
+          "blake2b_256": "8ebe749896153a2689a0366bceba85d0773482a5da6c1f5f39c2421f03179d84",
+          "md5": "06b3ee3e41e338968751bcd86ae3e2f4",
+          "sha256": "270b00d36282f103f80f08f1c8546c63e35b3e58ef714cd19206f04d7c3439da"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.2.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "06b3ee3e41e338968751bcd86ae3e2f4",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.8",
+        "size": 96233,
+        "upload_time": "2026-01-27T16:52:55",
+        "upload_time_iso_8601": "2026-01-27T16:52:55.459548Z",
+        "url": "https://files.pythonhosted.org/packages/8e/be/749896153a2689a0366bceba85d0773482a5da6c1f5f39c2421f03179d84/omero_annotate_ai-0.2.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "164033b0f40095dd0036c663bc5ca4ad37b383fe6f8d892544a55ed4cab24c45",
+          "md5": "c0a2c12783af09a1a329fca37c99ac9f",
+          "sha256": "f1d28b854210caa1738e5aa6002d0b9e169f0b17f8e468bfa3e7427981a631eb"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.2.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "c0a2c12783af09a1a329fca37c99ac9f",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.8",
+        "size": 119001,
+        "upload_time": "2026-01-27T16:52:57",
+        "upload_time_iso_8601": "2026-01-27T16:52:57.369984Z",
+        "url": "https://files.pythonhosted.org/packages/16/40/33b0f40095dd0036c663bc5ca4ad37b383fe6f8d892544a55ed4cab24c45/omero_annotate_ai-0.2.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "5e737bbb52c3d2cfad0f2ce9c8380f84409026bcb90a34e3bbe08418405a5a82"
+        },
+        "digests": {
+          "blake2b_256": "3d2742908a2c9c0f7482bf26ca8f55cbf3cc34eb50a3e2ca6f5c1d0f216d3c27",
+          "md5": "fd3639daf63ff56bb34786a5d68bf889",
+          "sha256": "8c430aee9d0ed36e9f65708af35da0c639f519d1ce06cf85409879eebe7d31e1"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.2.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "fd3639daf63ff56bb34786a5d68bf889",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 92297,
+        "upload_time": "2026-02-17T21:18:14",
+        "upload_time_iso_8601": "2026-02-17T21:18:14.409687Z",
+        "url": "https://files.pythonhosted.org/packages/3d/27/42908a2c9c0f7482bf26ca8f55cbf3cc34eb50a3e2ca6f5c1d0f216d3c27/omero_annotate_ai-0.2.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "22b66c4aad4b052122dd1c3a1041c7cc25a6fcd39ec308ab8fd0e4d3b7de7c35",
+          "md5": "b96c72d1c10d76b31edafb75e051fd31",
+          "sha256": "224ad848db1d858e953d2a7bd372d7850cd1e11967408e1b42292270fb47f832"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.2.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "b96c72d1c10d76b31edafb75e051fd31",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 114022,
+        "upload_time": "2026-02-17T21:18:16",
+        "upload_time_iso_8601": "2026-02-17T21:18:16.276340Z",
+        "url": "https://files.pythonhosted.org/packages/22/b6/6c4aad4b052122dd1c3a1041c7cc25a6fcd39ec308ab8fd0e4d3b7de7c35/omero_annotate_ai-0.2.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.2": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "770658dbc90873039509f2f435ab7626be3637a5adf354af7c1c779d1d5a9c3a"
+        },
+        "digests": {
+          "blake2b_256": "45f5175145a7116f9a96fee6967d797e4b9a15f85865b17a393bcdedb951a790",
+          "md5": "e18b8ec309e4b6a1c236542a3cfe0b75",
+          "sha256": "a72ce123173149d9bf0e60b1b46f58e139c448f3c4a41ac2148ea0eb6c78b1cd"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.2.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "e18b8ec309e4b6a1c236542a3cfe0b75",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 92717,
+        "upload_time": "2026-02-18T20:39:50",
+        "upload_time_iso_8601": "2026-02-18T20:39:50.067221Z",
+        "url": "https://files.pythonhosted.org/packages/45/f5/175145a7116f9a96fee6967d797e4b9a15f85865b17a393bcdedb951a790/omero_annotate_ai-0.2.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "e3b105974353f1caa51a5f2c30bd3cbc0b8aaed00c7f91f59733c3b545aa425f",
+          "md5": "87c829c2fe5cd20d2fd6f68c103ee847",
+          "sha256": "eb2534d4968b3b5f6d6555fcbe36d1af630cd74dce5cfa0d4e9b931412c94477"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.2.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "87c829c2fe5cd20d2fd6f68c103ee847",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 116482,
+        "upload_time": "2026-02-18T20:39:51",
+        "upload_time_iso_8601": "2026-02-18T20:39:51.769890Z",
+        "url": "https://files.pythonhosted.org/packages/e3/b1/05974353f1caa51a5f2c30bd3cbc0b8aaed00c7f91f59733c3b545aa425f/omero_annotate_ai-0.2.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.3": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "6dd51e4e5d44652a25115ea6f17dc60d5d634e73644f877507594d3699955d86"
+        },
+        "digests": {
+          "blake2b_256": "d7b47d7069e0a4fa035a386cf40d5ef60af4fbba5a1c49dac23129e9992e5d95",
+          "md5": "2e2b4adb13dcf1cb538ffd4eaa316973",
+          "sha256": "e355ad6456ae62568c564024cac29bcaba5a906c76e0200ec7054c85b059a57f"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.2.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "2e2b4adb13dcf1cb538ffd4eaa316973",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 93529,
+        "upload_time": "2026-02-26T21:46:13",
+        "upload_time_iso_8601": "2026-02-26T21:46:13.521404Z",
+        "url": "https://files.pythonhosted.org/packages/d7/b4/7d7069e0a4fa035a386cf40d5ef60af4fbba5a1c49dac23129e9992e5d95/omero_annotate_ai-0.2.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "c748060a60ae3c581142d7ab34ed251da988f4666b7725225164a48a5b2e9b06",
+          "md5": "e7020601309b0c7ff65e3515cd125864",
+          "sha256": "f4d232b5c655a6d46fb01d84c926bc45caaba676291cb9d626e6cd14eb86b71c"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.2.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e7020601309b0c7ff65e3515cd125864",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 119831,
+        "upload_time": "2026-02-26T21:46:15",
+        "upload_time_iso_8601": "2026-02-26T21:46:15.186312Z",
+        "url": "https://files.pythonhosted.org/packages/c7/48/060a60ae3c581142d7ab34ed251da988f4666b7725225164a48a5b2e9b06/omero_annotate_ai-0.2.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.4": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "98e059600fe56adba18657d9acf19690838380fed514270528e6acdb6c8feee3"
+        },
+        "digests": {
+          "blake2b_256": "0b72ae4842a5482a0152a05818b54d1f81ac14d8db657a74f2ef104b74969914",
+          "md5": "1f23c37b3405f35deda64c1609f51626",
+          "sha256": "e3776b538de52019e57b0188ea7b6d7920b033ac8922fd9521ca97bc2b551322"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.2.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "1f23c37b3405f35deda64c1609f51626",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 95138,
+        "upload_time": "2026-03-03T17:45:12",
+        "upload_time_iso_8601": "2026-03-03T17:45:12.933440Z",
+        "url": "https://files.pythonhosted.org/packages/0b/72/ae4842a5482a0152a05818b54d1f81ac14d8db657a74f2ef104b74969914/omero_annotate_ai-0.2.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "dbc298388948afada665b44a0ac1e4a70f5b2d39592bb401ebff34779ec7777b",
+          "md5": "79f5e11352bbc05d1372da9fd2f2150c",
+          "sha256": "161881a78ece8ae30b87da2048c1921992e8fcf813b5ab50cc5ee504fcfa4626"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.2.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "79f5e11352bbc05d1372da9fd2f2150c",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 122902,
+        "upload_time": "2026-03-03T17:45:14",
+        "upload_time_iso_8601": "2026-03-03T17:45:14.620993Z",
+        "url": "https://files.pythonhosted.org/packages/db/c2/98388948afada665b44a0ac1e4a70f5b2d39592bb401ebff34779ec7777b/omero_annotate_ai-0.2.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.6": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "c36003ce06eea2ecd73906fae886346d4bcd5d1c189bb9c3c3ebf4174ff3522c"
+        },
+        "digests": {
+          "blake2b_256": "fa547a80eb67828009f6671dc3cb8798ead2f7ac16cdd1c96a917401ee5f773b",
+          "md5": "6ff3af7f23e1fb2dfba6a0f5a3c07da4",
+          "sha256": "e8be6e0aa1cf9999750131d267e90903697af68714bc5a48857171a4410e0ca8"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.2.6-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "6ff3af7f23e1fb2dfba6a0f5a3c07da4",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 95428,
+        "upload_time": "2026-03-03T20:52:30",
+        "upload_time_iso_8601": "2026-03-03T20:52:30.739786Z",
+        "url": "https://files.pythonhosted.org/packages/fa/54/7a80eb67828009f6671dc3cb8798ead2f7ac16cdd1c96a917401ee5f773b/omero_annotate_ai-0.2.6-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "d9d0b0c7ea38683b5bf2240735b282482014d129da5ad1d9bbc808de4ed65fcb",
+          "md5": "a76f756f3a99f90a6cc08e800fe9ad00",
+          "sha256": "68e4a66d3ef59e2f02b8eb70a130fe4b24ca52605f79dd1a39495630a75018b5"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.2.6.tar.gz",
+        "has_sig": false,
+        "md5_digest": "a76f756f3a99f90a6cc08e800fe9ad00",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 123083,
+        "upload_time": "2026-03-03T20:52:32",
+        "upload_time_iso_8601": "2026-03-03T20:52:32.454826Z",
+        "url": "https://files.pythonhosted.org/packages/d9/d0/b0c7ea38683b5bf2240735b282482014d129da5ad1d9bbc808de4ed65fcb/omero_annotate_ai-0.2.6.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.7": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "c0d1b17f95b15584eb48cede657ab43d0b629c36b1ca4754e7d93054e63e4ad1"
+        },
+        "digests": {
+          "blake2b_256": "cacf5d57bfd90e2e3df940bc83aa87a1ecaa50989c63ab99e2f752cd7914657c",
+          "md5": "2b7688dca4ada1d2e9101f26e56472a8",
+          "sha256": "937e4352907207776475058ebf6237568a0976d8b34cc08e0ed276d142bae5dc"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.2.7-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "2b7688dca4ada1d2e9101f26e56472a8",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 95403,
+        "upload_time": "2026-03-04T15:31:10",
+        "upload_time_iso_8601": "2026-03-04T15:31:10.921931Z",
+        "url": "https://files.pythonhosted.org/packages/ca/cf/5d57bfd90e2e3df940bc83aa87a1ecaa50989c63ab99e2f752cd7914657c/omero_annotate_ai-0.2.7-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.8": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "93cb2e18e0bf1172aef589331d017b5bfa8e615a570d119209bd5608d11a5bf3"
+        },
+        "digests": {
+          "blake2b_256": "2dacc5dcab66bd3ac51bfae7d5b7cf257636a33aee61f2fe82d23b889e1a9fb9",
+          "md5": "f2ef7a5336c1efad668ad4eee37f84e3",
+          "sha256": "806718e990891f7ff91800225cb7d69cb38e5c0e3f9a9e593b548a75f16e3492"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.2.8-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "f2ef7a5336c1efad668ad4eee37f84e3",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 98164,
+        "upload_time": "2026-04-01T19:21:20",
+        "upload_time_iso_8601": "2026-04-01T19:21:20.361412Z",
+        "url": "https://files.pythonhosted.org/packages/2d/ac/c5dcab66bd3ac51bfae7d5b7cf257636a33aee61f2fe82d23b889e1a9fb9/omero_annotate_ai-0.2.8-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "b0a5548a81b62689977106bec1500a07bb769985637416b3d2673b32cbcc5299",
+          "md5": "c869fe06cadb7d14b0917203fa625159",
+          "sha256": "9d46be226eccbb23be28ceaeda7bc97e9f8edf8a198f00f2e97afe2aabd7776a"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.2.8.tar.gz",
+        "has_sig": false,
+        "md5_digest": "c869fe06cadb7d14b0917203fa625159",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 128356,
+        "upload_time": "2026-04-01T19:21:21",
+        "upload_time_iso_8601": "2026-04-01T19:21:21.640800Z",
+        "url": "https://files.pythonhosted.org/packages/b0/a5/548a81b62689977106bec1500a07bb769985637416b3d2673b32cbcc5299/omero_annotate_ai-0.2.8.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.9": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "453b5eff11f0eb2638b26934305b92b2ecca851a777a961b48a668021c101ef0"
+        },
+        "digests": {
+          "blake2b_256": "64f994097c6f7ab37401bc39e8a26c9acf0fcf15f774d66555941b5cb900cb39",
+          "md5": "df565a2ede249fdc56cbe97a05bc68de",
+          "sha256": "84ff268e8b0a1f68b343e91f900dc79fc1e5bfb9b7d12d44a833c67ffbfe157f"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.2.9-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "df565a2ede249fdc56cbe97a05bc68de",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 100379,
+        "upload_time": "2026-05-12T19:40:00",
+        "upload_time_iso_8601": "2026-05-12T19:40:00.327742Z",
+        "url": "https://files.pythonhosted.org/packages/64/f9/94097c6f7ab37401bc39e8a26c9acf0fcf15f774d66555941b5cb900cb39/omero_annotate_ai-0.2.9-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "eca9d26f5640a70b0cffd36eb2368f7c0d0c318582c089adbd415a41c7d92431",
+          "md5": "8771ec32ea90d7b7ef21d39bc596f0a6",
+          "sha256": "d2c245572aa9e72a67695b8309916b4ba260d0aaade94167c91a91ff982e9402"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.2.9.tar.gz",
+        "has_sig": false,
+        "md5_digest": "8771ec32ea90d7b7ef21d39bc596f0a6",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 133230,
+        "upload_time": "2026-05-12T19:40:02",
+        "upload_time_iso_8601": "2026-05-12T19:40:02.273049Z",
+        "url": "https://files.pythonhosted.org/packages/ec/a9/d26f5640a70b0cffd36eb2368f7c0d0c318582c089adbd415a41c7d92431/omero_annotate_ai-0.2.9.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "69912caef724f5dd6265362eeda325e3d492cb1f72e0e3d2d03b89d6ec355a57"
+        },
+        "digests": {
+          "blake2b_256": "d7f93f96d2372a1cbdcf2e771d4761d476821bf355147bf2a3eb2aa227529691",
+          "md5": "d05af809a50ec211c1de2d8a82b66720",
+          "sha256": "78330d3fe210043e2c331dc2a03eec5a1f31b7e04312b255e526816619360ab4"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.3.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "d05af809a50ec211c1de2d8a82b66720",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 100872,
+        "upload_time": "2026-05-12T20:47:23",
+        "upload_time_iso_8601": "2026-05-12T20:47:23.651667Z",
+        "url": "https://files.pythonhosted.org/packages/d7/f9/3f96d2372a1cbdcf2e771d4761d476821bf355147bf2a3eb2aa227529691/omero_annotate_ai-0.3.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "9f4c8823c691254de17c30b0fe233f1fc6c42b540a18f1df19ed30818b078fbd",
+          "md5": "3a1cd993f49ecd21d9df9d7a2d941d6f",
+          "sha256": "25583daa6315a4c0580b7dc3a759fb6584787c51a8d4098ef151aca6efad85bf"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.3.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "3a1cd993f49ecd21d9df9d7a2d941d6f",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 134793,
+        "upload_time": "2026-05-12T20:47:25",
+        "upload_time_iso_8601": "2026-05-12T20:47:25.127758Z",
+        "url": "https://files.pythonhosted.org/packages/9f/4c/8823c691254de17c30b0fe233f1fc6c42b540a18f1df19ed30818b078fbd/omero_annotate_ai-0.3.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "13fcf70ce1aff0446a4f0d995daa8e148f0c45cc2101699fb3789a9cfeb9c2b9"
+        },
+        "digests": {
+          "blake2b_256": "e5099afbe44fcb349ecc103bb2a646468e34bc72e26ad164d3a1d0e1b3acd809",
+          "md5": "1d9b7d66b86431fdf5ce33d7b98b6ea6",
+          "sha256": "5c113421120db8ff0cba1cc22fbcc998de75e31236c5da34b2bb646feee2d55d"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.3.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "1d9b7d66b86431fdf5ce33d7b98b6ea6",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 101019,
+        "upload_time": "2026-07-10T16:46:39",
+        "upload_time_iso_8601": "2026-07-10T16:46:39.217988Z",
+        "url": "https://files.pythonhosted.org/packages/e5/09/9afbe44fcb349ecc103bb2a646468e34bc72e26ad164d3a1d0e1b3acd809/omero_annotate_ai-0.3.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "0e85872853b33bb0dbf7e05568f35c451ecb67474ec6c9bad95f429aadc8e0ee",
+          "md5": "1d90f831e673656f969c7aab74e746f0",
+          "sha256": "5c774ab774989c9cb55df566ede6356d793c86be468828a3dfe371c5f0abacd0"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.3.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "1d90f831e673656f969c7aab74e746f0",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 135625,
+        "upload_time": "2026-07-10T16:46:40",
+        "upload_time_iso_8601": "2026-07-10T16:46:40.518995Z",
+        "url": "https://files.pythonhosted.org/packages/0e/85/872853b33bb0dbf7e05568f35c451ecb67474ec6c9bad95f429aadc8e0ee/omero_annotate_ai-0.3.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.2": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "dcb12cd8ee53b157ed91d2cb93745fdcaea0bc7b86b0b6928d4886af4431358a"
+        },
+        "digests": {
+          "blake2b_256": "8f352f414cf6513620e0e74be24b110fa3ae89a9e501f53439a5aeae135d0717",
+          "md5": "c72718678bb29422cd930fcdabe5c151",
+          "sha256": "65152efd4ac489227c4025db047e9ac4916a3d95f5f4d2addda66c8a2af29fe7"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.3.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "c72718678bb29422cd930fcdabe5c151",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 102167,
+        "upload_time": "2026-07-11T08:23:40",
+        "upload_time_iso_8601": "2026-07-11T08:23:40.489560Z",
+        "url": "https://files.pythonhosted.org/packages/8f/35/2f414cf6513620e0e74be24b110fa3ae89a9e501f53439a5aeae135d0717/omero_annotate_ai-0.3.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "451117e5e5b4574004f8f2475e5cd0036f3edd67a04fd1fa723a18a664ab6427",
+          "md5": "31f3a2739a168e0c212f7f25ed051cc1",
+          "sha256": "527783ebad01aed19d65baea26d9ba534085493eb4bb573bd6b0c548d2f4f15b"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.3.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "31f3a2739a168e0c212f7f25ed051cc1",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 140385,
+        "upload_time": "2026-07-11T08:23:42",
+        "upload_time_iso_8601": "2026-07-11T08:23:42.369711Z",
+        "url": "https://files.pythonhosted.org/packages/45/11/17e5e5b4574004f8f2475e5cd0036f3edd67a04fd1fa723a18a664ab6427/omero_annotate_ai-0.3.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.3.3": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "c24a5d883922ae5b12f0633d5e7aea5bdb92da48da6ca6d0660a7903b49aaecd"
+        },
+        "digests": {
+          "blake2b_256": "a28a5cc3b58bef2525c766d1efd948365095347725b047aaf882682d290e3893",
+          "md5": "0b80800992ad368f7c7d24b2771a8836",
+          "sha256": "17b7b2f0ebb4c26f7ecfe2efe3f5a8070008f518eb9c9c06b1d5baf5d70c8085"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.3.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "0b80800992ad368f7c7d24b2771a8836",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 102445,
+        "upload_time": "2026-07-15T08:23:01",
+        "upload_time_iso_8601": "2026-07-15T08:23:01.475723Z",
+        "url": "https://files.pythonhosted.org/packages/a2/8a/5cc3b58bef2525c766d1efd948365095347725b047aaf882682d290e3893/omero_annotate_ai-0.3.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "35f14a4c8eb65ebde10188bbbde2ee329068c64fba0406d5a0de86147d01cc7d",
+          "md5": "cc1df004cb5092463b6a82d2f9751141",
+          "sha256": "0d267552af622b59eed18ab8fc7f23186c2fdb202c1bb218b956a2a5877d177e"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.3.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "cc1df004cb5092463b6a82d2f9751141",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 141192,
+        "upload_time": "2026-07-15T08:23:02",
+        "upload_time_iso_8601": "2026-07-15T08:23:02.871125Z",
+        "url": "https://files.pythonhosted.org/packages/35/f1/4a4c8eb65ebde10188bbbde2ee329068c64fba0406d5a0de86147d01cc7d/omero_annotate_ai-0.3.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.4.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "4bcbf508881aea2359bce7c90fabef332be566b228469b7b6d640ef13fb5fec8"
+        },
+        "digests": {
+          "blake2b_256": "ccdaad1e536185abdac73b8841cc60c4872076f6b64003c6e4fec080cfa6b8d1",
+          "md5": "3990b579b2e8211bfa3f27fbb5ca953f",
+          "sha256": "2cf7a2d8a4f4f22df9b298b41cd6a716c8080acd002e2b142654dd81cc2294d0"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.4.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "3990b579b2e8211bfa3f27fbb5ca953f",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 120008,
+        "upload_time": "2026-11-06T07:47:39",
+        "upload_time_iso_8601": "2026-11-06T07:47:39.521583Z",
+        "url": "https://files.pythonhosted.org/packages/cc/da/ad1e536185abdac73b8841cc60c4872076f6b64003c6e4fec080cfa6b8d1/omero_annotate_ai-0.4.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "fd646ed75954dc78028755e76511129a886afcd585e375dd27c85a8606820845",
+          "md5": "61d0cec4297187c88a5447da5f5ff926",
+          "sha256": "4daa85f7de5fab68a936ed8eb1823762d9560058a4fcce8de6843cf571819743"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.4.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "61d0cec4297187c88a5447da5f5ff926",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 169700,
+        "upload_time": "2026-11-06T07:47:40",
+        "upload_time_iso_8601": "2026-11-06T07:47:40.915215Z",
+        "url": "https://files.pythonhosted.org/packages/fd/64/6ed75954dc78028755e76511129a886afcd585e375dd27c85a8606820845/omero_annotate_ai-0.4.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.5.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "db2445f83d8c60636f47ecb8df61e196ff6fdab042760efacf33f9a378382edd"
+        },
+        "digests": {
+          "blake2b_256": "d9d9b696ad83bd78542a251419d956e16d61cc57ee1368dd0864e5889ca3099c",
+          "md5": "5841b35ec2bf646410167217b76401b4",
+          "sha256": "4cacecfcbdad925a294ecb0a544b9de2e653d00b6c3b5cc7f45334bad7ec5cd8"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.5.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "5841b35ec2bf646410167217b76401b4",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 164206,
+        "upload_time": "2026-11-08T11:18:37",
+        "upload_time_iso_8601": "2026-11-08T11:18:37.099201Z",
+        "url": "https://files.pythonhosted.org/packages/d9/d9/b696ad83bd78542a251419d956e16d61cc57ee1368dd0864e5889ca3099c/omero_annotate_ai-0.5.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "948b7c1b206947552de66a5044bb1f772c65561e3a1eaf607a9b4475babeca4f",
+          "md5": "0594b97d3647abdde2e6f8e461f94205",
+          "sha256": "6bcc0bfc75119a5d15dce2e0a6d4291b29bb0bde1bc6245329d422b683e95f34"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.5.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "0594b97d3647abdde2e6f8e461f94205",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 239152,
+        "upload_time": "2026-11-08T11:18:38",
+        "upload_time_iso_8601": "2026-11-08T11:18:38.877468Z",
+        "url": "https://files.pythonhosted.org/packages/94/8b/7c1b206947552de66a5044bb1f772c65561e3a1eaf607a9b4475babeca4f/omero_annotate_ai-0.5.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.5.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "077b551130a71a52af141c684a81392e9672d4bdaccbc9ef96a9dea4e53ad68c"
+        },
+        "digests": {
+          "blake2b_256": "68d5a42f898e56e203fb2e653438812336210d696b7720c36b1832a362be8a1d",
+          "md5": "ced2c54c3e729e1043163afab58c796e",
+          "sha256": "5ba0e5d7f009bca12d782cd5b62f641b20efebecc51a44b56fc409e26831ff4b"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.5.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "ced2c54c3e729e1043163afab58c796e",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 188929,
+        "upload_time": "2026-11-08T13:46:13",
+        "upload_time_iso_8601": "2026-11-08T13:46:13.155682Z",
+        "url": "https://files.pythonhosted.org/packages/68/d5/a42f898e56e203fb2e653438812336210d696b7720c36b1832a362be8a1d/omero_annotate_ai-0.5.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "84d61aff6ede2480fdf250ef34dfc037553407d69729e07e84941a807fcf2f0d",
+          "md5": "cc60c9692e3e282c99c95ac17df237dd",
+          "sha256": "d399defe6e21f8d17d8d68e946331bd4e9391cb8df2fcd7fb09dc24e00e9667a"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.5.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "cc60c9692e3e282c99c95ac17df237dd",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 274702,
+        "upload_time": "2026-11-08T13:46:14",
+        "upload_time_iso_8601": "2026-11-08T13:46:14.823571Z",
+        "url": "https://files.pythonhosted.org/packages/84/d6/1aff6ede2480fdf250ef34dfc037553407d69729e07e84941a807fcf2f0d/omero_annotate_ai-0.5.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "077b551130a71a52af141c684a81392e9672d4bdaccbc9ef96a9dea4e53ad68c"
+      },
+      "digests": {
+        "blake2b_256": "68d5a42f898e56e203fb2e653438812336210d696b7720c36b1832a362be8a1d",
+        "md5": "ced2c54c3e729e1043163afab58c796e",
+        "sha256": "5ba0e5d7f009bca12d782cd5b62f641b20efebecc51a44b56fc409e26831ff4b"
+      },
+      "downloads": -1,
+      "filename": "omero_annotate_ai-0.5.1-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "ced2c54c3e729e1043163afab58c796e",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.11",
+      "size": 188929,
+      "upload_time": "2026-11-08T13:46:13",
+      "upload_time_iso_8601": "2026-11-08T13:46:13.155682Z",
+      "url": "https://files.pythonhosted.org/packages/68/d5/a42f898e56e203fb2e653438812336210d696b7720c36b1832a362be8a1d/omero_annotate_ai-0.5.1-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "84d61aff6ede2480fdf250ef34dfc037553407d69729e07e84941a807fcf2f0d",
+        "md5": "cc60c9692e3e282c99c95ac17df237dd",
+        "sha256": "d399defe6e21f8d17d8d68e946331bd4e9391cb8df2fcd7fb09dc24e00e9667a"
+      },
+      "downloads": -1,
+      "filename": "omero_annotate_ai-0.5.1.tar.gz",
+      "has_sig": false,
+      "md5_digest": "cc60c9692e3e282c99c95ac17df237dd",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.11",
+      "size": 274702,
+      "upload_time": "2026-11-08T13:46:14",
+      "upload_time_iso_8601": "2026-11-08T13:46:14.823571Z",
+      "url": "https://files.pythonhosted.org/packages/84/d6/1aff6ede2480fdf250ef34dfc037553407d69729e07e84941a807fcf2f0d/omero_annotate_ai-0.5.1.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
