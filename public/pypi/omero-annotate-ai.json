@@ -19,7 +19,7 @@
       "Topic :: Scientific/Engineering :: Image Processing",
       "Topic :: Scientific/Engineering :: Medical Science Apps."
     ],
-    "description": "# OMERO Annotate.AI\n\n[![PyPI version](https://img.shields.io/pypi/v/omero-annotate-ai)](https://pypi.org/project/omero-annotate-ai/)\n[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/omero-annotate-ai/README.html)\n[![Python versions](https://img.shields.io/pypi/pyversions/omero-annotate-ai)](https://pypi.org/project/omero-annotate-ai/)\n[![CI/CD](https://github.com/Leiden-Cell-Observatory/omero_annotate_ai/actions/workflows/ci.yml/badge.svg)](https://github.com/Leiden-Cell-Observatory/omero_annotate_ai/actions)\n[![Documentation](https://github.com/Leiden-Cell-Observatory/omero_annotate_ai/actions/workflows/docs.yml/badge.svg)](https://leiden-cell-observatory.github.io/omero_annotate_ai/)\n[![Pixi Badge](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/prefix-dev/pixi/main/assets/badge/v0.json)](https://pixi.sh)\n[![License](https://img.shields.io/github/license/Leiden-Cell-Observatory/omero_annotate_ai)](https://github.com/Leiden-Cell-Observatory/omero_annotate_ai/blob/main/LICENSE)\n\n<picture>\n  <source media=\"(prefers-color-scheme: dark)\" srcset=\"docs/images/logo-dark.svg\">\n  <img src=\"docs/images/logo.svg\" alt=\"OMERO Annotate.AI logo\" width=\"120\" align=\"right\">\n</picture>\n\n**Reproducible AI-assisted annotation of OMERO data, from image selection to training-ready datasets.**\n\nPick images from an OMERO project, dataset, plate or screen. Annotate them in napari with\n[micro-SAM](https://github.com/computational-cell-analytics/micro-sam) or prepare them for\n[Cellpose](https://www.cellpose.org). The masks, ROIs and a tracking table go back to OMERO.\nEvery run is described by one YAML file, so you can resume it, repeat it or share it.\n<br clear=\"right\">\n\n![micro-SAM segmentation of a Cell Painting field in napari](docs/images/napari_microsam.jpg)\n<sub>micro-SAM (`vit_b_lm`) instance segmentation of nuclei in a Cell Painting field from the BioImage Archive (S-BIAD855), shown in napari.</sub>\n\n## How it works\n\n```mermaid\nflowchart LR\n    A[OMERO<br/>project \u00b7 dataset \u00b7 plate \u00b7 screen] --> B[Select images<br/>train / val / test split]\n    B --> C[Annotate in napari<br/>micro-SAM or Cellpose]\n    C --> D[Back to OMERO<br/>masks \u00b7 ROIs \u00b7 tracking table]\n    D --> E[Training data<br/>micro-SAM \u00b7 BiaPy \u00b7 DL4MicEverywhere]\n    D --> F[BioImage Archive<br/>MIFA export]\n```\n\n- **Jupyter widgets** to connect to OMERO and create a training set or open one to continue, no code needed.\n- **Resumable and crash-safe:** each mask is saved locally, uploaded with a tag and then recorded in the tracking table, so an interrupted run continues where it stopped without duplicate uploads; pixel digests flag files that changed afterwards.\n- **Review and correct** earlier annotations with their saved masks; record a note per session.\n- **Flexible sampling:** timepoints, z-slices, 3D volumes, random patches, and filtering plate wells on their key-value pairs.\n- **Training-ready output:** one folder layout for micro-SAM, BiaPy and DL4MicEverywhere, with images and labels paired by name.\n- **FAIR by default:** the config carries study and method metadata and exports to the BioImage Archive (MIFA).\n- **Local-only storage** (`storage: local`) for data you cannot write to, such as public [IDR](https://idr.openmicroscopy.org) OME-Zarr.\n\n## Jupyter widgets\n\n<table>\n  <tr>\n    <td width=\"45%\"><img src=\"docs/images/widget_connect.png\" alt=\"OMERO connection widget\"></td>\n    <td width=\"55%\"><img src=\"docs/images/widget_container.png\" alt=\"Choosing an OMERO container in the workflow widget\"></td>\n  </tr>\n  <tr>\n    <td><sub>Connect to any OMERO server.</sub></td>\n    <td><sub>Choose a project, dataset, plate or screen.</sub></td>\n  </tr>\n</table>\n\n## napari plugin (experimental)\n\nAnnotate in your own napari window: **Plugins \u2192 OMERO Annotate AI \u2192 Annotate training\nset** (install with `pip install \"omero-annotate-ai[napari]\"`). It opens existing\ntraining sets on OMERO or in a local folder, saves each accepted image straight away,\nand can review annotated images starting from their saved masks. See the\n[napari plugin guide](https://leiden-cell-observatory.github.io/omero_annotate_ai/napari-plugin/).\n\n## Installation\n\n```bash\n# Recommended: pixi\npixi init myproject && cd myproject\npixi add micro_sam jupyterlab\npixi add --pypi \"omero-annotate-ai[notebooks]\"\n\n# Or: conda + pip\nconda install -c conda-forge micro_sam jupyterlab\npip install \"omero-annotate-ai[notebooks]\"\n\n# Or: pip only (micro-SAM and napari from PyPI)\npip install \"omero-annotate-ai[microsam,notebooks]\" jupyterlab\n```\n\nSee the [installation guide](https://leiden-cell-observatory.github.io/omero_annotate_ai/installation/) for details and troubleshooting.\n\n## Quick start\n\n**With widgets** (in Jupyter):\n\n```python\nfrom omero_annotate_ai import create_omero_connection_widget, create_workflow_widget\n\nconn_widget = create_omero_connection_widget()\nconn_widget.display()\nconn = conn_widget.get_connection()\n\nworkflow_widget = create_workflow_widget(connection=conn)\nworkflow_widget.display()  # New training set, or Open one to continue\n\nts = workflow_widget.training_set()\nworkflow_widget.annotate(note=\"nuclei only, small debris skipped\")\n```\n\n**From a YAML config** (scripts, batch runs, or repeating a run):\n\n```python\nfrom omero_annotate_ai import TrainingSet, load_config\n\nconfig = load_config(\"annotation_config.yaml\")\nts = TrainingSet.create(config, conn)\nts.annotate()\n```\n\n**Continue later** (after closing napari, or a crash): open the set by its table ID and\nannotate what is left; anything a crash left half-done is repaired first.\n\n```python\nts = TrainingSet.open(12345, conn)\nts.extend(train_n=10)  # optional: add images to the same table\nts.annotate(note=\"second round\")\n```\n\nEach training set keeps its files in one folder: images, masks, `config.yaml` (with the\nsessions and their notes) and a local copy of the tracking table. By default that is\n`~/omero_annotate_ai/<server>/<table id>_<name>/`; set `OMERO_ANNOTATE_AI_HOME` (or pass\n`home=` to `TrainingSet.create` / `open`) to keep the sets elsewhere.\n`ts.review()` reopens annotated images with their masks to correct them.\nOpen the same set on another computer to carry on there; two people can even annotate\nit at the same time, because each session claims the images it shows (your own claims,\ne.g. after a dropped connection, never block you).\n`create_pipeline(config, conn).run_full_micro_sam_workflow()` from 0.4 still works but\nis deprecated.\n\nThe [configuration guide](https://leiden-cell-observatory.github.io/omero_annotate_ai/configuration/) lists every option.\n\n## Example notebooks\n\n| | Jupyter | marimo |\n|---|---|---|\n| Annotate with micro-SAM or Cellpose | [widget workflow](notebooks/jupyter/annotation/omero-annotate-ai-annotation-widget.ipynb) | [annotation](notebooks/marimo/omero-annotate-ai-annotation.py) |\n| Run from YAML (OMERO or OME-Zarr) | | [from YAML](notebooks/marimo/annotate-from-yaml.py) |\n| Train micro-SAM | | [micro-SAM](notebooks/marimo/omero-training-microsam.py) |\n| Export for BiaPy / DL4MicEverywhere | [export](notebooks/jupyter/training/omero-training-export.ipynb) | |\n| Export to the BioImage Archive | [BIA export](notebooks/jupyter/export_annotations/omero-table-to-bioimage-archive.ipynb) | |\n| Try it on public data | | [IDR OME-Zarr demo](notebooks/marimo/idr-zarr-demo.py) |\n\n## Documentation\n\nUpgrading from 0.4? The [release notes](https://leiden-cell-observatory.github.io/omero_annotate_ai/release-notes/) list the changes and how to migrate.\n\nFull documentation: **https://leiden-cell-observatory.github.io/omero_annotate_ai/**\n([micro-SAM tutorial](https://leiden-cell-observatory.github.io/omero_annotate_ai/tutorials/microsam-annotation-pipeline/),\n[API reference](https://leiden-cell-observatory.github.io/omero_annotate_ai/api/)).\n\n## Contributing\n\n```bash\ngit clone https://github.com/Leiden-Cell-Observatory/omero_annotate_ai.git\ncd omero_annotate_ai\npixi install                         # default env: everything to run the notebooks\npixi run -e dev install-hooks        # once per clone: ruff + notebook-output hooks\npixi run -e dev pytest tests/        # dev env adds test, lint and type-check tools\n```\n\nIssues and pull requests are welcome on [GitHub](https://github.com/Leiden-Cell-Observatory/omero_annotate_ai/issues).\n\n## Contact and acknowledgements\n\n**Maarten Paul**, m.w.paul@lacdr.leidenuniv.nl\n\nDeveloped at the [Leiden Cell Observatory](https://github.com/Leiden-Cell-Observatory) within the\n[NL-BioImaging](https://github.com/NL-BioImaging) infrastructure, funded by NWO.\n\n## License\n\nGNU General Public License v2.0 or later (GPL-2.0-or-later); see [LICENSE](LICENSE).\nThe package builds on [omero-py](https://github.com/ome/omero-py) (GPL-2.0-or-later) and\n[ezomero](https://github.com/TheJacksonLaboratory/ezomero) (GPL-2.0), so it uses a compatible\nlicense. Releases up to and including 0.4.x were published under Apache-2.0.\n",
+    "description": "# OMERO Annotate.AI\n\n[![PyPI version](https://img.shields.io/pypi/v/omero-annotate-ai)](https://pypi.org/project/omero-annotate-ai/)\n[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/omero-annotate-ai/README.html)\n[![Python versions](https://img.shields.io/pypi/pyversions/omero-annotate-ai)](https://pypi.org/project/omero-annotate-ai/)\n[![CI/CD](https://github.com/Leiden-Cell-Observatory/omero_annotate_ai/actions/workflows/ci.yml/badge.svg)](https://github.com/Leiden-Cell-Observatory/omero_annotate_ai/actions)\n[![Documentation](https://github.com/Leiden-Cell-Observatory/omero_annotate_ai/actions/workflows/docs.yml/badge.svg)](https://leiden-cell-observatory.github.io/omero_annotate_ai/)\n[![Pixi Badge](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/prefix-dev/pixi/main/assets/badge/v0.json)](https://pixi.sh)\n[![License](https://img.shields.io/github/license/Leiden-Cell-Observatory/omero_annotate_ai)](https://github.com/Leiden-Cell-Observatory/omero_annotate_ai/blob/main/LICENSE)\n\n<picture>\n  <source media=\"(prefers-color-scheme: dark)\" srcset=\"docs/images/logo-dark.svg\">\n  <img src=\"docs/images/logo.svg\" alt=\"OMERO Annotate.AI logo\" width=\"120\" align=\"right\">\n</picture>\n\n**Reproducible AI-assisted annotation of OMERO data, from image selection to training-ready datasets.**\n\nPick images from an OMERO project, dataset, plate or screen. Annotate them in napari with\n[micro-SAM](https://github.com/computational-cell-analytics/micro-sam) or prepare them for\n[Cellpose](https://www.cellpose.org). The masks, ROIs and a tracking table go back to OMERO.\nEvery run is described by one YAML file, so you can resume it, repeat it or share it.\n<br clear=\"right\">\n\n![micro-SAM segmentation of a Cell Painting field in napari](docs/images/napari_microsam.jpg)\n<sub>micro-SAM (`vit_b_lm`) instance segmentation of nuclei in a Cell Painting field from the BioImage Archive (S-BIAD855), shown in napari.</sub>\n\n## How it works\n\n```mermaid\nflowchart LR\n    A[OMERO<br/>project \u00b7 dataset \u00b7 plate \u00b7 screen] --> B[Select images<br/>train / val / test split]\n    B --> C[Annotate in napari<br/>micro-SAM or Cellpose]\n    C --> D[Back to OMERO<br/>masks \u00b7 ROIs \u00b7 tracking table]\n    D --> E[Training data<br/>micro-SAM \u00b7 BiaPy \u00b7 DL4MicEverywhere]\n    D --> F[BioImage Archive<br/>MIFA export]\n```\n\n- **Jupyter widgets** to connect to OMERO and create a training set or open one to continue, no code needed.\n- **Resumable and crash-safe:** each mask is saved locally, uploaded with a tag and then recorded in the tracking table, so an interrupted run continues where it stopped without duplicate uploads; pixel digests flag files that changed afterwards.\n- **Review and correct** earlier annotations with their saved masks; record a note per session.\n- **Flexible sampling:** timepoints, z-slices, 3D volumes, random patches, and filtering plate wells on their key-value pairs.\n- **Training-ready output:** one folder layout for micro-SAM, BiaPy and DL4MicEverywhere, with images and labels paired by name.\n- **FAIR by default:** the config carries study and method metadata and exports to the BioImage Archive (MIFA).\n- **Local-only storage** (`storage: local`) for data you cannot write to, such as public [IDR](https://idr.openmicroscopy.org) OME-Zarr.\n\n## Jupyter widgets\n\n<table>\n  <tr>\n    <td width=\"45%\"><img src=\"docs/images/widget_connect.png\" alt=\"OMERO connection widget\"></td>\n    <td width=\"55%\"><img src=\"docs/images/widget_open_set.png\" alt=\"Opening a training set in the workflow widget: progress per split and session notes\"></td>\n  </tr>\n  <tr>\n    <td><sub>Connect to any OMERO server.</sub></td>\n    <td><sub>Pick a container, then start a new training set or continue one: progress per split and the notes of earlier sessions.</sub></td>\n  </tr>\n</table>\n\n## napari plugin (experimental)\n\nAnnotate in your own napari window: **Plugins \u2192 OMERO Annotate AI \u2192 Annotate training\nset** (install with `pip install \"omero-annotate-ai[napari]\"`). It opens existing\ntraining sets on OMERO or in a local folder, saves each accepted image straight away,\nand can review annotated images starting from their saved masks. See the\n[napari plugin guide](https://leiden-cell-observatory.github.io/omero_annotate_ai/napari-plugin/).\n\n## Installation\n\n```bash\n# Recommended: pixi\npixi init myproject && cd myproject\npixi add micro_sam jupyterlab\npixi add --pypi \"omero-annotate-ai[notebooks]\"\n\n# Or: conda + pip\nconda install -c conda-forge micro_sam jupyterlab\npip install \"omero-annotate-ai[notebooks]\"\n\n# Or: pip only (micro-SAM and napari from PyPI)\npip install \"omero-annotate-ai[microsam,notebooks]\" jupyterlab\n```\n\nSee the [installation guide](https://leiden-cell-observatory.github.io/omero_annotate_ai/installation/) for details and troubleshooting.\n\n## Quick start\n\n**With widgets** (in Jupyter):\n\n```python\nfrom omero_annotate_ai import create_omero_connection_widget, create_workflow_widget\n\nconn_widget = create_omero_connection_widget()\nconn_widget.display()\nconn = conn_widget.get_connection()\n\nworkflow_widget = create_workflow_widget(connection=conn)\nworkflow_widget.display()  # New training set, or Open one to continue\n\nts = workflow_widget.training_set()\nworkflow_widget.annotate(note=\"nuclei only, small debris skipped\")\n```\n\n**From a YAML config** (scripts, batch runs, or repeating a run):\n\n```python\nfrom omero_annotate_ai import TrainingSet, load_config\n\nconfig = load_config(\"annotation_config.yaml\")\nts = TrainingSet.create(config, conn)\nts.annotate()\n```\n\n**Continue later** (after closing napari, or a crash): open the set by its table ID and\nannotate what is left; anything a crash left half-done is repaired first.\n\n```python\nts = TrainingSet.open(12345, conn)\nts.extend(train_n=10)  # optional: add images to the same table\nts.annotate(note=\"second round\")\n```\n\nEach training set keeps its files in one folder: images, masks, `config.yaml` (with the\nsessions and their notes) and a local copy of the tracking table. By default that is\n`~/omero_annotate_ai/<server>/<table id>_<name>/`; set `OMERO_ANNOTATE_AI_HOME` (or pass\n`home=` to `TrainingSet.create` / `open`) to keep the sets elsewhere.\n`ts.review()` reopens annotated images with their masks to correct them.\nOpen the same set on another computer to carry on there; two people can even annotate\nit at the same time, because each session claims the images it shows (your own claims,\ne.g. after a dropped connection, never block you).\n`create_pipeline(config, conn).run_full_micro_sam_workflow()` from 0.4 still works but\nis deprecated.\n\nThe [configuration guide](https://leiden-cell-observatory.github.io/omero_annotate_ai/configuration/) lists every option.\n\n## Example notebooks\n\n| | Jupyter | marimo |\n|---|---|---|\n| Annotate with micro-SAM or Cellpose | [widget workflow](notebooks/jupyter/annotation/omero-annotate-ai-annotation-widget.ipynb) | [annotation](notebooks/marimo/omero-annotate-ai-annotation.py) |\n| Run from YAML (OMERO or OME-Zarr) | | [from YAML](notebooks/marimo/annotate-from-yaml.py) |\n| Train micro-SAM | | [micro-SAM](notebooks/marimo/omero-training-microsam.py) |\n| Export for BiaPy / DL4MicEverywhere | [export](notebooks/jupyter/training/omero-training-export.ipynb) | |\n| Export to the BioImage Archive | [BIA export](notebooks/jupyter/export_annotations/omero-table-to-bioimage-archive.ipynb) | |\n| Try it on public data | | [IDR OME-Zarr demo](notebooks/marimo/idr-zarr-demo.py) |\n\n## Documentation\n\nUpgrading from 0.4? The [release notes](https://leiden-cell-observatory.github.io/omero_annotate_ai/release-notes/) list the changes and how to migrate.\n\nFull documentation: **https://leiden-cell-observatory.github.io/omero_annotate_ai/**\n([micro-SAM tutorial](https://leiden-cell-observatory.github.io/omero_annotate_ai/tutorials/microsam-annotation-pipeline/),\n[API reference](https://leiden-cell-observatory.github.io/omero_annotate_ai/api/)).\n\n## Contributing\n\n```bash\ngit clone https://github.com/Leiden-Cell-Observatory/omero_annotate_ai.git\ncd omero_annotate_ai\npixi install                         # default env: everything to run the notebooks\npixi run -e dev install-hooks        # once per clone: ruff + notebook-output hooks\npixi run -e dev pytest tests/        # dev env adds test, lint and type-check tools\n```\n\nIssues and pull requests are welcome on [GitHub](https://github.com/Leiden-Cell-Observatory/omero_annotate_ai/issues).\n\n## Contact and acknowledgements\n\n**Maarten Paul**, m.w.paul@lacdr.leidenuniv.nl\n\nDeveloped at the [Leiden Cell Observatory](https://github.com/Leiden-Cell-Observatory) within the\n[NL-BioImaging](https://github.com/NL-BioImaging) infrastructure, funded by NWO.\n\n## License\n\nGNU General Public License v2.0 or later (GPL-2.0-or-later); see [LICENSE](LICENSE).\nThe package builds on [omero-py](https://github.com/ome/omero-py) (GPL-2.0-or-later) and\n[ezomero](https://github.com/TheJacksonLaboratory/ezomero) (GPL-2.0), so it uses a compatible\nlicense. Releases up to and including 0.4.x were published under Apache-2.0.\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -61,7 +61,7 @@
       "provenance",
       "all"
     ],
-    "release_url": "https://pypi.org/project/omero-annotate-ai/0.5.1/",
+    "release_url": "https://pypi.org/project/omero-annotate-ai/0.5.2/",
     "requires_dist": [
       "numpy>=1.21.0",
       "pandas>=1.3.0",
@@ -95,11 +95,11 @@
     ],
     "requires_python": ">=3.11",
     "summary": "OMERO integration for AI-powered image annotation and segmentation workflows",
-    "version": "0.5.1",
+    "version": "0.5.2",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 43364462,
+  "last_serial": 43377735,
   "ownership": {
     "organization": null,
     "roles": [
@@ -999,30 +999,78 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.5.2": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "9de356c4d070cc1b943422fce64d9201c4b722fa69e2c99cfd7aaf49f98107bc"
+        },
+        "digests": {
+          "blake2b_256": "9a3cbbc4a921f046b490ef1c73bb1a58e9fb59dc838944911b8e5677879a1c13",
+          "md5": "5935bd5f51e8f41ef72da73e508d720e",
+          "sha256": "337f26b786006c0abf1c1f851243a7598fb0d6b894a3837f581c945b8b19578c"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.5.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "5935bd5f51e8f41ef72da73e508d720e",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 192929,
+        "upload_time": "2026-11-08T21:50:49",
+        "upload_time_iso_8601": "2026-11-08T21:50:49.370557Z",
+        "url": "https://files.pythonhosted.org/packages/9a/3c/bbc4a921f046b490ef1c73bb1a58e9fb59dc838944911b8e5677879a1c13/omero_annotate_ai-0.5.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "1c9c0809e2e374aff5487bfc658fbd6fe73ac200452e395b8fed73ca9aa08898",
+          "md5": "144832b65137a4d59b490bbc8fab46d3",
+          "sha256": "4630bfd3663b9ab3190aa66f60e25b69a99f2a0b0b9360e3381be11a610e9f85"
+        },
+        "downloads": -1,
+        "filename": "omero_annotate_ai-0.5.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "144832b65137a4d59b490bbc8fab46d3",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 282334,
+        "upload_time": "2026-11-08T21:50:51",
+        "upload_time_iso_8601": "2026-11-08T21:50:51.165017Z",
+        "url": "https://files.pythonhosted.org/packages/1c/9c/0809e2e374aff5487bfc658fbd6fe73ac200452e395b8fed73ca9aa08898/omero_annotate_ai-0.5.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": null,
       "core-metadata": {
-        "sha256": "077b551130a71a52af141c684a81392e9672d4bdaccbc9ef96a9dea4e53ad68c"
+        "sha256": "9de356c4d070cc1b943422fce64d9201c4b722fa69e2c99cfd7aaf49f98107bc"
       },
       "digests": {
-        "blake2b_256": "68d5a42f898e56e203fb2e653438812336210d696b7720c36b1832a362be8a1d",
-        "md5": "ced2c54c3e729e1043163afab58c796e",
-        "sha256": "5ba0e5d7f009bca12d782cd5b62f641b20efebecc51a44b56fc409e26831ff4b"
+        "blake2b_256": "9a3cbbc4a921f046b490ef1c73bb1a58e9fb59dc838944911b8e5677879a1c13",
+        "md5": "5935bd5f51e8f41ef72da73e508d720e",
+        "sha256": "337f26b786006c0abf1c1f851243a7598fb0d6b894a3837f581c945b8b19578c"
       },
       "downloads": -1,
-      "filename": "omero_annotate_ai-0.5.1-py3-none-any.whl",
+      "filename": "omero_annotate_ai-0.5.2-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "ced2c54c3e729e1043163afab58c796e",
+      "md5_digest": "5935bd5f51e8f41ef72da73e508d720e",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.11",
-      "size": 188929,
-      "upload_time": "2026-11-08T13:46:13",
-      "upload_time_iso_8601": "2026-11-08T13:46:13.155682Z",
-      "url": "https://files.pythonhosted.org/packages/68/d5/a42f898e56e203fb2e653438812336210d696b7720c36b1832a362be8a1d/omero_annotate_ai-0.5.1-py3-none-any.whl",
+      "size": 192929,
+      "upload_time": "2026-11-08T21:50:49",
+      "upload_time_iso_8601": "2026-11-08T21:50:49.370557Z",
+      "url": "https://files.pythonhosted.org/packages/9a/3c/bbc4a921f046b490ef1c73bb1a58e9fb59dc838944911b8e5677879a1c13/omero_annotate_ai-0.5.2-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
@@ -1030,21 +1078,21 @@
       "comment_text": null,
       "core-metadata": false,
       "digests": {
-        "blake2b_256": "84d61aff6ede2480fdf250ef34dfc037553407d69729e07e84941a807fcf2f0d",
-        "md5": "cc60c9692e3e282c99c95ac17df237dd",
-        "sha256": "d399defe6e21f8d17d8d68e946331bd4e9391cb8df2fcd7fb09dc24e00e9667a"
+        "blake2b_256": "1c9c0809e2e374aff5487bfc658fbd6fe73ac200452e395b8fed73ca9aa08898",
+        "md5": "144832b65137a4d59b490bbc8fab46d3",
+        "sha256": "4630bfd3663b9ab3190aa66f60e25b69a99f2a0b0b9360e3381be11a610e9f85"
       },
       "downloads": -1,
-      "filename": "omero_annotate_ai-0.5.1.tar.gz",
+      "filename": "omero_annotate_ai-0.5.2.tar.gz",
       "has_sig": false,
-      "md5_digest": "cc60c9692e3e282c99c95ac17df237dd",
+      "md5_digest": "144832b65137a4d59b490bbc8fab46d3",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.11",
-      "size": 274702,
-      "upload_time": "2026-11-08T13:46:14",
-      "upload_time_iso_8601": "2026-11-08T13:46:14.823571Z",
-      "url": "https://files.pythonhosted.org/packages/84/d6/1aff6ede2480fdf250ef34dfc037553407d69729e07e84941a807fcf2f0d/omero_annotate_ai-0.5.1.tar.gz",
+      "size": 282334,
+      "upload_time": "2026-11-08T21:50:51",
+      "upload_time_iso_8601": "2026-11-08T21:50:51.165017Z",
+      "url": "https://files.pythonhosted.org/packages/1c/9c/0809e2e374aff5487bfc658fbd6fe73ac200452e395b8fed73ca9aa08898/omero_annotate_ai-0.5.2.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
