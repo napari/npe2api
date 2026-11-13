@@ -1,17 +1,15 @@
 {
   "info": {
     "author": null,
-    "author_email": "Cyrille Couture <cyrille.couture@univ-grenoble-alpes.fr>",
+    "author_email": "Cyrille Couture <cyrille.couture@univ-grenoble-alpes.fr>, Emmanuel Roubin <emmanuel.roubin@univ-grenoble-alpes.fr>",
     "bugtrack_url": null,
     "classifiers": [
-      "Development Status :: 3 - Alpha",
       "Environment :: X11 Applications :: Qt",
       "Framework :: napari",
-      "Intended Audience :: Science/Research",
       "Programming Language :: Python :: 3",
       "Topic :: Scientific/Engineering :: Image Processing"
     ],
-    "description": "# spam-gui\n\nGraphical modules for [spam](https://spam-project.dev) (Software for the Practical Analysis of Materials), in a [napari](https://napari.org) viewer.\n\nThe first module is the **multimodal registration** (MMR): it registers two 3D images of the same sample acquired with different modalities (e.g., x-rays and neutrons). The registration itself is spam's; spam-gui guides you through it, step by step:\n\n1. Load images (at a chosen binning, reusing the eye registration, crop and MMR registration of a coarser one). The two images can have different sizes: image 1 is shown on the voxels of image 2, the reference, centre on centre, and everything is done on image 2's voxels\n2. Eye registration (pairs of points). It carries the scale too, if the voxel sizes differ (\u00ab Zoom \u00bb: e.g., 2 for voxels of image 1 twice as large): Phi then takes image 1 about its centre to image 2 about its centre, with that scale\n3. Crop\n4. Joint histogram, in three panes: grey level mapping (the grey levels of each image spread over the bins); bin and peak selection (the bins, how the peaks are found, \u00ab Compute histogram \u00bb); the joint histogram with its peaks to tick (fitted by Gaussians). It is seen from above, or as a 3D surface in an isometric view rotated about its vertical axis with a slider\n5. Phase diagram\n6. MMR registration\n\nplus a **Summary**, available at any time.\n\nThe second module is the **eye registration** (as spam's `spam-ereg`): 1. Load images \u203a 2. Eye registration \u203a 3. Save (\u03a6 in spam's registration file, at this binning and for the original images; image 1 moved, as a TIFF). Its steps 1 and 2 are those of the multimodal registration, and what is done in them is shared: images loaded and registered by eye in one module are in use in the other (switching module with the module button, top left).\n\n## Install\n\nspam-gui is installed from PyPI (`pip install spam-gui`), in a virtual environment as spam is. Installing it also installs spam (0.9.1 or later, as released: nothing in spam needs changing), napari and PyQt6 (Qt 6). It needs Python 3.10 or later. The commands below are for Ubuntu or Debian (and WSL).\n\nspam is a dependency of spam-gui: pip installs it, so it is not installed on its own. Only the system libraries that pip cannot install come from apt: those spam needs, those of napari's window (Qt's display libraries), and git. apt installs only those missing: on an Ubuntu desktop, most are already there.\n\n### To use it\n\n```\n# install minimal system deps\nsudo apt install python3-venv git libglu1-mesa libxcursor1 libxft2 libxinerama1 libgomp1 libgl1 libglib2.0-0 libdbus-1-3 \\\n    libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0 libxcb-cursor0\n# Create a virtual environment (or skip this line to install spam-gui in an existing spam-venv)\n/usr/bin/python3 -m venv spam-venv\n# Activate your virtual environment\nsource spam-venv/bin/activate\n# update python package manager\npip install -U pip\n# install spam-gui (and with it spam, napari and PyQt6)\npip install spam-gui\n```\n\nUntil its first release on PyPI, the last line is `pip install \"git+https://gitlab.com/spam-project/spam-gui.git\"` (the code as it is on GitLab).\n\nTo update it later, in the activated environment: `pip install -U spam-gui`. The version installed: `spam-gui --version`.\n\nspam-gui used Qt 5 (PyQt5) before it moved to Qt 6: an environment installed then still has PyQt5, which napari would pick, and fail (\u00ab napari requires Qt >= 6.7.0, but PyQt5 \u2026 was imported \u00bb). Once, before the update above, replace it (and install `libxcb-cursor0` with apt):\n\n```\npip uninstall -y PyQt5 PyQt5-Qt5 PyQt5-sip\npip install -U \"napari[pyqt6]\"\n```\n\n### To develop it (e.g., to write a new module)\n\nThe code is cloned, and installed in editable mode (it follows the code as it is edited), with the tools to test it and build it:\n\n```\n# install minimal system deps, and xvfb (a virtual screen: the window test and screenshots at any screen size, unseen)\nsudo apt install python3-venv git libglu1-mesa libxcursor1 libxft2 libxinerama1 libgomp1 libgl1 libglib2.0-0 libdbus-1-3 \\\n    libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0 libxcb-cursor0 \\\n    xvfb\n# Create a virtual environment (next to the code, not in it)\n/usr/bin/python3 -m venv spam-venv\n# Activate your virtual environment\nsource spam-venv/bin/activate\n# update python package manager\npip install -U pip\n# get the code (or git@gitlab.com:spam-project/spam-gui.git, with write access)\ngit clone https://gitlab.com/spam-project/spam-gui.git\ncd spam-gui\n# install spam-gui in editable mode, with the tools to test it and build it (pytest, pyflakes, build, twine...)\npip install -e \".[dev]\"\n```\n\nTo update it: `git pull`. Before writing a module, read [SPEC.md](https://gitlab.com/spam-project/spam-gui/-/blob/main/SPEC.md) (see \u00ab Writing a new module \u00bb below).\n\n## Start\n\n```\nspam-gui                 # opens the module used last (the first one, the very first time)\nspam-gui mmr [image1 image2]\nspam-gui ereg [image1 image2]\nspam-gui --help          # the modules; spam-gui MODULE --help: the arguments of a module\n```\n\nEach module is a subcommand, with its own arguments. `mmr`, the multimodal registration, and `ereg`, the eye registration: the images (TIFF files, or folders of TIFF slices) are optional; image 1 is moved onto image 2, the reference. From an open napari window: **Plugins \u203a spam \u203a spam-gui**.\n\nOn Linux, spam-gui uses X11 (`QT_QPA_PLATFORM=xcb`), also in a Wayland session: under Wayland a program cannot place its windows (its pop-ups would not open at the centre of the window), and napari's drawing can fail (it does under WSL). It also sets `PYOPENGL_PLATFORM=glx` (unless already set), so that napari's drawing finds the OpenGL context Qt made with X11. Started from napari's menu instead, it uses the display napari chose.\n\n## The window\n\nThe window opens within its screen (maximised the first time, or if the size it had does not fit the screen). Its panels follow its size:\n\n- the images are shown in one, two or three windows side by side (\u00ab Single \u00bb, \u00ab Double \u00bb, \u00ab Triple \u00bb, on the right): at first, both images in one window; image 1 on the left and image 2 on the right; image 1, image 2 and both in a checkerboard. Each view keeps its windows' settings;\n- the borders between the panels, and between the image windows, can be dragged (a double click on a border between two windows gives them the same width again);\n- the two small buttons at the far left and right, just above the panels, hide and show the panels on that side, to give the images more room;\n- napari's menus (File, View, Layers...) are hidden: Ctrl+M shows them (and hides them again);\n- the panels are always there (they cannot be closed or moved); the layer controls and the layer list can be collapsed to one line by a click on their title (\u25be, \u25b8), to leave more height to the other;\n- the layer controls show the basic controls of a layer (an image: its opacity, its histogram and contrast limits, its colormap); \u00ab \u25b8 Advanced \u00bb shows the others, the 3D ones among them (labelled \u00ab (3D) \u00bb);\n- in a narrow window, the steps show their numbers only (their titles are in their tooltips), and what does not fit in a panel scrolls.\n\n## Large images\n\nImages of several GB each can be larger than the memory: spam-gui does not need them in memory.\n\n- **Coarse binnings first.** Register at a coarse binning (e.g., 16 or 4), then load a finer one with the eye registration, crop and MMR registration of the coarser one ticked (step 1). The joint histogram and the phase diagram (steps 4, 5) are made again at each binning: their peaks change with the binning.\n- **At full resolution (binning 1)**, an image is read from its file as it is used, when the file allows it: a single TIFF file that is not compressed. A compressed file or a folder of slices is loaded in memory if it fits there; otherwise it is first copied into a scratch file of the same size.\n- **Long calculations** (reading and binning, the joint histogram, saving the images) run a part of the image at a time, in threads, with a progress bar and a button to cancel.\n- **The registration itself (step 6) is spam's, and needs its region in memory: about 60 bytes for each voxel** (2 GB for 320\u00b3 voxels, 60 GB for 1000\u00b3). Step 6 says how much the region needs and how much is available, and asks before starting a registration that does not fit. At full resolution, register a crop (step 3).\n- **3D views** need both images whole in memory: they are refused for images that do not fit (load a coarser binning for a 3D view).\n- **Scratch files** (an image that cannot be read as it is used, or image 1 moved on a very large crop) go to the temporary folder, and are deleted when they are no longer used. To put them elsewhere (e.g., on a larger or faster disk): `SPAM_GUI_SCRATCH=/path/to/folder spam-gui`.\n\n## Writing a new module\n\nNew modules follow [SPEC.md](https://gitlab.com/spam-project/spam-gui/-/blob/main/SPEC.md): how a module is built (steps, panes, shared files), how it looks and behaves, and how it is tested. It is written so that it can also be given to Claude: in this repository, ask Claude Code to read SPEC.md, then to build the module.\n\n## Tests\n\nFrom a developer install (see \u00ab To develop it \u00bb above):\n\n```\npytest tests\n```\n\nOne more test drives the window itself through the whole registration, on a small pair of images it makes. It opens the window for about a minute, so it only runs when asked:\n\n```\nSPAM_GUI_TESTS=1 pytest tests/test_gui.py\n```\n\nTo run it on a virtual screen (xvfb, see \u00ab To develop it \u00bb), unseen, at a chosen screen size:\n\n```\nSPAM_GUI_TESTS=1 xvfb-run -a -s \"-screen 0 1920x1080x24\" env QT_QPA_PLATFORM=xcb LIBGL_ALWAYS_SOFTWARE=1 pytest tests/test_gui.py\n```\n\n## Docs as a website\n\nThe Markdown files of the repository (this one, SPEC.md, TODO.md, OPEN_QUESTIONS.md, TO_SPAM.md, the specs) are published as a website by GitLab Pages on each push to the default branch (`.gitlab-ci.yml`). To build it locally, from a developer install: `python scripts/pages.py`, then open `public/index.html`.\n\n## Licence\n\nGPL-3.0-or-later, as spam (see `LICENSE.md`).\n",
+    "description": "# spam-gui\n\nGraphical modules for [spam](https://spam-project.dev) (Software for the Practical Analysis of Materials), in a\n[napari](https://napari.org) viewer. spam-gui is part of the spam project: https://spam-project.dev\n\n- **Multimodal registration** (`spam-gui mmr`): registers two 3D images of the same sample acquired with different\n  modalities (e.g., x-rays and neutrons), step by step, with spam's registration.\n- **Eye registration** (`spam-gui ereg`): as spam's `spam-ereg`, image 1 moved by hand onto image 2, and \u03a6 saved in\n  spam's registration file.\n\nBoth work on large images (several GB, larger than the memory), at several binnings, and share what is done in their\nfirst steps (the images loaded, the eye registration).\n\n## Install\n\n```\npip install spam-gui\n```\n\nin a virtual environment, as spam: a few system libraries first, see\n[INSTALLATION.md](https://gitlab.com/spam-project/spam-gui/-/blob/main/INSTALLATION.md).\n\n## Start\n\n```\nspam-gui                 # the module used last\nspam-gui mmr [image1 image2]\nspam-gui ereg [image1 image2]\nspam-gui --help\n```\n\n## Documentation\n\n| | |\n|---|---|\n| [INSTALLATION.md](https://gitlab.com/spam-project/spam-gui/-/blob/main/INSTALLATION.md) | Installing, updating; old Qt 5 environments; Linux and Wayland |\n| [USAGE.md](https://gitlab.com/spam-project/spam-gui/-/blob/main/USAGE.md) | Starting it, the modules and their steps, the window, large images |\n| [DEVELOPMENT.md](https://gitlab.com/spam-project/spam-gui/-/blob/main/DEVELOPMENT.md) | Installing to develop, writing a module, tests, releases, the docs website |\n| [SPEC.md](https://gitlab.com/spam-project/spam-gui/-/blob/main/SPEC.md) | How modules are built, how they look and behave (and the specs of each module) |\n\nAll of them, as a website: https://spam-project.gitlab.io/spam-gui/\n\n## Licence\n\nGPL-3.0-or-later, as spam (see [LICENSE.md](https://gitlab.com/spam-project/spam-gui/-/blob/main/LICENSE.md)).\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -24,7 +22,7 @@
       "License-File"
     ],
     "home_page": null,
-    "keywords": "spam, napari, multimodal registration, eye registration, image registration, tomography",
+    "keywords": "image registration, tomography",
     "license": null,
     "license_expression": "GPL-3.0-or-later",
     "license_files": [
@@ -38,14 +36,14 @@
     "project_url": "https://pypi.org/project/spam-gui/",
     "project_urls": {
       "Documentation": "https://spam-project.gitlab.io/spam-gui/markdowns/",
+      "Homepage": "https://spam-project.dev",
       "Issues": "https://gitlab.com/spam-project/spam-gui/-/issues",
-      "Source": "https://gitlab.com/spam-project/spam-gui",
-      "spam": "https://spam-project.dev"
+      "Source": "https://gitlab.com/spam-project/spam-gui"
     },
     "provides_extra": [
       "dev"
     ],
-    "release_url": "https://pypi.org/project/spam-gui/0.1.0/",
+    "release_url": "https://pypi.org/project/spam-gui/0.1.1/",
     "requires_dist": [
       "spam>=0.9.1",
       "napari[pyqt6]>=0.5",
@@ -58,11 +56,11 @@
     ],
     "requires_python": ">=3.10",
     "summary": "Graphical modules for spam (Software for the Practical Analysis of Materials), in a napari viewer",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 43612208,
+  "last_serial": 43613241,
   "ownership": {
     "organization": null,
     "roles": [
@@ -120,30 +118,78 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.1.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "7191626ba2d57c68552c99c8cfd962ef20203af7cb9966a8ef5a2d6a6f1a0f04"
+        },
+        "digests": {
+          "blake2b_256": "a31d2d9f6ce4195e18619f2572c040420abfc5ee8ee39d7d35b3b0b374d28438",
+          "md5": "d59235dc5cba85c57360b513917fd80e",
+          "sha256": "3185b8298e41d2cdee1af9e19255339295ebef4867c8c9a95a8267ee835914cc"
+        },
+        "downloads": -1,
+        "filename": "spam_gui-0.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "d59235dc5cba85c57360b513917fd80e",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 343424,
+        "upload_time": "2026-11-13T16:09:13",
+        "upload_time_iso_8601": "2026-11-13T16:09:13.960002Z",
+        "url": "https://files.pythonhosted.org/packages/a3/1d/2d9f6ce4195e18619f2572c040420abfc5ee8ee39d7d35b3b0b374d28438/spam_gui-0.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "0e82735598325ea16818601f2149364f9b34251697d9167efe9f9985f0960318",
+          "md5": "a8e4883daebe38b1470d8229edb1b172",
+          "sha256": "ed6ab8f959f14b096e98ad8c13b1a6496116c3fd97d29761df5fbe45d73ad4f6"
+        },
+        "downloads": -1,
+        "filename": "spam_gui-0.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "a8e4883daebe38b1470d8229edb1b172",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 339818,
+        "upload_time": "2026-11-13T16:09:15",
+        "upload_time_iso_8601": "2026-11-13T16:09:15.200273Z",
+        "url": "https://files.pythonhosted.org/packages/0e/82/735598325ea16818601f2149364f9b34251697d9167efe9f9985f0960318/spam_gui-0.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": null,
       "core-metadata": {
-        "sha256": "2841f56e63af938a55a6211fe530573a50b6d264cefc88b91b349e889d536031"
+        "sha256": "7191626ba2d57c68552c99c8cfd962ef20203af7cb9966a8ef5a2d6a6f1a0f04"
       },
       "digests": {
-        "blake2b_256": "bd19996829091fc4e6074f9a6178cb881bdd5330cec3352bf65facabcb2f3fdc",
-        "md5": "b9945612169a61f64a822d8a7d16f196",
-        "sha256": "654aaf8420766febd4a93443cdb1d5661b70272d2c0bb33e672883f31631fa99"
+        "blake2b_256": "a31d2d9f6ce4195e18619f2572c040420abfc5ee8ee39d7d35b3b0b374d28438",
+        "md5": "d59235dc5cba85c57360b513917fd80e",
+        "sha256": "3185b8298e41d2cdee1af9e19255339295ebef4867c8c9a95a8267ee835914cc"
       },
       "downloads": -1,
-      "filename": "spam_gui-0.1.0-py3-none-any.whl",
+      "filename": "spam_gui-0.1.1-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "b9945612169a61f64a822d8a7d16f196",
+      "md5_digest": "d59235dc5cba85c57360b513917fd80e",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.10",
-      "size": 346908,
-      "upload_time": "2026-11-13T15:47:43",
-      "upload_time_iso_8601": "2026-11-13T15:47:43.280959Z",
-      "url": "https://files.pythonhosted.org/packages/bd/19/996829091fc4e6074f9a6178cb881bdd5330cec3352bf65facabcb2f3fdc/spam_gui-0.1.0-py3-none-any.whl",
+      "size": 343424,
+      "upload_time": "2026-11-13T16:09:13",
+      "upload_time_iso_8601": "2026-11-13T16:09:13.960002Z",
+      "url": "https://files.pythonhosted.org/packages/a3/1d/2d9f6ce4195e18619f2572c040420abfc5ee8ee39d7d35b3b0b374d28438/spam_gui-0.1.1-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
@@ -151,21 +197,21 @@
       "comment_text": null,
       "core-metadata": false,
       "digests": {
-        "blake2b_256": "b16a3168ce9ac35a7a56cab4fdf7c4a811689f70c51a5d561107e100fb66fde1",
-        "md5": "70b48c4e444160d1082bc43d5068d69b",
-        "sha256": "4bf609f62fbf23c5f4dadd1a8286edf19be84f5ff17950cf138e2153c57628e8"
+        "blake2b_256": "0e82735598325ea16818601f2149364f9b34251697d9167efe9f9985f0960318",
+        "md5": "a8e4883daebe38b1470d8229edb1b172",
+        "sha256": "ed6ab8f959f14b096e98ad8c13b1a6496116c3fd97d29761df5fbe45d73ad4f6"
       },
       "downloads": -1,
-      "filename": "spam_gui-0.1.0.tar.gz",
+      "filename": "spam_gui-0.1.1.tar.gz",
       "has_sig": false,
-      "md5_digest": "70b48c4e444160d1082bc43d5068d69b",
+      "md5_digest": "a8e4883daebe38b1470d8229edb1b172",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.10",
-      "size": 405577,
-      "upload_time": "2026-11-13T15:47:50",
-      "upload_time_iso_8601": "2026-11-13T15:47:50.505862Z",
-      "url": "https://files.pythonhosted.org/packages/b1/6a/3168ce9ac35a7a56cab4fdf7c4a811689f70c51a5d561107e100fb66fde1/spam_gui-0.1.0.tar.gz",
+      "size": 339818,
+      "upload_time": "2026-11-13T16:09:15",
+      "upload_time_iso_8601": "2026-11-13T16:09:15.200273Z",
+      "url": "https://files.pythonhosted.org/packages/0e/82/735598325ea16818601f2149364f9b34251697d9167efe9f9985f0960318/spam_gui-0.1.1.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
