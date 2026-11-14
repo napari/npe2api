@@ -1,0 +1,325 @@
+{
+  "info": {
+    "author": null,
+    "author_email": "Zuzana Cockova <cockovaz@natur.cuni.cz>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 3 - Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "License :: OSI Approved :: MIT License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-flopa\n\n[![License MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)\n[![npe2](https://img.shields.io/badge/plugin-npe2-blue)](https://napari.org/stable/plugins/index.html)\n[![PyPI](https://img.shields.io/pypi/v/napari-flopa.svg?color=green)](https://pypi.org/project/napari-flopa)\n[![Python Version](https://img.shields.io/pypi/pyversions/napari-flopa.svg?color=green)](https://python.org)\n\n\n> **Work in progress** \u2014 the plugin is functional but under active development. Expect breaking changes between versions.\n\nA [napari] plugin for opening, processing and analysing FLIM (Fluorescence Lifetime Imaging Microscopy) data from `.ptu` files.\n\n## Feature panels\n\n- **File**\n  - read a `.ptu`, display its header, reconstruct it into an xarray dataset (photon count, mean arrival time, phasor, TCSPC histogram)\n  - supports multi-frame, multi-sequence (with line accumulation) and multi-detector data\n  - bidirectional scans with an **Alignment wizard** for the line-marker delays\n  - scan config with value provenance, saved/loaded as JSON\n  - marker statistics\n  - optional ROI mask to reconstruct only part of the field\n  - **Drag and drop** \u2014 a `.ptu` or scan-config `.json` dropped onto napari opens in the File tab\n- **Trace**\n  - photon-count time trace per detector over a chosen time window and bin width, with line/frame marker overlays\n- **FLIM View** (bottom dock)\n  - intensity and lifetime display with histogram contrast sliders (Auto-once, Auto-live, Min-Max), smoothing\n  - frame/sequence/detector selection or summing\n  - lifetime *Calibrated* by the IRF delay from the phasor calibration\n  - intensity, lifetime and combined masks as Labels layers\n  - FLIM RGB composite\n  - export to TIFF/PNG\n- **Phasor**\n  - per-object or per-pixel phasor plot as scatter, intensity-weighted scatter or density (square or hex bins), smoothing\n  - color by a Labels layer or use it as a filter\n  - calibration from a reference lifetime or a custom factor\n- **Decay**\n  - TCSPC decay curves with frame/sequence/detector aggregation, per-detector toggles, normalisation and log scale\n- **Batch**\n  - process a folder (or selected files, opt. with sub-folders and label masks) with a shared scan config and calibration\n  - export of images (FLIM RGB, intensity, lifetime), phasor tables per object or per pixel and decay tables (raw or normalised), per file or merged\n- **Analyzer**\n  - explore phasor CSV tables (from Phasor or Batch)\n  - color by any column\n  - per-group density contours, mean/median and covariance ellipses\n  - calibration\n  - compute phase and modulation lifetimes\n  - compute 2- and 3-component fractions\n  - clustering (K-means, hierarchical; Gaussian mixture, DBSCAN, HDBSCAN with scikit-learn)\n  - row filtering, regex grouping and column combining in **Data tools**\n\n## Screenshots\n\n<table>\n  <tr>\n    <td width=\"50%\" align=\"center\"><a href=\"docs/images/file_config.png\"><img src=\"docs/images/file_config.png\" alt=\"File: header and scan configuration\"></a><br><sub>File: ptu reading, header and scan configuration</sub></td>\n    <td width=\"50%\" align=\"center\"><a href=\"docs/images/trace.png\"><img src=\"docs/images/trace.png\" alt=\"Trace: photon-count time trace with marker overlays\"></a><br><sub>Trace: photon-count time trace with marker overlays</sub></td>\n  </tr>\n  <tr>\n    <td width=\"50%\" align=\"center\"><a href=\"docs/images/rgb_flim.png\"><img src=\"docs/images/rgb_flim.png\" alt=\"FLIM View: calibrated lifetime over intensity\"></a><br><sub>FLIM View: lifetime over intensity visualization</sub></td>\n    <td width=\"50%\" align=\"center\"><a href=\"docs/images/batch_panel.png\"><img src=\"docs/images/batch_panel.png\" alt=\"Batch: scan configuration and export passes\"></a><br><sub>Batch: batch processing with configurable outputs</sub></td>\n  </tr>\n  <tr>\n    <td width=\"50%\" align=\"center\"><a href=\"docs/images/object_phasor.png\"><img src=\"docs/images/object_phasor.png\" alt=\"Phasor per object, colored by a Labels layer\"></a><br><sub>Phasor: per object, colored by a Labels layer</sub></td>\n    <td width=\"50%\" align=\"center\"><a href=\"docs/images/masked_phasor.png\"><img src=\"docs/images/masked_phasor.png\" alt=\"Phasor per pixel as density, filtered by a mask\"></a><br><sub>Phasor: per pixel (here density color-coded & filtered by a mask)</sub></td>\n  </tr>\n  <tr>\n    <td width=\"50%\" align=\"center\"><a href=\"docs/images/analyzer2.png\"><img src=\"docs/images/analyzer2.png\" alt=\"Analyzer: two detectors as groups, with mean, median and 2\u03c3 ellipses\"></a><br><sub>Analyzer: tabular phasor data visualization</sub></td>\n    <td width=\"50%\" align=\"center\"><a href=\"docs/images/analyzer1.png\"><img src=\"docs/images/analyzer1.png\" alt=\"Analyzer: 3-component fractions, colored by f3, mean per label\"></a><br><sub>Analyzer: mono-exponential lifetime component fractions</sub></td>\n\n  </tr>\n</table>\n\n## Requirements\n\n- Python \u2265 3.11\n- [napari] with a Qt backend\n\n## Installation\n\n**From PyPI - options**\n\n>```bash\n>pip install \"napari-flopa[all]\"           # plugin + napari + Qt\n> ```\n>```bash\n>pip install napari-flopa                  # plugin only, install into an existing napari\n>```\n>```bash\n>pip install \"napari-flopa[cluster]\"       # plugin only + scikit-learn\n>```\n> The `cluster` extra adds scikit-learn for the Analyzer's Gaussian mixture, DBSCAN and\n>HDBSCAN clustering (K-means and hierarchical work without it).\n\n**From source**\n\n>```bash\n>git clone https://github.com/cockovaz/napari-flopa\n>cd napari-flopa\n>pip install -e \".[all]\"      # editable install, napari + Qt included\n>```\n\n\n**Full install instructions**\n\nIt is recommended to use virtual environment. See examples below.\n\n>uv\n>\n>```bash\n>uv venv --python 3.11 .venv\n>source .venv/bin/activate        # Windows: .venv\\Scripts\\activate\n>uv pip install \"napari-flopa[all]\"\n>```\n\n> conda\n>\n>```bash\n>conda create -n flopa python=3.11\n>conda activate flopa\n>pip install \"napari-flopa[all]\"\n>```\n\n>pixi\n>\n>```bash\n>pixi init flopa\n>cd flopa\n>pixi add python=3.11\n>pixi add --pypi \"napari-flopa[all]\"\n>```\n\n\n\n## Getting started\n\n1. **Open the plugin**\n\n   Start napari and choose **Plugins \u2192 FLOPA \u2192 FLIM Analysis**.\n\n2. **Load a file**\n\n   In the **File** tab, click **Load Demo** for the bundled demo dataset, or **Read PTU\u2026** for your own \u2014 or drop a `.ptu` onto the napari window.\n\n   > Note: the colored dot beside each field says where its value came from - file metadata, a default, an estimate, or your own edit.\n\n3. **Set the scan geometry**\n\n   Frames, lines, pixels, sequences and accumulations must match how the image was actually acquired, because the raw file is a stream of photon and marker events with no image shape of its own. The header contains some information, fill in the rest. **Demo dataset** is loaded with the correct configuration set up.\n\n   **Marker Stats** inspects the marker events and suggests dimensions. For bidirectional scans, the **Alignment wizard** estimates the line-marker delays.\n\n4. **Reconstruct**\n\n   Pick what to compute under **Output**. Optionally pick an **ROI Mask** (a Labels layer or a mask file) to keep only the photons inside it.\n\n   - *Intensity* \u2014 photon-count image only, the fastest\n   - *Int. + \u03c4* \u2014 adds the mean arrival time (lifetime) image\n   - *All* \u2014 adds phasor coordinates per pixel and the global TCSPC decay (enables the **Phasor** and **Decay** tabs)\n\n5. **Look at the result**\n\n   The **FLIM View** dock opens at the bottom, with a histogram for Intensity and one for Lifetime. Each has two sliders: the **cyan** one sets the display contrast, the **red** one a threshold range. **\u2192 Generate Int./Lt. Mask** turns that range into a napari Labels layer. Once a calibration is enabled in the Phasor tab, **Calibrated** shows the lifetime with the IRF delay subtracted (negative values are wrapped around by one period).\n\n   Intensity, lifetime and the FLIM RGB composite can be exported from here.\n\n6. **Analyze**\n\n   - **Phasor** plots g/s per object or per pixel \u2014 apply a calibration factor, pick a Labels layer to color by object or to restrict the plot to a region.\n   - **Decay** plots the global TCSPC curves per slice. **FLIM View** shows only decay of slice configuration currently shown in FLIM View.\n\n7. **Reuse the settings**\n\n   Use the **Batch** tab to run a whole folder of `.ptu` files with identical settings. Or export multiple slices of a single file. Each export pass picks frames, sequences and detectors as an index, `*` (all, one output per value) or `a` (aggregate).\n\n\n## Data model\n\nReading and reconstructing `.ptu` files is done by **[tttrkit]** (imported as\n`tttrkit.ptuio`), a separate package developed alongside this plugin. It is a\nnormal dependency and is installed automatically \u2014 see [tttrkit] for the raw\nTTTR parsing, scan reconstruction and phasor maths that sit underneath the GUI.\n\nReconstruction produces a single `xarray.Dataset` holding up to five variables.\n\nFour of them are images and share the dimensions\n`(frame, sequence, line, pixel, channel)`: `photon_count`, `mean_arrival_time`,\n`phasor_g` and `phasor_s`. Here `line` and `pixel` are the spatial axes and\n`channel` is the detector axis.\n\nThe fifth, `tcspc_histogram`, is the global decay: its\ndimensions are `(frame, channel, tcspc_channel)` with no spatial axes.\n\n\n\n## Roadmap\n\nPlanned updates:\n\n- **Interactive phasor** \u2014 lasso a region of the plot and paint the matching pixels\n  back into the image as a napari Labels layer\n- **Decay fitting** \u2014 extract lifetimes from the TCSPC curves\n- **Region-wise decay** \u2014 curves per mask and per object, not only per frame/detector\n- **Wider import support** \u2014 `.ptu` from further scanning systems, and other formats\n  (`.sdt`, \u2026)\n\n\n\n## License\n\nDistributed under the terms of the [MIT] license.\n`napari-flopa` is free and open source software.\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed description.\n\n[napari]: https://github.com/napari/napari\n[tttrkit]: https://github.com/panekdal/tttrkit\n[MIT]: http://opensource.org/licenses/MIT\n[file an issue]: https://github.com/cockovaz/napari-flopa/issues\n[issues]: https://github.com/cockovaz/napari-flopa/issues\n[pip]: https://pypi.org/project/pip/\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": "The MIT License (MIT)\n        \n        Copyright (c) 2025 Zuzana Cockova\n        \n        Permission is hereby granted, free of charge, to any person obtaining a copy\n        of this software and associated documentation files (the \"Software\"), to deal\n        in the Software without restriction, including without limitation the rights\n        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n        copies of the Software, and to permit persons to whom the Software is\n        furnished to do so, subject to the following conditions:\n        \n        The above copyright notice and this permission notice shall be included in\n        all copies or substantial portions of the Software.\n        \n        THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\n        THE SOFTWARE.\n        ",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-flopa",
+    "package_url": "https://pypi.org/project/napari-flopa/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-flopa/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/cockovaz/napari-flopa/issues",
+      "Homepage": "https://github.com/cockovaz/napari-flopa",
+      "Source Code": "https://github.com/cockovaz/napari-flopa"
+    },
+    "provides_extra": [
+      "all",
+      "cluster"
+    ],
+    "release_url": "https://pypi.org/project/napari-flopa/0.1.2/",
+    "requires_dist": [
+      "numpy",
+      "qtpy",
+      "xarray",
+      "scipy",
+      "matplotlib>3.6",
+      "superqt",
+      "tttrkit",
+      "napari[all]; extra == \"all\"",
+      "scikit-learn>=1.3; extra == \"cluster\""
+    ],
+    "requires_python": ">=3.11",
+    "summary": "Flim (fluorescence lifetime) image data opening, processing and analysis",
+    "version": "0.1.2",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 43129843,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "cockovaz"
+      }
+    ]
+  },
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "f2982c11596b290d2dcfce80937ef507ddcd78edb4b38923ca53b90e6b7941a6"
+        },
+        "digests": {
+          "blake2b_256": "151ba687f1d3ea9d1f10d46ac41914b378c9c39d00d74ee2e50f087c8acae0a5",
+          "md5": "d74796e855893cdf0c6044518e9a5be3",
+          "sha256": "08dfe766119ae58e7464e3ac8f5d035113f403b1601c56095ef758d4ff09e66c"
+        },
+        "downloads": -1,
+        "filename": "napari_flopa-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "d74796e855893cdf0c6044518e9a5be3",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 5219664,
+        "upload_time": "2026-07-28T14:22:26",
+        "upload_time_iso_8601": "2026-07-28T14:22:26.576175Z",
+        "url": "https://files.pythonhosted.org/packages/15/1b/a687f1d3ea9d1f10d46ac41914b378c9c39d00d74ee2e50f087c8acae0a5/napari_flopa-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "b17856ddfeb2ccfa9fda1672afbfd8390bf0bc636dde0dfe709e65ae56a28787",
+          "md5": "1d69ddc0ec9f24f529806a96f3521798",
+          "sha256": "15f3703f8ab9ced781a3eccc13b2d0d9718850e572cb27c34b41d5382bd264ee"
+        },
+        "downloads": -1,
+        "filename": "napari_flopa-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "1d69ddc0ec9f24f529806a96f3521798",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 5221041,
+        "upload_time": "2026-07-28T14:22:28",
+        "upload_time_iso_8601": "2026-07-28T14:22:28.292668Z",
+        "url": "https://files.pythonhosted.org/packages/b1/78/56ddfeb2ccfa9fda1672afbfd8390bf0bc636dde0dfe709e65ae56a28787/napari_flopa-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.0rc0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "53b4092d9bda8b0ea132685d951ff61ed88e9eaad749e94fb038b413d8e9b874"
+        },
+        "digests": {
+          "blake2b_256": "9a625946333787300f715be57390456b45dbe63cf3a8749d0f199561d0eb06d9",
+          "md5": "d4ce4fd825755e12f6c3cfb63cef7a91",
+          "sha256": "78c813dab033aabde442af81cc034c76aa8994cbb834e2921fffa5cb04f0d79c"
+        },
+        "downloads": -1,
+        "filename": "napari_flopa-0.1.0rc0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "d4ce4fd825755e12f6c3cfb63cef7a91",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 5219712,
+        "upload_time": "2026-07-28T14:01:52",
+        "upload_time_iso_8601": "2026-07-28T14:01:52.735748Z",
+        "url": "https://files.pythonhosted.org/packages/9a/62/5946333787300f715be57390456b45dbe63cf3a8749d0f199561d0eb06d9/napari_flopa-0.1.0rc0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "2e4b70126aa02aa3fbee1dd620dadb1a7efd5632be7cf8319ba7ec8391f0d7fa",
+          "md5": "225311ec312e6a7bc13c769830ea3777",
+          "sha256": "fd7f667b0c279a9cc2c86a8d3025877a29ab26c523aab38ba896ec33aa1af441"
+        },
+        "downloads": -1,
+        "filename": "napari_flopa-0.1.0rc0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "225311ec312e6a7bc13c769830ea3777",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 5221071,
+        "upload_time": "2026-07-28T14:01:54",
+        "upload_time_iso_8601": "2026-07-28T14:01:54.454687Z",
+        "url": "https://files.pythonhosted.org/packages/2e/4b/70126aa02aa3fbee1dd620dadb1a7efd5632be7cf8319ba7ec8391f0d7fa/napari_flopa-0.1.0rc0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "06038b72142d2017764d1fe7ad34c0918c968e9622164b470cf358b72a0b1ba4"
+        },
+        "digests": {
+          "blake2b_256": "899afe131696146c0af0a715424af27b4f4c45858fb33cecc5f8c788444b6056",
+          "md5": "f0ab6273e5a8e8c4db2723a59b40b781",
+          "sha256": "05a8c985002d7fe93e14dc7738363eae54ddd9df96385071ff9bbabf52818af5"
+        },
+        "downloads": -1,
+        "filename": "napari_flopa-0.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "f0ab6273e5a8e8c4db2723a59b40b781",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 5231051,
+        "upload_time": "2026-08-14T13:59:59",
+        "upload_time_iso_8601": "2026-08-14T13:59:59.751800Z",
+        "url": "https://files.pythonhosted.org/packages/89/9a/fe131696146c0af0a715424af27b4f4c45858fb33cecc5f8c788444b6056/napari_flopa-0.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "ec6cac1543512b8ddf6cd94d311f05a0005fa29c6e0d6e22c9620449286a9dc0",
+          "md5": "2231115f0dfd60447f51335a3a808c35",
+          "sha256": "6da73e83c834f0deba5a9a10bdbf10a95628066f263e42a81bdb0814e5f964cd"
+        },
+        "downloads": -1,
+        "filename": "napari_flopa-0.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "2231115f0dfd60447f51335a3a808c35",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 5232967,
+        "upload_time": "2026-08-14T14:00:02",
+        "upload_time_iso_8601": "2026-08-14T14:00:02.158475Z",
+        "url": "https://files.pythonhosted.org/packages/ec/6c/ac1543512b8ddf6cd94d311f05a0005fa29c6e0d6e22c9620449286a9dc0/napari_flopa-0.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.2": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "29e36f47eb4e722609f4907e39322d26a3b5caf99f3b880456f798c29ab63809"
+        },
+        "digests": {
+          "blake2b_256": "2035314cb22a7e64258a2ff5a49c0341fec4b3aee9ad1524632ee929e12d998d",
+          "md5": "f0d6131fb757cb5f6c1aeb5fa7d95bbf",
+          "sha256": "26481b9bd3659a18994c6c573076386535c103feab6985cdd04b33bd6965f13f"
+        },
+        "downloads": -1,
+        "filename": "napari_flopa-0.1.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "f0d6131fb757cb5f6c1aeb5fa7d95bbf",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 5293507,
+        "upload_time": "2026-11-03T08:35:50",
+        "upload_time_iso_8601": "2026-11-03T08:35:50.087215Z",
+        "url": "https://files.pythonhosted.org/packages/20/35/314cb22a7e64258a2ff5a49c0341fec4b3aee9ad1524632ee929e12d998d/napari_flopa-0.1.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "80fdba1da301122a0f0538f37bc22fb5be106645991ccbb493abcec1a3555f4b",
+          "md5": "e87c72bbc3c00fca9fbaf283eb35b88c",
+          "sha256": "04084a081b45c90f80d7450cf94a7e459497ae945a0e4408260e311fab6798a5"
+        },
+        "downloads": -1,
+        "filename": "napari_flopa-0.1.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e87c72bbc3c00fca9fbaf283eb35b88c",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 8193666,
+        "upload_time": "2026-11-03T08:35:52",
+        "upload_time_iso_8601": "2026-11-03T08:35:52.281582Z",
+        "url": "https://files.pythonhosted.org/packages/80/fd/ba1da301122a0f0538f37bc22fb5be106645991ccbb493abcec1a3555f4b/napari_flopa-0.1.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "29e36f47eb4e722609f4907e39322d26a3b5caf99f3b880456f798c29ab63809"
+      },
+      "digests": {
+        "blake2b_256": "2035314cb22a7e64258a2ff5a49c0341fec4b3aee9ad1524632ee929e12d998d",
+        "md5": "f0d6131fb757cb5f6c1aeb5fa7d95bbf",
+        "sha256": "26481b9bd3659a18994c6c573076386535c103feab6985cdd04b33bd6965f13f"
+      },
+      "downloads": -1,
+      "filename": "napari_flopa-0.1.2-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "f0d6131fb757cb5f6c1aeb5fa7d95bbf",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.11",
+      "size": 5293507,
+      "upload_time": "2026-11-03T08:35:50",
+      "upload_time_iso_8601": "2026-11-03T08:35:50.087215Z",
+      "url": "https://files.pythonhosted.org/packages/20/35/314cb22a7e64258a2ff5a49c0341fec4b3aee9ad1524632ee929e12d998d/napari_flopa-0.1.2-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "80fdba1da301122a0f0538f37bc22fb5be106645991ccbb493abcec1a3555f4b",
+        "md5": "e87c72bbc3c00fca9fbaf283eb35b88c",
+        "sha256": "04084a081b45c90f80d7450cf94a7e459497ae945a0e4408260e311fab6798a5"
+      },
+      "downloads": -1,
+      "filename": "napari_flopa-0.1.2.tar.gz",
+      "has_sig": false,
+      "md5_digest": "e87c72bbc3c00fca9fbaf283eb35b88c",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.11",
+      "size": 8193666,
+      "upload_time": "2026-11-03T08:35:52",
+      "upload_time_iso_8601": "2026-11-03T08:35:52.281582Z",
+      "url": "https://files.pythonhosted.org/packages/80/fd/ba1da301122a0f0538f37bc22fb5be106645991ccbb493abcec1a3555f4b/napari_flopa-0.1.2.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

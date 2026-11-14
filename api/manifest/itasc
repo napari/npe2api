@@ -1,0 +1,170 @@
+{
+  "name": "itasc",
+  "display_name": "ITASC",
+  "visibility": "public",
+  "icon": null,
+  "categories": [],
+  "schema_version": "0.2.1",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "itasc.main_widget",
+        "title": "ITASC",
+        "python_name": "itasc.napari:ITASCWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "itasc.cellpose_segment_track_widget",
+        "title": "Cellpose Segment + Track",
+        "python_name": "itasc.napari.cellpose_segment_track_widget:make_cellpose_segment_track_widget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "itasc.nucleus_tracking_widget",
+        "title": "Ultrack Segment + Track",
+        "python_name": "itasc.napari.nucleus_workflow_widget:make_nucleus_tracking_widget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "itasc.contact_analysis_widget",
+        "title": "ITASC Aggregate",
+        "python_name": "itasc.napari.main_widget:make_aggregate_app_widget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "itasc.main_widget",
+        "display_name": "ITASC",
+        "autogenerate": false
+      },
+      {
+        "command": "itasc.cellpose_segment_track_widget",
+        "display_name": "Cellpose Segment + Track",
+        "autogenerate": false
+      },
+      {
+        "command": "itasc.nucleus_tracking_widget",
+        "display_name": "Ultrack Segment + Track",
+        "autogenerate": false
+      },
+      {
+        "command": "itasc.contact_analysis_widget",
+        "display_name": "ITASC Aggregate",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "itasc",
+    "version": "0.2.0.dev0",
+    "dynamic": null,
+    "platform": null,
+    "supported_platform": null,
+    "summary": "Fast, interactive cell tracking",
+    "description": "# ITASC\n\nSegment, track, correct, and quantify cells in time-lapse microscopy, inside napari.\n\nITASC (Interactive Tracking And Segmentation of Cells) takes raw time-lapse\nstacks to tracked, quantified cells. It segments each frame, links cells across\ntime, lets you correct the result by hand where the automatics miss, and\nmeasures what the tracked cells do. It is a [napari](https://napari.org) plugin\nbuilt for dense, motile monolayers, where segmentation and tracking are the hard\npart.\n\n<!-- hero-start -->\n<p align=\"center\">\n  <img src=\"docs/_static/napari_timelapse_last.png\"\n       alt=\"ITASC tracking a monolayer in napari\" width=\"100%\">\n</p>\n<!-- hero-end -->\n\n## What it does\n\nAn ITASC run moves through four stages, each usable on its own:\n\n- **Segment** each frame with [Cellpose-SAM](https://github.com/MouseLand/cellpose).\n  For sparse, well-separated cells its masks are the result; for a dense\n  monolayer its probability and flow output becomes divergence images that\n  separate crowded, variable-shape cells and form the input the tracker runs on.\n- **Track** across time: [Ultrack](https://github.com/royerlab/ultrack) for\n  dense monolayers, [LapTrack](https://github.com/yfukai/laptrack) for sparse,\n  well-separated cells.\n- **Correct** tracks and labels interactively, with editing tools adapted from\n  [EpiCure](https://github.com/Image-Analysis-Hub/Epicure), where the automatic\n  result is wrong.\n- **Quantify** what the tracked cells do, in two outputs:\n  - cell-cell contacts and edges, identified and tracked through T1 transitions,\n    written to a self-describing HDF5 (`.h5`) file.\n  - aggregate analysis of tracked nuclei, cell bodies, and cell-cell contacts\n    (shape and dynamics over time), exported to `.csv` tables.\n\n## How it is organized\n\nITASC comes in two forms.\n\nThe **full app** is the integrated pipeline. A project is a directory with one\nsubfolder per position, and the four stages hand off through the `.tif` and HDF5\nfiles on disk, so you can enter wherever your data already sits or pick up a\nproject someone else started.\n\nThe **solo distributions** are separate, smaller napari tools, each built for one\njob with its own interface: `itasc-cellpose` segments and tracks channels\nstraight into viewer layers, `itasc-tracking` turns foreground and contour maps\ninto corrected Ultrack tracks, and `itasc-aggregate` quantifies contacts and T1\nevents from finished labels. They are not the full app with stages switched off:\neach ships only the code its job needs and a leaner interface to match.\n\nPick the one that matches the data you have. Each row links to that tool's guide,\nwhich covers how to install it and how to use it.\n\n| If you have… | Reach for | It gives you |\n| --- | --- | --- |\n| **Dense, motile cells of varying shape** (a confluent monolayer), from raw stacks to quantified contacts | [itasc\\[all\\]](docs/manual/full-app.md) | The unified `ITASC` workflow widget, every stage end to end. |\n| **Sparse, well-separated cells** with a cell and/or nucleus marker, to segment and track one or both channels | [itasc-cellpose](docs/manual/cellpose.md) | A local Cellpose-SAM runner for segmentation, then `laptrack` linking across time, plus manual correction of tracks and masks (adapted from [EpiCure](https://github.com/Image-Analysis-Hub/Epicure)). One channel or two. |\n| **Foreground and contour maps already**, to skip the cellpose step | [itasc-tracking](docs/manual/tracking.md) | Ultrack candidate database, solving, browsing, and interactive segmentation and tracking correction. |\n| **Tracked cell labels already**, and you want the aggregate quantification | [itasc-aggregate](docs/manual/aggregate.md) | Cell-cell edges, border edges, and T1 events to HDF5, aggregate quantification to `.csv`. |\n| **Code to build on** | [itasc-core](docs/manual/core.md) | TIFF/path/label-IO helpers, the lineage model, and napari UI primitives. |\n\n## Built on\n\nITASC reuses the published methods of four tools. If you use the stage that\ndepends on one, please cite it:\n\n- **Cellpose-SAM** (segmentation): Pachitariu M, Rariden M, Stringer C.\n  *Cellpose-SAM: superhuman generalization for cellular segmentation.* bioRxiv\n  (2025). [doi:10.1101/2025.04.28.651001](https://doi.org/10.1101/2025.04.28.651001)\n  · [MouseLand/cellpose](https://github.com/MouseLand/cellpose)\n- **Ultrack** (dense tracking): Bragantini J, et al. *Ultrack: pushing the\n  limits of cell tracking across biological scales.* Nature Methods (2025).\n  [doi:10.1038/s41592-025-02778-0](https://doi.org/10.1038/s41592-025-02778-0)\n  · [royerlab/ultrack](https://github.com/royerlab/ultrack)\n- **LapTrack** (sparse tracking): Fukai YT, Kawaguchi K. *LapTrack: linear\n  assignment particle tracking with tunable metrics.* Bioinformatics 39(1),\n  btac799 (2023). [doi:10.1093/bioinformatics/btac799](https://doi.org/10.1093/bioinformatics/btac799)\n  · [yfukai/laptrack](https://github.com/yfukai/laptrack)\n- **EpiCure** (correction tools): Letort G. *EpiCure: a versatile and handy tool\n  for curation of epithelial segmentation.* bioRxiv (2026).\n  [doi:10.64898/2026.03.27.714683](https://doi.org/10.64898/2026.03.27.714683)\n  · [Image-Analysis-Hub/Epicure](https://github.com/Image-Analysis-Hub/Epicure)\n\n## Documentation\n\n- [User guide](docs/index.md): install, the staged workflow, and driving the\n  plugin.\n- [API reference](docs/api/index.md): the programmatic API, generated\n  from the source.\n\n## Status\n\nITASC is approaching its first public release and JOSS submission. The four\nstages and the file-based project layout are settled and in active research use.\nInstallation and the public API are close to final: expect small changes before\nthe release and its accompanying manuscript.\n\n## Citing ITASC\n\nCite the software using the metadata in [`CITATION.cff`](CITATION.cff). A DOI\nand manuscript citation will be added with the public release. For\npre-publication citation questions, contact Artur Ruppel at `artur@ruppel.pro`.\n\n## License\n\nAGPL-3.0. See [`LICENSE`](LICENSE).\n\n## AI usage\n\nGenerative AI tools (OpenAI GPT and Anthropic Claude) assisted with code\ndrafting, refactoring, tests, debugging, and documentation. Human authors made\nthe scientific, architectural, and design decisions, and are fully responsible\nfor all code and other content in the repository.\n",
+    "description_content_type": "text/markdown",
+    "keywords": "cell-tracking,microscopy,napari,segmentation",
+    "home_page": null,
+    "download_url": null,
+    "author": null,
+    "author_email": "Artur Ruppel <artur@ruppel.pro>",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "AGPL-3.0",
+    "classifier": [
+      "Development Status :: 3 - Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "License :: OSI Approved :: GNU Affero General Public License v3",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Scientific/Engineering :: Bio-Informatics",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "requires_dist": [
+      "h5py",
+      "matplotlib>=3.9.4",
+      "napari[all]>=0.4.18",
+      "numba",
+      "numpy",
+      "pandas",
+      "pyarrow",
+      "pydantic",
+      "pymaxflow>=1.3.2",
+      "pyqtgraph>=0.13",
+      "qtpy>=2.3.0",
+      "scikit-image",
+      "scipy",
+      "seaborn>=0.13",
+      "sqlalchemy",
+      "tifffile",
+      "cellpose>=4.0; extra == 'all'",
+      "torch; extra == 'all'",
+      "torchvision; extra == 'all'",
+      "ultrack; extra == 'all'",
+      "cellpose>=4.0; extra == 'cellpose'",
+      "torch; extra == 'cellpose'",
+      "torchvision; extra == 'cellpose'",
+      "pytest>=8; extra == 'dev'",
+      "ruff>=0.11; extra == 'dev'",
+      "tomli>=2.0; (python_version < '3.11') and extra == 'dev'",
+      "furo>=2024.1; extra == 'docs'",
+      "myst-parser>=2; extra == 'docs'",
+      "sphinx-autobuild>=2024.2; extra == 'docs'",
+      "sphinx-autodoc-typehints>=1.25; extra == 'docs'",
+      "sphinx-design>=0.5; extra == 'docs'",
+      "sphinx>=7; extra == 'docs'",
+      "sphinxcontrib-mermaid>=0.9; extra == 'docs'",
+      "pytest>=8; extra == 'test'",
+      "tomli>=2.0; (python_version < '3.11') and extra == 'test'",
+      "ultrack; extra == 'tracking'"
+    ],
+    "requires_python": ">=3.10",
+    "requires_external": null,
+    "project_url": [
+      "Homepage, https://github.com/ArturRuppel/ITASC",
+      "Repository, https://github.com/ArturRuppel/ITASC",
+      "Issues, https://github.com/ArturRuppel/ITASC/issues"
+    ],
+    "provides_extra": [
+      "all",
+      "cellpose",
+      "dev",
+      "docs",
+      "test",
+      "tracking"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}

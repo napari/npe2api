@@ -1,0 +1,1001 @@
+{
+  "info": {
+    "author": null,
+    "author_email": "Simon Leclerc <simon.leclerc@gu.se>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 3 - Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "Intended Audience :: Science/Research",
+      "License :: OSI Approved :: MIT License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari atlas cci\n\nA napari plugin for stitching and aligning array tomography data acquired with\nFIBICS ATLAS. It provides a graphical interface to the\n[CCI ATLAS backend](https://github.com/CCI-GU-Sweden/ATLAS).\n\nThe workflow has been tested primarily with data acquired on the Zeiss Gemini\nSEM 450 at the Centre for Cellular Imaging (CCI), University of Gothenburg.\nSee [CCI's correlative array tomography page](https://www.gu.se/index.php/en/core-facilities/core-facilities-research-infrastructures/centre-for-cellular-imaging-cci/our-services/correlative-array-tomography)\nfor details of the workflow and equipment.\n\n## Installation\n\nThe plugin requires Python **3.11 or 3.12**, napari, and a Qt backend. Its\n[ATLAS backend](https://github.com/CCI-GU-Sweden/ATLAS) is installed as a\nPython dependency; the master Zarr workflow requires `atlas-cci-align` 1.3.19\nor later.\n\n### Create an environment\n\nInstall [Miniforge](https://github.com/conda-forge/miniforge) or another Conda\ndistribution, then run the following in a terminal (on Windows, use a Conda\nterminal):\n\n```bash\nconda create -n atlas-napari -c conda-forge python=3.11 napari pyqt\nconda activate atlas-napari\npython -m pip install napari-atlas-cci\nnapari\n```\n\nIn napari, open **Plugins \u2192 Atlas CCI \u2192 AtlasCCI**. To start it again later,\nactivate the environment and run `napari`. For more ways to install napari, see\nthe [napari installation guide](https://napari.org/stable/tutorials/fundamentals/installation.html).\n\n### Create a desktop launcher\n\nThese launchers open a terminal, activate the environment, and start napari.\nKeep the terminal open while napari runs; it also shows progress and errors.\nReplace `atlas-napari` below if you chose a different environment name.\n\n#### Windows\n\n1. Open your Conda terminal and run `conda info --base`. Note the path it\n   prints, for example `C:\\Users\\YourName\\miniforge3`.\n2. Open Notepad and paste the following. Replace the example path with your\n   own Conda base path, keeping `\\condabin\\conda.bat` at the end:\n\n   ```bat\n   @echo off\n   call \"C:\\Users\\YourName\\miniforge3\\condabin\\conda.bat\" activate atlas-napari\n   if errorlevel 1 (\n       echo Could not activate the atlas-napari environment.\n       pause\n       exit /b 1\n   )\n   napari\n   pause\n   ```\n\n3. Choose **Save As**, select **All Files** as the file type, and save it on\n   the desktop as `Launch Atlas Napari.bat` (not `.bat.txt`). Double-click it\n   to start napari. The terminal stays open after napari closes so you can read\n   any messages; press a key to close it.\n\n#### macOS\n\n1. Open Terminal and run `conda info --base`. Note the path it prints, for\n   example `/Users/yourname/miniforge3`.\n2. Open TextEdit, choose **Format \u2192 Make Plain Text**, and paste the following.\n   Replace the example path with your own Conda base path, keeping\n   `/etc/profile.d/conda.sh` at the end:\n\n   ```bash\n   #!/bin/bash\n   source \"/Users/yourname/miniforge3/etc/profile.d/conda.sh\" || exit 1\n   conda activate atlas-napari || exit 1\n   napari\n   ```\n\n3. Save the plain-text file on the desktop as `Launch Atlas Napari.command`.\n   In Terminal, make it executable once:\n\n   ```bash\n   chmod +x ~/Desktop/\"Launch Atlas Napari.command\"\n   ```\n\n   Double-click the file to open Terminal and start napari. If your Desktop is\n   stored in another location, use that file's path in the `chmod` command.\n   See [Apple's instructions for executable scripts](https://support.apple.com/guide/terminal/apdd100908f/mac).\n\n### Update an existing environment\n\nClose napari, activate the environment in which you installed the plugin, and\nupdate both the plugin and the ATLAS backend:\n\n```bash\nconda activate atlas-napari\npython -m pip install --upgrade napari-atlas-cci atlas-cci-align\n```\n\nRun `napari` again. To inspect the installed versions and their locations:\n\n```bash\npython -m pip show napari-atlas-cci atlas-cci-align\n```\n\nPublished packages can lag behind changes merged on GitHub. An editable source\ninstallation uses its local checkout, so check its location before replacing it\nwith a PyPI installation.\n\n### Install from source for development\n\nAfter creating and activating the environment above, clone this repository and\ninstall it in editable mode:\n\n```bash\ngit clone https://github.com/CCI-GU-Sweden/napari-atlas-cci.git\ncd napari-atlas-cci\npython -m pip install -e \".[testing]\"\n```\n\nRestart napari after changing plugin code. The ATLAS backend is installed from\nPyPI unless it has separately been installed from a local editable checkout.\n\n## How to use\n\n### Select the ATLAS section-set folder\n\nUse **Browse...** to select the ATLAS **section set** folder: the folder that\ncontains the `S_...` section folders directly. Select the section-set folder,\nnot an individual `S_...` folder or the higher-level session folder. For\nexample:\n\n```text\nsession_740977233/\n\u2514\u2500\u2500 Section Set 6/                         \u2190 select this folder\n    \u251c\u2500\u2500 S_012_1314243284/                 \u2190 one section\n    \u2502   \u251c\u2500\u2500 MosaicInfo_S_012_1314243284.ve-mif\n    \u2502   \u2514\u2500\u2500 Tile_r1-c1_S_012_1314243284.tif\n    \u2514\u2500\u2500 S_013_1234567890/\n        \u251c\u2500\u2500 MosaicInfo_S_013_1234567890.ve-mif\n        \u251c\u2500\u2500 Tile_r1-c1_S_013_1234567890.tif\n        \u2514\u2500\u2500 Tile_r2-c1_S_013_1234567890.tif\n```\n\nNames and numbers vary between acquisitions. An S folder represents one\nsection and may contain one tile or several tiles. For stitching, each section\nfolder needs one `.ve-mif` acquisition metadata file and the `.tif` tiles\nlisted in it. The acquisition must be marked completed in the metadata, and\nthe tile names and count must match the files present. ATLAS may also create\nother files or subfolders, such as overview images and update files.\n\nThe plugin lists valid S folders found directly inside the selected section\nset. If a section is missing from the list, check that its acquisition is\ncomplete and that its metadata and tiles are present. The plugin writes the\nmaster `stitched_sections.zarr` and alignment outputs alongside the S folders\nin the selected section-set folder.\n\n![Initial status](assets/Unprocessed_folder.png)\n\n### 2D stitching\n\nFor 2D stitching, select one, multiple, or all S_ folders. Stitched sections and their metadata are stored in `stitched_sections.zarr` in the project folder. The thread count in Options controls how many sections can be stitched concurrently; higher counts require more memory.\n\n![On going stitching](assets/Stitching_ongoing.png)\n\nAfter processing, you can select one S_ folder and display the image in Napari.\n\n### Z alignment\n\nInitial Z alignment uses completed sections in the master Zarr, in numeric\nsection order or in the order specified by `correct_order.txt`. Set the axial\npixel size and unit, then click **Initial Z alignment**. The plugin calculates\nshifts and displays a downsampled preview; the downsampling factor is set in\n**Options...**. Scroll through the Z planes and inspect the alignment.\n\n![Initial align preview](<assets/Initial align preview.png>)\n\n#### Choose the section order\n\nBy default, initial alignment uses all completed sections in ascending ATLAS\nsection-number order. If a section number is missing, the backend prints a\nwarning in the terminal and treats the gap as accepted: for example, it aligns\n`S_4` directly with `S_6` if `S_5` is missing. Inspect such warnings to confirm\nthe gap is expected.\n\nTo select a subset or change the order, create a plain-text file named\n`correct_order.txt` in the selected section-set folder before running\n**Initial Z alignment**.\n\nWrite ATLAS section numbers as comma-separated integers, without the `S_`\nprefix. The order in the file is the alignment order. For example:\n\n```text\n1,...,3,6,9,...,7\n```\n\nThis selects sections `S_1, S_2, S_3, S_6, S_9, S_8, S_7`, in that order.\nThe `...` token expands the range between the two numbers, including both\nends; it works in ascending or descending order. Sections not listed are\nexcluded. Every section listed or included in a range must already be complete\nin the master Zarr; otherwise initial alignment reports an error. To include a\nrange with missing section numbers, list only the available sections instead.\n\n#### Correct the alignment by tracing\n\nThe default mode, **Trace: one point per plane**, lets you follow the same\nrecognizable feature through successive sections. The plugin turns consecutive\npoints into pairs automatically, so you only need one points layer.\n\n1. Select **Trace: one point per plane** and click **Enter Correction**. The\n   plugin creates a red **Reference Points** layer and selects it for adding\n   points.\n2. On the preview, find a feature that is visible in consecutive Z planes.\n   Place a point on that feature in the first plane, move to the adjacent plane,\n   and place a point on the same feature. Continue in the same direction,\n   placing **one point per plane**. You can trace forwards or backwards.\n3. Click **Apply Correction**. The plugin calculates the correction and\n   rebuilds the preview. Inspect the new preview by scrolling through the\n   corrected planes.\n4. If further adjustment is needed, click **Enter Correction** again and place\n   **new points on the updated preview**. Repeat as needed. The correction is\n   added to the existing alignment, so reusing old points would apply the same\n   adjustment again.\n\nFor example, points entered on planes `2, 3, 4` create pairs `2 \u2192 3` and\n`3 \u2192 4`. A gap starts a separate trace: `2, 3, 4, 8, 9, 10` creates pairs\n`2 \u2192 3`, `3 \u2192 4`, `8 \u2192 9`, and `9 \u2192 10`; it does not join planes 4 and 8.\nEach trace needs at least two consecutive planes. Enter each trace in order,\nwith at most one point per plane across all traces. The plugin reports duplicate\nplanes, isolated points, and invalid ordering so you can edit the points and\ntry again.\n\nThe original automatic alignment is saved as\n`alignment_results/z_alignment_results_before_manual_correction.pkl`. The\nlatest corrected results are saved in `z_alignment_results.pkl` and used for\nfinal alignment.\n\n#### Alternative: explicit point pairs\n\nFor the earlier two-layer workflow, select **Explicit point pairs** and click\n**Enter Correction**. The plugin creates red **Reference Points** and blue\n**Adjustable Points** layers. Add matching landmarks in the same order to both\nlayers: each reference point belongs to the Z plane immediately before its\nmatching adjustable point. Both layers must contain the same number of points.\nClick **Apply Correction** and inspect the regenerated preview. In trace mode,\nany existing Adjustable Points layer is ignored.\n\nWhen satisfied with the preview, click **Final Z Alignment** to generate the\nfull-resolution output. This can take time for large datasets.\n\n![Final alignment](assets/Final_align_view.png)\n\n### Options and saved preferences\n\nThe **Options...** dialog includes lower and upper saturation percentiles for\nalignment processing. Defaults are **1.0** and **99.95**; values must satisfy\n`0 \u2264 lower < upper \u2264 100`. They apply to saved previews, previews regenerated\nafter manual correction, and full-resolution aligned outputs. Changing them\ndoes not modify outputs that have already been generated.\n\nWhen the plugin creates an aligned preview or full-resolution output, it\nstretches each section's intensity range using its own selected percentiles.\nThis improves contrast and can make neighboring sections look more consistent.\nValues outside the stretched range are clipped to the image data type's limits.\n**This changes the saved pixel intensities relative to the original stitched\nand raw images**; it is not just a display setting. Use the original stitched\nsections in `stitched_sections.zarr` when unmodified stitched intensities are\nneeded for quantitative analysis.\n\nClick **OK** to apply and save the Options values; **Cancel** leaves them\nunchanged. Thread count, maximum stitching shift, alignment downsampling,\nCZI compression, and both percentiles are restored next time the plugin opens.\nAxial pixel size and its explicit unit are also saved when the edit is finished\nor the unit changes. Thread count is limited to one fewer than the available CPU\ncores (with a minimum of one).\n\nPreferences are saved as readable JSON in\n`<Qt GenericConfigLocation>/napari-atlas-cci/settings.json`, under the user's\nAppData directory on Windows. They apply across projects on that computer.\nMissing preferences use the defaults; invalid files produce feedback and fall\nback to defaults. Upload tokens and project paths are excluded from this JSON\nfile. The Browse dialog remembers the last selected project folder separately\nusing Qt settings. This implements local user preferences alongside [#12](https://github.com/CCI-GU-Sweden/napari-atlas-cci/issues/12);\nportable project configurations and historical run snapshots described in\n[#14](https://github.com/CCI-GU-Sweden/napari-atlas-cci/issues/14) remain separate work.\n\n### Export and upload\n\nStitched sections and their metadata are stored in `stitched_sections.zarr` in\nthe project folder. Alignment results are saved as a pandas pickle table in\n`alignment_results`. After **Final Z Alignment**, the plugin also provides the\nfollowing outputs. The aligned arrays and exports derived from them contain\nthe percentile-stretched intensities described in **Options and saved\npreferences** above.\n\n**Disk space and time:** The current workflow creates several copies of the\nimage data for convenient viewing and export. Final alignment writes both a\nfull-resolution aligned Zarr and an OME-Zarr pyramid. A WebKnossos upload also\nbuilds a local WebKnossos dataset and pyramid before uploading it; that local\ndataset is deleted after a successful upload by default. Allow sufficient free\nspace and processing time, especially for large projects. We may review and\nreduce these intermediate copies in a future version.\n\n#### OME-Zarr\n\nThe plugin automatically creates an OME-Zarr pyramid for the downsampled\npreview and another for the full-resolution alignment. The final pyramid is\nsaved as `<project>_aligned.ome.zarr` in the project folder. Use **View** next\nto **Final Z Alignment** in the plugin or open the OME-Zarr folder with a\ncompatible viewer.\nThe pyramid contains multiple resolutions and carries the ATLAS alignment\nmetadata. A separate full-resolution aligned Zarr array,\n`<project>_aligned.zarr`, is also saved and is used as the source for CZI and\nWebKnossos export.\n\n#### CZI\n\nClick **Export to CZI** after final alignment to write\n`<project>_aligned.czi` in the project folder. The plugin reads the aligned\nZarr one plane at a time and writes tiled CZI data. XY pixel size comes from\nthe master store and Z pixel size from the axial value and unit in the UI;\ncheck the axial value before exporting. CZI compression can be set in\n**Options...**. The CZI export currently writes image data and scale; retaining\nthe complete alignment transform metadata is being investigated in\n[#20](https://github.com/CCI-GU-Sweden/napari-atlas-cci/issues/20).\n\n#### WebKnossos\n\nClick **Upload to Webknossos...** after final alignment. Enter your\n[WebKnossos](https://webknossos.org/) token, review the dataset name and XY/Z\npixel sizes, and start the upload. The dialog displays the name that will be\nused and lets you edit it. XY size is read from the master store; Z size comes\nfrom the axial value and unit in the UI. Sizes in the upload dialog are in\nnanometers.\n\nThe plugin builds a local compressed WebKnossos dataset and its resolution\npyramid before uploading. By default, the local WebKnossos dataset is deleted\nafter a successful upload; clear the checkbox to keep it. The aligned Zarr\nand OME-Zarr remain in the project folder. A successful upload displays a link\nto the dataset. An account and token are required; tokens are not saved in\nplugin preferences.\n\n![Upload to WebKnossos](assets/upload_to_wkn.png)\n\n![WebKnossos upload success](<assets/webknossos upload.png>)\n\n#### Download from WebKnossos\n\nAfter fine alignment in WebKnossos, use **Download from webknossos...** at the\nbottom of the plugin. Enter your token, the new aligned dataset's ID or full\ndataset URL, an output filename, and the destination folder (defaults to the\ncurrent project). No local aligned output is required to use this button.\n\nThe download reads the full-resolution `color` layer one Z plane at a time and\nwrites that plane as CZI tiles of at most 1024 \u00d7 1024 pixels. All channels are\npreserved, XY axes are converted to CZI order, and voxel sizes are copied from\nthe remote dataset. Source bounding-box offsets are rebased to CZI coordinates\nstarting at zero. CZI compression follows **Options...** at download start.\nAn existing destination file is never overwritten; choose a new filename.\nIf a transfer fails after writing starts, a partial CZI may remain at that path.\n\nDownloads run in a background worker, with an activity indicator and\ncompletion or error notifications. Tokens are used for the request and are not\nsaved in preferences.\n\n## Why translation-only alignment?\n\nThis alignment applies XY translations between sections. It does not apply\nrotation, scaling, or other affine transforms at this stage. Placing the\nfull-resolution sections using pixel shifts avoids the interpolation that those\ntransforms would require and keeps the original pixel spacing. The preview is\ndownsampled, and aligned outputs have their intensities stretched as described\nin **Options and saved preferences** above, so their pixel values differ from\nthe raw data. The translated volume can be used as a starting point for finer\nalignment in other tools, for example:\n\n- [WebKnossos AI Alignment](https://docs.webknossos.org/webknossos/automation/alignment.html),\n  which aligns sections after upload. See its documentation for dataset and\n  service requirements.\n- [Microscopy Image Browser (MIB) alignment](https://mib.helsinki.fi/help/main2/user-interface/menu/dataset/dataset-alignment.html),\n  part of the open-source MATLAB-based image analysis software.\n- [TrakEM2 in Fiji](https://imagej.github.io/plugins/trakem2/tutorials), which\n  includes tools for aligning serial sections.\n\nCheck the chosen tool's supported input formats and import instructions before\nstarting.\n\n## Troubleshooting\n\n- **Plugin not visible:** check that napari was launched from the environment\n  where `napari-atlas-cci` is installed. Run\n  `python -m pip show napari-atlas-cci` in that environment and restart napari.\n- **Qt cannot load the `xcb` platform plugin on Linux:** check your desktop and\n  Qt runtime setup using the [napari installation guide](https://napari.org/stable/tutorials/fundamentals/installation.html).\n  When using WSL, also confirm that Linux GUI applications work in your WSL setup.\n- **WebKnossos upload:** provide an account token in the upload dialog. The\n  token is not saved in plugin preferences.\n\n## Contributing\n\nContributions are welcome. Install the source with the `testing` extra as\nshown above, then run:\n\n```bash\npython -m pytest\n```\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": "MIT License\n        \n        Copyright (c) 2026 LECLERC Simon\n        \n        Permission is hereby granted, free of charge, to any person obtaining a copy\n        of this software and associated documentation files (the \"Software\"), to deal\n        in the Software without restriction, including without limitation the rights\n        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n        copies of the Software, and to permit persons to whom the Software is\n        furnished to do so, subject to the following conditions:\n        \n        The above copyright notice and this permission notice shall be included in all\n        copies or substantial portions of the Software.\n        \n        THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n        SOFTWARE.\n        ",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-atlas-cci",
+    "package_url": "https://pypi.org/project/napari-atlas-cci/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-atlas-cci/",
+    "project_urls": null,
+    "provides_extra": [
+      "all",
+      "testing",
+      "dev"
+    ],
+    "release_url": "https://pypi.org/project/napari-atlas-cci/1.1.13/",
+    "requires_dist": [
+      "numpy",
+      "qtpy",
+      "scipy",
+      "ome-zarr",
+      "dask",
+      "webknossos<5,>=4.0.0",
+      "pylibCZIrw",
+      "atlas-cci-align>=1.3.19",
+      "napari[all]; extra == \"all\"",
+      "pytest; extra == \"testing\"",
+      "pytest-cov; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "napari[qt]; extra == \"testing\"",
+      "napari-omero-downloader-cci[testing]; extra == \"dev\"",
+      "black; extra == \"dev\"",
+      "ruff; extra == \"dev\""
+    ],
+    "requires_python": "<3.13,>=3.11",
+    "summary": "A plugin that allows napari to run atlas stitching and alignement tool",
+    "version": "1.1.13",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 43612218,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "leclercsimon74"
+      }
+    ]
+  },
+  "releases": {
+    "1.0.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "976c372c95a0fa1839ea1fff326fdaea34620cc9f3c91920e831f5bc73a52b2b"
+        },
+        "digests": {
+          "blake2b_256": "8552d0ceb403823f365c7d158643e7623cafbe1489fdd0993fc47225f8c0a01d",
+          "md5": "29ede4bb546fb6ffa86b25859ad3b050",
+          "sha256": "76ca6e1c9144b2a54dd9df25f603f0220d59d189cc2883620569a7d921c08293"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.0.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "29ede4bb546fb6ffa86b25859ad3b050",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.10",
+        "size": 22574,
+        "upload_time": "2026-07-24T14:19:55",
+        "upload_time_iso_8601": "2026-07-24T14:19:55.511906Z",
+        "url": "https://files.pythonhosted.org/packages/85/52/d0ceb403823f365c7d158643e7623cafbe1489fdd0993fc47225f8c0a01d/napari_atlas_cci-1.0.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "7b14ac05ba1e9510a0bda62f34c15b03eccc28a2f4608eb9ed6b47123542bf94",
+          "md5": "f354c6cd95273cb5e833aefb9e749deb",
+          "sha256": "5016202c0eee18c0097fe20404d39bc45faa3916ba4189508ca6595f95db3b37"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.0.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "f354c6cd95273cb5e833aefb9e749deb",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.10",
+        "size": 2294895,
+        "upload_time": "2026-07-24T14:19:57",
+        "upload_time_iso_8601": "2026-07-24T14:19:57.178078Z",
+        "url": "https://files.pythonhosted.org/packages/7b/14/ac05ba1e9510a0bda62f34c15b03eccc28a2f4608eb9ed6b47123542bf94/napari_atlas_cci-1.0.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "2be32823013cb0d6caae2b223e63caad9c1d8929c7d273c380f123f0fa73d02a"
+        },
+        "digests": {
+          "blake2b_256": "0fbe316db956214fcf7df9fa6a83d6b78f50f64f744878ea90cdd42fc54982f4",
+          "md5": "9b4adf0dc59a56cdb4b03b14e2beff8f",
+          "sha256": "8708fd8b277254d7e7de3bda002d402aba49bb60a6bd0bbfb32ff81fa8dc4bb8"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.0.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "9b4adf0dc59a56cdb4b03b14e2beff8f",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.11",
+        "size": 22569,
+        "upload_time": "2026-08-03T14:19:34",
+        "upload_time_iso_8601": "2026-08-03T14:19:34.198193Z",
+        "url": "https://files.pythonhosted.org/packages/0f/be/316db956214fcf7df9fa6a83d6b78f50f64f744878ea90cdd42fc54982f4/napari_atlas_cci-1.0.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "37855183400c1f66bd25b2645615d61fd48ea8b3b68187015acf40b2929eaa0c",
+          "md5": "99491cb4473b4fa3fd183da30ab3e8b1",
+          "sha256": "12a2d0e8c28fa057b587130a322ac3259998c6c64a1ebb27f393882b07aa2c72"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.0.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "99491cb4473b4fa3fd183da30ab3e8b1",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.11",
+        "size": 2294870,
+        "upload_time": "2026-08-03T14:19:35",
+        "upload_time_iso_8601": "2026-08-03T14:19:35.745391Z",
+        "url": "https://files.pythonhosted.org/packages/37/85/5183400c1f66bd25b2645615d61fd48ea8b3b68187015acf40b2929eaa0c/napari_atlas_cci-1.0.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.2": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "0abcb4afe439e6ed240ab979ca6c91f70221ae3e3a0f12ec6f679fea5870c128"
+        },
+        "digests": {
+          "blake2b_256": "cd2fd07b2f6aa44977a92f402832b60430c8411e45ced0a284efacc9b3f12456",
+          "md5": "1e524e5ade457c2035244a1b9c5eeb7e",
+          "sha256": "9a02a8e67255e7461cc4e015a2e30c2765c8a526f581e770608f576a70ce7f15"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.0.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "1e524e5ade457c2035244a1b9c5eeb7e",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.11",
+        "size": 22705,
+        "upload_time": "2026-08-03T15:53:54",
+        "upload_time_iso_8601": "2026-08-03T15:53:54.833065Z",
+        "url": "https://files.pythonhosted.org/packages/cd/2f/d07b2f6aa44977a92f402832b60430c8411e45ced0a284efacc9b3f12456/napari_atlas_cci-1.0.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "b8332ecca55d985cd836801ea2f92a237a45bcb60d93aa41a358565167f69ce0",
+          "md5": "4c330f95544a34f0322445b4f109b3aa",
+          "sha256": "9505d8603510bcdbc1fd6e350e66e69f9fe4beab742a48cd630ad621977e3164"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.0.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "4c330f95544a34f0322445b4f109b3aa",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.11",
+        "size": 2295015,
+        "upload_time": "2026-08-03T15:53:56",
+        "upload_time_iso_8601": "2026-08-03T15:53:56.307811Z",
+        "url": "https://files.pythonhosted.org/packages/b8/33/2ecca55d985cd836801ea2f92a237a45bcb60d93aa41a358565167f69ce0/napari_atlas_cci-1.0.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.3": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "ff331e7ee701f712573faaa9238252ff940b07dff6f056e904a5087a7a834d7c"
+        },
+        "digests": {
+          "blake2b_256": "fdb106085825a9ad9b68da015055dfa2289816709180ef4ff7deb0442b9a0676",
+          "md5": "deb6c4597864c025a09cfd542fb4ad9e",
+          "sha256": "9b5143e29b8e330864a2d76a79e72d4cc4a60ab1c76e645671218839c1abc0c9"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.0.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "deb6c4597864c025a09cfd542fb4ad9e",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.11",
+        "size": 22702,
+        "upload_time": "2026-08-03T16:04:03",
+        "upload_time_iso_8601": "2026-08-03T16:04:03.794455Z",
+        "url": "https://files.pythonhosted.org/packages/fd/b1/06085825a9ad9b68da015055dfa2289816709180ef4ff7deb0442b9a0676/napari_atlas_cci-1.0.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "137987a58d401f35c03a5440ae1df64c432507602bf7fff345e7b8cd7de87b32",
+          "md5": "bd844f87036afb0b12015baa29651b37",
+          "sha256": "5c7f38f91b11c86700fac0182b319046893fe20da726e90e25f2de9a18c7e4ec"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.0.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "bd844f87036afb0b12015baa29651b37",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.11",
+        "size": 2295009,
+        "upload_time": "2026-08-03T16:04:05",
+        "upload_time_iso_8601": "2026-08-03T16:04:05.200315Z",
+        "url": "https://files.pythonhosted.org/packages/13/79/87a58d401f35c03a5440ae1df64c432507602bf7fff345e7b8cd7de87b32/napari_atlas_cci-1.0.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.1.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "aa38a3d7b96e48e67588bb5fe931bfa1c053ef52a0c0dd8f57ef5e6619e475f8"
+        },
+        "digests": {
+          "blake2b_256": "89d607d344afa9550044ed5d7663fd86950257fc50a24b9d529bacfb5cf0da7f",
+          "md5": "1fcc9ba8c4732a1c83b71ba166226e53",
+          "sha256": "333f50b82597735a7208d9922133db55231c2f98e03c87621bc37cf6be7805e0"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "1fcc9ba8c4732a1c83b71ba166226e53",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.11",
+        "size": 22753,
+        "upload_time": "2026-08-04T09:20:41",
+        "upload_time_iso_8601": "2026-08-04T09:20:41.355408Z",
+        "url": "https://files.pythonhosted.org/packages/89/d6/07d344afa9550044ed5d7663fd86950257fc50a24b9d529bacfb5cf0da7f/napari_atlas_cci-1.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "42e7f79bc1b499904163ee194322bee22ad515f8722c944bce117d19762623c3",
+          "md5": "b73d7a642f625e0798d143cb5c4705a8",
+          "sha256": "2f0251f1cfaedcd2cdcf1952239f296dc06a055167152fc683ea5ca6f830b7a6"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "b73d7a642f625e0798d143cb5c4705a8",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.11",
+        "size": 2295040,
+        "upload_time": "2026-08-04T09:20:43",
+        "upload_time_iso_8601": "2026-08-04T09:20:43.189330Z",
+        "url": "https://files.pythonhosted.org/packages/42/e7/f79bc1b499904163ee194322bee22ad515f8722c944bce117d19762623c3/napari_atlas_cci-1.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.1.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "5f51e78eeed6f098afdf30dc9954025655a59d6dfd5444cf1965df81cc82b5db"
+        },
+        "digests": {
+          "blake2b_256": "89232525d04d1f552a0488a7e2dff44e340c3c929fba00cb807470f95616481f",
+          "md5": "b6d07d2cf3bdd367a71e0450ecbb6b1b",
+          "sha256": "be4e4680e69626e91e256f4a12a82bbc322bcf30e106eab23e91ecf92a7788b3"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "b6d07d2cf3bdd367a71e0450ecbb6b1b",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.11",
+        "size": 24366,
+        "upload_time": "2026-08-11T12:57:14",
+        "upload_time_iso_8601": "2026-08-11T12:57:14.330086Z",
+        "url": "https://files.pythonhosted.org/packages/89/23/2525d04d1f552a0488a7e2dff44e340c3c929fba00cb807470f95616481f/napari_atlas_cci-1.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "79c72e3bc53412f2486fe65359ac518b5772147c4cf1414184f181bf89517ff9",
+          "md5": "618cb0eff053914771c9dc666d508d80",
+          "sha256": "d45d0357d485255076dea59fc809408eb0bfdd1b933d912432884596d7015034"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "618cb0eff053914771c9dc666d508d80",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.11",
+        "size": 2300501,
+        "upload_time": "2026-08-11T12:57:15",
+        "upload_time_iso_8601": "2026-08-11T12:57:15.839801Z",
+        "url": "https://files.pythonhosted.org/packages/79/c7/2e3bc53412f2486fe65359ac518b5772147c4cf1414184f181bf89517ff9/napari_atlas_cci-1.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.1.10": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "0acb2889a86e33c3d016189c0dea49a2908a09e9032fc531a27f6b5677a1a4d8"
+        },
+        "digests": {
+          "blake2b_256": "036f5cb2aa94b1f86c40135ac18831a7ab02018d3549c9ce8386017720e34477",
+          "md5": "7f8004f0bb658019b563fb04b3cea720",
+          "sha256": "f4ab2052b8e43baa8f88a8ffe4269a2cf813d048f7d289054db32172906b01bd"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.1.10-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "7f8004f0bb658019b563fb04b3cea720",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.11",
+        "size": 33917,
+        "upload_time": "2026-11-12T07:32:32",
+        "upload_time_iso_8601": "2026-11-12T07:32:32.308104Z",
+        "url": "https://files.pythonhosted.org/packages/03/6f/5cb2aa94b1f86c40135ac18831a7ab02018d3549c9ce8386017720e34477/napari_atlas_cci-1.1.10-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "2618fb332b529c91a39e4ae359785c7bc00d89ab6e6e81c5fe1bc62bd291e34f",
+          "md5": "a85cd3e5caa551d749d4037479efddff",
+          "sha256": "1459a0bc435c2e317ea93b35c6cd657cbf5bfd59cbc16bfc0ba31631be539d3d"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.1.10.tar.gz",
+        "has_sig": false,
+        "md5_digest": "a85cd3e5caa551d749d4037479efddff",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.11",
+        "size": 2316311,
+        "upload_time": "2026-11-12T07:32:33",
+        "upload_time_iso_8601": "2026-11-12T07:32:33.823063Z",
+        "url": "https://files.pythonhosted.org/packages/26/18/fb332b529c91a39e4ae359785c7bc00d89ab6e6e81c5fe1bc62bd291e34f/napari_atlas_cci-1.1.10.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.1.11": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "4f9fecdcc58d230858c48faf99c2c3f1c01e4a0ead150dd4a80d2446e090e7b4"
+        },
+        "digests": {
+          "blake2b_256": "bdb6e748374775505a2d9c13313beeebd4bbdf43841c045e4883acb57a2956a0",
+          "md5": "e9d31861354632b4ecbc762b02f48760",
+          "sha256": "7a9a56e393d2d3c27c736aec1b8e53236feb4aa7a9f883897183aed33329b3e5"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.1.11-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "e9d31861354632b4ecbc762b02f48760",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.11",
+        "size": 35611,
+        "upload_time": "2026-11-12T16:24:47",
+        "upload_time_iso_8601": "2026-11-12T16:24:47.216957Z",
+        "url": "https://files.pythonhosted.org/packages/bd/b6/e748374775505a2d9c13313beeebd4bbdf43841c045e4883acb57a2956a0/napari_atlas_cci-1.1.11-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "f6a377c41c2c9e0ba4da09c3afdd528d33c5d5abe37e7545747e6dcfee168ce4",
+          "md5": "54640ca467ddf1fcd52ad63eb95dedcc",
+          "sha256": "36feb62611d066661ba183ad0610fdb5e9cd225286f4f3c25caf251860915695"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.1.11.tar.gz",
+        "has_sig": false,
+        "md5_digest": "54640ca467ddf1fcd52ad63eb95dedcc",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.11",
+        "size": 2319179,
+        "upload_time": "2026-11-12T16:24:48",
+        "upload_time_iso_8601": "2026-11-12T16:24:48.507651Z",
+        "url": "https://files.pythonhosted.org/packages/f6/a3/77c41c2c9e0ba4da09c3afdd528d33c5d5abe37e7545747e6dcfee168ce4/napari_atlas_cci-1.1.11.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.1.12": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "63e4d3dd41e914279feda0a1ee78fbae167f1b7f262e91d396939a9e7a528c13"
+        },
+        "digests": {
+          "blake2b_256": "933eb8856f0fdef03ebad4b3acc8203004bcf3f71fec1f7a7560a9ef60ca0f32",
+          "md5": "187a93a8e405b85c3bcdae2578093df1",
+          "sha256": "d9f1aad82a03777ffb81ac69f7cc4b7ad068084b079b89ccdfbf3f7f23cb9e44"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.1.12-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "187a93a8e405b85c3bcdae2578093df1",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.11",
+        "size": 37691,
+        "upload_time": "2026-11-13T15:20:18",
+        "upload_time_iso_8601": "2026-11-13T15:20:18.776656Z",
+        "url": "https://files.pythonhosted.org/packages/93/3e/b8856f0fdef03ebad4b3acc8203004bcf3f71fec1f7a7560a9ef60ca0f32/napari_atlas_cci-1.1.12-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "bef7d0734ca43dd173aa4177ec2fbaccdf3cad82711ac4e42fdef499bbc993e3",
+          "md5": "b4b13a506d449b4c12bcdc7cc1541b06",
+          "sha256": "04bab4bb26cd281cd99164cd7ab7b35097b808f93c046a5a3adac62b780f760d"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.1.12.tar.gz",
+        "has_sig": false,
+        "md5_digest": "b4b13a506d449b4c12bcdc7cc1541b06",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.11",
+        "size": 2322850,
+        "upload_time": "2026-11-13T15:20:20",
+        "upload_time_iso_8601": "2026-11-13T15:20:20.284045Z",
+        "url": "https://files.pythonhosted.org/packages/be/f7/d0734ca43dd173aa4177ec2fbaccdf3cad82711ac4e42fdef499bbc993e3/napari_atlas_cci-1.1.12.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.1.13": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "583aef9623f429ef56afdf17638a1f5c145b506eeb237feaff645c05efef923a"
+        },
+        "digests": {
+          "blake2b_256": "1c96534ce2f2dc96e4ea22edc58d66d546f7478cf8d40123c3c5c2ecfdac3e9f",
+          "md5": "9049996f4930bc6ba1a247b8356a2a07",
+          "sha256": "8429d4d68da1c781e72d8665fc04f38123fb19b6e55c6a45151e3ccde362b780"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.1.13-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "9049996f4930bc6ba1a247b8356a2a07",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.11",
+        "size": 41808,
+        "upload_time": "2026-11-13T15:47:56",
+        "upload_time_iso_8601": "2026-11-13T15:47:56.951730Z",
+        "url": "https://files.pythonhosted.org/packages/1c/96/534ce2f2dc96e4ea22edc58d66d546f7478cf8d40123c3c5c2ecfdac3e9f/napari_atlas_cci-1.1.13-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "2c6dbf4f915aa874ad7236bc4194b726063ddac8c60a8cae8689890d37040c65",
+          "md5": "5dc177c8ce0761f991058def5cde5bc3",
+          "sha256": "c14aeee84d7ba60b285cf382faf71fe53ce84d28ea4ec1a51c3baf17e5bde1ee"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.1.13.tar.gz",
+        "has_sig": false,
+        "md5_digest": "5dc177c8ce0761f991058def5cde5bc3",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.11",
+        "size": 2331029,
+        "upload_time": "2026-11-13T15:47:58",
+        "upload_time_iso_8601": "2026-11-13T15:47:58.770299Z",
+        "url": "https://files.pythonhosted.org/packages/2c/6d/bf4f915aa874ad7236bc4194b726063ddac8c60a8cae8689890d37040c65/napari_atlas_cci-1.1.13.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.1.2": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "b5c9640f8f5b3306bfed2c1dc3d2aea269643719bda0a880eddd4e1fd6012a91"
+        },
+        "digests": {
+          "blake2b_256": "853df01436bfeb8772b9f85103b05ef6394df5ce9afc6fc19987a05ac36a1112",
+          "md5": "44ca11841f4f436497ba44035a7d0d72",
+          "sha256": "67ffb750096241807975be26652c89a1e638f64f333fef978eb1a67bb666bacd"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.1.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "44ca11841f4f436497ba44035a7d0d72",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.11",
+        "size": 24713,
+        "upload_time": "2026-08-11T15:21:36",
+        "upload_time_iso_8601": "2026-08-11T15:21:36.869508Z",
+        "url": "https://files.pythonhosted.org/packages/85/3d/f01436bfeb8772b9f85103b05ef6394df5ce9afc6fc19987a05ac36a1112/napari_atlas_cci-1.1.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "25e82822db97dfce03f14c73f32dc233cb850230c7c2bcc7c88399d28d735acd",
+          "md5": "372dd2a262ff4d863ec9348309a30f0b",
+          "sha256": "62000046933628cd7b25d08c7241ef885c0ba038088e047084e6d0bea4b18c32"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.1.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "372dd2a262ff4d863ec9348309a30f0b",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.11",
+        "size": 2297246,
+        "upload_time": "2026-08-11T15:21:38",
+        "upload_time_iso_8601": "2026-08-11T15:21:38.217549Z",
+        "url": "https://files.pythonhosted.org/packages/25/e8/2822db97dfce03f14c73f32dc233cb850230c7c2bcc7c88399d28d735acd/napari_atlas_cci-1.1.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.1.3": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "ac03349301ef0ac2d4f18360123f7839f7d9f53ec9ba0598078db8c40d46d183"
+        },
+        "digests": {
+          "blake2b_256": "fbc25a3e5ffaf1ac6b190e0750076438bca9c3120348ba853d4e22d8aa5791fc",
+          "md5": "296682dd26844c13df5d8ba3f516c16d",
+          "sha256": "34e5fe216ec739e68364c159818ed8d692492c99d16a145df8dfd8968ab45d1d"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.1.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "296682dd26844c13df5d8ba3f516c16d",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.11",
+        "size": 24759,
+        "upload_time": "2026-08-11T15:49:34",
+        "upload_time_iso_8601": "2026-08-11T15:49:34.635746Z",
+        "url": "https://files.pythonhosted.org/packages/fb/c2/5a3e5ffaf1ac6b190e0750076438bca9c3120348ba853d4e22d8aa5791fc/napari_atlas_cci-1.1.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "aa5f48e1365f4084cb586a7c1aac9e4d4c11187389d6cd1f8a7af01210733e6c",
+          "md5": "14104de759bd661423c86fbcd5654602",
+          "sha256": "8c36a7d5a4feb7a88f870e305f73e0a85ba883b13d9039a90d0278b79f8af713"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.1.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "14104de759bd661423c86fbcd5654602",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.11",
+        "size": 2297476,
+        "upload_time": "2026-08-11T15:49:36",
+        "upload_time_iso_8601": "2026-08-11T15:49:36.300841Z",
+        "url": "https://files.pythonhosted.org/packages/aa/5f/48e1365f4084cb586a7c1aac9e4d4c11187389d6cd1f8a7af01210733e6c/napari_atlas_cci-1.1.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.1.4": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "5054847f2b5cf1d7cbca57a6db57ad0dda189040425a98255bee9c4ca3d84f9c"
+        },
+        "digests": {
+          "blake2b_256": "51f93d4e51114b4c55dbd29f2741ff2390a89cc945c4a9265f604a71fa8c0090",
+          "md5": "ac6ab7e6ceef4b2b88d9ac8d9f476111",
+          "sha256": "2649ec107cbda90a9e729a2e06a5b085cd3d4b9f77d72aa8e7b5487c7e961da4"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.1.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "ac6ab7e6ceef4b2b88d9ac8d9f476111",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.11",
+        "size": 24764,
+        "upload_time": "2026-08-12T10:20:09",
+        "upload_time_iso_8601": "2026-08-12T10:20:09.457267Z",
+        "url": "https://files.pythonhosted.org/packages/51/f9/3d4e51114b4c55dbd29f2741ff2390a89cc945c4a9265f604a71fa8c0090/napari_atlas_cci-1.1.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "fd5cc4e1c78aad8cc9d28b11748e032ff5998704751a8ce294bb0e105135fb96",
+          "md5": "df1787f095cab657728606b2392bc89e",
+          "sha256": "20fbae2fe71fe27e373b0b6aa505bdb76a3aeec2843753e31e577691f20fdb80"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.1.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "df1787f095cab657728606b2392bc89e",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.11",
+        "size": 2297529,
+        "upload_time": "2026-08-12T10:20:10",
+        "upload_time_iso_8601": "2026-08-12T10:20:10.855504Z",
+        "url": "https://files.pythonhosted.org/packages/fd/5c/c4e1c78aad8cc9d28b11748e032ff5998704751a8ce294bb0e105135fb96/napari_atlas_cci-1.1.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.1.5": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "c92bd53ca8453bda465adf06a49cb840754440353302019beccea34de8cf3cbb"
+        },
+        "digests": {
+          "blake2b_256": "1845a5e145aca63f4d842af760a46772c7ea18c9f4b763aed262528747ee48a2",
+          "md5": "9ba1cdc3916f052e9bdf6236bdb7fdff",
+          "sha256": "3f737363b38f2123d9d76e770fa5cd8f48bc94963bd47129928b3dbc4a5c20f1"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.1.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "9ba1cdc3916f052e9bdf6236bdb7fdff",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.11",
+        "size": 25323,
+        "upload_time": "2026-10-21T14:46:42",
+        "upload_time_iso_8601": "2026-10-21T14:46:42.555610Z",
+        "url": "https://files.pythonhosted.org/packages/18/45/a5e145aca63f4d842af760a46772c7ea18c9f4b763aed262528747ee48a2/napari_atlas_cci-1.1.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "7902011ecfc0719c176fb14e631fc3ae37256b305d0c63fd7c1ca0b867bf2b49",
+          "md5": "e5ebe4a2cc265a800dabf06abc005bc5",
+          "sha256": "63327d43b99b71db97352765d5fca07452080648df751d2f766ff15feb336b14"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.1.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e5ebe4a2cc265a800dabf06abc005bc5",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.11",
+        "size": 2301218,
+        "upload_time": "2026-10-21T14:46:44",
+        "upload_time_iso_8601": "2026-10-21T14:46:44.122283Z",
+        "url": "https://files.pythonhosted.org/packages/79/02/011ecfc0719c176fb14e631fc3ae37256b305d0c63fd7c1ca0b867bf2b49/napari_atlas_cci-1.1.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.1.6": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "8a0d1aed8c68f58be340c121be933d96269a2a5861ca393552feb22b94f81d87"
+        },
+        "digests": {
+          "blake2b_256": "249f0d3c844ffe0d3dc4a36977a4b43e68a02ce1156e0402d98cbb688f533b83",
+          "md5": "65bfc4b60b9aaa0bee75417354acc32f",
+          "sha256": "dbe40be5bf28196bb1cf37d1b6f2b8b3c2da12cd7a8ab58cdf988219aed0a680"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.1.6-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "65bfc4b60b9aaa0bee75417354acc32f",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.11",
+        "size": 27992,
+        "upload_time": "2026-10-22T07:23:01",
+        "upload_time_iso_8601": "2026-10-22T07:23:01.508285Z",
+        "url": "https://files.pythonhosted.org/packages/24/9f/0d3c844ffe0d3dc4a36977a4b43e68a02ce1156e0402d98cbb688f533b83/napari_atlas_cci-1.1.6-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "83f0ee56300a871cea79d3e3ca7e6e599cec73cebdaa8b3fe8ebf63af8ebe3e0",
+          "md5": "1a16003f0e1cdfdef59a0b8cd4d77d5f",
+          "sha256": "5300331f1320616b1117c1cbac6ac4020f10a910eff8892e4f0046be143745aa"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.1.6.tar.gz",
+        "has_sig": false,
+        "md5_digest": "1a16003f0e1cdfdef59a0b8cd4d77d5f",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.11",
+        "size": 2304224,
+        "upload_time": "2026-10-22T07:23:02",
+        "upload_time_iso_8601": "2026-10-22T07:23:02.936098Z",
+        "url": "https://files.pythonhosted.org/packages/83/f0/ee56300a871cea79d3e3ca7e6e599cec73cebdaa8b3fe8ebf63af8ebe3e0/napari_atlas_cci-1.1.6.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.1.7": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "1bbb0adbf592f86ff6548573ba417b45f20a26ff0b8400df92f70a7a93c0020a"
+        },
+        "digests": {
+          "blake2b_256": "e64f16585e5d2994d44909092b2f2b4d7144923821fc586ce502e8b3b9e5d709",
+          "md5": "97e887610edeee85acdafae5a1e6fa57",
+          "sha256": "bc4f396a7c8ef5528058f53b885649581d8943ea328311cb4268351b5dac223c"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.1.7-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "97e887610edeee85acdafae5a1e6fa57",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.11",
+        "size": 29436,
+        "upload_time": "2026-10-22T07:58:33",
+        "upload_time_iso_8601": "2026-10-22T07:58:33.331720Z",
+        "url": "https://files.pythonhosted.org/packages/e6/4f/16585e5d2994d44909092b2f2b4d7144923821fc586ce502e8b3b9e5d709/napari_atlas_cci-1.1.7-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "2a74b29bc6e50e6ce54a25ca5d6789abec1cf5f55fe93e8fc3b52addf4e7a189",
+          "md5": "9114eed8f5db0012797e8ac5afd10903",
+          "sha256": "f4a23d17665baf35e009f5de88b7da5466afea19709f75da9119705a8e96d300"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.1.7.tar.gz",
+        "has_sig": false,
+        "md5_digest": "9114eed8f5db0012797e8ac5afd10903",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.11",
+        "size": 2307423,
+        "upload_time": "2026-10-22T07:58:34",
+        "upload_time_iso_8601": "2026-10-22T07:58:34.784389Z",
+        "url": "https://files.pythonhosted.org/packages/2a/74/b29bc6e50e6ce54a25ca5d6789abec1cf5f55fe93e8fc3b52addf4e7a189/napari_atlas_cci-1.1.7.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.1.8": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "e84e668029a00b36e816de00aa8b747f5d9404ca146afc9b3c1e27b403777682"
+        },
+        "digests": {
+          "blake2b_256": "ccaf2eb04f4e67483af00f7542d5017e355e193f7846372012ded8a3b368f60b",
+          "md5": "fb32e2a0ee84e84c5dab65f227d84cc2",
+          "sha256": "1466ccaf30cf9aa941c0afa7a8d999ef96b1a49428ef356c53cb3008e8af0863"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.1.8-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "fb32e2a0ee84e84c5dab65f227d84cc2",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.11",
+        "size": 32378,
+        "upload_time": "2026-10-22T14:09:47",
+        "upload_time_iso_8601": "2026-10-22T14:09:47.590019Z",
+        "url": "https://files.pythonhosted.org/packages/cc/af/2eb04f4e67483af00f7542d5017e355e193f7846372012ded8a3b368f60b/napari_atlas_cci-1.1.8-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "dcfd511e9153cf460d9ecba893388e545dd70158a3730041595e3fa781ec536a",
+          "md5": "787570f329d76fa90507b79fd348380e",
+          "sha256": "924629481cb05dfbdb1f718a9aa7bae894832ecd0be7176b542d6a2bb878579e"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.1.8.tar.gz",
+        "has_sig": false,
+        "md5_digest": "787570f329d76fa90507b79fd348380e",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.11",
+        "size": 2312686,
+        "upload_time": "2026-10-22T14:09:48",
+        "upload_time_iso_8601": "2026-10-22T14:09:48.934710Z",
+        "url": "https://files.pythonhosted.org/packages/dc/fd/511e9153cf460d9ecba893388e545dd70158a3730041595e3fa781ec536a/napari_atlas_cci-1.1.8.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.1.9": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "4e5c52a74bd12604160ef70709946e2736bff062f93f969ac335aecaf3c903a1"
+        },
+        "digests": {
+          "blake2b_256": "36636962ea9b70810fa7d77455c054d7662cdb5147b318e25c1b9f4be50e8ea2",
+          "md5": "265b7373fbd75dbfcf4f7a08b7e12f19",
+          "sha256": "646d26e29e1800cb96ae125a81148fec85bf0bc453e2f115d61ac3d7466a187e"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.1.9-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "265b7373fbd75dbfcf4f7a08b7e12f19",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": "<3.13,>=3.11",
+        "size": 32511,
+        "upload_time": "2026-11-11T10:19:31",
+        "upload_time_iso_8601": "2026-11-11T10:19:31.899412Z",
+        "url": "https://files.pythonhosted.org/packages/36/63/6962ea9b70810fa7d77455c054d7662cdb5147b318e25c1b9f4be50e8ea2/napari_atlas_cci-1.1.9-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "13c9c9ffb320f668c2b2ba90390deaeca0653ce5b1e5dfe82728942983ef5810",
+          "md5": "0550f25c358cb38c12fe5cc9d59eed0e",
+          "sha256": "894dd3cefea7dbc87545ebece6bb2fa6895d2e3221b4eeb118f9deb36082c374"
+        },
+        "downloads": -1,
+        "filename": "napari_atlas_cci-1.1.9.tar.gz",
+        "has_sig": false,
+        "md5_digest": "0550f25c358cb38c12fe5cc9d59eed0e",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": "<3.13,>=3.11",
+        "size": 2313624,
+        "upload_time": "2026-11-11T10:19:33",
+        "upload_time_iso_8601": "2026-11-11T10:19:33.264237Z",
+        "url": "https://files.pythonhosted.org/packages/13/c9/c9ffb320f668c2b2ba90390deaeca0653ce5b1e5dfe82728942983ef5810/napari_atlas_cci-1.1.9.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "583aef9623f429ef56afdf17638a1f5c145b506eeb237feaff645c05efef923a"
+      },
+      "digests": {
+        "blake2b_256": "1c96534ce2f2dc96e4ea22edc58d66d546f7478cf8d40123c3c5c2ecfdac3e9f",
+        "md5": "9049996f4930bc6ba1a247b8356a2a07",
+        "sha256": "8429d4d68da1c781e72d8665fc04f38123fb19b6e55c6a45151e3ccde362b780"
+      },
+      "downloads": -1,
+      "filename": "napari_atlas_cci-1.1.13-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "9049996f4930bc6ba1a247b8356a2a07",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": "<3.13,>=3.11",
+      "size": 41808,
+      "upload_time": "2026-11-13T15:47:56",
+      "upload_time_iso_8601": "2026-11-13T15:47:56.951730Z",
+      "url": "https://files.pythonhosted.org/packages/1c/96/534ce2f2dc96e4ea22edc58d66d546f7478cf8d40123c3c5c2ecfdac3e9f/napari_atlas_cci-1.1.13-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "2c6dbf4f915aa874ad7236bc4194b726063ddac8c60a8cae8689890d37040c65",
+        "md5": "5dc177c8ce0761f991058def5cde5bc3",
+        "sha256": "c14aeee84d7ba60b285cf382faf71fe53ce84d28ea4ec1a51c3baf17e5bde1ee"
+      },
+      "downloads": -1,
+      "filename": "napari_atlas_cci-1.1.13.tar.gz",
+      "has_sig": false,
+      "md5_digest": "5dc177c8ce0761f991058def5cde5bc3",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": "<3.13,>=3.11",
+      "size": 2331029,
+      "upload_time": "2026-11-13T15:47:58",
+      "upload_time_iso_8601": "2026-11-13T15:47:58.770299Z",
+      "url": "https://files.pythonhosted.org/packages/2c/6d/bf4f915aa874ad7236bc4194b726063ddac8c60a8cae8689890d37040c65/napari_atlas_cci-1.1.13.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
