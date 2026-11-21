@@ -1,0 +1,153 @@
+{
+  "name": "napari-nifti",
+  "display_name": "Medical images via MedVol",
+  "visibility": "public",
+  "icon": null,
+  "categories": [
+    "IO"
+  ],
+  "schema_version": "0.3.0",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-nifti.get_reader",
+        "title": "Open medical images (NIfTI, NRRD, MetaImage, MGH, DICOM)",
+        "python_name": "napari_nifti._reader:napari_get_reader",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-nifti.write_single_image",
+        "title": "Save as a medical image (NIfTI, NRRD, MetaImage, MGH)",
+        "python_name": "napari_nifti._writer:write_single_image",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": [
+      {
+        "command": "napari-nifti.get_reader",
+        "filename_patterns": [
+          "*.nii",
+          "*.nii.gz",
+          "*.hdr",
+          "*.img",
+          "*.hdr.gz",
+          "*.img.gz",
+          "*.nrrd",
+          "*.nhdr",
+          "*.mha",
+          "*.mhd",
+          "*.mgh",
+          "*.mgz",
+          "*.dcm",
+          "*"
+        ],
+        "accepts_directories": true
+      }
+    ],
+    "writers": [
+      {
+        "command": "napari-nifti.write_single_image",
+        "layer_types": [
+          "image"
+        ],
+        "filename_extensions": [
+          ".nii.gz",
+          ".nii",
+          ".nrrd",
+          ".nhdr",
+          ".mha",
+          ".mhd",
+          ".mgz",
+          ".mgh"
+        ],
+        "display_name": ""
+      },
+      {
+        "command": "napari-nifti.write_single_image",
+        "layer_types": [
+          "labels"
+        ],
+        "filename_extensions": [
+          ".nii.gz",
+          ".nii",
+          ".nrrd",
+          ".nhdr",
+          ".mha",
+          ".mhd",
+          ".mgz",
+          ".mgh"
+        ],
+        "display_name": ""
+      }
+    ],
+    "widgets": null,
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configurations": {}
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "napari-nifti",
+    "version": "1.0.0",
+    "dynamic": [
+      "license-file"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "napari reader and writer for medical images (NIfTI, NRRD, MetaImage, MGH/MGZ, DICOM) through MedVol, with correct physical geometry and orientation.",
+    "description": "# napari-nifti\n\n<p align=\"center\">\n  <a href=\"https://pypi.org/project/napari-nifti/\"><img src=\"https://img.shields.io/pypi/v/napari-nifti?logo=pypi&color=brightgreen\" alt=\"PyPI\" align=\"middle\" /></a>\n  <a href=\"https://pypi.org/project/napari-nifti/\"><img src=\"https://img.shields.io/pypi/pyversions/napari-nifti?logo=python\" alt=\"Python Version\" align=\"middle\" /></a>\n  <a href=\"https://github.com/MIC-DKFZ/napari-nifti/actions\"><img src=\"https://img.shields.io/github/actions/workflow/status/MIC-DKFZ/napari-nifti/test_and_deploy.yml?branch=main&logo=github\" alt=\"Tests\" align=\"middle\" /></a>\n  <a href=\"https://napari-hub.org/plugins/napari-nifti\"><img src=\"https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-nifti\" alt=\"napari hub\" align=\"middle\" /></a>\n  <a href=\"https://github.com/MIC-DKFZ/napari-nifti/blob/main/LICENSE\"><img src=\"https://img.shields.io/github/license/MIC-DKFZ/napari-nifti\" alt=\"License\" align=\"middle\" /></a>\n</p>\n\nA [napari](https://napari.org) reader and writer for medical images: **NIfTI, NRRD, MetaImage, MGH/MGZ and DICOM**,\nshown where they physically are and in the orientation radiologists expect. Despite its name it reads every\nformat [MedVol](https://mic-dkfz.github.io/MedVol/) reads; MLArray (`.mla`) files are opened by\n[napari-mlarray](https://github.com/MIC-DKFZ/napari-mlarray).\n\n```bash\npip install napari-nifti            # into an existing napari installation\npip install \"napari-nifti[all]\"     # with napari and Qt\n```\n\nDrag files into napari or use `File > Open`. For a DICOM series, open its folder (`File > Open Folder`).\n\n## What you see\n\nMedVol reads the file faithfully (its own geometry rules, every ambiguity resolved by a named policy and reported),\nand napari-mlarray turns the result into layers. NIfTI, NRRD, MetaImage, MGH, DICOM and `.mla` files therefore look\nthe same and overlay correctly:\n\n| plane (`viewer.dims.order`) | screen up | screen right |\n|---|---|---|\n| axial `(0, 1, 2)` | anterior | patient left (radiological) |\n| coronal `(1, 0, 2)` | superior | patient left |\n| sagittal `(2, 0, 1)` | superior | posterior |\n\n- Every voxel is placed exactly from the file's geometry, whatever the storage order (axial, sagittal, flipped,\n  RAS or LPS). The world axes point to **I, P, L** (labelled on the dims sliders), and the 3-D view is not mirrored.\n- Oblique images are resampled onto world-aligned axes for display; rotations below a tenth of a voxel over the\n  image (scanner round-off) are ignored. See napari-mlarray for the `neurological` convention and other options.\n- Values are shown physically: scaling (NIfTI `scl_slope`, DICOM rescale) is applied, e.g. Hounsfield units.\n- **Label maps** become Labels layers: DICOM SEG with names, colours and codes, and integer images whose values\n  look like class ids (0, 1, 2, ... with few gaps, at most 256 of them), such as nnU-Net or TotalSegmentator\n  segmentations. `napari_nifti.set_labels(\"never\" | \"always\" | \"auto\")` or `NAPARI_NIFTI_LABELS` changes that.\n- A DICOM folder with several series or stacks opens as one layer each. MedVol's warnings (e.g. qform and sform\n  disagree) are shown as napari notifications; the full report is in `layer.metadata[\"medvol\"]`.\n\n## Saving\n\n`File > Save Selected Layer(s)` writes Image and Labels layers as `.nii.gz`, `.nii`, `.nrrd`, `.nhdr`, `.mha`,\n`.mhd`, `.mgz` or `.mgh`:\n\n- A layer opened with this plugin is written in its original array order. Saved to the format it came from, its\n  header is kept (descriptions, extensions, custom keys); only what the image defines (geometry, size, data type)\n  is rewritten. The layer's current position is saved, so a layer you moved stays where it is shown.\n- Saved to another format, the geometry and values are converted and what the format cannot store is reported.\n- New layers (labels you painted on an image) are written in the image's patient frame, so they line up with it in\n  any other tool.\n\nDICOM is read but not written from napari: writing a DICOM series or SEG needs the original or referenced series,\nwhich MedVol supports from Python (`medvol.write(image, \"seg.dcm\", reference=\"ct_dir/\")`).\n\n## Python\n\n```python\nimport napari\nfrom napari_nifti import read_layers\n\nviewer = napari.Viewer()\nfor data, kwargs, layer_type in read_layers(\"ct.nii.gz\", nifti_form=\"qform\"):   # MedVol policies as keywords\n    getattr(viewer, f\"add_{layer_type}\")(data, **kwargs)\n```\n\n## Development\n\n```bash\npip install -e \".[test]\"\npytest\n```\n\nThe tests check every voxel's position for NIfTI (RAS, LPS, sagittal, mirrored) and NRRD written by nibabel and\npynrrd, MetaImage and MGZ, a DICOM series, the label rule and save round trips.\n\n## License\n\nDistributed under the terms of the Apache Software License 2.0.\n\n<p align=\"left\">\n  <img src=\"https://raw.githubusercontent.com/MIC-DKFZ/napari-nifti/main/HI_Logo.png\" width=\"150\"> &nbsp;&nbsp;&nbsp;&nbsp;\n  <img src=\"https://raw.githubusercontent.com/MIC-DKFZ/napari-nifti/main/dkfz_logo.png\" width=\"500\">\n</p>\n\nThis repository is developed and maintained by the Applied Computer Vision Lab (ACVL)\nof [Helmholtz Imaging](https://www.helmholtz-imaging.de/) and the\n[Division of Medical Image Computing](https://www.dkfz.de/en/medical-image-computing) at DKFZ.\n",
+    "description_content_type": "text/markdown",
+    "keywords": "napari,nifti,nrrd,dicom,medical imaging,medvol",
+    "home_page": null,
+    "download_url": null,
+    "author": null,
+    "author_email": "Karol Gotkowski <karol.gotkowski@dkfz.de>",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "Apache-2.0",
+    "classifier": [
+      "Development Status :: 4 - Beta",
+      "Framework :: napari",
+      "License :: OSI Approved :: Apache Software License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Scientific/Engineering :: Image Processing",
+      "Topic :: Scientific/Engineering :: Medical Science Apps."
+    ],
+    "requires_dist": [
+      "numpy",
+      "medvol[dicom]>=1.0.1",
+      "napari-mlarray>=1.1.0",
+      "napari[all]>=0.6; extra == \"all\"",
+      "pytest; extra == \"test\"",
+      "napari[qt]>=0.6; extra == \"test\""
+    ],
+    "requires_python": ">=3.10",
+    "requires_external": null,
+    "project_url": [
+      "Homepage, https://github.com/MIC-DKFZ/napari-nifti"
+    ],
+    "provides_extra": [
+      "all",
+      "test"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}

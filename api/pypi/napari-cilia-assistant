@@ -1,0 +1,462 @@
+{
+  "info": {
+    "author": "Wulin Teo",
+    "author_email": null,
+    "bugtrack_url": null,
+    "classifiers": [
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "License :: OSI Approved :: MIT License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-cilia-assistant\n\n`napari-cilia-assistant` is a napari plugin for exploratory ciliary motion analysis from high-speed AVI microscopy videos.\n\nThe plugin supports ROI-based ciliary beat frequency (CBF) measurement, kymograph review, spatial CBF heatmaps, motion activity maps, and experimental optical-flow descriptors.\n\n[Watch the demo video](docs/ui.mp4)\n\n## Install\n\nInstall conda-forge first:  \nhttps://conda-forge.org/download/\n\nThen open a terminal and run:\n\n```bash\nconda create -n cilia-assistant python=3.11 -y\nconda activate cilia-assistant\nconda install -c conda-forge napari pyqt git -y\ngit clone https://github.com/wulinteousa2-hash/napari-cilia-assistant.git\ncd napari-cilia-assistant\npip install -e .\nnapari\n```\n\nIn napari, open:\n\n```text\nPlugins > Cilia Assistant\n```\n\n## What It Does\n\n- Opens one AVI video through the napari widget.\n- Reads video metadata such as FPS, frame count, size, codec, and duration.\n- Loads AVI data as a grayscale `T, Y, X` image stack.\n- Lets the user draw/edit a rectangular ROI over active cilia.\n- Supports optional background ROI subtraction.\n- Measures ROI mean-intensity change over time.\n- Estimates CBF using FFT, Welch PSD, or periodogram analysis.\n- Provides a peak-interval CBF check.\n- Creates a kymograph layer from the selected ROI.\n- Generates spatial CBF heatmaps.\n- Generates motion activity maps to help locate moving regions.\n- Provides experimental optical-flow maps for apparent motion direction, magnitude, curl, and deformation.\n- Exports the last ROI signal and frequency spectrum as CSV files.\n- Copies or saves the current measurement graph.\n\n## User Interface Overview\n\nThe widget uses a five-step workflow:\n\n1. **Input**  \n   Load an AVI file, inspect metadata, and confirm FPS.\n\n2. **Region of Interest**  \n   Draw or edit the cilia ROI. Optionally define a background ROI.\n\n3. **Analysis**  \n   Choose one of the analysis tabs:\n\n   - **ROI Frequency**  \n     Standard CBF measurement from a selected ROI. This is the main workflow for quantitative reporting.\n\n   - **CBF Heatmap**  \n     Generates a spatial map of dominant frequency across the selected ROI or whole frame.\n\n   - **Motion Activity**  \n     Shows where the video changes over time. This is useful for finding active cilia, drift, debris, or non-ciliary motion.\n\n   - **Advanced Flow**  \n     Experimental optical-flow analysis for apparent motion magnitude, direction, curl, and deformation.\n\n4. **Results / Graphs**  \n   Review the intensity trace, frequency spectrum, peak result, heatmap, activity map, or flow-map summary.\n\n5. **Export & Log**  \n   Export results and copy the analysis log.\n\n## Basic ROI Frequency Workflow\n\n1. Open napari.\n2. Open `Plugins > Cilia Assistant`.\n3. Click **Open AVI**.\n4. Confirm the FPS. Correct it manually if the AVI metadata are wrong.\n5. Click **Create / Edit ROI Rectangle**.\n6. Move/resize the ROI over visibly beating cilia.\n7. Optional: create a background ROI if there is shared illumination or focus drift.\n8. Go to **Step 3 > ROI Frequency**.\n9. Choose the frequency method:\n   - `FFT` for simple dominant-frequency analysis.\n   - `Welch` for noisier traces.\n   - `Periodogram` as another spectrum-based check.\n10. Set the expected CBF search range, for example `3-25 Hz`.\n11. Click **Analyze Selected ROI**.\n12. Review the trace, frequency peak, peak-interval result, and kymograph.\n13. Export CSV files if the result is usable.\n\n## Output\n\n- **Frequency CBF:** dominant frequency in the selected search range.\n- **Peak-interval CBF:** independent check based on repeated peaks in the ROI signal.\n- **Kymograph:** visual audit of periodic motion in the ROI.\n- **CBF heatmap:** spatial map of estimated dominant frequency.\n- **Peak-strength map:** map showing relative frequency-peak strength.\n- **Motion activity map:** temporal motion/activity map.\n- **Optical-flow maps:** exploratory apparent motion descriptors.\n- **CSV export:** raw ROI time-intensity signal and frequency spectrum.\n- **Graph export:** copy or save the current measurement graph.\n\n## Good Measurement Practice\n\n- Use videos with known FPS.\n- Correct the FPS manually if AVI metadata are wrong.\n- Keep temperature, medium, and timing consistent across samples.\n- Place the ROI on active cilia, not static tissue, debris, or whole-frame motion.\n- Use motion activity maps to identify candidate moving regions before final ROI measurement.\n- Use CBF heatmaps as exploratory spatial screening, not as a replacement for careful ROI review.\n- Use multiple ROIs/videos and biological replicates for group comparisons.\n- Treat whole-frame frequency and optical-flow results as exploratory only.\n- Always review the raw video, ROI placement, graph, and kymograph before interpreting the number.\n\n## Limitations\n\nThis plugin measures ciliary motion from intensity changes in AVI microscopy videos. The standard ROI workflow estimates beat frequency, not full ciliary waveform or clinical diagnostic beat pattern.\n\nA sample can have a normal CBF but abnormal waveform or poor flow generation. CBF heatmaps, motion activity maps, and optical-flow maps are useful exploratory tools, but they do not replace expert review of the raw video.\n\nThe **Advanced Flow** tab is experimental. Flow magnitude, direction, curl, and deformation should be interpreted as image-motion descriptors, not diagnostic classifications.\n\n\n## Acknowledgements\n\nDuring development, I reviewed publicly available open-source cilia motion-analysis resources, including the `cilia-metrics` repository:\n\nhttps://github.com/quinngroup/cilia-metrics\n\nThe repository was useful for understanding existing computational approaches to ciliary motion analysis, especially spatial CBF mapping and frequency-domain analysis. This helped guide the addition of CBF heatmaps, Welch/PSD options, and motion-map style outputs in `napari-cilia-assistant`.\n\n`napari-cilia-assistant` is independently implemented as a napari-based interactive workflow for AVI loading, ROI-based CBF measurement, kymograph review, spatial screening, and exportable analysis logs.\n\n## References\n\n1. Chilvers MA, O'Callaghan C. Analysis of ciliary beat pattern and beat frequency using digital high speed imaging: comparison with the photomultiplier and photodiode methods. *Thorax*. 2000;55:314-317. doi:10.1136/thorax.55.4.314\n\n2. Jackson CL, Bottier M. Methods for the assessment of human airway ciliary function. *European Respiratory Journal*. 2022;60:2102300. doi:10.1183/13993003.02300-2021\n\n3. Francis R. A Simple Method for Imaging and Quantifying Respiratory Cilia Motility in Mouse Models. *Methods and Protocols*. 2025;8:113. doi:10.3390/mps8050113\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": "MIT",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-cilia-assistant",
+    "package_url": "https://pypi.org/project/napari-cilia-assistant/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-cilia-assistant/",
+    "project_urls": {
+      "Homepage": "https://github.com/wulinteousa2-hash/napari-cilia-assistant",
+      "Issues": "https://github.com/wulinteousa2-hash/napari-cilia-assistant/issues",
+      "Repository": "https://github.com/wulinteousa2-hash/napari-cilia-assistant"
+    },
+    "provides_extra": null,
+    "release_url": "https://pypi.org/project/napari-cilia-assistant/1.1.0/",
+    "requires_dist": [
+      "napari",
+      "numpy",
+      "scipy",
+      "opencv-python",
+      "qtpy",
+      "magicgui",
+      "matplotlib"
+    ],
+    "requires_python": ">=3.10",
+    "summary": "A napari plugin for measuring ciliary beat frequency from high-speed microscopy videos.",
+    "version": "1.1.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 36919886,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "viralvector"
+      }
+    ]
+  },
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "91ad7802fc192d2f7e3af3516901c08191b61ea2e4f815e548e363332c7905e3"
+        },
+        "digests": {
+          "blake2b_256": "94230ac7a6c14699afa7d8c4909795e806935989acbb6faeef55615f3c06682a",
+          "md5": "b818fa27626b54188dc8af97372b4b44",
+          "sha256": "dc78b47f345aa0a3c517b98705dbaaa3c2235de37f53d115ec48d879aa3c3e0e"
+        },
+        "downloads": -1,
+        "filename": "napari_cilia_assistant-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "b818fa27626b54188dc8af97372b4b44",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 19124,
+        "upload_time": "2026-05-08T01:52:25",
+        "upload_time_iso_8601": "2026-05-08T01:52:25.576169Z",
+        "url": "https://files.pythonhosted.org/packages/94/23/0ac7a6c14699afa7d8c4909795e806935989acbb6faeef55615f3c06682a/napari_cilia_assistant-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "a36a14fefd1458dd18a899a8774d4e88730a3a6b3e1d297fb425940889a75146",
+          "md5": "34493b93efb1c410a3420158b354c030",
+          "sha256": "fe5543aed64c32777369f01a4cd5455337ab2f23d8bd5cb64332b5a5b877b677"
+        },
+        "downloads": -1,
+        "filename": "napari_cilia_assistant-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "34493b93efb1c410a3420158b354c030",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 22256,
+        "upload_time": "2026-05-08T01:52:26",
+        "upload_time_iso_8601": "2026-05-08T01:52:26.731659Z",
+        "url": "https://files.pythonhosted.org/packages/a3/6a/14fefd1458dd18a899a8774d4e88730a3a6b3e1d297fb425940889a75146/napari_cilia_assistant-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "1a9dfbffb6fdb59fd11dade89906cd823b64ff1dc6fea912b7f18aff920a32a0"
+        },
+        "digests": {
+          "blake2b_256": "867556bc24a552ce56b65384a7b7d5fb3b87f5f7793f86dc39dc7a95ff407525",
+          "md5": "a4789d6d3108f8760693f0b761548598",
+          "sha256": "3e489995aab4d8e2e56fdd23693d4e3848ddf3866d832ef0d0f5fa12f2e90af9"
+        },
+        "downloads": -1,
+        "filename": "napari_cilia_assistant-0.2.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "a4789d6d3108f8760693f0b761548598",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 20501,
+        "upload_time": "2026-05-08T21:45:49",
+        "upload_time_iso_8601": "2026-05-08T21:45:49.921527Z",
+        "url": "https://files.pythonhosted.org/packages/86/75/56bc24a552ce56b65384a7b7d5fb3b87f5f7793f86dc39dc7a95ff407525/napari_cilia_assistant-0.2.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "065c995c2393cb21999658eb42ab28ca898dad31f4a91cbe97106390650c0cac",
+          "md5": "44a9e6d7ef18892f4817a0d3d9ea3521",
+          "sha256": "5f4a98cb3809feee30a705d68e71e5b6867384ca06a708cbcf9b072489bd556c"
+        },
+        "downloads": -1,
+        "filename": "napari_cilia_assistant-0.2.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "44a9e6d7ef18892f4817a0d3d9ea3521",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 23742,
+        "upload_time": "2026-05-08T21:45:51",
+        "upload_time_iso_8601": "2026-05-08T21:45:51.161645Z",
+        "url": "https://files.pythonhosted.org/packages/06/5c/995c2393cb21999658eb42ab28ca898dad31f4a91cbe97106390650c0cac/napari_cilia_assistant-0.2.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "aaff3edd45d92e65b20f6383287baea2ee139a9635b56e1758cc9b911d23a2b3"
+        },
+        "digests": {
+          "blake2b_256": "fec7cdbd8ee5897c35032c1e0184afcc51d31f0933567a504f89bd490749eb18",
+          "md5": "d7331f17c2e8f00bb7c4765e81f896da",
+          "sha256": "d85b103a0ba504b2948a858bcb2a71a035aed9b93182f449ba540bd208fa2090"
+        },
+        "downloads": -1,
+        "filename": "napari_cilia_assistant-1.0.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "d7331f17c2e8f00bb7c4765e81f896da",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 21735,
+        "upload_time": "2026-05-09T15:14:34",
+        "upload_time_iso_8601": "2026-05-09T15:14:34.690741Z",
+        "url": "https://files.pythonhosted.org/packages/fe/c7/cdbd8ee5897c35032c1e0184afcc51d31f0933567a504f89bd490749eb18/napari_cilia_assistant-1.0.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "da7a06aba4285d67d660d8e0d779adefd5ceb7ced100b92282e8fb38469ca6d5",
+          "md5": "1f32c7c21c7d7119882e9e5406905862",
+          "sha256": "a866cfd9293718dd6908efc27478a8756025b4e883d4fec5e8cc926f047162d9"
+        },
+        "downloads": -1,
+        "filename": "napari_cilia_assistant-1.0.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "1f32c7c21c7d7119882e9e5406905862",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 25354,
+        "upload_time": "2026-05-09T15:14:35",
+        "upload_time_iso_8601": "2026-05-09T15:14:35.939307Z",
+        "url": "https://files.pythonhosted.org/packages/da/7a/06aba4285d67d660d8e0d779adefd5ceb7ced100b92282e8fb38469ca6d5/napari_cilia_assistant-1.0.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "fd2a85ece0278bf6639a63968b028c8e10b202057a7dbba8f24983a058992579"
+        },
+        "digests": {
+          "blake2b_256": "f8a8df9c6444bd2361a67578005e50c3009ede10ed230589d68f014c0010271b",
+          "md5": "e83f6de9aad73d45fec367637a4d6664",
+          "sha256": "fee424f06d219f0ee0fd40ab5fb8102196958aad5d80244e407e5e46ab593933"
+        },
+        "downloads": -1,
+        "filename": "napari_cilia_assistant-1.0.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "e83f6de9aad73d45fec367637a4d6664",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 19625,
+        "upload_time": "2026-05-09T17:37:41",
+        "upload_time_iso_8601": "2026-05-09T17:37:41.497766Z",
+        "url": "https://files.pythonhosted.org/packages/f8/a8/df9c6444bd2361a67578005e50c3009ede10ed230589d68f014c0010271b/napari_cilia_assistant-1.0.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "384f6f48bdf9224199080543ea87b56be5159868d4dfd0bc86395921546f3108",
+          "md5": "0cd759dc1530a550ac259264c1d6eb5c",
+          "sha256": "ca3c332c1a458487521b9c284e0e6c036d742499875e4e822da0dc05a4695952"
+        },
+        "downloads": -1,
+        "filename": "napari_cilia_assistant-1.0.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "0cd759dc1530a550ac259264c1d6eb5c",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 20091,
+        "upload_time": "2026-05-09T17:37:42",
+        "upload_time_iso_8601": "2026-05-09T17:37:42.693679Z",
+        "url": "https://files.pythonhosted.org/packages/38/4f/6f48bdf9224199080543ea87b56be5159868d4dfd0bc86395921546f3108/napari_cilia_assistant-1.0.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.2": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "0d4f3604e927a4be5dfc84b31782881b8efd17cd7d8ddc6956217e142a2f8e13"
+        },
+        "digests": {
+          "blake2b_256": "bad7f5435ee68abbea67ad781db5465dff40f763d848d91e58893cd00c87aba5",
+          "md5": "0f5e153ecc13997fa2573a49f6a6c214",
+          "sha256": "b078225d9de6f990e56194a81ecb1d80865aa8a43d47b2adae39126b3d811273"
+        },
+        "downloads": -1,
+        "filename": "napari_cilia_assistant-1.0.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "0f5e153ecc13997fa2573a49f6a6c214",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 19641,
+        "upload_time": "2026-05-09T17:44:40",
+        "upload_time_iso_8601": "2026-05-09T17:44:40.299240Z",
+        "url": "https://files.pythonhosted.org/packages/ba/d7/f5435ee68abbea67ad781db5465dff40f763d848d91e58893cd00c87aba5/napari_cilia_assistant-1.0.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "c258161827b3b5f13076a30b0c33eee81cec270861bb5acbfda8acec4f8d8f38",
+          "md5": "85a51f6057718fb4d5b0fd8a33cf68df",
+          "sha256": "6288f9662b1f0dc1c23dd37791cc9be7c14b9aa778248beb9e5bc72739368ae3"
+        },
+        "downloads": -1,
+        "filename": "napari_cilia_assistant-1.0.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "85a51f6057718fb4d5b0fd8a33cf68df",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 20134,
+        "upload_time": "2026-05-09T17:44:41",
+        "upload_time_iso_8601": "2026-05-09T17:44:41.497950Z",
+        "url": "https://files.pythonhosted.org/packages/c2/58/161827b3b5f13076a30b0c33eee81cec270861bb5acbfda8acec4f8d8f38/napari_cilia_assistant-1.0.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.0.3": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "67c1233c753bcec0b2b9ddff56e7b72ae4ee4df649d37042fdfe7426ec3e9915"
+        },
+        "digests": {
+          "blake2b_256": "2113db4c3435cb39a2b6a9dbb70bcfa3d80b1f34ea7f9f0f07cd967fc7f80ff1",
+          "md5": "8e1b70a212a2c574958bdaefc92310ec",
+          "sha256": "287e9b4cd90b81944f8503497c51b1b534c8324c86a2a8b125058cad9cd07a07"
+        },
+        "downloads": -1,
+        "filename": "napari_cilia_assistant-1.0.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "8e1b70a212a2c574958bdaefc92310ec",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 20057,
+        "upload_time": "2026-05-09T19:09:07",
+        "upload_time_iso_8601": "2026-05-09T19:09:07.247172Z",
+        "url": "https://files.pythonhosted.org/packages/21/13/db4c3435cb39a2b6a9dbb70bcfa3d80b1f34ea7f9f0f07cd967fc7f80ff1/napari_cilia_assistant-1.0.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "11ce6417aa25a8dcf641069ddeebf77ec9a2bdb669aa80cdcf00b49c84a90c17",
+          "md5": "5a8afe38be79f020a5a1c75ed9c48af7",
+          "sha256": "7944fdacafbda0505c0226a4d15f873c853940fa5876bdffb2c15cc0d9a8f568"
+        },
+        "downloads": -1,
+        "filename": "napari_cilia_assistant-1.0.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "5a8afe38be79f020a5a1c75ed9c48af7",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 20511,
+        "upload_time": "2026-05-09T19:09:08",
+        "upload_time_iso_8601": "2026-05-09T19:09:08.193358Z",
+        "url": "https://files.pythonhosted.org/packages/11/ce/6417aa25a8dcf641069ddeebf77ec9a2bdb669aa80cdcf00b49c84a90c17/napari_cilia_assistant-1.0.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "1.1.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "6f454745dc4caf2475a9dd78eb08658925a2569b240ef7d145312eeec5ed30de"
+        },
+        "digests": {
+          "blake2b_256": "1d542b030861d11742fc2521366461890ffe5516925473000e807b2f83c00e3c",
+          "md5": "7c6ab9a17efcc2cb650b54c8bb8a78f0",
+          "sha256": "a4aef034aa270230e369d405ac94921d095e6c148df1319480bf6164ec615021"
+        },
+        "downloads": -1,
+        "filename": "napari_cilia_assistant-1.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "7c6ab9a17efcc2cb650b54c8bb8a78f0",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 25991,
+        "upload_time": "2026-05-10T15:39:51",
+        "upload_time_iso_8601": "2026-05-10T15:39:51.928395Z",
+        "url": "https://files.pythonhosted.org/packages/1d/54/2b030861d11742fc2521366461890ffe5516925473000e807b2f83c00e3c/napari_cilia_assistant-1.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "f16fe7f31f12a3332de7a4406c2328fd36cd9d5d900d299f4f13385fb9985c96",
+          "md5": "2cba2b6b240cc02e9a85d4539c95fe08",
+          "sha256": "b69f6e7ed5131866030a5290db0033e757b68dacc11851fe0c13f18372c2457a"
+        },
+        "downloads": -1,
+        "filename": "napari_cilia_assistant-1.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "2cba2b6b240cc02e9a85d4539c95fe08",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 23763,
+        "upload_time": "2026-05-10T15:39:52",
+        "upload_time_iso_8601": "2026-05-10T15:39:52.894515Z",
+        "url": "https://files.pythonhosted.org/packages/f1/6f/e7f31f12a3332de7a4406c2328fd36cd9d5d900d299f4f13385fb9985c96/napari_cilia_assistant-1.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "6f454745dc4caf2475a9dd78eb08658925a2569b240ef7d145312eeec5ed30de"
+      },
+      "digests": {
+        "blake2b_256": "1d542b030861d11742fc2521366461890ffe5516925473000e807b2f83c00e3c",
+        "md5": "7c6ab9a17efcc2cb650b54c8bb8a78f0",
+        "sha256": "a4aef034aa270230e369d405ac94921d095e6c148df1319480bf6164ec615021"
+      },
+      "downloads": -1,
+      "filename": "napari_cilia_assistant-1.1.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "7c6ab9a17efcc2cb650b54c8bb8a78f0",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.10",
+      "size": 25991,
+      "upload_time": "2026-05-10T15:39:51",
+      "upload_time_iso_8601": "2026-05-10T15:39:51.928395Z",
+      "url": "https://files.pythonhosted.org/packages/1d/54/2b030861d11742fc2521366461890ffe5516925473000e807b2f83c00e3c/napari_cilia_assistant-1.1.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "f16fe7f31f12a3332de7a4406c2328fd36cd9d5d900d299f4f13385fb9985c96",
+        "md5": "2cba2b6b240cc02e9a85d4539c95fe08",
+        "sha256": "b69f6e7ed5131866030a5290db0033e757b68dacc11851fe0c13f18372c2457a"
+      },
+      "downloads": -1,
+      "filename": "napari_cilia_assistant-1.1.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "2cba2b6b240cc02e9a85d4539c95fe08",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.10",
+      "size": 23763,
+      "upload_time": "2026-05-10T15:39:52",
+      "upload_time_iso_8601": "2026-05-10T15:39:52.894515Z",
+      "url": "https://files.pythonhosted.org/packages/f1/6f/e7f31f12a3332de7a4406c2328fd36cd9d5d900d299f4f13385fb9985c96/napari_cilia_assistant-1.1.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

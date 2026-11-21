@@ -1,0 +1,183 @@
+{
+  "name": "napari-quantem",
+  "display_name": "QuantEM",
+  "visibility": "public",
+  "icon": null,
+  "categories": [
+    "Segmentation",
+    "Image Processing"
+  ],
+  "schema_version": "0.2.1",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-quantem.segment",
+        "title": "Segment organelles",
+        "python_name": "napari_quantem._widget_segment:SegmentWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-quantem.finetune",
+        "title": "Fine-tune on your annotations",
+        "python_name": "napari_quantem._widget_finetune:FineTuneWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-quantem.proofread",
+        "title": "Proofreading tools",
+        "python_name": "napari_quantem._widget_proofread:ProofreadWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-quantem.measure",
+        "title": "Measure objects",
+        "python_name": "napari_quantem._widget_measure:MeasureWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-quantem.batch",
+        "title": "Batch process a folder",
+        "python_name": "napari_quantem._widget_batch:BatchWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-quantem.models",
+        "title": "Manage models",
+        "python_name": "napari_quantem._widget_models:ModelManagerWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-quantem.sample_em",
+        "title": "Example EM image",
+        "python_name": "napari_quantem._sample_data:load_sample_em",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "napari-quantem.segment",
+        "display_name": "QuantEM: Segment",
+        "autogenerate": false
+      },
+      {
+        "command": "napari-quantem.finetune",
+        "display_name": "QuantEM: Fine-tune",
+        "autogenerate": false
+      },
+      {
+        "command": "napari-quantem.proofread",
+        "display_name": "QuantEM: Proofread",
+        "autogenerate": false
+      },
+      {
+        "command": "napari-quantem.measure",
+        "display_name": "QuantEM: Measure",
+        "autogenerate": false
+      },
+      {
+        "command": "napari-quantem.batch",
+        "display_name": "QuantEM: Batch",
+        "autogenerate": false
+      },
+      {
+        "command": "napari-quantem.models",
+        "display_name": "QuantEM: Models",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": [
+      {
+        "command": "napari-quantem.sample_em",
+        "key": "quantem_islet_em",
+        "display_name": "Mouse pancreatic islet (SEM, 5 nm/px)"
+      }
+    ],
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "napari-quantem",
+    "version": "0.1.0",
+    "dynamic": [
+      "license-file"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "QuantEM & OmniEM vision-transformer organelle segmentation for electron microscopy",
+    "description": "# napari-quantem\n\nOrganelle segmentation for electron microscopy in [napari](https://napari.org), using the QuantEM\nand OmniEM vision-transformer models.\n\n## What it does\n\nEight pretrained models — **mitochondria, endoplasmic reticulum, nucleus and lipid droplets**, each\nin two sizes (QuantEM ViT-B, 86M parameters; OmniEM ViT-L, 302M) — plus the tools to correct their\noutput and adapt them to your own data.\n\n| Widget | |\n|---|---|\n| **Segment** | Run a model over a 2-D image or a stack. Sliding 512 px windows at 25 % overlap with Hann blending — the same procedure used for the published benchmarks. |\n| **Fine-tune** | Correct the segmentation inside a region you draw, then adapt the model to it. Only the decoder head trains, which the manuscript found works about as well as heavier methods and takes seconds rather than minutes. |\n| **Proofread** | Split, merge, delete, filter by size, remove border-touching objects, and morphological clean-up — uses napari's own painting tools. |\n| **Measure** | Per-object morphometrics and per-image summaries into the layer's feature table, plus CSV export. |\n| **Batch** | Run a folder of images and write labels and one combined measurements CSV. |\n| **Models** | What is cached, what a download would cost, and what hardware is available. |\n\n## Using it\n\n**File → Open Sample → QuantEM → Mouse pancreatic islet (SEM, 5 nm/px)** loads a small example image that ships with the plugin. Open **QuantEM: Segment**, optionally set the pixel size to **5**, and run. (The model itself downloads on first use; see *Model files* below.)\n\n## Installing\n\nIf you do not already have napari:\n\n```bash\npip install \"napari-quantem[all]\"\n```\n\nIf napari is already installed then just get the plugin:\n\n```bash\npip install napari-quantem\n```\n\nPyTorch is a dependency. If you do not want the larger CUDA version installed automatically, install the CPU build separately first:\n\n```bash\npip install torch --index-url https://download.pytorch.org/whl/cpu\n```\n\nA GPU is not required. Segmentation runs well on CPU for moderate images, particularly on the ViT-B sized models, though fine-tuning is significantly slower for CPU-only. \n\n## Model files\n\nWeights are downloaded once, on first use, and cached.\n\nEncoder parameters are shared where the models share them, so a second organelle model usually is much smaller to download than the first. \n\n## Pixel size\n\nThe plugin does not guess pixel size. If you supply one,\nimages are resampled to the resolution the model was trained at (8 nm/px for mitochondria and lipid\ndroplets, 25 nm/px for nuclei; ER runs at native resolution). If you leave it blank, nothing is\nrescaled.\n\nSupplying a pixel size usually has moderate to insignificant effects when native resolution is ~0.5x-2x the resampling defaults (8nm for mitochondria and lipid droplets, 25nm for nuclei). Large upsampling to this resolution can have variable results, and outputs should be examined; downsampling into this range is likely to improve results for very high resolution images. \n\n## Fine-tuning: draw the region you actually annotated\n\nThe fine-tuning widget asks for a **reviewed region** — a rectangle or polygon you draw. Inside it, labels are taken as complete. Outside it, they are treated as *unknown*, not as background.\n\nThe recommended loop is to segment, look for areas where the model is wrong, draw a region around one of\nthose places, fix the labels inside it, and adapt. With three or more regions you can run a\nleave-one-region-out check for a genuinely held-out accuracy figure. Larger regions will give better results. \n\n## Citing\n\nAcree C, *et al.* *QuantEM: An optimized platform of vision transformer-based models for segmentation and analysis of electron microscopy data.* bioRxiv 2026.\n[https://www.biorxiv.org/content/10.64898/2026.08.06.743293v1](https://www.biorxiv.org/content/10.64898/2026.08.06.743293v1)\n\n## Licence\n\nBSD-3-Clause — see [`LICENSE`](LICENSE).\n",
+    "description_content_type": "text/markdown",
+    "keywords": "napari,electron microscopy,segmentation,organelle,mitochondria",
+    "home_page": null,
+    "download_url": null,
+    "author": "Arrojo e Drigo Lab, Vanderbilt University",
+    "author_email": null,
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": null,
+    "classifier": [
+      "Development Status :: 4 - Beta",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Scientific/Engineering :: Image Recognition",
+      "Operating System :: OS Independent"
+    ],
+    "requires_dist": [
+      "quantem-core~=0.1.0",
+      "napari>=0.7",
+      "magicgui>=0.8",
+      "qtpy",
+      "numpy>=1.24",
+      "napari[all]; extra == \"all\"",
+      "pytest; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "napari[pyqt6]; extra == \"testing\""
+    ],
+    "requires_python": ">=3.11",
+    "requires_external": null,
+    "project_url": [
+      "Homepage, https://github.com/ArrojoDrigoLab/QuantEM",
+      "Bug Tracker, https://github.com/ArrojoDrigoLab/QuantEM/issues",
+      "Source Code, https://github.com/ArrojoDrigoLab/QuantEM",
+      "User Support, https://github.com/ArrojoDrigoLab/QuantEM/issues"
+    ],
+    "provides_extra": [
+      "all",
+      "testing"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}

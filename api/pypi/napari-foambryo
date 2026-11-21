@@ -1,0 +1,187 @@
+{
+  "info": {
+    "author": null,
+    "author_email": "Herv\u00e9 Turlier <herve.turlier@cnrs.fr>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 3 - Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Scientific/Engineering :: Bio-Informatics",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# napari-foambryo\n\nA napari plugin over delaunay-watershed-3d and foambryo: reconstruct the multimaterial mesh of a 3-D segmentation, infer its relative surface tensions and cell pressures, show them on the tissue, and export the same files as the `foambryo` command.\n\nVersion 0.1.0, the first release (17 October 2026). Licence: GPL-3.0-or-later. What changed: the [CHANGELOG](https://github.com/VirtualEmbryo/napari-foambryo/blob/v0.1.0/CHANGELOG.md).\n\n![Tensions of benchmark case 000 in napari](https://raw.githubusercontent.com/VirtualEmbryo/napari-foambryo/v0.1.0/docs/images/case_000_tensions.png)\n\n*Benchmark case 000 (6 cells): the tensions of its outer interfaces on the reconstructed mesh (blue below the mean tension, grey at it, red above), the colour bars and the table, in which the true tensions of this simulated aggregate are shown beside the inferred ones. foambryo's Polyscope viewer shows the same colours for the same mesh.*\n\n## What it does\n\n* **Reconstruct**: a Labels layer, whoever made it (a file, napari's tools, another segmentation plugin), becomes a multimaterial mesh by delaunay-watershed-3d's default reconstruction, the one `foambryo mesh` runs. The voxel size comes from the layer, from another layer (the image that was segmented) or is typed: it is never guessed. Before the run the dock shows the estimated time and memory, and a report of the mask (cells, cells touching the image box, cells in several pieces, very small labels). The reconstruction runs in a separate process: **Cancel** stops it at once and frees its memory.\n* **Infer**: the tensions, then the pressures, by foambryo's `infer_forces` with the options and defaults of `foambryo infer`; or a **seed ensemble** (`infer_tensions_over_seeds`), whose spread over the seeds is a lower bound on the error.\n* **Results**: the tensions and pressures on the mesh, coloured as foambryo's own viewer colours them, the colour bars, and the tables. Select a row to see its interface or cell.\n* **Export**: `mesh.rec`, `tensions.csv`, `pressures.csv`, `colour_bars.png` and `run.json`, the files of the `foambryo` command, with the command lines that reproduce them.\n\n**One code path.** The plugin computes nothing of its own: every number is one that a public function of foambryo returns for the same mask and options, the functions the `foambryo` command calls. The tests check this bit for bit, and check that the exported files are byte for byte those of the command.\n\n## Installation\n\nIn a virtual environment:\n\n```bash\npip install \"napari[all]\" napari-foambryo\n```\n\nIt needs delaunay-watershed-3d 0.7 and foambryo 0.7 (installed with it), and Python 3.11 or later.\n\n## Quickstart\n\n1. *File \u203a Open Sample \u203a foambryo \u203a Benchmark case 000*.\n2. *Plugins \u203a foambryo \u203a Reconstruct*: the layer and its voxel size are chosen; click **Reconstruct**.\n3. *Plugins \u203a foambryo \u203a Infer*: click **Infer**. The tensions appear on the mesh.\n4. *Plugins \u203a foambryo \u203a Results*: the colour bars and the tables; case 000's true tensions are in the table.\n5. *Plugins \u203a foambryo \u203a Export*: choose a folder, click **Export**. If the folder already holds foambryo's files, a dialog lists them and asks before replacing them; other files are never touched.\n6. *Plugins \u203a foambryo \u203a View*: **Explode** moves the cells apart (each interface drawn on both cells' sides), **Cut** clips everything with a plane normal to z, y or x, to see the interfaces inside the tissue (3-D view), and **Background** paints the canvas black, dark grey, light grey, white or a custom colour (a colour that one background hides, another shows).\n\n![The quickstart in napari, from the sample to the exported files](https://raw.githubusercontent.com/VirtualEmbryo/napari-foambryo/v0.1.0/docs/images/walk_through_case_000.gif)\n\n*The quickstart on benchmark case 000, the whole napari window: the sample, Reconstruct, Infer (the tensions, then the colour bars and the table in Results), the pressures, View's explode slider, and Export.*\n\nThe same, scripted: `python examples/quickstart.py` (add `--close-when-done` to close napari once the numbers are printed).\n\n## What the numbers mean\n\n* **Tensions** are relative: they are gauged to a mean of 1 (*Advanced \u203a mean tension*). Interfaces with no triple line are undetermined and reported as `nan`: not filled, drawn as green outlines by their own layer. The tension colours run from blue (low) through light grey (the mean tension) to red (high).\n* **Pressures** are relative to the medium (label 0, *base pressure* 0), in units of tension per length of the voxel size's unit. Untick *pressures* in Infer for the tensions only (`foambryo infer --no-pressures`).\n* **Diagnostics** (*Infer \u203a Advanced \u203a Diagnostics*: `basic`, or `spectrum` for the singular values too): the Results dock's Diagnostics tab lists every linear solve (rank, residual, condition number, \u2026); Export writes them as `solves.csv` and `spectra.npz`.\n* **Cut cells**: where cells reach the image box, the mesh closes them with *crop faces* (see-through glass with their edges); the pressures of the cells they cut are `nan`. Only pressure methods with a formulation for crop faces are offered.\n* **Seed ensembles**: the seed standard deviation is a lower bound on the error, not an error bar.\n\n## Large tissues\n\nThe estimate before a run is fitted to measured reconstructions (from a few seconds for a 6-cell aggregate to about 13 minutes and 39 GiB for a 1 866-cell tissue at cubic voxels); its range is that of the fit, not a guarantee. When the estimate exceeds the machine's memory, Reconstruct needs *run anyway* to be ticked: run `foambryo mesh` on a larger machine instead (same numbers) and open the `.rec` file here.\n\n## From a segmentation plugin to foambryo\n\nSegmentation plugins (Cellpose, PlantSeg, micro-sam, napari-segment-blobs-and-things-with-membranes, \u2026) leave a Labels layer that often has no voxel size, and may label the background with something else than 0. In the Reconstruct dock:\n\n* **Voxel size from \u203a layer: \u2026** the image that was segmented (or *typed*);\n* **Medium is label \u2026** the background's label: a copy of the layer with that label and 0 swapped is made and reconstructed (and exported, since the equivalent command needs it);\n* read the **mask report**: a background split into several pieces shows up as extra cells touching the image box. Merge them into the background with napari's fill tool, then Reconstruct.\n\nThe results are marked *out of date* if the labels change after the reconstruction, and Export waits for a new one. Example: `python examples/from_a_segmentation_plugin.py` (with `--close-when-done`, it clicks Reconstruct and Infer itself and closes napari).\n\n![A membrane segmentation plugin's labels, with the mask report](https://raw.githubusercontent.com/VirtualEmbryo/napari-foambryo/v0.1.0/docs/images/from_a_segmentation_plugin.png)\n\n## Reproducing a result without napari\n\n`run.json` lists the command lines that rebuild the exported folder, for example\n\n```bash\nfoambryo mesh mask.npz -o mesh.rec --spacing 1.0 1.0 1.0 --spacing-unit voxel --min-distance 3\n```\n\n```bash\nfoambryo infer mesh.rec -o . --tension-method young-dupre --pressure-method variational\n```\n\n(Tick *include the mask* in Export to get `mask.npz`.)\n\n## Credits, contact, citations\n\nIf you use this tool, please cite the associated article: Ichbiah S., Delbary F., McDougall A., Dumollard R., Turlier H. *Embryo mechanics cartography: inference of 3D force atlases from fluorescence microscopy.* Nature Methods **20**(12), 1989\u20131999 (2023), [doi:10.1038/s41592-023-02084-7](https://doi.org/10.1038/s41592-023-02084-7). Benchmark case 000, shipped as sample data with its true tensions, comes from that article's benchmark.\n\nRecent work on dw3d and foambryo is part of a collaboration with Alejandro Aguilera Castrejon (Janelia Research Campus, Howard Hughes Medical Institute). We thank him and his Janelia colleagues Adam L. Taylor, Wenhong Li and Francesco Roncato. Adam L. Taylor found the border-triangle winding defect fixed in 0.6.0 and pointed us to the seed-extraction and dense tension-solve bottlenecks on large tissues.\n\n## Licence\n\nGNU General Public License, version 3 or (at your option) any later version (`GPL-3.0-or-later`); the text is in `LICENSE`. How the plugin works, dock by dock: [docs/how-it-works.md](https://github.com/VirtualEmbryo/napari-foambryo/blob/v0.1.0/docs/how-it-works.md).\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": null,
+    "license_expression": "GPL-3.0-or-later",
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-foambryo",
+    "package_url": "https://pypi.org/project/napari-foambryo/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-foambryo/",
+    "project_urls": {
+      "Changelog": "https://github.com/VirtualEmbryo/napari-foambryo/blob/main/CHANGELOG.md",
+      "Documentation": "https://github.com/VirtualEmbryo/napari-foambryo/blob/main/docs/how-it-works.md",
+      "Homepage": "https://github.com/VirtualEmbryo/napari-foambryo",
+      "Issues": "https://github.com/VirtualEmbryo/napari-foambryo/issues",
+      "Source": "https://github.com/VirtualEmbryo/napari-foambryo",
+      "Team website": "https://www.turlierlab.com/"
+    },
+    "provides_extra": [
+      "testing"
+    ],
+    "release_url": "https://pypi.org/project/napari-foambryo/0.1.0/",
+    "requires_dist": [
+      "napari>=0.9",
+      "magicgui",
+      "qtpy",
+      "superqt",
+      "numpy>=2.0.0",
+      "matplotlib>=3.8.4",
+      "psutil",
+      "delaunay-watershed-3d>=0.7.0",
+      "foambryo[cli]>=0.7.0",
+      "pytest; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "dask[array]; extra == \"testing\""
+    ],
+    "requires_python": ">=3.11",
+    "summary": "Surface tensions and cell pressures of a 3-D segmentation, in napari: delaunay-watershed-3d and foambryo",
+    "version": "0.1.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 42809283,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "hturlier"
+      },
+      {
+        "role": "Maintainer",
+        "user": "VirtualEmbryo"
+      }
+    ]
+  },
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "d4621ceacfc03ca166843029cd173004de88e5894c699b8101a299319b46a852"
+        },
+        "digests": {
+          "blake2b_256": "e46187c7d654614d7fd329535f755da1c2c66b049e08e1397296a0a6ad335dfa",
+          "md5": "4a0a5ebbc116f7cf9fff62ae746d87a3",
+          "sha256": "09f56ddc37c1fb5cf543b8db990a7cb544e94c7b329145fa08d701329d060a93"
+        },
+        "downloads": -1,
+        "filename": "napari_foambryo-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "4a0a5ebbc116f7cf9fff62ae746d87a3",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 143838,
+        "upload_time": "2026-10-17T18:14:03",
+        "upload_time_iso_8601": "2026-10-17T18:14:03.723396Z",
+        "url": "https://files.pythonhosted.org/packages/e4/61/87c7d654614d7fd329535f755da1c2c66b049e08e1397296a0a6ad335dfa/napari_foambryo-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "ece84410addd4e61d534b90aa1a8bf06c3ddd8ecf94f450c0c712857ac9fc210",
+          "md5": "52cbdcdb27816141e467ef08be4d08d5",
+          "sha256": "56ee499973c8a040d98c0f1560b2d553f7332ec3db876f6c7405b9559b4eba5c"
+        },
+        "downloads": -1,
+        "filename": "napari_foambryo-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "52cbdcdb27816141e467ef08be4d08d5",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 1437990,
+        "upload_time": "2026-10-17T18:14:31",
+        "upload_time_iso_8601": "2026-10-17T18:14:31.855534Z",
+        "url": "https://files.pythonhosted.org/packages/ec/e8/4410addd4e61d534b90aa1a8bf06c3ddd8ecf94f450c0c712857ac9fc210/napari_foambryo-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "d4621ceacfc03ca166843029cd173004de88e5894c699b8101a299319b46a852"
+      },
+      "digests": {
+        "blake2b_256": "e46187c7d654614d7fd329535f755da1c2c66b049e08e1397296a0a6ad335dfa",
+        "md5": "4a0a5ebbc116f7cf9fff62ae746d87a3",
+        "sha256": "09f56ddc37c1fb5cf543b8db990a7cb544e94c7b329145fa08d701329d060a93"
+      },
+      "downloads": -1,
+      "filename": "napari_foambryo-0.1.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "4a0a5ebbc116f7cf9fff62ae746d87a3",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.11",
+      "size": 143838,
+      "upload_time": "2026-10-17T18:14:03",
+      "upload_time_iso_8601": "2026-10-17T18:14:03.723396Z",
+      "url": "https://files.pythonhosted.org/packages/e4/61/87c7d654614d7fd329535f755da1c2c66b049e08e1397296a0a6ad335dfa/napari_foambryo-0.1.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "ece84410addd4e61d534b90aa1a8bf06c3ddd8ecf94f450c0c712857ac9fc210",
+        "md5": "52cbdcdb27816141e467ef08be4d08d5",
+        "sha256": "56ee499973c8a040d98c0f1560b2d553f7332ec3db876f6c7405b9559b4eba5c"
+      },
+      "downloads": -1,
+      "filename": "napari_foambryo-0.1.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "52cbdcdb27816141e467ef08be4d08d5",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.11",
+      "size": 1437990,
+      "upload_time": "2026-10-17T18:14:31",
+      "upload_time_iso_8601": "2026-10-17T18:14:31.855534Z",
+      "url": "https://files.pythonhosted.org/packages/ec/e8/4410addd4e61d534b90aa1a8bf06c3ddd8ecf94f450c0c712857ac9fc210/napari_foambryo-0.1.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
