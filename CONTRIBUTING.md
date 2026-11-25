@@ -87,7 +87,8 @@ The API endpoints are implemented in `pages/api/`:
 #### Data processing scripts
 
 Core scripts in `scripts/`:
-- `bigquery.py` - Queries BigQuery for napari plugins
+- `bigquery.py` - Queries BigQuery for napari plugins, skipping those in
+  [`denylist.toml`](denylist.toml)
 - `fetch_manifests.py` - Downloads plugin manifests
 - `reindex.py` - Validates and aggregates plugin data
 

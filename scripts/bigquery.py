@@ -11,6 +11,7 @@ Requires Google Cloud credentials, e.g. via GOOGLE_APPLICATION_CREDENTIALS.
 
 import json
 import sys
+import tomllib
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from urllib.error import HTTPError
@@ -22,6 +23,7 @@ from packaging.version import InvalidVersion, Version
 
 PUBLIC = Path(__file__).parent.parent / "public"
 PYPI_DIR = PUBLIC / "pypi"
+DENYLIST = Path(__file__).parent.parent / "denylist.toml"
 CLASSIFIER = "Framework :: napari"
 QUERY = """
 SELECT
@@ -96,8 +98,16 @@ def _prune_yanked_versions(info, versions):
     ]
 
 
+def _is_denied(info, denied_users) -> bool:
+    """Whether any PyPI owner of the package is a denied user."""
+    roles = (info.get("ownership") or {}).get("roles") or []
+    return any((role.get("user") or "").lower() in denied_users for role in roles)
+
+
 def main():
     PYPI_DIR.mkdir(exist_ok=True, parents=True)
+    denylist = tomllib.loads(DENYLIST.read_text(encoding="utf-8"))
+    denied_users = {user.lower() for user in denylist["users"]}
     all_packages_with_classifier = _find_by_classifier(CLASSIFIER)
     if not all_packages_with_classifier:
         # never overwrite classifiers.json with an empty index
@@ -106,12 +116,14 @@ def main():
     active = {}
     withdrawn = {}
     deleted = {}
+    denied = {}
 
     with ThreadPoolExecutor() as pool:
         icon = {
             "active": "✅",
             "withdrawn": "🔵",
             "deleted": "❌",
+            "denied": "⛔",
             "error": "⚠️",
         }
         for normalized_name, info in pool.map(
@@ -129,6 +141,10 @@ def main():
             if not versions:
                 deleted[normalized_name] = versions
                 status = "deleted"
+
+            if status == "active" and _is_denied(info, denied_users):
+                denied[normalized_name] = versions
+                status = "denied"
 
             if status == "active" and CLASSIFIER not in info["info"].get(
                 "classifiers", []
@@ -149,6 +165,7 @@ def main():
         "active": dict(sorted(active.items())),
         "withdrawn": dict(sorted(withdrawn.items())),
         "deleted": dict(sorted(deleted.items())),
+        "denied": dict(sorted(denied.items())),
     }
     (PUBLIC / "classifiers.json").write_text(json.dumps(output, indent=2))
 
