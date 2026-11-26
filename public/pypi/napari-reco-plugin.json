@@ -7,17 +7,18 @@
       "Development Status :: 3 - Alpha",
       "Framework :: napari",
       "Intended Audience :: Science/Research",
-      "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+      "License :: OSI Approved :: MIT License",
       "Operating System :: OS Independent",
       "Programming Language :: Python :: 3",
       "Programming Language :: Python :: 3.10",
       "Programming Language :: Python :: 3.11",
       "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
       "Programming Language :: Python :: 3.9",
       "Topic :: Scientific/Engineering :: Image Processing",
       "Topic :: Scientific/Engineering :: Medical Science Apps."
     ],
-    "description": "# Reconstruction Napari Plugin\r\n\r\nA Napari plugin for tomographic reconstruction using the [ASTRA Toolbox](https://www.astra-toolbox.com/), with optional Paganin phase retrieval filter for phase-contrast data.\r\n\r\nSupported reconstruction algorithms: **FBP**, **BP**, **SIRT**, **SART**, **CGLS** \u2014 all available in CPU or GPU (CUDA) mode.\r\n\r\n## Installation\r\n\r\n### Option 1 \u2014 Install from Napari Hub (recommended)\r\n\r\nOnce published, the plugin can be installed directly from the Napari plugin manager:\r\n\r\n1. Open **Napari**\r\n2. Go to **Plugins > Install/Uninstall Plugins**\r\n3. Search for **\"napari-reco-plugin\"**\r\n4. Click **Install**\r\n\r\nAlternatively, install via pip:\r\n\r\n```bash\r\npip install napari-reco-plugin\r\n```\r\n\r\n---\r\n\r\n### Option 2 \u2014 Manual installation (development)\r\n\r\n#### 1. Create and activate a conda environment\r\n\r\n```bash\r\nconda create -n napari-env python=3.12\r\nconda activate napari-env\r\n```\r\n\r\n#### 2. Install main dependencies\r\n\r\n```bash\r\nconda install -c conda-forge napari pyqt\r\nconda install -c astra-toolbox -c nvidia astra-toolbox\r\n\r\n# Ensure compatibility with ASTRA\r\npip install numpy==1.26.4\r\n\r\n# Install CuPy depending on your CUDA version\r\npip install cupy-cuda12x  # or cupy-cuda11x\r\n```\r\n\r\n#### 3. Clone the repository\r\n\r\n```bash\r\ngit clone https://github.com/Clementcmoi/Reconstruction-napari-plugin.git\r\ncd Reconstruction-napari-plugin\r\n```\r\n\r\n#### 4. Install the plugin\r\n\r\n```bash\r\npip install -e .\r\n```\r\n\r\n---\r\n\r\n## Requirements\r\n\r\n### Core\r\n\r\n* Python \u2265 3.9\r\n* Napari\r\n* ASTRA Toolbox\r\n\r\n### Optional (for GPU acceleration)\r\n\r\n* CUDA Toolkit\r\n* CuPy\r\n\r\n\r\n> \u26a0\ufe0f GPU dependencies are not installed automatically. You must install them manually according to your system configuration.\r\n\r\n---\r\n\r\n## Usage\r\n\r\nStart Napari:\r\n\r\n```bash\r\nnapari\r\n```\r\n\r\nThen open the plugin via:\r\n\r\n```\r\nPlugins > Reconstruction Plugin\r\n```\r\n\r\nAvailable tools:\r\n\r\n* **Reconstruction**\r\n* **Multi Paganin**\r\n\r\n---\r\n\r\n## Launchers Templates\r\n\r\nTemplate scripts for launching Napari with the correct environment are available in the `launchers/` folder.\r\n\r\n### Usage\r\n\r\n1. Copy a `.bat` file from `launchers/`\r\n2. Edit:\r\n\r\n   * `<path_to_conda>` \u2192 your Anaconda/Miniconda path\r\n   * `<your_napari_env>` \u2192 your environment name\r\n3. Double-click to launch\r\n\r\n### Desktop shortcut (optional)\r\n\r\n* Right-click `.bat` \u2192 **Send to Desktop**\r\n* (Optional) Change icon via shortcut properties\r\n\r\n---\r\n\r\n## Project Structure\r\n\r\n* Plugin source code: `src/reco_plugin/`\r\n* Plugin manifest: `src/reco_plugin/napari.yaml`\r\n\r\n---\r\n\r\n## License\r\n\r\nThis project is licensed under the GNU General Public License v3.0 (GPL-3.0), in compliance with the [ASTRA Toolbox license](https://www.astra-toolbox.com/).\r\n",
+    "description": "# napari-reco-plugin\r\n\r\nA [napari](https://napari.org) plugin for parallel-beam tomographic reconstruction with the\r\n[ASTRA Toolbox](https://www.astra-toolbox.com/), with single-distance **Paganin** phase retrieval.\r\n\r\n- Reconstruction algorithms: **FBP, BP, SIRT, SART, CGLS**, on GPU (CUDA) or CPU.\r\n- Standard (180\u00b0 or 360\u00b0) and **half acquisition** (offset rotation axis, 360\u00b0) scans.\r\n- Flat/dark-field and double flat-field correction, measured angles read from `.nxs` files.\r\n- Centre-of-rotation tools: COR scan on one slice, automatic global COR (half acquisition).\r\n- **Big Data** mode: batch processing with lazy loading, result written to a temporary HDF5 file.\r\n- Readers for `.nxs` / `.tdf` (HDF5); writers for `.tif` and `.raw` (+ processing history as JSON).\r\n\r\nEverything also runs **without a GPU**: CuPy is optional (NumPy/SciPy are used instead) and\r\nASTRA's CPU algorithms are used when CUDA is not available.\r\n\r\n## Installation\r\n\r\n### pip\r\n\r\n```bash\r\npip install \"napari-reco-plugin[astra]\"        # plugin + ASTRA Toolbox\r\npip install cupy-cuda12x                       # optional: GPU arrays (or cupy-cuda11x)\r\n```\r\n\r\n### conda (recommended, GPU or CPU)\r\n\r\nFrom a clone of this repository, create a dedicated environment with everything\r\n(napari, ASTRA, CuPy, all from conda-forge) and the plugin in editable mode:\r\n\r\n```bash\r\nconda env create -f environment.yml\r\nconda activate napari-reco\r\nnapari\r\n```\r\n\r\nASTRA and CuPy use CUDA when an NVIDIA driver is present, otherwise the CPU.\r\nAvoid mixing Qt bindings in one environment (e.g. PyQt5 and PySide6): napari \u2265 0.10 needs Qt 6.\r\n\r\n### From source (development)\r\n\r\n```bash\r\ngit clone https://github.com/Clementcmoi/Reconstruction-napari-plugin.git\r\ncd Reconstruction-napari-plugin\r\npip install -e \".[testing]\"\r\n```\r\n\r\nThe array backend in use (`cupy (GPU)` or `numpy (CPU)`) is shown at the bottom of the\r\n*Reconstruction Algorithm* section. Set `RECO_PLUGIN_BACKEND=numpy` to force the CPU.\r\n\r\n## Usage\r\n\r\nStart napari, open a `.nxs`/`.tdf` file (projections, flats and darks become layers), then\r\n**Plugins \u203a Reconstruction Plugin \u203a Reconstruction**.\r\n\r\nTypical workflow in the *Reconstruction* panel:\r\n\r\n1. **Sample Selection** \u2013 choose the projection layer (angles \u00d7 rows \u00d7 columns). *Slice* is a\r\n   detector row (0 \u2026 rows \u2212 1).\r\n2. **Preprocessing** \u2013 tick *Flatfield* / *Darkfield* and choose their layers. *Apply* creates a\r\n   `preprocess_\u2026` layer, but it is optional: every action applies the correction itself.\r\n3. **Paganin** \u2013 energy (keV), distance (m), \u03b4/\u03b2, optional unsharp mask and outlier cleaning.\r\n   *Apply* creates a `paganin_\u2026_db<\u03b4/\u03b2>` layer (optional as well).\r\n4. **Center of Rotation** \u2013 *Standard*: enter a COR range and *Try Center of Rotation* (one\r\n   frame per COR value, listed in the layer metadata). *Half acquisition*: *Find Global Center of\r\n   Rotation*, then refine with *Try Center of Rotation* (\u00b1 delta around the value).\r\n5. **Reconstruction Algorithm** \u2013 algorithm, GPU or CPU, pixel size (m, also used for the units).\r\n6. **Process** \u2013 *Process one slice* or *Process all slices* (*Big Data* for volumes that do not\r\n   fit in RAM).\r\n\r\nResults carry their full processing history in the layer metadata, saved next to the image by\r\nthe `.tif` and `.raw` writers.\r\n\r\n### Good to know\r\n\r\n- **Parameters are read when you click.** Changing \u03b4/\u03b2 (or any field) is always taken into\r\n  account. A layer already filtered with Paganin is reused only if its parameters match the\r\n  current ones; otherwise the plugin goes back to the layer it was computed from, so Paganin is\r\n  never applied twice.\r\n- **Units:** pixel size and distance are in **metres** (0.65 \u00b5m \u2192 `0.65e-6`, 50 mm \u2192 `0.05`);\r\n  values that look like \u00b5m or mm are rejected, because they make \u03b4/\u03b2 seem to have no effect.\r\n  Commas are accepted as decimal separators. With a pixel size, reconstructions are in mm\u207b\u00b9.\r\n- **Without Paganin**, flat-field corrected transmissions I/I\u2080 are converted to attenuation\r\n  \u2212ln(I/I\u2080) before reconstruction (Paganin's output already is an attenuation).\r\n- The pixel size appears in the *Paganin* and *Reconstruction Algorithm* sections: it is the\r\n  same field (editing one updates the other).\r\n- **COR convention:** standard acquisition = position of the axis on the detector (pixels);\r\n  half acquisition = distance from the left detector edge to the axis (the overlap is 2 \u00d7 COR).\r\n- **SART iterations** are full sweeps over all projections.\r\n- **Big Data:** the temporary HDF5 output is deleted when its layer is removed or napari closes.\r\n  Datasets larger than `RECO_PLUGIN_LAZY_GB` (default 4 GB) are opened lazily by the reader.\r\n\r\n## Troubleshooting\r\n\r\n| Symptom | Cause / fix |\r\n| --- | --- |\r\n| Changing \u03b4/\u03b2 changes nothing | Check the units: the pixel size must be in metres (e.g. `0.65e-6`). |\r\n| *Use GPU (CUDA)* is greyed out | ASTRA cannot use CUDA on this machine: CPU algorithms are used. |\r\n| \"Another processing is still running\" | One job at a time; wait for the *Processing* window to close. |\r\n| \"no 1D dataset of N angles\" | Untick *Use the measured angles*, or check the file contains them. |\r\n\r\n## Development\r\n\r\n```bash\r\npip install -e \".[testing]\"\r\npytest            # CPU backend, offscreen Qt: no GPU or display needed\r\n```\r\n\r\nProject layout:\r\n\r\n```\r\nsrc/reco_plugin/\r\n\u251c\u2500\u2500 _widget.py, ui_sections.py           # Qt panel\r\n\u251c\u2500\u2500 _link.py                             # parameters \u2192 processing (background threads)\r\n\u251c\u2500\u2500 _reader.py, _writer.py, napari.yaml  # napari reader / writers / manifest\r\n\u251c\u2500\u2500 processing/                          # numerical code (Paganin, sinograms, COR, ASTRA)\r\n\u2514\u2500\u2500 utils/                               # backend (CuPy/NumPy), parameters, layers, Qt helpers\r\ntests/                                   # pytest suite\r\nlaunchers/                               # Windows .bat templates to start napari\r\n```\r\n\r\nSee [CHANGELOG.md](CHANGELOG.md) for the list of changes.\r\n\r\n## License\r\n\r\nMIT \u2014 see [LICENSE](LICENSE). The ASTRA Toolbox itself is distributed under the GPLv3.\r\n",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": null,
@@ -47,9 +48,11 @@
       "Source Code": "https://github.com/Clementcmoi/Reconstruction-napari-plugin"
     },
     "provides_extra": [
+      "astra",
+      "gpu",
       "testing"
     ],
-    "release_url": "https://pypi.org/project/napari-reco-plugin/0.1.6/",
+    "release_url": "https://pypi.org/project/napari-reco-plugin/0.2.0/",
     "requires_dist": [
       "h5py",
       "numpy",
@@ -60,17 +63,21 @@
       "dask[array]",
       "qtpy",
       "napari>=0.4.18",
+      "tifffile",
+      "astra-toolbox>=2.1; extra == \"astra\"",
+      "cupy-cuda12x; extra == \"gpu\"",
       "pytest; extra == \"testing\"",
-      "pytest-qt; extra == \"testing\"",
-      "napari[pyqt5]; extra == \"testing\""
+      "napari; extra == \"testing\"",
+      "PyQt6>=6.7; extra == \"testing\"",
+      "astra-toolbox>=2.1; extra == \"testing\""
     ],
     "requires_python": ">=3.9",
-    "summary": "A Napari plugin for tomographic reconstruction using the ASTRA Toolbox, with optional Paganin phase retrieval filter for phase-contrast data.",
-    "version": "0.1.6",
+    "summary": "Napari plugin for tomographic reconstruction (ASTRA Toolbox) with Paganin phase retrieval, on GPU or CPU",
+    "version": "0.2.0",
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 38413890,
+  "last_serial": 44206369,
   "ownership": {
     "organization": null,
     "roles": [
@@ -416,30 +423,78 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "0.2.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "925783a5946ee76c739452b5d171f188b9a408312264ef3edde19325673d3229"
+        },
+        "digests": {
+          "blake2b_256": "86ccebb3c429e697f90accca185c6636381f7c06472a68a0f3d2b081e5119190",
+          "md5": "035f065edf672b5e27ca48202cf868b7",
+          "sha256": "9deaf88e10bc1a5328b0443c328d0d925ea8c9e5f7861477f6f9d8e4f5622f65"
+        },
+        "downloads": -1,
+        "filename": "napari_reco_plugin-0.2.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "035f065edf672b5e27ca48202cf868b7",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 44378,
+        "upload_time": "2026-11-26T13:41:43",
+        "upload_time_iso_8601": "2026-11-26T13:41:43.925570Z",
+        "url": "https://files.pythonhosted.org/packages/86/cc/ebb3c429e697f90accca185c6636381f7c06472a68a0f3d2b081e5119190/napari_reco_plugin-0.2.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "2bdea2974e5920fce91710e029db19f1a86eaded4621deb75685a6b94e812894",
+          "md5": "77349289ca63b62ba7f9071799cebcff",
+          "sha256": "fd7062f490d69a474ed40ac8d9a795ab2fbbad6363854ef4f84ef127b961f57f"
+        },
+        "downloads": -1,
+        "filename": "napari_reco_plugin-0.2.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "77349289ca63b62ba7f9071799cebcff",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 46958,
+        "upload_time": "2026-11-26T13:41:45",
+        "upload_time_iso_8601": "2026-11-26T13:41:45.076221Z",
+        "url": "https://files.pythonhosted.org/packages/2b/de/a2974e5920fce91710e029db19f1a86eaded4621deb75685a6b94e812894/napari_reco_plugin-0.2.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
     ]
   },
   "urls": [
     {
       "comment_text": null,
       "core-metadata": {
-        "sha256": "6e035b03daf945d1ff0a5b3f1e458832597ce04819d0850a2dfbc2144c810dd6"
+        "sha256": "925783a5946ee76c739452b5d171f188b9a408312264ef3edde19325673d3229"
       },
       "digests": {
-        "blake2b_256": "173631d929d397c151d7a34d193187ccaa771b7f269c31b318bd65e4a4d60205",
-        "md5": "766ad3c7563c330c1228e4dc177d76c3",
-        "sha256": "39c1de1d9c4264bcc438699b29dcc1785b65d1e24f9277cb59ab57655ec9c71d"
+        "blake2b_256": "86ccebb3c429e697f90accca185c6636381f7c06472a68a0f3d2b081e5119190",
+        "md5": "035f065edf672b5e27ca48202cf868b7",
+        "sha256": "9deaf88e10bc1a5328b0443c328d0d925ea8c9e5f7861477f6f9d8e4f5622f65"
       },
       "downloads": -1,
-      "filename": "napari_reco_plugin-0.1.6-py3-none-any.whl",
+      "filename": "napari_reco_plugin-0.2.0-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "766ad3c7563c330c1228e4dc177d76c3",
+      "md5_digest": "035f065edf672b5e27ca48202cf868b7",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.9",
-      "size": 51615,
-      "upload_time": "2026-06-26T11:51:29",
-      "upload_time_iso_8601": "2026-06-26T11:51:29.012117Z",
-      "url": "https://files.pythonhosted.org/packages/17/36/31d929d397c151d7a34d193187ccaa771b7f269c31b318bd65e4a4d60205/napari_reco_plugin-0.1.6-py3-none-any.whl",
+      "size": 44378,
+      "upload_time": "2026-11-26T13:41:43",
+      "upload_time_iso_8601": "2026-11-26T13:41:43.925570Z",
+      "url": "https://files.pythonhosted.org/packages/86/cc/ebb3c429e697f90accca185c6636381f7c06472a68a0f3d2b081e5119190/napari_reco_plugin-0.2.0-py3-none-any.whl",
       "yanked": false,
       "yanked_reason": null
     },
@@ -447,21 +502,21 @@
       "comment_text": null,
       "core-metadata": false,
       "digests": {
-        "blake2b_256": "d046d7363e338d5182d7097895272a66efe34f3fbf2274545bd1b979953335cb",
-        "md5": "5ffe85d6055b94516296d812183d5416",
-        "sha256": "ee19b0bc101d5ef85a44cb1b2339e0a33dca91330a35da94540b59900825f728"
+        "blake2b_256": "2bdea2974e5920fce91710e029db19f1a86eaded4621deb75685a6b94e812894",
+        "md5": "77349289ca63b62ba7f9071799cebcff",
+        "sha256": "fd7062f490d69a474ed40ac8d9a795ab2fbbad6363854ef4f84ef127b961f57f"
       },
       "downloads": -1,
-      "filename": "napari_reco_plugin-0.1.6.tar.gz",
+      "filename": "napari_reco_plugin-0.2.0.tar.gz",
       "has_sig": false,
-      "md5_digest": "5ffe85d6055b94516296d812183d5416",
+      "md5_digest": "77349289ca63b62ba7f9071799cebcff",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.9",
-      "size": 44695,
-      "upload_time": "2026-06-26T11:51:29",
-      "upload_time_iso_8601": "2026-06-26T11:51:29.987201Z",
-      "url": "https://files.pythonhosted.org/packages/d0/46/d7363e338d5182d7097895272a66efe34f3fbf2274545bd1b979953335cb/napari_reco_plugin-0.1.6.tar.gz",
+      "size": 46958,
+      "upload_time": "2026-11-26T13:41:45",
+      "upload_time_iso_8601": "2026-11-26T13:41:45.076221Z",
+      "url": "https://files.pythonhosted.org/packages/2b/de/a2974e5920fce91710e029db19f1a86eaded4621deb75685a6b94e812894/napari_reco_plugin-0.2.0.tar.gz",
       "yanked": false,
       "yanked_reason": null
     }
