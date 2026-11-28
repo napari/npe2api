@@ -11,8 +11,8 @@ Much of this code is taken from `npe2._inspection._fetch`, where
 import json
 import sys
 from concurrent.futures import ProcessPoolExecutor
+from dataclasses import dataclass
 from pathlib import Path
-from typing import TypedDict
 
 from npe2 import fetch_manifest
 from packaging.version import Version
@@ -41,7 +41,8 @@ def _current_manifest_is_valid(name: str, version: str) -> bool:
         return False
 
 
-class ManifestError(TypedDict):
+@dataclass
+class ManifestError:
     name: str
     version: str
     error: str
