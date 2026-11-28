@@ -1,0 +1,167 @@
+{
+  "name": "napari-reco-plugin",
+  "display_name": "Reconstruction Plugin",
+  "visibility": "public",
+  "icon": null,
+  "categories": [],
+  "schema_version": "0.2.0",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-reco-plugin.reconstruction",
+        "title": "Reconstruction",
+        "python_name": "reco_plugin._widget:ReconstructionWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-reco-plugin.get_reader",
+        "title": "Read NXS Files",
+        "python_name": "reco_plugin._reader:napari_get_reader",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-reco-plugin.tif_writer",
+        "title": "Write TIF Files",
+        "python_name": "reco_plugin._writer:write_tiff",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-reco-plugin.raw_writer",
+        "title": "Write Raw Files",
+        "python_name": "reco_plugin._writer:write_raw",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": [
+      {
+        "command": "napari-reco-plugin.get_reader",
+        "filename_patterns": [
+          "*.nxs",
+          "*.tdf",
+          "*.NXS",
+          "*.TDF"
+        ],
+        "accepts_directories": false
+      }
+    ],
+    "writers": [
+      {
+        "command": "napari-reco-plugin.tif_writer",
+        "layer_types": [
+          "image"
+        ],
+        "filename_extensions": [
+          ".tif"
+        ],
+        "display_name": ""
+      },
+      {
+        "command": "napari-reco-plugin.raw_writer",
+        "layer_types": [
+          "image"
+        ],
+        "filename_extensions": [
+          ".raw"
+        ],
+        "display_name": ""
+      }
+    ],
+    "widgets": [
+      {
+        "command": "napari-reco-plugin.reconstruction",
+        "display_name": "Reconstruction",
+        "autogenerate": false,
+        "default_dock_area": "right",
+        "tabify": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configurations": {}
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "napari-reco-plugin",
+    "version": "0.2.0",
+    "dynamic": [
+      "license-file"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "Napari plugin for tomographic reconstruction (ASTRA Toolbox) with Paganin phase retrieval, on GPU or CPU",
+    "description": "# napari-reco-plugin\n\nA [napari](https://napari.org) plugin for parallel-beam tomographic reconstruction with the\n[ASTRA Toolbox](https://www.astra-toolbox.com/), with single-distance **Paganin** phase retrieval.\n\n- Reconstruction algorithms: **FBP, BP, SIRT, SART, CGLS**, on GPU (CUDA) or CPU.\n- Standard (180° or 360°) and **half acquisition** (offset rotation axis, 360°) scans.\n- Flat/dark-field and double flat-field correction, measured angles read from `.nxs` files.\n- Centre-of-rotation tools: COR scan on one slice, automatic global COR (half acquisition).\n- **Big Data** mode: batch processing with lazy loading, result written to a temporary HDF5 file.\n- Readers for `.nxs` / `.tdf` (HDF5); writers for `.tif` and `.raw` (+ processing history as JSON).\n\nEverything also runs **without a GPU**: CuPy is optional (NumPy/SciPy are used instead) and\nASTRA's CPU algorithms are used when CUDA is not available.\n\n## Installation\n\n### pip\n\n```bash\npip install \"napari-reco-plugin[astra]\"        # plugin + ASTRA Toolbox\npip install cupy-cuda12x                       # optional: GPU arrays (or cupy-cuda11x)\n```\n\n### conda (recommended, GPU or CPU)\n\nFrom a clone of this repository, create a dedicated environment with everything\n(napari, ASTRA, CuPy, all from conda-forge) and the plugin in editable mode:\n\n```bash\nconda env create -f environment.yml\nconda activate napari-reco\nnapari\n```\n\nASTRA and CuPy use CUDA when an NVIDIA driver is present, otherwise the CPU.\nAvoid mixing Qt bindings in one environment (e.g. PyQt5 and PySide6): napari ≥ 0.10 needs Qt 6.\n\n### From source (development)\n\n```bash\ngit clone https://github.com/Clementcmoi/Reconstruction-napari-plugin.git\ncd Reconstruction-napari-plugin\npip install -e \".[testing]\"\n```\n\nThe array backend in use (`cupy (GPU)` or `numpy (CPU)`) is shown at the bottom of the\n*Reconstruction Algorithm* section. Set `RECO_PLUGIN_BACKEND=numpy` to force the CPU.\n\n## Usage\n\nStart napari, open a `.nxs`/`.tdf` file (projections, flats and darks become layers), then\n**Plugins › Reconstruction Plugin › Reconstruction**.\n\nTypical workflow in the *Reconstruction* panel:\n\n1. **Sample Selection** – choose the projection layer (angles × rows × columns). *Slice* is a\n   detector row (0 … rows − 1).\n2. **Preprocessing** – tick *Flatfield* / *Darkfield* and choose their layers. *Apply* creates a\n   `preprocess_…` layer, but it is optional: every action applies the correction itself.\n3. **Paganin** – energy (keV), distance (m), δ/β, optional unsharp mask and outlier cleaning.\n   *Apply* creates a `paganin_…_db<δ/β>` layer (optional as well).\n4. **Center of Rotation** – *Standard*: enter a COR range and *Try Center of Rotation* (one\n   frame per COR value, listed in the layer metadata). *Half acquisition*: *Find Global Center of\n   Rotation*, then refine with *Try Center of Rotation* (± delta around the value).\n5. **Reconstruction Algorithm** – algorithm, GPU or CPU, pixel size (m, also used for the units).\n6. **Process** – *Process one slice* or *Process all slices* (*Big Data* for volumes that do not\n   fit in RAM).\n\nResults carry their full processing history in the layer metadata, saved next to the image by\nthe `.tif` and `.raw` writers.\n\n### Good to know\n\n- **Parameters are read when you click.** Changing δ/β (or any field) is always taken into\n  account. A layer already filtered with Paganin is reused only if its parameters match the\n  current ones; otherwise the plugin goes back to the layer it was computed from, so Paganin is\n  never applied twice.\n- **Units:** pixel size and distance are in **metres** (0.65 µm → `0.65e-6`, 50 mm → `0.05`);\n  values that look like µm or mm are rejected, because they make δ/β seem to have no effect.\n  Commas are accepted as decimal separators. With a pixel size, reconstructions are in mm⁻¹.\n- **Without Paganin**, flat-field corrected transmissions I/I₀ are converted to attenuation\n  −ln(I/I₀) before reconstruction (Paganin's output already is an attenuation).\n- The pixel size appears in the *Paganin* and *Reconstruction Algorithm* sections: it is the\n  same field (editing one updates the other).\n- **COR convention:** standard acquisition = position of the axis on the detector (pixels);\n  half acquisition = distance from the left detector edge to the axis (the overlap is 2 × COR).\n- **SART iterations** are full sweeps over all projections.\n- **Big Data:** the temporary HDF5 output is deleted when its layer is removed or napari closes.\n  Datasets larger than `RECO_PLUGIN_LAZY_GB` (default 4 GB) are opened lazily by the reader.\n\n## Troubleshooting\n\n| Symptom | Cause / fix |\n| --- | --- |\n| Changing δ/β changes nothing | Check the units: the pixel size must be in metres (e.g. `0.65e-6`). |\n| *Use GPU (CUDA)* is greyed out | ASTRA cannot use CUDA on this machine: CPU algorithms are used. |\n| \"Another processing is still running\" | One job at a time; wait for the *Processing* window to close. |\n| \"no 1D dataset of N angles\" | Untick *Use the measured angles*, or check the file contains them. |\n\n## Development\n\n```bash\npip install -e \".[testing]\"\npytest            # CPU backend, offscreen Qt: no GPU or display needed\n```\n\nProject layout:\n\n```\nsrc/reco_plugin/\n├── _widget.py, ui_sections.py           # Qt panel\n├── _link.py                             # parameters → processing (background threads)\n├── _reader.py, _writer.py, napari.yaml  # napari reader / writers / manifest\n├── processing/                          # numerical code (Paganin, sinograms, COR, ASTRA)\n└── utils/                               # backend (CuPy/NumPy), parameters, layers, Qt helpers\ntests/                                   # pytest suite\nlaunchers/                               # Windows .bat templates to start napari\n```\n\nSee [CHANGELOG.md](CHANGELOG.md) for the list of changes.\n\n## License\n\nMIT — see [LICENSE](LICENSE). The ASTRA Toolbox itself is distributed under the GPLv3.\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": null,
+    "download_url": null,
+    "author": null,
+    "author_email": "Clément Capdeville <clement.capdeville@univ-lyon1.fr>",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "MIT License\n\nCopyright (c) 2024 Clément Capdeville\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n",
+    "classifier": [
+      "Development Status :: 3 - Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "License :: OSI Approved :: MIT License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.9",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Scientific/Engineering :: Image Processing",
+      "Topic :: Scientific/Engineering :: Medical Science Apps."
+    ],
+    "requires_dist": [
+      "h5py",
+      "numpy",
+      "scipy",
+      "tqdm",
+      "scikit-image",
+      "matplotlib>=3.5",
+      "dask[array]",
+      "qtpy",
+      "napari>=0.4.18",
+      "tifffile",
+      "astra-toolbox>=2.1; extra == \"astra\"",
+      "cupy-cuda12x; extra == \"gpu\"",
+      "pytest; extra == \"testing\"",
+      "napari; extra == \"testing\"",
+      "PyQt6>=6.7; extra == \"testing\"",
+      "astra-toolbox>=2.1; extra == \"testing\""
+    ],
+    "requires_python": ">=3.9",
+    "requires_external": null,
+    "project_url": [
+      "Bug Tracker, https://github.com/Clementcmoi/Reconstruction-napari-plugin/issues",
+      "Source Code, https://github.com/Clementcmoi/Reconstruction-napari-plugin"
+    ],
+    "provides_extra": [
+      "astra",
+      "gpu",
+      "testing"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}

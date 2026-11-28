@@ -1,0 +1,90 @@
+{
+  "name": "napari-manual-labels-editor",
+  "display_name": "Manual Labels Editor",
+  "visibility": "public",
+  "icon": "",
+  "categories": [],
+  "schema_version": "0.2.1",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-manual-labels-editor.make_manual_labels_editor_widget",
+        "title": "Manual Labels Editor (Manual Labels Editor)",
+        "python_name": "napari_manual_labels_editor._widget:make_manual_labels_editor_widget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "napari-manual-labels-editor.make_manual_labels_editor_widget",
+        "display_name": "Manual Labels Editor",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configuration": []
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "napari-manual-labels-editor",
+    "version": "0.1.4",
+    "dynamic": [
+      "license-file"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "Manual fine-tuning toolkit for napari Labels: compute stats, assign new IDs, delete/merge labels, relabel to 1..N, and save LZW BigTIFF safely.",
+    "description": "# napari-manual-labels-editor\n\nManual fine-tuning toolkit for **napari Labels** (integer label masks).\nDesigned for “after segmentation” workflows where you need to **inspect, fix, and export** large label images safely (e.g., TIFF/LZW/BigTIFF).\n\nTutorial video: https://www.youtube.com/watch?v=cQf_7ExGQHk&t=15s\n\n## What it does\n\nThis plugin operates on a **napari Labels layer** (background must be `0`) and provides a small, fast panel to:\n\n- **Pick Active Layer**: choose the current active Image/Labels layer; if it’s an Image, it can be converted to Labels (integer).\n- **Compute Stats (safe)**: compute `maxID` and `cells` without heavy `np.unique` (safer for large arrays).\n- **New ID (max+1)**: set selected label to `maxID + 1` so you can paint a new object.\n- **Delete selected ID**: delete the currently selected label ID (set its pixels to `0`).\n- **Compact IDs Order (1..N)**: relabel present IDs to consecutive `1..N` (useful before export).\n- **Merge (Shift-click)**: when merge is enabled, **Shift-click A**, then **Shift-click B** to merge **B → A** (into A).\n- **Fill closed shape**: draw a closed outline, then fill the enclosed region for the selected label.\n- **Filter small labels (to new layer)**: remove tiny fragments by area threshold while keeping the original layer unchanged.\n- **Undo / Redo**: revert recent edits made through the plugin’s actions (pixel edits only).\n- **Blink**: quick visibility toggling for spot-checking edits.\n- **Jump to label (J)**: jump to a specific label ID via a dialog (sets `selected_label`).\n\nExport:\n\n- **Save labels to TIFF** (LZW + BigTIFF enabled).\n  Use **Browse…** to pick an output path, then click **Save**.\n\n## Compatibility\n\n- Python: 3.10–3.13 (tested on 3.11)\n- napari: 0.6.x\n- Layer type: **Labels** (integer), background `0`\n\n## Installation\n\n### From PyPI (recommended)\n\n```bash\npip install napari-manual-labels-editor\n```\n\nIf you don’t have napari yet:\n\n```bash\npip install \"napari[all]\" napari-manual-labels-editor\n```\n\n### From GitHub (latest main)\n\n```bash\npip install -U \"git+https://github.com/yaohualee1215-bit/napari-manual-labels-editor.git\"\n```\n\n## Usage (inside napari)\n\n1. Launch napari and load your **Labels** layer (and optional background image).\n2. Open the plugin panel:\n\n   **Plugins → Manual Labels Editor → Manual Labels Editor**\n\n3. Click **Pick Active Layer (Image or Labels)**\n   Make sure the layer you want is the **active** layer in the layer list first.\n4. (Optional but recommended) Click **Compute Stats (safe)**\n   The status area will show `selected`, `cells`, `maxID`, and `merge` state.\n\n### Hotkeys\n\n- `N` — **New ID (max+1)**\n- `F` — **Fill closed shape**\n- `Shift+F` — **Fill closed shape + Next ID**\n- `J` — **Jump to label ID** (dialog)\n\nNotes:\n- Hotkeys are captured by the napari viewer. If a key seems unresponsive, click once on the canvas to give the viewer focus.\n- napari also has its own built-in tools/hotkeys (e.g., paint/fill modes); you can keep using those alongside this plugin.\n\n### UI behavior (narrow dock)\n\n- The dock panel can be resized narrower without hiding critical controls.\n- **Browse…** and **Save** are protected from being shrunk to zero width.\n\n### Undo / Redo behavior\n\n- Undo/Redo reverts recent pixel edits made via the plugin’s actions (e.g., fill closed, delete, merge, relabel/filter).\n- Changing the selected label / “New ID” alone does not change pixels, so it is not treated as an edit step to undo.\n- Standard behavior: if you Undo and then make a new edit, the Redo history is cleared.\n\n### Export\n\n1. Click **Browse…** to choose an output file path (TIFF).\n2. Click **Save**.\n\nNotes:\n- TIFF writer uses `compression=\"lzw\"` and `bigtiff=True`.\n\n## Notes\n\n### Large LZW TIFF support\n\nIf LZW read/write fails or is slow, install `imagecodecs`:\n\n```bash\nconda install -c conda-forge imagecodecs\n```\n\n## License\n\nBSD-3-Clause\n",
+    "description_content_type": "text/markdown",
+    "keywords": null,
+    "home_page": null,
+    "download_url": null,
+    "author": "Yaohua Li",
+    "author_email": "liyaohua12345@foxmail.com",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": "Copyright (c) 2026, Yaohua Li\nAll rights reserved.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n\n* Redistributions of source code must retain the above copyright notice, this\n  list of conditions and the following disclaimer.\n\n* Redistributions in binary form must reproduce the above copyright notice,\n  this list of conditions and the following disclaimer in the documentation\n  and/or other materials provided with the distribution.\n\n* Neither the name of copyright holder nor the names of its\n  contributors may be used to endorse or promote products derived from\n  this software without specific prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\"\nAND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\nIMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\nDISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE\nFOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\nDAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR\nSERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER\nCAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,\nOR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\nOF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n",
+    "classifier": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "requires_dist": [
+      "numpy",
+      "magicgui",
+      "qtpy",
+      "scikit-image",
+      "napari[all]; extra == \"all\""
+    ],
+    "requires_python": ">=3.10",
+    "requires_external": null,
+    "project_url": null,
+    "provides_extra": [
+      "all"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}

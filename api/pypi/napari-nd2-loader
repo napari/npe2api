@@ -1,0 +1,188 @@
+{
+  "info": {
+    "author": "Nils Friederich, Philip Kohle, Mona Wellh\u00e4usser, Lennart Hilbert, Ralf Mikut",
+    "author_email": null,
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 4 - Beta",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Programming Language :: Python :: 3.14",
+      "Topic :: Scientific/Engineering :: Bio-Informatics",
+      "Topic :: Scientific/Engineering :: Image Processing",
+      "Topic :: Scientific/Engineering :: Visualization"
+    ],
+    "description": "# napari-nd2-loader\n\n[![CI](https://github.com/N-Friederich/napari-nd2-loader/actions/workflows/ci.yml/badge.svg)](https://github.com/N-Friederich/napari-nd2-loader/actions/workflows/ci.yml)\n[![PyPI](https://img.shields.io/pypi/v/napari-nd2-loader.svg)](https://pypi.org/project/napari-nd2-loader/)\n[![Python versions](https://img.shields.io/pypi/pyversions/napari-nd2-loader.svg)](https://pypi.org/project/napari-nd2-loader/)\n[![License](https://img.shields.io/github/license/N-Friederich/napari-nd2-loader)](https://github.com/N-Friederich/napari-nd2-loader/blob/main/LICENSE)\n[![codecov](https://codecov.io/gh/N-Friederich/napari-nd2-loader/graph/badge.svg)](https://codecov.io/gh/N-Friederich/napari-nd2-loader)\n[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)\n[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)\n\nA [napari](https://napari.org) plugin for Nikon `.nd2` microscopy files, built\non [`nd2`](https://pypi.org/project/nd2/). Inspect channels, positions, spacing,\nand memory cost before reading pixels, load in pixel coordinates for accurate\ndrawing, and switch any calibrated file to micrometres later without rebuilding\nits layers.\n\n*Not the [`napari-nd2`](https://pypi.org/project/napari-nd2/) package on PyPI\n(Georgeos Hardo, BSD-3-Clause, 0.1.1), which is a separate lazy-only `.nd2`\nreader.*\n\n![Demo of napari-nd2-loader: an ND2 stack is dragged onto the napari canvas so its first position loads in wavelength colours with sampled contrast limits and without its two blank channels, and the ND2 Loader panel opens filled in with size, pixel size, objective, and date. A second position (pos1) is ticked and Update adds it into an automatic side-by-side gallery sharing the same channel contrast limits. Units is switched to Calibrated (\u00b5m) and Update rescales the same layers in place with the scale bar switching to \u00b5m. Finally the viewer switches to 3D, scrolls out slightly, and tilts both stacks to show their true Z proportions.](https://raw.githubusercontent.com/N-Friederich/napari-nd2-loader/v0.1.0/docs/demo.gif)\n\n## Installation\n\n```bash\npip install napari-nd2-loader\n```\n\nOlder JPEG2000-compressed `.nd2` files need the legacy decoder extra:\n\n```bash\npip install \"napari-nd2-loader[legacy]\"\n```\n\nYou also need napari with a Qt backend, for example `pip install \"napari[all]\"`\n(which installs PyQt6).\n\nIf both `napari-nd2` and `napari-nd2-loader` (or another `.nd2` reader) are\ninstalled in the same environment, napari prompts you to choose a reader when\nopening an `.nd2` file or uses whichever reader is saved in your preferences.\nSelect **ND2 Loader** in napari's reader dialog and tick \"Remember this\nchoice\", or assign `.nd2` to **ND2 Loader** under **Preferences -> Plugins**.\n\n## Quick start: drop a file\n\nDrag any `.nd2` file onto the napari canvas. napari-nd2-loader loads a fast, safe\ndefault:\n\n- the **first position** only, if the file has several,\n- every **fluorescent or brightfield channel**, skipping channels whose whole\n  name is `blank` or `black` (case-insensitive) and unnamed channels (unless\n  every channel matches), checked by name only, never by pixel values,\n- every timepoint and Z slice, in **pixel coordinates** so drawn masks line up.\n\nOnly the selected position is read from disk (channels within a frame are\ninterleaved in `.nd2` files, so only the selected channels are kept in memory).\nThe **ND2 Loader** panel opens on the right already filled in for that file.\nTick additional channels or positions and press **Update** to add them without\nrebuilding what is already on screen.\n\nTo inspect a file before loading any pixels, open **Plugins -> ND2 Loader**,\nclick **Browse...**, pick your channels, positions, memory mode, and units, and\npress **Load** (the button changes to **Update** once layers from that file are\nloaded). Typing a path and pressing **Open** loads immediately (preserving any\nradios you ticked on an empty panel, or resetting to session defaults when\nswitching from another open file).\n\n## The panel at a glance\n\n![The ND2 Loader panel showing a multi-position ND2 file with size, pixel size, objective, acquisition date, channels, positions, memory strategy, coordinate units, and the collapsed resize section.](https://raw.githubusercontent.com/N-Friederich/napari-nd2-loader/v0.1.0/docs/screenshot-panel.png)\n\n- **File facts (\"What is in it\")**: Shows image dimensions, bit depth, pixel and\n  Z spacing, plus the objective and acquisition date whenever the file records\n  them. Every loaded layer also keeps acquisition facts under\n  `layer.metadata[\"napari_nd2_loader\"][\"acquisition\"]` (per-channel excitation\n  and emission wavelengths, objective name, magnification and its\n  `magnification_source` (`\"file\"` when read from the file's numeric field or\n  `\"objective name\"` when `nd2` parsed it from the objective label), numerical\n  aperture, immersion refractive index, zoom, modality, and Nikon's `text_info`\n  description, date, and capture settings).\n- **Channels and positions**: One napari image layer per ticked position-channel\n  pair. Position labels always keep the 0-based index first (`pos0 \u00b7 A1` when\n  the file's XY-position loop names it, or `pos0` alone when unnamed; long names\n  elide only the name so `pos0` stays readable), and named positions appear in\n  the panel, layer names (`stack_pos0 \u00b7 A1_mCherry` when named; unnamed\n  multi-position loads use `stack_pos1_mCherry` and unnamed drops omit `pos0`),\n  and state line. Use **All**, **None**, and **Untick Black** for quick\n  selection.\n- **Display defaults**: Each position's channels stack as an additive composite\n  over an opaque bottom layer so positions never sum together. Display colours\n  follow emission wavelength (blue <= 470 nm, cyan 471-500 nm, green 501-545 nm,\n  magenta > 545 nm, with collisions shifted to yellow or cyan, and transmitted\n  light kept gray). Scalar channels start with contrast limits set to the 1st\n  and 99.5th percentiles of sampled frames (first, middle, and last timepoint,\n  middle Z, every 4th row and column) while their contrast slider range spans\n  the full dtype range; positions of the same channel loaded together share\n  pooled limits, and adding a later position copies that channel's current\n  viewer limits. RGB images keep their true colours with no stretch; in-memory\n  layers sample what is already in RAM and virtual stacks read only those\n  sampled frames once per frame across channels. Loading more than one position\n  automatically opens napari's grid gallery with one position per tile and\n  refits the camera. Blending or colour changes you make by hand are preserved,\n  and a grid you configure by hand stays yours with a one-time notice in the\n  state line; turning napari's grid off returns grid control to the plugin on\n  the next **Load** or **Update** (a gallery turned off by hand stays off until\n  you toggle napari's grid button or apply a **Load** / **Update**).\n- **Load / Update**: Update applies only the difference. Newly ticked channels\n  are added, unticked ones are removed, and existing layers keep their contrast,\n  colormap, gamma, opacity, visibility, and order.\n- **Per-file controls**: **Memory**, **Units**, and **Resize** are per-file\n  choices; opening or dropping another file resets them to session defaults so\n  settings from one file never carry over silently to the next.\n- **Advanced: resize the image**: Collapsed by default. You do not need to\n  resample just to view true 3D proportions because **Calibrated (\u00b5m)** already\n  applies the physical Z spacing. Open it only when a downstream tool needs an\n  **Isotropic** or **Custom size** pixel array (in-memory loads only).\n\n## Units and micrometres (\u00b5m)\n\n![Two positions of a multi-channel ND2 stack displayed side by side in 3D with Calibrated (\u00b5m) units active and the scale bar reading in \u00b5m.](https://raw.githubusercontent.com/N-Friederich/napari-nd2-loader/v0.1.0/docs/screenshot-loaded.png)\n\nMicroscopy files carry a physical voxel size in micrometres, while masks and\nlabels in napari default to pixel coordinates (scale 1). Choosing **Units**\ncontrols this per file:\n\n- **Pixels** (default): layers load at scale 1 so Labels, Points, and Shapes\n  drawn in napari sit directly on the image grid.\n- **Calibrated (\u00b5m)**: layers use the file's physical voxel size so napari's\n  scale bar, measurements, and 3D Z proportions are in micrometres.\n\nSwitch a loaded file's **Units** radio and press **Update** to rescale its\nlayers in place and refit the camera: **in-memory layers rescale with no disk\nreads**, and **virtual stacks keep the same Dask layer without rebuilding it**\nwhile napari re-slices the displayed 2D plane (or renders the displayed 3D\nvolume when in 3D). If a file lacks calibration on a spatial axis (such as an\nuncalibrated Z step), Update keeps it in pixels and tells you why.\n\n**Drawn layers do not rescale with images.** If you have Labels, Points, Shapes,\nTracks, Vectors, or Surface layers in the viewer, the panel warns you that they\nstay in their own coordinates when you change units. Note also that napari's\nbottom status bar displays world coordinates without a unit suffix (integers on\nnapari 0.7-0.8; integers in Pixels and decimals in \u00b5m on napari 0.9+).\n\n## Memory and virtual stacks\n\nLike Fiji's Bio-Formats virtual stack option, **Memory** lets you decide how\nmuch data sits in RAM:\n\n- **Automatic** (default): uses a virtual stack (Dask) for timelapses or when\n  the selected data exceeds half of free RAM, and loads into memory (NumPy) for\n  smaller stacks.\n- **Use virtual stack**: reads slices from disk on demand (fast to open, low\n  idle RAM). Switching napari to **3D** pulls the whole volume at once, so the\n  panel shows the estimated 3D cost beforehand.\n- **Load into memory**: reads the selection into NumPy arrays, asking for\n  confirmation first when **Load** exceeds free RAM (or when an **Update**\n  exceeds half of free RAM).\n\nThe summary line shows the estimated size in MB or GB before you press **Load**\nor **Update**. Full details on coordinates, change detection, memory estimates,\nand scripting are in [docs/DETAILS.md](https://github.com/N-Friederich/napari-nd2-loader/blob/v0.1.0/docs/DETAILS.md).\n\n## How it compares\n\n| Plugin | Formats | Licence | Interactive dock panel | Memory & loading | Display & coordinates |\n|---|---|---|---|---|---|\n| **napari-nd2-loader** (this plugin) | `.nd2` only | Apache-2.0 | Yes (**ND2 Loader**): channel/position/memory/units/resize selection, objective/date inspection, and incremental **Update** | Automatic (Dask virtual stack or NumPy in memory) against free RAM; position-scoped reads | Wavelength composites, shared per-channel contrast limits, position names from file, automatic multi-position gallery, per-file Pixels / \u00b5m toggle, acquisition metadata with magnification provenance |\n| [`napari-nd2`](https://pypi.org/project/napari-nd2/) (Georgeos Hardo, 0.1.1) | `.nd2` only | BSD-3-Clause | No (reader only; no panel and no choice of channels, positions, or memory before loading) | Lazy-only reader; opens every position at once as one slider | Calibrated Z/Y/X in \u00b5m and T in s; canvas caption with position name and time; contrast from sampled frames; channel colours from file |\n| [`bioio`](https://github.com/bioio-devs/bioio) / [`ndevio`](https://github.com/ndev-kit/ndevio) | Multi-format (`.nd2` via `bioio-nd2`, OME-TIFF, CZI, LIF, etc.) | BSD-3-Clause (core and `bioio-nd2`; some format extras GPL-3) | `bioio` is a Python library; `ndevio` provides multi-scene selection and reader-installer widgets without `.nd2`-specific channel/memory/units/resize pre-load controls | General-purpose bioimage readers | Format-agnostic layer loading |\n\n## Good to know & limitations\n\n- **Deleting a layer does not untick its channel.** Untick the channel in the\n  panel and press **Update** to remove it permanently; otherwise the next\n  **Update** reloads the missing layer.\n- **Drawn or foreign layers pause the gallery.** Adding a **Labels**, **Points**,\n  or other non-ND2 layer turns the automatic multi-position gallery off until\n  that layer is removed (so masks are never tiled alongside unrelated positions).\n- **Opening the same path twice creates a second group.** Dropping a file again\n  or clicking **Open** creates a second independent row and layer group;\n  **Browse...** switches back to an already-open unchanged row.\n- **Keep one ND2 Loader dock open** per viewer rather than opening two side by\n  side.\n- **In-memory loads block the UI** while pixels are read (no progress bar or\n  cancel button yet).\n- **Virtual stacks still cache displayed slices** in napari, and switching to 3D\n  loads the full volume.\n- **Blank-channel filtering checks names only**, never pixel values. A channel\n  named `Black` with real signal starts unticked, and an empty channel with a\n  probe name stays ticked.\n- **3D light-theme blending**: in 3D with napari's light theme, an additive\n  channel over an empty or background-clipped base layer vanishes completely\n  (not visible against the light canvas, which is napari's own 3D additive\n  blending behaviour).\n- **Axis names on sliders** appear on napari 0.9+ (napari 0.7 and 0.8 show\n  numeric indices, though `layer.axis_labels` is set on every version).\n- **Scripting**: napari's `viewer.open(path)` defaults to `plugin=\"napari\"`, so\n  pass `viewer.open(\"stack.nd2\", plugin=\"napari-nd2-loader\")` explicitly (see\n  [docs/DETAILS.md](https://github.com/N-Friederich/napari-nd2-loader/blob/v0.1.0/docs/DETAILS.md) for headless `npe2.read` usage and\n  in-place array caveats).\n- **Multi-file stacking** (Shift-drop) is refused with a message because two\n  ND2s can differ in channels or calibration. Open them separately instead.\n\n## Compatibility and tested versions\n\nRequires Python 3.11+ and napari 0.7.0+ with PyQt6 or PySide6. The table below\nseparates what has been run locally from the GitHub Actions CI matrix (which\nruns on pushes to `main` and pull requests):\n\n| napari | Python | Qt binding | Verification status |\n|---|---|---|---|\n| 0.7.0 (floor) | 3.11-3.13 (local & CI) | PyQt6 | Full wheel unit suite + real-window GUI tests verified locally on macOS (2026-11-25); pinned in CI (Linux) |\n| 0.8.0 | 3.12 | PyQt6 | Full wheel unit suite + GUI grid checks verified locally on macOS (2026-11-25); pinned in CI (Linux) |\n| 0.9.0 | 3.12 | PyQt6 | Full wheel unit suite + GUI grid checks verified locally on macOS (2026-11-25); pinned in CI (Linux) |\n| 0.10.0 | 3.11-3.13 (local); 3.12 (CI) | PyQt6, PySide6 (3.12) | Full wheel unit suite, coverage check, + real-window GUI tests verified locally on macOS (2026-11-25); pinned in CI (Linux) |\n| latest | 3.11-3.14 (Linux); 3.13 (macOS, Windows) | PyQt6, PySide6 (Linux) | Configured in CI matrix (`ci.yml`), plus Linux Xvfb real-display drop test |\n\n## Development\n\n```bash\npip install -e \".[testing]\"\npytest\npre-commit run --all-files\n```\n\nSee [CONTRIBUTING.md](https://github.com/N-Friederich/napari-nd2-loader/blob/v0.1.0/CONTRIBUTING.md) for real-file tests (`ND2_TEST_FILES`),\nPySide6 testing, and [docs/GUI_SMOKE_TEST.md](https://github.com/N-Friederich/napari-nd2-loader/blob/v0.1.0/docs/GUI_SMOKE_TEST.md) for the\nmanual real-window checklist.\n\n## Citing\n\nIf napari-nd2-loader is useful in published work, please cite it using\n[CITATION.cff](https://github.com/N-Friederich/napari-nd2-loader/blob/v0.1.0/CITATION.cff):\n\n```bibtex\n@software{friederich_napari_nd2_loader,\n  author  = {Friederich, Nils and Kohle, Philip and Wellh\u00e4usser, Mona and\n             Hilbert, Lennart and Mikut, Ralf},\n  title   = {napari-nd2-loader},\n  year    = {2026},\n  version = {0.1.0},\n  url     = {https://github.com/N-Friederich/napari-nd2-loader}\n}\n```\n\nA Zenodo concept DOI will be added here and to `CITATION.cff` once the first\nrelease is archived.\n\n## Acknowledgements\n\nN. Friederich is funded through the graduate school \"Helmholtz Information &\nData Science School for Health (HIDSS4Health)\". Built on\n[`nd2`](https://github.com/tlambert03/nd2) by Talley Lambert.\n\nThe demo recording and screenshots use one stack from Lennart Hilbert's Zenodo\ndataset [Analysis of antibody signal loss for elongating RNA polymerase II upon\ntranscription inhibition](https://zenodo.org/records/5229988)\n([10.5281/zenodo.5229988](https://doi.org/10.5281/zenodo.5229988)), adapted under\n[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Real-file tests also\nuse `header_test1.nd2` by Jonas Dorn (CC BY 4.0). Full provenance and derivation\nnotes are in [docs/SAMPLE_DATA.md](https://github.com/N-Friederich/napari-nd2-loader/blob/v0.1.0/docs/SAMPLE_DATA.md).\n\n## License\n\nApache License, Version 2.0. See [LICENSE](https://github.com/N-Friederich/napari-nd2-loader/blob/v0.1.0/LICENSE).\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": "napari, napari-plugin, nd2, nikon, microscopy, bioimaging, imaging",
+    "license": null,
+    "license_expression": "Apache-2.0",
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-nd2-loader",
+    "package_url": "https://pypi.org/project/napari-nd2-loader/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-nd2-loader/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/N-Friederich/napari-nd2-loader/issues",
+      "Changelog": "https://github.com/N-Friederich/napari-nd2-loader/blob/main/CHANGELOG.md",
+      "Homepage": "https://github.com/N-Friederich/napari-nd2-loader",
+      "Source Code": "https://github.com/N-Friederich/napari-nd2-loader",
+      "User Support": "https://github.com/N-Friederich/napari-nd2-loader/issues"
+    },
+    "provides_extra": [
+      "legacy",
+      "testing"
+    ],
+    "release_url": "https://pypi.org/project/napari-nd2-loader/0.1.0/",
+    "requires_dist": [
+      "nd2>=0.9.0",
+      "numpy>=1.24.2",
+      "napari>=0.7.0",
+      "scipy>=1.14.0",
+      "dask>=2021.10.0",
+      "psutil>=5.9.0",
+      "qtpy>=2.4.0",
+      "nd2[legacy]>=0.9.0; extra == \"legacy\"",
+      "pytest; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "pytest-cov; extra == \"testing\"",
+      "PyQt6; extra == \"testing\"",
+      "ruff==0.15.7; extra == \"testing\"",
+      "pre-commit; extra == \"testing\""
+    ],
+    "requires_python": ">=3.11",
+    "summary": "Read Nikon ND2 files in napari, choosing channels, positions and memory strategy before loading",
+    "version": "0.1.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 44221209,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "N-Friederich"
+      }
+    ]
+  },
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "d1a6f089bc4684aea700b03f3c5fdb6cd411844b1f1d0799f551ed14fe72740e"
+        },
+        "digests": {
+          "blake2b_256": "346433eca9eef60b7b2f80d5dfb82b761ac55e351656c6014a4e1f4b7e0bbd25",
+          "md5": "48cd9bb036e72b303e15dbe7dd0bb9a0",
+          "sha256": "19ff1fd531c23033c4c65fe82fc17861bffc8552b30cca0091c276a727944a86"
+        },
+        "downloads": -1,
+        "filename": "napari_nd2_loader-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "48cd9bb036e72b303e15dbe7dd0bb9a0",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.11",
+        "size": 171760,
+        "upload_time": "2026-11-26T20:01:48",
+        "upload_time_iso_8601": "2026-11-26T20:01:48.736864Z",
+        "url": "https://files.pythonhosted.org/packages/34/64/33eca9eef60b7b2f80d5dfb82b761ac55e351656c6014a4e1f4b7e0bbd25/napari_nd2_loader-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "5e522f671bacfd2e2362960d173398c8a5561eccfcae55d47fe0e43913414011",
+          "md5": "4d403b210f69e8e66f245b80b401a7ba",
+          "sha256": "8a0a6ad5f3d2cf1970330333f63c21596447edc74f84ad1119a6ea2cb4bd0c32"
+        },
+        "downloads": -1,
+        "filename": "napari_nd2_loader-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "4d403b210f69e8e66f245b80b401a7ba",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.11",
+        "size": 406668,
+        "upload_time": "2026-11-26T20:01:50",
+        "upload_time_iso_8601": "2026-11-26T20:01:50.010574Z",
+        "url": "https://files.pythonhosted.org/packages/5e/52/2f671bacfd2e2362960d173398c8a5561eccfcae55d47fe0e43913414011/napari_nd2_loader-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "d1a6f089bc4684aea700b03f3c5fdb6cd411844b1f1d0799f551ed14fe72740e"
+      },
+      "digests": {
+        "blake2b_256": "346433eca9eef60b7b2f80d5dfb82b761ac55e351656c6014a4e1f4b7e0bbd25",
+        "md5": "48cd9bb036e72b303e15dbe7dd0bb9a0",
+        "sha256": "19ff1fd531c23033c4c65fe82fc17861bffc8552b30cca0091c276a727944a86"
+      },
+      "downloads": -1,
+      "filename": "napari_nd2_loader-0.1.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "48cd9bb036e72b303e15dbe7dd0bb9a0",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.11",
+      "size": 171760,
+      "upload_time": "2026-11-26T20:01:48",
+      "upload_time_iso_8601": "2026-11-26T20:01:48.736864Z",
+      "url": "https://files.pythonhosted.org/packages/34/64/33eca9eef60b7b2f80d5dfb82b761ac55e351656c6014a4e1f4b7e0bbd25/napari_nd2_loader-0.1.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "5e522f671bacfd2e2362960d173398c8a5561eccfcae55d47fe0e43913414011",
+        "md5": "4d403b210f69e8e66f245b80b401a7ba",
+        "sha256": "8a0a6ad5f3d2cf1970330333f63c21596447edc74f84ad1119a6ea2cb4bd0c32"
+      },
+      "downloads": -1,
+      "filename": "napari_nd2_loader-0.1.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "4d403b210f69e8e66f245b80b401a7ba",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.11",
+      "size": 406668,
+      "upload_time": "2026-11-26T20:01:50",
+      "upload_time_iso_8601": "2026-11-26T20:01:50.010574Z",
+      "url": "https://files.pythonhosted.org/packages/5e/52/2f671bacfd2e2362960d173398c8a5561eccfcae55d47fe0e43913414011/napari_nd2_loader-0.1.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

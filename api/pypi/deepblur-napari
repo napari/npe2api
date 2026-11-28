@@ -1,0 +1,187 @@
+{
+  "info": {
+    "author": null,
+    "author_email": "Pierre Weiss <pierre.weiss@cnrs.fr>, Florian Sarron <florian.sarron@irit.fr>, Minh-Hai NGUYEN <nguyenhai7120qh@gmail.com>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 2 - Pre-Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Developers",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "description": "# DeepBlur for napari\n\n[![License BSD-3](https://img.shields.io/pypi/l/deepblur-napari.svg?color=green)](https://opensource.org/licenses/BSD-3-Clause)\n[![PyPI](https://img.shields.io/pypi/v/deepblur-napari.svg?color=green)](https://pypi.org/project/deepblur-napari)\n[![Python Version](https://img.shields.io/pypi/pyversions/deepblur-napari.svg?color=green)](https://python.org)\n[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/deepblur-napari)](https://napari-hub.org/plugins/deepblur-napari)\n[![npe2](https://img.shields.io/badge/plugin-npe2-blue?link=https://napari.org/stable/plugins/index.html)](https://napari.org/stable/plugins/index.html)\n\nDeepBlur estimates the blur of an image with neural networks, without\ncalibration, and deblurs the image. The blur (point spread function, PSF)\nmay vary across the field of view, as in most microscopes. From the\nestimated PSFs, the plugin also measures the quality of the optics: maps of\nthe EE50, of the FWHM and of the cut-off frequency.\n\n## Usage\n\nOpen the plugin with Plugins > DeepBlur > DeepBlur, or with\n`napari -w deepblur_napari`. \n\nYou can drag&drop images, then open the plugin to treat them. \nAn alternative is to just launch the plugin and demo images will be displayed. \nYou can still add yours by drag&drop.\nThe **Help** button of the plugin explains the main features.\n\nThe main processing pipeline is:\n- 1/ add your image\n- 2/ estimate the operator\n- 3/ estimate the noise\n- 4/ deblur\n\n1. **Images**: DeepBlur processes 2D grayscale and RGB images. Each image\n   added to napari joins the *Active Image* menu.\n2. **Identification model**: the network that estimates the PSF. Use\n   `z3_z36` for microscopes and optical blurs, `motion` or `motion_x_z3_z16`\n   for motion blurs.\n3. **Operator estimation**: *Estimate Operator* builds the blur operator of\n   the image from the PSFs estimated on overlapping tiles. It uses a single\n   PSF (`constant`), PSFs interpolated through eigen-PSFs (`eigen_psf`), or\n   PSFs blended between the tiles (`tiled_psf`).\n4. **Noise**: set the Gaussian noise and the bit depth, which sets the\n   Poisson noise, or estimate them with *Estimate noise*.\n5. **Deblurring**: *Deblur Image* with Tikhonov, TV, DPIR or RAM (usually\n   the best).\n\n**Metrology**: *Grid* and clicks on the image display the estimated PSFs.\n*EE50 Map*, *FWHM Map* and *Cut-off Map* map the radius containing 50% of\nthe energy of the PSF, its full width at half maximum, and the cut-off\nfrequency of the optics.\n\nComputations run in the background. The first use of a network downloads\nits weights.\n\n## Installation\n\nDeepBlur needs Python 3.10 to 3.13 (PyTorch has no wheels for Intel Macs).\nIt runs on CPU and, much faster, on NVIDIA GPUs.\n\nIn an environment that has napari, install it from napari's plugin manager\n(Plugins > Install/Uninstall Plugins), or with\n\n```sh\npip install deepblur-napari\n```\n\nIn a new environment, `pip install \"deepblur-napari[all]\"` also installs\nnapari with its Qt backend.\n\nOn Linux, the PyTorch wheels of PyPI use CUDA. To get a CPU-only PyTorch, or\none for another CUDA version, install it first by following\nhttps://pytorch.org/get-started/locally/, then install the plugin.\n\n### From the sources\n\n[uv] creates the environment `.venv` with the versions locked in `uv.lock`:\n\n```sh\ngit clone https://github.com/pierre-weiss/deepblur-napari.git\ncd deepblur-napari\nuv sync --extra all      # add --extra testing for the test tools\nuv run napari -w deepblur_napari\n```\n\n`uv run python debug.py` opens the same window, e.g. to debug the plugin in\nan editor. With pip, run `pip install -e \".[all]\"` in a new environment, or\n`pip install -e .` in an environment that has napari.\n\n### Weights\n\nThe networks download their weights on first use from the MAMBO server, or from the Hugging Face hub\n(`mhnguyen712/deepblur`) if the server is unreachable. They are cached in\n`~/.cache/deepblur/weights`. You can change the server and the cache folder\nwith the environment variables `DEEPBLUR_WEIGHTS_URL` and `DEEPBLUR_CACHE`.\n\n## Contributing\n\nContributions are very welcome. Run the tests with `uv run pytest` (after\n`uv sync --extra all --extra testing`) or with [tox], and please ensure the\ncoverage at least stays the same before you submit a pull request. The\ntests download the weights of the networks the first time.\n\nTo release, push a tag: `git tag v0.1.0 && git push origin v0.1.0`. The\ncontinuous integration runs the tests, builds the package from a clean\ncheckout (the version comes from the tag) and publishes it on PyPI.\n\n## License\n\nDistributed under the terms of the [BSD-3] license, deepblur-napari is free\nand open source software.\n\n## Acknowledging this work\n\nIf you find this plugin useful for your research, please cite : \n\nBlind spatially varying PSF estimation for fluorescence microscopy\nMinh Hai Nguyen, Florian Sarron, Paul Escande, Sylvain Cantaloube, Thomas Mangeat and Pierre Weiss\n\n## The main contributors to this plugin are \n\nMinh Hai Nguyen, Florian Sarron, Paul Escande, Pierre Weiss\n\n## Issues\n\nIf you encounter any problems, please [file an issue] along with a detailed\ndescription.\n\n[BSD-3]: http://opensource.org/licenses/BSD-3-Clause\n[file an issue]: https://github.com/pierre-weiss/deepblur-napari/issues\n[tox]: https://tox.readthedocs.io/en/latest/\n[uv]: https://docs.astral.sh/uv/\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": null,
+    "license_expression": "BSD-3-Clause",
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "deepblur-napari",
+    "package_url": "https://pypi.org/project/deepblur-napari/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/deepblur-napari/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/pierre-weiss/deepblur-napari/issues",
+      "Source Code": "https://github.com/pierre-weiss/deepblur-napari"
+    },
+    "provides_extra": [
+      "all",
+      "testing"
+    ],
+    "release_url": "https://pypi.org/project/deepblur-napari/0.1.0/",
+    "requires_dist": [
+      "numpy",
+      "magicgui",
+      "napari>=0.6",
+      "qtpy",
+      "deepinv>=0.5.0",
+      "torch>=2.7.0",
+      "torchvision>=0.22.0",
+      "pyyaml",
+      "imageio",
+      "huggingface_hub",
+      "napari[all]; extra == \"all\"",
+      "tox; extra == \"testing\"",
+      "pytest; extra == \"testing\"",
+      "pytest-cov; extra == \"testing\"",
+      "pytest-qt; extra == \"testing\"",
+      "napari[all]; extra == \"testing\""
+    ],
+    "requires_python": ">=3.10",
+    "summary": "Blind deblurring and PSF metrology with neural networks, for microscopy",
+    "version": "0.1.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 43836127,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "pweiss"
+      }
+    ]
+  },
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "377bb47fdf5c695d434e764ebfafcb9872f1ccb819058b4e0868f550a1d41fd7"
+        },
+        "digests": {
+          "blake2b_256": "5064557bfbb86a1446475590edbf94c39e7742d419b0939bf30fcddaccd56b7e",
+          "md5": "5aea244f77fa171d5c7c00b9887cb33c",
+          "sha256": "5e5185a9a5f92324e61d67d388a5e1516dc247ea8cb19665f29bc39898f2060e"
+        },
+        "downloads": -1,
+        "filename": "deepblur_napari-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "5aea244f77fa171d5c7c00b9887cb33c",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.10",
+        "size": 13763973,
+        "upload_time": "2026-11-18T14:36:55",
+        "upload_time_iso_8601": "2026-11-18T14:36:55.443022Z",
+        "url": "https://files.pythonhosted.org/packages/50/64/557bfbb86a1446475590edbf94c39e7742d419b0939bf30fcddaccd56b7e/deepblur_napari-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "aa4d425c7cc27b00a4430aae62bdec510810459c1ce388c93b86e82f4f0dd28b",
+          "md5": "326e295c3c95fe7ba30106c304024802",
+          "sha256": "2951f9e1be00609c71213dd8f7c7417a518a37a3de4e57f25bb9d58cbd324a05"
+        },
+        "downloads": -1,
+        "filename": "deepblur_napari-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "326e295c3c95fe7ba30106c304024802",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.10",
+        "size": 14275499,
+        "upload_time": "2026-11-18T14:36:58",
+        "upload_time_iso_8601": "2026-11-18T14:36:58.363199Z",
+        "url": "https://files.pythonhosted.org/packages/aa/4d/425c7cc27b00a4430aae62bdec510810459c1ce388c93b86e82f4f0dd28b/deepblur_napari-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "377bb47fdf5c695d434e764ebfafcb9872f1ccb819058b4e0868f550a1d41fd7"
+      },
+      "digests": {
+        "blake2b_256": "5064557bfbb86a1446475590edbf94c39e7742d419b0939bf30fcddaccd56b7e",
+        "md5": "5aea244f77fa171d5c7c00b9887cb33c",
+        "sha256": "5e5185a9a5f92324e61d67d388a5e1516dc247ea8cb19665f29bc39898f2060e"
+      },
+      "downloads": -1,
+      "filename": "deepblur_napari-0.1.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "5aea244f77fa171d5c7c00b9887cb33c",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.10",
+      "size": 13763973,
+      "upload_time": "2026-11-18T14:36:55",
+      "upload_time_iso_8601": "2026-11-18T14:36:55.443022Z",
+      "url": "https://files.pythonhosted.org/packages/50/64/557bfbb86a1446475590edbf94c39e7742d419b0939bf30fcddaccd56b7e/deepblur_napari-0.1.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "aa4d425c7cc27b00a4430aae62bdec510810459c1ce388c93b86e82f4f0dd28b",
+        "md5": "326e295c3c95fe7ba30106c304024802",
+        "sha256": "2951f9e1be00609c71213dd8f7c7417a518a37a3de4e57f25bb9d58cbd324a05"
+      },
+      "downloads": -1,
+      "filename": "deepblur_napari-0.1.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "326e295c3c95fe7ba30106c304024802",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.10",
+      "size": 14275499,
+      "upload_time": "2026-11-18T14:36:58",
+      "upload_time_iso_8601": "2026-11-18T14:36:58.363199Z",
+      "url": "https://files.pythonhosted.org/packages/aa/4d/425c7cc27b00a4430aae62bdec510810459c1ce388c93b86e82f4f0dd28b/deepblur_napari-0.1.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

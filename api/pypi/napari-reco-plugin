@@ -1,0 +1,525 @@
+{
+  "info": {
+    "author": null,
+    "author_email": "Cl\u00e9ment Capdeville <clement.capdeville@univ-lyon1.fr>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 3 - Alpha",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "License :: OSI Approved :: MIT License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Scientific/Engineering :: Image Processing",
+      "Topic :: Scientific/Engineering :: Medical Science Apps."
+    ],
+    "description": "# napari-reco-plugin\r\n\r\nA [napari](https://napari.org) plugin for parallel-beam tomographic reconstruction with the\r\n[ASTRA Toolbox](https://www.astra-toolbox.com/), with single-distance **Paganin** phase retrieval.\r\n\r\n- Reconstruction algorithms: **FBP, BP, SIRT, SART, CGLS**, on GPU (CUDA) or CPU.\r\n- Standard (180\u00b0 or 360\u00b0) and **half acquisition** (offset rotation axis, 360\u00b0) scans.\r\n- Flat/dark-field and double flat-field correction, measured angles read from `.nxs` files.\r\n- Centre-of-rotation tools: COR scan on one slice, automatic global COR (half acquisition).\r\n- **Big Data** mode: batch processing with lazy loading, result written to a temporary HDF5 file.\r\n- Readers for `.nxs` / `.tdf` (HDF5); writers for `.tif` and `.raw` (+ processing history as JSON).\r\n\r\nEverything also runs **without a GPU**: CuPy is optional (NumPy/SciPy are used instead) and\r\nASTRA's CPU algorithms are used when CUDA is not available.\r\n\r\n## Installation\r\n\r\n### pip\r\n\r\n```bash\r\npip install \"napari-reco-plugin[astra]\"        # plugin + ASTRA Toolbox\r\npip install cupy-cuda12x                       # optional: GPU arrays (or cupy-cuda11x)\r\n```\r\n\r\n### conda (recommended, GPU or CPU)\r\n\r\nFrom a clone of this repository, create a dedicated environment with everything\r\n(napari, ASTRA, CuPy, all from conda-forge) and the plugin in editable mode:\r\n\r\n```bash\r\nconda env create -f environment.yml\r\nconda activate napari-reco\r\nnapari\r\n```\r\n\r\nASTRA and CuPy use CUDA when an NVIDIA driver is present, otherwise the CPU.\r\nAvoid mixing Qt bindings in one environment (e.g. PyQt5 and PySide6): napari \u2265 0.10 needs Qt 6.\r\n\r\n### From source (development)\r\n\r\n```bash\r\ngit clone https://github.com/Clementcmoi/Reconstruction-napari-plugin.git\r\ncd Reconstruction-napari-plugin\r\npip install -e \".[testing]\"\r\n```\r\n\r\nThe array backend in use (`cupy (GPU)` or `numpy (CPU)`) is shown at the bottom of the\r\n*Reconstruction Algorithm* section. Set `RECO_PLUGIN_BACKEND=numpy` to force the CPU.\r\n\r\n## Usage\r\n\r\nStart napari, open a `.nxs`/`.tdf` file (projections, flats and darks become layers), then\r\n**Plugins \u203a Reconstruction Plugin \u203a Reconstruction**.\r\n\r\nTypical workflow in the *Reconstruction* panel:\r\n\r\n1. **Sample Selection** \u2013 choose the projection layer (angles \u00d7 rows \u00d7 columns). *Slice* is a\r\n   detector row (0 \u2026 rows \u2212 1).\r\n2. **Preprocessing** \u2013 tick *Flatfield* / *Darkfield* and choose their layers. *Apply* creates a\r\n   `preprocess_\u2026` layer, but it is optional: every action applies the correction itself.\r\n3. **Paganin** \u2013 energy (keV), distance (m), \u03b4/\u03b2, optional unsharp mask and outlier cleaning.\r\n   *Apply* creates a `paganin_\u2026_db<\u03b4/\u03b2>` layer (optional as well).\r\n4. **Center of Rotation** \u2013 *Standard*: enter a COR range and *Try Center of Rotation* (one\r\n   frame per COR value, listed in the layer metadata). *Half acquisition*: *Find Global Center of\r\n   Rotation*, then refine with *Try Center of Rotation* (\u00b1 delta around the value).\r\n5. **Reconstruction Algorithm** \u2013 algorithm, GPU or CPU, pixel size (m, also used for the units).\r\n6. **Process** \u2013 *Process one slice* or *Process all slices* (*Big Data* for volumes that do not\r\n   fit in RAM).\r\n\r\nResults carry their full processing history in the layer metadata, saved next to the image by\r\nthe `.tif` and `.raw` writers.\r\n\r\n### Good to know\r\n\r\n- **Parameters are read when you click.** Changing \u03b4/\u03b2 (or any field) is always taken into\r\n  account. A layer already filtered with Paganin is reused only if its parameters match the\r\n  current ones; otherwise the plugin goes back to the layer it was computed from, so Paganin is\r\n  never applied twice.\r\n- **Units:** pixel size and distance are in **metres** (0.65 \u00b5m \u2192 `0.65e-6`, 50 mm \u2192 `0.05`);\r\n  values that look like \u00b5m or mm are rejected, because they make \u03b4/\u03b2 seem to have no effect.\r\n  Commas are accepted as decimal separators. With a pixel size, reconstructions are in mm\u207b\u00b9.\r\n- **Without Paganin**, flat-field corrected transmissions I/I\u2080 are converted to attenuation\r\n  \u2212ln(I/I\u2080) before reconstruction (Paganin's output already is an attenuation).\r\n- The pixel size appears in the *Paganin* and *Reconstruction Algorithm* sections: it is the\r\n  same field (editing one updates the other).\r\n- **COR convention:** standard acquisition = position of the axis on the detector (pixels);\r\n  half acquisition = distance from the left detector edge to the axis (the overlap is 2 \u00d7 COR).\r\n- **SART iterations** are full sweeps over all projections.\r\n- **Big Data:** the temporary HDF5 output is deleted when its layer is removed or napari closes.\r\n  Datasets larger than `RECO_PLUGIN_LAZY_GB` (default 4 GB) are opened lazily by the reader.\r\n\r\n## Troubleshooting\r\n\r\n| Symptom | Cause / fix |\r\n| --- | --- |\r\n| Changing \u03b4/\u03b2 changes nothing | Check the units: the pixel size must be in metres (e.g. `0.65e-6`). |\r\n| *Use GPU (CUDA)* is greyed out | ASTRA cannot use CUDA on this machine: CPU algorithms are used. |\r\n| \"Another processing is still running\" | One job at a time; wait for the *Processing* window to close. |\r\n| \"no 1D dataset of N angles\" | Untick *Use the measured angles*, or check the file contains them. |\r\n\r\n## Development\r\n\r\n```bash\r\npip install -e \".[testing]\"\r\npytest            # CPU backend, offscreen Qt: no GPU or display needed\r\n```\r\n\r\nProject layout:\r\n\r\n```\r\nsrc/reco_plugin/\r\n\u251c\u2500\u2500 _widget.py, ui_sections.py           # Qt panel\r\n\u251c\u2500\u2500 _link.py                             # parameters \u2192 processing (background threads)\r\n\u251c\u2500\u2500 _reader.py, _writer.py, napari.yaml  # napari reader / writers / manifest\r\n\u251c\u2500\u2500 processing/                          # numerical code (Paganin, sinograms, COR, ASTRA)\r\n\u2514\u2500\u2500 utils/                               # backend (CuPy/NumPy), parameters, layers, Qt helpers\r\ntests/                                   # pytest suite\r\nlaunchers/                               # Windows .bat templates to start napari\r\n```\r\n\r\nSee [CHANGELOG.md](CHANGELOG.md) for the list of changes.\r\n\r\n## License\r\n\r\nMIT \u2014 see [LICENSE](LICENSE). The ASTRA Toolbox itself is distributed under the GPLv3.\r\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": "MIT License\r\n        \r\n        Copyright (c) 2024 Cl\u00e9ment Capdeville\r\n        \r\n        Permission is hereby granted, free of charge, to any person obtaining a copy\r\n        of this software and associated documentation files (the \"Software\"), to deal\r\n        in the Software without restriction, including without limitation the rights\r\n        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\r\n        copies of the Software, and to permit persons to whom the Software is\r\n        furnished to do so, subject to the following conditions:\r\n        \r\n        The above copyright notice and this permission notice shall be included in all\r\n        copies or substantial portions of the Software.\r\n        \r\n        THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\r\n        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\r\n        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\r\n        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\r\n        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\r\n        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\r\n        SOFTWARE.\r\n        ",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "napari-reco-plugin",
+    "package_url": "https://pypi.org/project/napari-reco-plugin/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/napari-reco-plugin/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/Clementcmoi/Reconstruction-napari-plugin/issues",
+      "Source Code": "https://github.com/Clementcmoi/Reconstruction-napari-plugin"
+    },
+    "provides_extra": [
+      "astra",
+      "gpu",
+      "testing"
+    ],
+    "release_url": "https://pypi.org/project/napari-reco-plugin/0.2.0/",
+    "requires_dist": [
+      "h5py",
+      "numpy",
+      "scipy",
+      "tqdm",
+      "scikit-image",
+      "matplotlib>=3.5",
+      "dask[array]",
+      "qtpy",
+      "napari>=0.4.18",
+      "tifffile",
+      "astra-toolbox>=2.1; extra == \"astra\"",
+      "cupy-cuda12x; extra == \"gpu\"",
+      "pytest; extra == \"testing\"",
+      "napari; extra == \"testing\"",
+      "PyQt6>=6.7; extra == \"testing\"",
+      "astra-toolbox>=2.1; extra == \"testing\""
+    ],
+    "requires_python": ">=3.9",
+    "summary": "Napari plugin for tomographic reconstruction (ASTRA Toolbox) with Paganin phase retrieval, on GPU or CPU",
+    "version": "0.2.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 44206369,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "Clementcmoi"
+      }
+    ]
+  },
+  "releases": {
+    "0.1.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "b2af12a965f358a3b579f7b27dfcc8f7b050c0182305c04f1f5a7b2381a35128"
+        },
+        "digests": {
+          "blake2b_256": "50bce8d4e7e29244862db71b1df4be6f588021cc3385bc5e22621d6658d4a647",
+          "md5": "2acb943d9b68af2e66f6cb9b7c52d84a",
+          "sha256": "117c7bf4db859a09800e3205d936395149320e5746260c5c20fc32fea14f6d65"
+        },
+        "downloads": -1,
+        "filename": "napari_reco_plugin-0.1.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "2acb943d9b68af2e66f6cb9b7c52d84a",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 37621,
+        "upload_time": "2026-04-03T10:23:41",
+        "upload_time_iso_8601": "2026-04-03T10:23:41.764345Z",
+        "url": "https://files.pythonhosted.org/packages/50/bc/e8d4e7e29244862db71b1df4be6f588021cc3385bc5e22621d6658d4a647/napari_reco_plugin-0.1.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "66aff51f7ccb206d2c43989e3a64ea6612864efc910ff48448cdadbb54b4eb65",
+          "md5": "166dbd3749058d993c75aa062dc784f1",
+          "sha256": "388c13bb62e4a82958ddcf08079b05a32c1e36af1ca41f0582f8e9b5bd415f06"
+        },
+        "downloads": -1,
+        "filename": "napari_reco_plugin-0.1.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "166dbd3749058d993c75aa062dc784f1",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 31123,
+        "upload_time": "2026-04-03T10:23:43",
+        "upload_time_iso_8601": "2026-04-03T10:23:43.221726Z",
+        "url": "https://files.pythonhosted.org/packages/66/af/f51f7ccb206d2c43989e3a64ea6612864efc910ff48448cdadbb54b4eb65/napari_reco_plugin-0.1.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.1": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "1484ecc52ff36f00a4687da23ca4d2234999b6d1bee288cab7394f2c7d9804c1"
+        },
+        "digests": {
+          "blake2b_256": "10fe253a9045be8fea5de0354fad48f2f6d3bc84ee123bdbd22b4ad7d73382b9",
+          "md5": "cbb1f3ec47099acf7d3d6cc584b8efff",
+          "sha256": "f1d5d3a7e3ebcd55f1a7da387933aa1443cedc4fe0fb64158093d94320e29bf7"
+        },
+        "downloads": -1,
+        "filename": "napari_reco_plugin-0.1.1-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "cbb1f3ec47099acf7d3d6cc584b8efff",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 37747,
+        "upload_time": "2026-04-07T08:22:46",
+        "upload_time_iso_8601": "2026-04-07T08:22:46.092295Z",
+        "url": "https://files.pythonhosted.org/packages/10/fe/253a9045be8fea5de0354fad48f2f6d3bc84ee123bdbd22b4ad7d73382b9/napari_reco_plugin-0.1.1-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "41b4ddc456203e78f4ef90fd8a2ce6d951d8c3d0c837efffc8eb22db75ca0930",
+          "md5": "9a44eac4295ed67cd81b5c09e4c37761",
+          "sha256": "1b3c88e4a71f4ccd127ac5a19415c75ef9c0602378f2c63ce22b1986bee56d61"
+        },
+        "downloads": -1,
+        "filename": "napari_reco_plugin-0.1.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "9a44eac4295ed67cd81b5c09e4c37761",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 31244,
+        "upload_time": "2026-04-07T08:22:48",
+        "upload_time_iso_8601": "2026-04-07T08:22:48.591585Z",
+        "url": "https://files.pythonhosted.org/packages/41/b4/ddc456203e78f4ef90fd8a2ce6d951d8c3d0c837efffc8eb22db75ca0930/napari_reco_plugin-0.1.1.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.2": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "bac458117d59799c81ce99aec85b635319482e7f0a41faea7eab24dd33156067"
+        },
+        "digests": {
+          "blake2b_256": "7abf49713ca06bfa8401c0d9c2325cf6bddfb3ed912286f87059fc6801432f84",
+          "md5": "beec4160de87520577753f90bef34ad9",
+          "sha256": "63284c7410f5c04d2998326aff9256d807768179ab96327180c993c602e6d1fa"
+        },
+        "downloads": -1,
+        "filename": "napari_reco_plugin-0.1.2-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "beec4160de87520577753f90bef34ad9",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 37799,
+        "upload_time": "2026-04-07T08:29:35",
+        "upload_time_iso_8601": "2026-04-07T08:29:35.105051Z",
+        "url": "https://files.pythonhosted.org/packages/7a/bf/49713ca06bfa8401c0d9c2325cf6bddfb3ed912286f87059fc6801432f84/napari_reco_plugin-0.1.2-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "edcfbbb21109fc8baf933b6460d1995c34b18dc49250100bf2c97adb27dcd0ad",
+          "md5": "a2ecc062031cf4fa62836aebf389d901",
+          "sha256": "df655e632814387a379710ed9352a62b23168e4e3e9d54cc33f6510250cd0d83"
+        },
+        "downloads": -1,
+        "filename": "napari_reco_plugin-0.1.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "a2ecc062031cf4fa62836aebf389d901",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 31297,
+        "upload_time": "2026-04-07T08:29:36",
+        "upload_time_iso_8601": "2026-04-07T08:29:36.983539Z",
+        "url": "https://files.pythonhosted.org/packages/ed/cf/bbb21109fc8baf933b6460d1995c34b18dc49250100bf2c97adb27dcd0ad/napari_reco_plugin-0.1.2.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.3": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "4b466de67d01c16f2c4b569652f4d92f11103508e759461ad48593a96b622ff6"
+        },
+        "digests": {
+          "blake2b_256": "b4a41a3dd947b842f0bf65b4ef288c6bed0d9dd483a1235b9888b1018a4dd136",
+          "md5": "c97f571d473cda2b066b808833b5f2f1",
+          "sha256": "4ecfc87468d813a8d32295ae5e6b5a3dc2c2a915ce58032a91e3922ba94a457e"
+        },
+        "downloads": -1,
+        "filename": "napari_reco_plugin-0.1.3-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "c97f571d473cda2b066b808833b5f2f1",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 38286,
+        "upload_time": "2026-04-07T14:52:29",
+        "upload_time_iso_8601": "2026-04-07T14:52:29.192419Z",
+        "url": "https://files.pythonhosted.org/packages/b4/a4/1a3dd947b842f0bf65b4ef288c6bed0d9dd483a1235b9888b1018a4dd136/napari_reco_plugin-0.1.3-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "79233069d19500d468c6b3bd2b8db52e764ee0aaff986f37b6b38c3101ddaa11",
+          "md5": "02d50860ee356e78b2b3e83d9e9afdef",
+          "sha256": "af3b47feed7d29c0551937281c6a53bf3ea8755eb1f57c040ceda27062c70bcd"
+        },
+        "downloads": -1,
+        "filename": "napari_reco_plugin-0.1.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "02d50860ee356e78b2b3e83d9e9afdef",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 31751,
+        "upload_time": "2026-04-07T14:52:30",
+        "upload_time_iso_8601": "2026-04-07T14:52:30.676670Z",
+        "url": "https://files.pythonhosted.org/packages/79/23/3069d19500d468c6b3bd2b8db52e764ee0aaff986f37b6b38c3101ddaa11/napari_reco_plugin-0.1.3.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.4": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "fc79c773d9f0df8feb94655c308a3e28dfae81fc60811119a1c5b44664b33e22"
+        },
+        "digests": {
+          "blake2b_256": "bc6eb7aa3f34213e3811cc22c06a7c5b134bb4da5c68de0100015c7ca5543351",
+          "md5": "794ac46b049c99ffec5f0d46c15d33c5",
+          "sha256": "d16e55f5bed3cc701812b481966b0361f6b3efa3929d92cc943119fbd5afa00e"
+        },
+        "downloads": -1,
+        "filename": "napari_reco_plugin-0.1.4-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "794ac46b049c99ffec5f0d46c15d33c5",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 38275,
+        "upload_time": "2026-04-08T13:36:00",
+        "upload_time_iso_8601": "2026-04-08T13:36:00.807872Z",
+        "url": "https://files.pythonhosted.org/packages/bc/6e/b7aa3f34213e3811cc22c06a7c5b134bb4da5c68de0100015c7ca5543351/napari_reco_plugin-0.1.4-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "bb016d3fbd355ea2518f9d613275b1b48e2da747329e5853e3872186f59f9fa6",
+          "md5": "d78b6b4bfad93995af472c60f6c2259e",
+          "sha256": "e01247c0e1dcf3457a903e19d3eb7b8a5836f0b65729599c731a4f13ef70ca69"
+        },
+        "downloads": -1,
+        "filename": "napari_reco_plugin-0.1.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "d78b6b4bfad93995af472c60f6c2259e",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 31746,
+        "upload_time": "2026-04-08T13:36:02",
+        "upload_time_iso_8601": "2026-04-08T13:36:02.020637Z",
+        "url": "https://files.pythonhosted.org/packages/bb/01/6d3fbd355ea2518f9d613275b1b48e2da747329e5853e3872186f59f9fa6/napari_reco_plugin-0.1.4.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.5": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "304f19918580ef6ab15d3eabacbba82ab54ac4b790737545f4cd42e9f9c54b66"
+        },
+        "digests": {
+          "blake2b_256": "43443a96ea8b5b4ac1e4157deae229e3ef2d46ffb22f5a07aa89d300c154f45c",
+          "md5": "57c84fc30ce1a4ccbe8ace85360a879f",
+          "sha256": "c1fd1159ff87812d05ed042e438ec169355d0cd98ea7c632d779b509dac7a954"
+        },
+        "downloads": -1,
+        "filename": "napari_reco_plugin-0.1.5-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "57c84fc30ce1a4ccbe8ace85360a879f",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 38730,
+        "upload_time": "2026-04-30T05:15:54",
+        "upload_time_iso_8601": "2026-04-30T05:15:54.556660Z",
+        "url": "https://files.pythonhosted.org/packages/43/44/3a96ea8b5b4ac1e4157deae229e3ef2d46ffb22f5a07aa89d300c154f45c/napari_reco_plugin-0.1.5-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "73007f07ad30d7292a3d4092f01bb31cb90250bc7f985647164771bcf1c54328",
+          "md5": "4d285a96a80ac26e820c191511d8de6f",
+          "sha256": "cce0b1f125c9847df67a0acafdbc3fb3db75c6527ff5cf9bf4c965ab702ade66"
+        },
+        "downloads": -1,
+        "filename": "napari_reco_plugin-0.1.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "4d285a96a80ac26e820c191511d8de6f",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 32229,
+        "upload_time": "2026-04-30T05:15:55",
+        "upload_time_iso_8601": "2026-04-30T05:15:55.860566Z",
+        "url": "https://files.pythonhosted.org/packages/73/00/7f07ad30d7292a3d4092f01bb31cb90250bc7f985647164771bcf1c54328/napari_reco_plugin-0.1.5.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.1.6": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "6e035b03daf945d1ff0a5b3f1e458832597ce04819d0850a2dfbc2144c810dd6"
+        },
+        "digests": {
+          "blake2b_256": "173631d929d397c151d7a34d193187ccaa771b7f269c31b318bd65e4a4d60205",
+          "md5": "766ad3c7563c330c1228e4dc177d76c3",
+          "sha256": "39c1de1d9c4264bcc438699b29dcc1785b65d1e24f9277cb59ab57655ec9c71d"
+        },
+        "downloads": -1,
+        "filename": "napari_reco_plugin-0.1.6-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "766ad3c7563c330c1228e4dc177d76c3",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 51615,
+        "upload_time": "2026-06-26T11:51:29",
+        "upload_time_iso_8601": "2026-06-26T11:51:29.012117Z",
+        "url": "https://files.pythonhosted.org/packages/17/36/31d929d397c151d7a34d193187ccaa771b7f269c31b318bd65e4a4d60205/napari_reco_plugin-0.1.6-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "d046d7363e338d5182d7097895272a66efe34f3fbf2274545bd1b979953335cb",
+          "md5": "5ffe85d6055b94516296d812183d5416",
+          "sha256": "ee19b0bc101d5ef85a44cb1b2339e0a33dca91330a35da94540b59900825f728"
+        },
+        "downloads": -1,
+        "filename": "napari_reco_plugin-0.1.6.tar.gz",
+        "has_sig": false,
+        "md5_digest": "5ffe85d6055b94516296d812183d5416",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 44695,
+        "upload_time": "2026-06-26T11:51:29",
+        "upload_time_iso_8601": "2026-06-26T11:51:29.987201Z",
+        "url": "https://files.pythonhosted.org/packages/d0/46/d7363e338d5182d7097895272a66efe34f3fbf2274545bd1b979953335cb/napari_reco_plugin-0.1.6.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "0.2.0": [
+      {
+        "comment_text": null,
+        "core-metadata": {
+          "sha256": "925783a5946ee76c739452b5d171f188b9a408312264ef3edde19325673d3229"
+        },
+        "digests": {
+          "blake2b_256": "86ccebb3c429e697f90accca185c6636381f7c06472a68a0f3d2b081e5119190",
+          "md5": "035f065edf672b5e27ca48202cf868b7",
+          "sha256": "9deaf88e10bc1a5328b0443c328d0d925ea8c9e5f7861477f6f9d8e4f5622f65"
+        },
+        "downloads": -1,
+        "filename": "napari_reco_plugin-0.2.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "035f065edf672b5e27ca48202cf868b7",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.9",
+        "size": 44378,
+        "upload_time": "2026-11-26T13:41:43",
+        "upload_time_iso_8601": "2026-11-26T13:41:43.925570Z",
+        "url": "https://files.pythonhosted.org/packages/86/cc/ebb3c429e697f90accca185c6636381f7c06472a68a0f3d2b081e5119190/napari_reco_plugin-0.2.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": null,
+        "core-metadata": false,
+        "digests": {
+          "blake2b_256": "2bdea2974e5920fce91710e029db19f1a86eaded4621deb75685a6b94e812894",
+          "md5": "77349289ca63b62ba7f9071799cebcff",
+          "sha256": "fd7062f490d69a474ed40ac8d9a795ab2fbbad6363854ef4f84ef127b961f57f"
+        },
+        "downloads": -1,
+        "filename": "napari_reco_plugin-0.2.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "77349289ca63b62ba7f9071799cebcff",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.9",
+        "size": 46958,
+        "upload_time": "2026-11-26T13:41:45",
+        "upload_time_iso_8601": "2026-11-26T13:41:45.076221Z",
+        "url": "https://files.pythonhosted.org/packages/2b/de/a2974e5920fce91710e029db19f1a86eaded4621deb75685a6b94e812894/napari_reco_plugin-0.2.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "925783a5946ee76c739452b5d171f188b9a408312264ef3edde19325673d3229"
+      },
+      "digests": {
+        "blake2b_256": "86ccebb3c429e697f90accca185c6636381f7c06472a68a0f3d2b081e5119190",
+        "md5": "035f065edf672b5e27ca48202cf868b7",
+        "sha256": "9deaf88e10bc1a5328b0443c328d0d925ea8c9e5f7861477f6f9d8e4f5622f65"
+      },
+      "downloads": -1,
+      "filename": "napari_reco_plugin-0.2.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "035f065edf672b5e27ca48202cf868b7",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.9",
+      "size": 44378,
+      "upload_time": "2026-11-26T13:41:43",
+      "upload_time_iso_8601": "2026-11-26T13:41:43.925570Z",
+      "url": "https://files.pythonhosted.org/packages/86/cc/ebb3c429e697f90accca185c6636381f7c06472a68a0f3d2b081e5119190/napari_reco_plugin-0.2.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "2bdea2974e5920fce91710e029db19f1a86eaded4621deb75685a6b94e812894",
+        "md5": "77349289ca63b62ba7f9071799cebcff",
+        "sha256": "fd7062f490d69a474ed40ac8d9a795ab2fbbad6363854ef4f84ef127b961f57f"
+      },
+      "downloads": -1,
+      "filename": "napari_reco_plugin-0.2.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "77349289ca63b62ba7f9071799cebcff",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.9",
+      "size": 46958,
+      "upload_time": "2026-11-26T13:41:45",
+      "upload_time_iso_8601": "2026-11-26T13:41:45.076221Z",
+      "url": "https://files.pythonhosted.org/packages/2b/de/a2974e5920fce91710e029db19f1a86eaded4621deb75685a6b94e812894/napari_reco_plugin-0.2.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

@@ -1,0 +1,134 @@
+{
+  "name": "baclct",
+  "display_name": "BacLCT",
+  "visibility": "public",
+  "icon": null,
+  "categories": [],
+  "schema_version": "0.3.0",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "baclct.make_tracking_widget",
+        "title": "Track bacteria (BacLCT)",
+        "python_name": "baclct.napari._widget:BacLCTWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "baclct.write_tracks_csv",
+        "title": "Save BacLCT tracks as CSV",
+        "python_name": "baclct.napari._writer:write_tracks_csv",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": [
+      {
+        "command": "baclct.write_tracks_csv",
+        "layer_types": [
+          "tracks"
+        ],
+        "filename_extensions": [
+          ".csv"
+        ],
+        "display_name": ""
+      }
+    ],
+    "widgets": [
+      {
+        "command": "baclct.make_tracking_widget",
+        "display_name": "BacLCT",
+        "autogenerate": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configurations": {}
+  },
+  "package_metadata": {
+    "metadata_version": "2.5",
+    "name": "baclct",
+    "version": "0.4.1",
+    "dynamic": null,
+    "platform": null,
+    "supported_platform": null,
+    "summary": "Bacteria tracking and life cycle state classification using graph neural networks and pretrained vision transformers",
+    "description": "# BacLCT: Bacteria Life Cycle Tracking\n\nCode for the paper [*Bacteria Tracking and Life Cycle State Classification using Graph\nNeural Networks and Pretrained Vision\nTransformers*](https://doi.org/10.1016/j.media.2026.104275) (Medical Image Analysis,\n2026).\n\nBacLCT is a unified GNN-based method for simultaneous tracking, division detection, and\nlife cycle state classification of bacteria in time-lapse microscopy. Segmented cells are\nrepresented as nodes of a graph and their interactions over time as multi-frame edges. A\nmessage-passing GNN classifies the graph edges as correspondence, division, or no\ncorrespondence, and the graph nodes as life cycle states. From these predictions,\ntrajectories are reconstructed. The division and multi-frame predictions are used for\nsegmentation error correction, such as for missed detections, early divisions, and\nincorrect merges. The node features combine learned features from a DINO-pretrained Vision\nTransformer with handcrafted single-object features, so no task-specific encoder has to be\ntrained.\n\nBacLCT includes pre-trained models for tracking bacteria in bright field and phase\ncontrast images, and for simultaneous tracking and life cycle state classification of *B.\nsubtilis* spore germination and outgrowth in bright field images. It is also available as\na napari plugin.\n\n**Documentation: <https://baclct.readthedocs.io>** — getting started, user guide, and API\nreference.\n\n## Installation\n\nIt is recommended to install on a machine with a GPU. System requirements depend on the\nsize of the image data and the number of objects in it. The smaller 2D sequences used in\nthe paper (190 frames, ~500x500 px, ~10K objects) stayed below 8 GB of GPU and system\nRAM, while the larger ones (800 frames, ~1000x1000 px, >100K objects) required 16 GB of\nGPU and 32 GB of system RAM. Inference also works without a GPU, but will be much\nslower.\n\nFor inference and the napari plugin, install from PyPI into an environment (e.g., using\n[Conda](https://docs.conda.io/projects/conda/en/stable/user-guide/getting-started.html)).\nIf the environment should use a GPU, install\n[PyTorch](https://pytorch.org/get-started/locally/) first.\n\n```bash\npip install baclct              # inference\npip install \"baclct[napari]\"    # + the napari plugin\n```\n\nFor training, it is recommended to clone the repository and install locally.\n\n```bash\ngit clone https://github.com/bmcv/baclct\ncd baclct\npip install -e \".[train]\"       # training\n```\n\nOr let [uv](https://docs.astral.sh/uv/) or [Pixi](https://pixi.sh/) set up and run\neverything in one command:\n\n```bash\npixi run baclct-track --help   # check the install\nuv run baclct-track --help\n```\n\nThe Pixi environments are configured for Linux only and the full development environment\nis pinned in `pixi.lock`. Setup using uv also works on macOS and Windows. The\n[documentation](https://baclct.readthedocs.io) lists the commands for the napari plugin\nand for training.\n\n## Usage\n\n```python\nimport tifffile\nfrom baclct import BacLCT\n\nimages = tifffile.imread(\"images.tif\")  # (T, H, W)\nmasks = tifffile.imread(\"masks.tif\")    # instance segmentation\n\npipeline = BacLCT()\ntracked_masks, tracks = pipeline.track(images, masks, model=\"baclct_track\")\n```\n\n`masks` must be an instance segmentation, one label per object; relabel a binary mask\nwith `skimage.measure.label` first. Both `images` and `masks` may be `numpy` or `dask`\narrays. `tracked_masks` are the input\nmasks relabelled along their trajectories, and `tracks` has one row per cell and frame\n(`label`, `t`, the center coordinate, `parent`, and the single-cell features). If the\nmodel classifies life cycle states, `tracks` also has a state column. Pass `output_dir` to\nadditionally export in [CTC format](https://celltrackingchallenge.net/datasets/) or as\nflat CSV/TIF.\n\nThe `baclct-track` CLI mirrors this API. It takes the two paths directly, or a dataset\ndirectory in one of three layouts, and then tracks every sequence in it. See `--help`.\n\n```bash\nbaclct-track images.tif masks.tif -o outputs/   # one sequence\nbaclct-track --data-dir data/ -o outputs/       # every sequence in a dataset\n```\n\nThe same runs interactively in napari. `baclct-napari` opens a sequence with the plugin\ndocked and the layers preselected, reading the frames on demand so a long movie opens at\nonce:\n\n```bash\nbaclct-napari images.tif masks.tif\n```\n\nIt takes the same tracking flags as `baclct-track`, and the plugin is also reachable the\nusual way, under **Plugins → BacLCT**.\n\n### Pre-trained Models\n\nThree pre-trained models for bacteria tracking are available by name, optionally with life\ncycle state classification. They were trained on two datasets, each model on the subset\nlisted in the table below: bright-field sequences of germinating and outgrowing *B.\nsubtilis* spores with annotated trajectories and life cycle states\n(<https://doi.org/10.5281/zenodo.21805068>) and phase-contrast sequences of growing *C.\nglutamicum* microcolonies with annotated trajectories (TOIAM, [Seiffarth et al.\n2025](https://doi.org/10.5281/zenodo.7260136)).\n\n| Model | Use case | Trained on |\n|-------|----------|------------|\n| `baclct_track` | Bacteria tracking and division detection. Bright-field and phase-contrast. Default. | Spores + TOIAM |\n| `baclct_spore_classification_bf` | Bacteria tracking and division detection. Life cycle state classification for *B. subtilis* spore germination and outgrowth. Bright-field. Used in paper. | Spores |\n| `baclct_toiam_pc` | Bacteria tracking and division detection. Phase-contrast. Used in paper. | TOIAM |\n\nThe models are downloaded automatically from the GitHub release on first use. A model is an\nexperiment directory containing the config it was trained with and a checkpoint.\n\n## Training\n\n```bash\nbaclct-train dataset=spores task=tracking_with_states fold=0\nbaclct-train dataset=toiam task=tracking fold=0\n```\n\nA run requires a configured `dataset` and `task` (see the directories in\n`src/baclct/config/`). The `dataset` defines the data and its graph parameters, and the\n`task` selects whether life cycle states and divisions are predicted. `fold` selects the\ncross-validation split and defaults to 0.\n\nDatasets are read from `paths.data_dir` in [CTC\nformat](https://celltrackingchallenge.net/datasets/). Next to the sequences, a\n`splits.yaml` maps each fold to train, val, and test sequence IDs, and an optional\n`states.txt` holds per-cell life cycle states. The splits used in the paper are in\n`examples/splits/`. Caching is mandatory for training: node features, DINO embeddings, and\ncandidate edges are always written under `paths.feature_dir` and stay below 1 GB for a\ntypical sequence, growing to a few GB for long or very dense ones.\n\nTo train on your own data, copy the annotated\n[`examples/configs/dataset/example.yaml`](examples/configs/dataset/example.yaml), adjust the\ngraph parameters to your images, and pass it with `--config-dir`:\n\n```bash\nbaclct-train --config-dir examples/configs dataset=example task=tracking fold=0\n```\n\nBacLCT is configured with [Hydra](https://hydra.cc), so any key can be overridden on the\ncommand line or swept with `--multirun`. See the\n[documentation](https://baclct.readthedocs.io) for the config groups and for reproducing\nthe paper's folds and ablations.\n\n## Citation\n\n> Kunzmann, M., Elizondo-Cantú, M. C., Bischofs, I. B., Rohr, K. Bacteria tracking and\n> life cycle state classification using graph neural networks and pretrained vision\n> transformers. *Medical Image Analysis*, 104275 (2026).\n> [doi:10.1016/j.media.2026.104275](https://doi.org/10.1016/j.media.2026.104275)\n\nWhen using the models with DINO-pretrained ViT features, please also cite [Caron et al.,\nICCV 2021](https://arxiv.org/abs/2104.14294).\n\n## Declaration of generative AI use\n\nParts of the codebase were developed with AI assistance (Claude Code). This was used\nprimarily for refactoring, organizing code and tests (e.g., converting existing notebooks\ninto integration tests), packaging and parts of the documentation (e.g., Sphinx),\ndebugging, as well as runtime and memory optimization (e.g., replacing existing code with\nfaster libraries). Some components, notably several tests and the napari plugin, started\nas generated drafts that were subsequently corrected, partly reimplemented, or heavily\nrefactored manually. Core functionality was ported from the author's previous\nimplementation of this work. Where new functionality was generated, it was validated\nagainst the previous implementation, existing benchmarks, or hand-written tests. All\ngenerated code was reviewed and validated by the author.\n",
+    "description_content_type": "text/markdown",
+    "keywords": "cell tracking,graph neural network,microscopy,napari",
+    "home_page": null,
+    "download_url": null,
+    "author": null,
+    "author_email": "Moritz Kunzmann <moritz.kunzmann@bioquant.uni-heidelberg.de>",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": null,
+    "classifier": [
+      "Framework :: napari"
+    ],
+    "requires_dist": [
+      "bioio-tifffile>=1.3.0",
+      "bioio>=3.5.0",
+      "dask",
+      "fastremap",
+      "hydra-colorlog>=1.2.0",
+      "hydra-core>=1.3",
+      "lightning>=2.5.5",
+      "networkx",
+      "omegaconf",
+      "platformdirs",
+      "polars>=1.35.0",
+      "pooch",
+      "pyarrow>=21.0.0",
+      "pyyaml",
+      "rustworkx>=0.17",
+      "scikit-image",
+      "scikit-learn",
+      "scipy",
+      "tifffile",
+      "torch-geometric>=2.7",
+      "torch>=2.0",
+      "torchvision",
+      "tqdm",
+      "typer",
+      "zarr",
+      "magicgui; extra == 'napari'",
+      "napari>=0.5; extra == 'napari'",
+      "pyqt6; extra == 'napari'",
+      "qtpy; extra == 'napari'",
+      "superqt; extra == 'napari'",
+      "vispy<0.16; extra == 'napari'",
+      "cmap<0.8,>=0.7.2; extra == 'train'",
+      "matplotlib; extra == 'train'",
+      "py-ctcmetrics==1.3.2; extra == 'train'",
+      "rich; extra == 'train'",
+      "seaborn; extra == 'train'",
+      "tensorboard>=2.20.0; extra == 'train'",
+      "torchmetrics; extra == 'train'"
+    ],
+    "requires_python": "<3.15,>=3.11",
+    "requires_external": null,
+    "project_url": [
+      "Documentation, https://baclct.readthedocs.io",
+      "Repository, https://github.com/bmcv/baclct",
+      "Bug Tracker, https://github.com/bmcv/baclct/issues"
+    ],
+    "provides_extra": [
+      "napari",
+      "train"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}

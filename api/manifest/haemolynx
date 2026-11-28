@@ -1,0 +1,140 @@
+{
+  "name": "HaemoLynx",
+  "display_name": "HaemoLynx",
+  "visibility": "public",
+  "icon": null,
+  "categories": [],
+  "schema_version": "0.3.0",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "HaemoLynx.settings_widget",
+        "title": "Configure and run a pipeline",
+        "python_name": "haemolynx.gui._widget:settings_widget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "HaemoLynx.about_widget",
+        "title": "About HaemoLynx",
+        "python_name": "haemolynx.gui._widget:about_widget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": null,
+    "writers": null,
+    "widgets": [
+      {
+        "command": "HaemoLynx.settings_widget",
+        "display_name": "Pipeline settings",
+        "autogenerate": false,
+        "default_dock_area": "right",
+        "tabify": false
+      },
+      {
+        "command": "HaemoLynx.about_widget",
+        "display_name": "About",
+        "autogenerate": false,
+        "default_dock_area": "right",
+        "tabify": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configurations": {}
+  },
+  "package_metadata": {
+    "metadata_version": "2.4",
+    "name": "HaemoLynx",
+    "version": "0.2.0",
+    "dynamic": [
+      "license-file"
+    ],
+    "platform": null,
+    "supported_platform": null,
+    "summary": "Vascular network analysis from 3D microscopy",
+    "description": "# HaemoLynx\n\nConverts raw microscopy images of the microvasculature into network-based representations for network level statistics and computational haemodynamics models for hypothesis testing, experimental design, and more.\n\n## Install\n\n```bash\npip install \"HaemoLynx[napari]\"    # needs Python 3.11+ (napari's floor, not ours)\n```\n\nThe `napari` extra brings a Qt binding (PyQt6) with it, so the panel opens on a\nfresh environment. If you already run napari with a binding of your own, install\n`HaemoLynx[napari-plugin]` instead and keep it.\n\n## Use it in napari\n\n```bash\nnapari      # Plugins -> HaemoLynx -> Pipeline settings\n```\n\nThen: **drag an image in, open the panel, press Run pipeline.** The selected\nlayer is picked up automatically, so on a segmented TIFF there is nothing else\nto set. Each stage's results appear in the viewer as it finishes.\n\nTo start from a **raw image** instead, segment it in the panel: set the Input\ntab's *Raw image path*, tick *Classify and segment raw image in Napari*, and\npress **Train...** on the classifier row. Paint a few strokes of vessel and\nbackground on the raw image, watch the plane in view classify as you paint, and\n**Save classifier**. The run then segments the raw image itself before it\nskeletonises. A classifier trained in [ilastik](https://www.ilastik.org/) works\ntoo (*Segment raw image with a pretrained Ilastik classifier*), and the training\nwindow can import an ilastik project's painted labels.\n\nTo run the same settings over **a folder of images**, press **Batch run** above\nthe Input row. It matches each image's raw image and masks by file name, runs\nthem one after another, and saves each image's outputs and `.haemorun` in a\nfolder of its own, with `batch_summary.csv` and every image's statistics side by\nside. Each image's inlets and outlets come from its own large vessel masks.\nGiven two conditions named in the file names, it tests one against the other.\nThe same from a terminal:\n\n```bash\npython -m haemolynx.gui.batch_run --config my_run.yaml --segmented images/\n```\n\nTo draw a **synthetic network** matched to a previous run instead of analysing\nan image, set the Input tab's *Input* to *Synthetic network from a template run*\nand point it at that run's `.haemorun` file (saved with Statistics on), or at a\nbatch's `.haemobatch` to match a condition's runs averaged. The run starts at the\nBoundaries stage and writes `{template}_synthetic_template_comparison.csv`\nsaying how close each characteristic came. *The template run's network inside a\nsynthetic one* draws the synthetic network round the run's own instead, joined\nwhere its vessels leave the image; its outputs are named `{template}_surrounded`.\n\n**[tutorials/README.md](tutorials/README.md)** covers the rest — configuring a\nrun, what each tab and the view panel show, editing the network by hand,\nperturbations, batch runs, running from the command line, and changing\nsettings.\n\n**[docs/export_dictionary.md](docs/export_dictionary.md)** says what every file a\nrun writes holds, column by column, with units; the statistics rows are in\n**[docs/statistics_glossary.md](docs/statistics_glossary.md)**.\n\n## Settings and presets\n\nEvery setting is declared once, in\n[`src/haemolynx/pipeline/schema.py`](src/haemolynx/pipeline/schema.py), with its\ndefault, limits and help text. The panel's form, the YAML config file and the\ncommand line's `--<setting-name>` flags are all generated from those\ndeclarations, so none of them can name a setting that does not exist.\n\nA **preset** is a named set of those settings to start a run from. The panel\nlists its presets in the **Preset** menu under *Load config...*: plain dicts in\n[`src/haemolynx/pipeline/presets.py`](src/haemolynx/pipeline/presets.py), each\npicking switches and choices only, never a file or a threshold. The example\nscripts take the same ones with `--preset NAME`, plus their own from\n[`examples/pipeline_presets.py`](examples/pipeline_presets.py), which may name\nfiles too; `--list-presets` lists them all. Every preset is checked against the\nschema, so none can set a setting that is gone.\n\nA preset sets only what it names. On the command line each layer overrides the\none before it:\n\n```\nschema default  ->  config file (--config)  ->  --preset NAME  ->  --<setting-name> VALUE\n```\n\nIn the panel a preset is loaded once, like a config: it fills the rows it\nnames, and a config loaded or a row changed afterwards replaces what it set.\n\n**Your own presets.** *Save these settings as a preset...* at the foot of the\nPreset menu keeps the panel's settings on this machine, less what belongs to one\nimage: its files and folders, channels, labels, voxel size, axis order, crop,\nnodes and vessels. Unlike the presets above, a saved one may hold thresholds, and\nit is a whole set: loading it puts back every setting it holds as it was saved,\nand every other setting it could hold to its default. Saved presets live in a\n`presets` folder in your own settings folder, shared by every checkout on the\nmachine (set `HAEMOLYNX_PRESET_DIR` to keep them elsewhere). A perturbation can\nbe kept the same way: **Save for later runs** on the Perturbations tab, then pick\nit under **+ Add a perturbation** in a later run.\n\n## Developing\n\nWork against a local checkout, with napari running the code you are editing:\n\n```bash\ngit clone https://github.com/physiomelinks/HaemoLynx.git\ncd HaemoLynx\npython -m venv .venv                  # 3.11+ for the napari panel\nsource .venv/bin/activate             # Windows: .venv\\Scripts\\activate\npip install -e \".[dev,napari]\"\n\nnapari                                # Plugins -> HaemoLynx -> Pipeline settings\n```\n\nThe install is editable, so whatever branch is checked out is what napari loads\n— no reinstall after switching branches.\n\n**[tutorials/dev_README.md](tutorials/dev_README.md)** covers the rest — running\nthe tests, checking whether a branch changes the numbers, adding a setting, and\nreleasing.\n\n## Licence\n\nHaemoLynx is released under the [Apache License 2.0](LICENSE).\nCopyright 2026 Finbar Argus and Harvey Davis.\n",
+    "description_content_type": "text/markdown",
+    "keywords": "vascular,microvasculature,haemodynamics,microscopy,skeletonization,graph,network-analysis",
+    "home_page": null,
+    "download_url": null,
+    "author": "Harvey Davis",
+    "author_email": "Finbar Argus <finbar.argus@auckland.ac.nz>",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": null,
+    "classifier": [
+      "Development Status :: 3 - Alpha",
+      "Intended Audience :: Science/Research",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Topic :: Scientific/Engineering :: Bio-Informatics",
+      "Topic :: Scientific/Engineering :: Image Processing",
+      "Topic :: Scientific/Engineering :: Medical Science Apps.",
+      "Topic :: Scientific/Engineering :: Visualization",
+      "Framework :: napari"
+    ],
+    "requires_dist": [
+      "numpy>=1.23",
+      "tifffile>=2022.8.12",
+      "matplotlib>=3.6",
+      "networkx>=2.8.8",
+      "scikit-image>=0.24",
+      "scipy>=1.9",
+      "pandas>=2.0.2",
+      "plotly>=5.10",
+      "h5py>=3.7",
+      "skan>=0.11.1",
+      "pyvista>=0.45",
+      "pyyaml>=6.0",
+      "pytest; extra == \"dev\"",
+      "pytest-cov; extra == \"dev\"",
+      "pytest-xdist; extra == \"dev\"",
+      "ruff; extra == \"dev\"",
+      "nbconvert; extra == \"dev\"",
+      "nbformat; extra == \"dev\"",
+      "npe2>=0.8; extra == \"dev\"",
+      "psutil; extra == \"dev\"",
+      "scikit-learn>=1.3; extra == \"dev\"",
+      "ipykernel; extra == \"notebook\"",
+      "napari[pyqt6]>=0.9; extra == \"napari\"",
+      "magicgui>=0.7; extra == \"napari\"",
+      "npe2>=0.8; extra == \"napari\"",
+      "imageio-ffmpeg>=0.4; extra == \"napari\"",
+      "scikit-learn>=1.3; extra == \"napari\"",
+      "napari>=0.9; extra == \"napari-plugin\"",
+      "magicgui>=0.7; extra == \"napari-plugin\"",
+      "npe2>=0.8; extra == \"napari-plugin\"",
+      "imageio-ffmpeg>=0.4; extra == \"napari-plugin\"",
+      "scikit-learn>=1.3; extra == \"napari-plugin\""
+    ],
+    "requires_python": ">=3.10",
+    "requires_external": null,
+    "project_url": [
+      "Homepage, https://github.com/physiomelinks/HaemoLynx",
+      "Repository, https://github.com/physiomelinks/HaemoLynx",
+      "Issues, https://github.com/physiomelinks/HaemoLynx/issues"
+    ],
+    "provides_extra": [
+      "dev",
+      "notebook",
+      "napari",
+      "napari-plugin"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}

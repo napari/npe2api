@@ -1,0 +1,132 @@
+{
+  "name": "napari-virtual-reader",
+  "display_name": "napari-virtual-reader",
+  "visibility": "public",
+  "icon": null,
+  "categories": [],
+  "schema_version": "0.2.1",
+  "on_activate": null,
+  "on_deactivate": null,
+  "contributions": {
+    "commands": [
+      {
+        "id": "napari-virtual-reader.get_reader",
+        "title": "Open as virtual OME-Zarr",
+        "python_name": "napari_virtual_reader._reader:napari_get_reader",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      },
+      {
+        "id": "napari-virtual-reader.widget",
+        "title": "Open virtual OME-Zarr",
+        "python_name": "napari_virtual_reader._widget:VirtualReaderWidget",
+        "short_title": null,
+        "category": null,
+        "icon": null,
+        "enablement": null
+      }
+    ],
+    "readers": [
+      {
+        "command": "napari-virtual-reader.get_reader",
+        "filename_patterns": [
+          "*.czi",
+          "*.tif",
+          "*.tiff",
+          "*.svs",
+          "*.ndpi",
+          "*.nd2",
+          "*.lif",
+          "*.ims",
+          "*.vsi",
+          "*.qptiff",
+          "*.dcm",
+          "*.dicom",
+          "*.nii",
+          "*.nii.gz",
+          "*.nrrd",
+          "*.nhdr",
+          "*.mrc",
+          "*.map",
+          "*.vzip"
+        ],
+        "accepts_directories": false
+      }
+    ],
+    "writers": null,
+    "widgets": [
+      {
+        "command": "napari-virtual-reader.widget",
+        "display_name": "Open Data as virtual OME-ZARR",
+        "autogenerate": false,
+        "default_dock_area": "right",
+        "tabify": false
+      }
+    ],
+    "sample_data": null,
+    "themes": null,
+    "menus": {},
+    "submenus": null,
+    "keybindings": null,
+    "configurations": {}
+  },
+  "package_metadata": {
+    "metadata_version": "2.5",
+    "name": "napari-virtual-reader",
+    "version": "0.0.4",
+    "dynamic": null,
+    "platform": null,
+    "supported_platform": null,
+    "summary": "Experimental napari plugin for reading microscopy image file formats, such as CZI as lazy virtual OME-Zarr images via refkv",
+    "description": "# napari-virtual-reader\n\nA napari plugin for lazy, reference-backed OME-Zarr images using\n[refkv](https://github.com/d-v-b/refkv).\n\n## Remarks\n\n**Experimental software - Beta status.** APIs and behavior may change without\nnotice. Validate results independently before relying on them for analysis.\n\nOpen images without first converting them, writing a pixel copy, or creating\nan intermediate archive. Requested regions are still decoded and composed in\nmemory for display; \"virtual\" does not mean zero memory use.\n\nThe plugin uses refkv directly. It does not depend on czitools, pylibCZIrw,\nor the napari-czitools plugin.\n\nThis README describes the source checkout. Published releases may not yet include\nall features below; see the [changelog](CHANGELOG.md) for unreleased changes.\n\nThe current UI combines loading controls, scene navigation and the metadata\ninspector in one dock. The canvas below retains one layer per channel and a\ntime slider; **Update while dragging** is off by default.\n\n<img src=\"https://raw.githubusercontent.com/sebi06/napari-virtual-reader/main/_images/czi_scene_canvas.png\" alt=\"Current combined dock with a two-channel, multi-scene CZI canvas, time slider and Update while dragging option\" style=\"width:100%; height:auto;\">\n\n## Visual guides\n\n- [How the plugin works](https://sebi06.github.io/napari-virtual-reader/plugin-workflow.html):\n  lazy loading, the combined dock, release-only slider dragging, scene controls,\n  multidimensional canvases, metadata and VZIP archives.\n- [How CZI tile assembly works](https://sebi06.github.io/napari-virtual-reader/czi-tile-assembly.html):\n  tile placement, chunk reads, coordinate mapping, stored tile pyramids,\n  lazy scene-canvas overviews, bounded overview caching and limitations.\n\nThese links open rendered HTML on GitHub Pages, not GitHub's HTML source viewer.\nThe editable sources and standalone pages are in [_docs](_docs/);\nsee the [documentation publishing notes](_docs/README.md) for regeneration and deployment.\n\n## Install\n\nPython 3.12 or newer is required. Install into the environment running napari:\n\n```powershell\npython -m pip install napari-virtual-reader\n```\n\nA working Qt backend is required. For a fresh environment:\n\n```powershell\npython -m pip install \"napari[pyqt6]\" napari-virtual-reader\nnapari\n```\n\nRestart napari after installation. The package registers an npe2 reader and\nwidget through its `napari.manifest` entry point; no manual registration is\nrequired. Check **Plugins > Plugin Manager** for **napari-virtual-reader**.\n\nThe plugin is also listed on\n[napari hub](https://napari-hub.org/plugins/napari-virtual-reader.html).\n\n## Format-specific features\n\n### CZI image files\n\n- **RGB images:** brightfield colour images open as one RGB/RGBA layer per\n  acquisition channel, not separate red, green, and blue layers. Fluorescence\n  channels remain separate.\n- **Large 2D images and pyramids:** supported 2D mosaics are assembled on demand,\n  including full resolution when native tiles are available. Napari switches\n  between stored resolution levels as you zoom, without loading the whole image\n  or writing a converted copy.\n- **Multiple scenes:** choose **One canvas** or **Scene slider** in the dock.\n  Matching scenes retain one layer per channel in both modes, including T/Z\n  dimensions. Nonmatching scenes keep individual layers without forced padding\n  or resampling. Use napari's native S slider or the dock's scene-number controls.\n\n**Why assembly helps:** refkv can expose irregular or overlapping CZI tiles\nseparately from its regular image levels. Reading only those levels can omit\nnative resolution or show just an overview. The plugin places supported tiles\nusing their CZI coordinates and groups them into the available resolution levels.\nPlacement restores the missing view; lazy, chunk-by-chunk reads make it practical\nwithout building the whole slide in memory. Tile assembly does not invent missing\nsource pixels or tile resolution levels. The separate scene-canvas path can add\nlazy display overviews from existing scene arrays.\n\n**This extra assembly is CZI-only.** Other formats can display images and pyramids\nalready exposed by refkv, but the plugin does **not yet assemble their separate\nirregular tile arrays**. General lazy loading is not a general tile-assembly solution.\n\nOpen the **original CZI** to use mosaic assembly; reopening a VZIP archive\ndoes not currently restore this assembly. Overlapping tiles use a fixed\n\"later tile wins\" rule, so overlap regions can look different from ZEN.\nIf some tiles cannot be assembled, the plugin warns that the view may be\nincomplete. See [Scope](#scope) for technical details and limitations.\n\n## Open an image\n\nIn napari, choose **Plugins > napari-virtual-reader > Open Data as virtual OME-ZARR**,\nselect the input, and click **Open**. This dock prepares the image in a background\nworker; napari provides its normal layer, contrast, time, and Z controls.\n\nThe plugin uses one dock: the file selector, **Save VZIP archive**, and **Open**\ncontrols stay at the top, with the metadata inspector below. The inspector\nreceives the remaining vertical space as the dock is resized.\n\nYou can also use **File > Open** or drop a file on the napari canvas and choose\nthe napari-virtual-reader reader. Drop a file on the plugin dock to select it without\nopening it yet.\n\n```python\nimport napari\n\nviewer = napari.Viewer()\nviewer.open(\"image.czi\", plugin=\"napari-virtual-reader\")\nnapari.run()\n```\n\nRaw images are virtualized in memory through `refkv.zarrify.zarrify`. Existing\n`.vzip` archives are opened directly. Original image files must remain available\nand unchanged for as long as their layers are used. Nothing is written beside\nthe source by default.\n\n### Save a VZIP Archive\n\nIn **Plugins > napari-virtual-reader > Open Data as virtual OME-ZARR**, select an image and enable\n**Save VZIP archive** before clicking **Open**. Choose the destination in the\nsave dialog; the suggested filename is a sibling `.vzip`. Saving runs in the\nbackground, and the resulting image still opens lazily with the metadata panel.\nThe status shows the saved filename, with its full path available on hover.\n\nSaving stores refkv's reference layout, not converted pixel data. It retains\nthe image series, pyramid levels and separate tile arrays exposed by refkv,\nnot just the selected napari layer. It is not a self-contained image backup:\nthe referenced source must remain available and unchanged.\nExisting destinations require explicit replacement confirmation; failed writes\nleave the old archive intact. Cancelling the save dialog cancels the open action.\nThe save option is disabled for inputs that are already VZIP archives.\nFile/Open and canvas drops remain in-memory operations without automatic saving.\n\nThe saved archive retains refkv's original reference layout, not the plugin's\nruntime mosaic composition. Refkv's live pyramid-factor summary is not saved\nin VZIP. If a CZI-derived archive contains separate tile arrays, reopening it\nstill warns about unassembled tiles; open the original CZI to use mosaic assembly.\nArchive reads also depend on refkv's source-access policy; an archive can fail to\nopen if that policy does not permit its referenced local files.\n\n## Metadata Inspector\n\nThe metadata inspector is embedded below the loading controls in the\n**Open Data as virtual OME-ZARR** dock, which opens on the right by default.\nUsing the refkv reader through File/Open or canvas drag-and-drop automatically\nopens this same dock, without requiring the plugin menu first. Opening the\nplugin from the menu before or after a reader load reuses the dock rather than\ncreating a second panel. A new reader load also reopens the dock if it was hidden.\nThe inspector follows the selected image layer, independently of how it was loaded.\n\n### Dimension slider updates\n\nWith a composed CZI canvas selected, **Update while dragging** is off by default.\nDrag a dimension-slider thumb, such as T or Z, to preview its numeric index\nwithout changing the displayed image. Releasing the thumb requests only the\nfinal position, rather than calculating every intermediate frame.\n\nEnable **Update while dragging** for continuous image updates. Keyboard steps,\nscrollbar step/page clicks, committed numeric entries and playback retain their\nnormal immediate updates. Napari's numeric fields commit on Enter or focus loss;\nthe dock's scene-number field also waits for committed entry rather than loading\neach digit.\n\nNapari's dimension sliders are shared by all layers in a viewer, so this option\naffects that viewer while a composed CZI canvas is selected. Selecting another\nsource, leaving composed canvas mode or closing the plugin widget restores the\nprevious tracking behavior. The option is disabled outside a composed canvas.\nIt does not enable background prefetch or change the overview-cache policy.\n\n### CZI scene display\n\nSelect a layer from a multi-scene CZI, then use **CZI scenes** in the dock:\n\n- **Scene slider** (default for compatible scenes): use one image layer per\n  acquisition channel with a real napari **S** dimension. Matching single-channel\n  files with 28 scenes therefore open as one layer, not 28 layers. Move napari's\n  S slider or use the dock's **Scene** number field and its up/down arrows.\n- **One canvas**: matching scenes share one lazy Y/X spatial canvas per acquisition\n  channel, at their recorded positions, retaining T and Z sliders when present.\n  Switching a matching 28-scene,\n  single-channel file therefore keeps **one layer in both modes**. Incompatible\n  scenes retain individual layers at their physical positions; this is their\n  default display mode.\n- For nonmatching shapes, scales, dtypes or pyramid depths, **Scene slider**\n  uses the dock slider and scene-number arrows instead. It shows the selected\n  scene's channels and fits the camera to that scene. No padding or resampling\n  is needed. Independent per-scene channel visibility also retains this mode.\n\nThe scene-number field is 1-based and supports typing a number and keyboard\nUp/Down; napari's native S indices are 0-based. The dock and native slider stay\nsynchronized. Each scene retains its lazy pixels, dtype and pyramid levels.\nCombined canvases read only intersecting source regions in bounded output\nchunks. Gaps are zero and later numeric scenes win overlaps. Fractional scene\npositions use nearest-neighbour sampling on the canvas pixel grid. Lazy\nnearest-neighbour overview levels are added when needed for large, sparse\ncanvases; switching back to S restores the original scene arrays and pyramids.\nGenerated overview chunks are cached on demand in a shared **64 MiB in-memory\nLRU cache per canvas load**, across channels and overview levels. Revisiting a\ncached timepoint or Z slice avoids rereading its source images; first visits\nstill need source reads. Full-resolution and stored pyramid levels are not\ncached by this mechanism. Cache entries are evicted as the budget is reached;\nswitching back to canvas mode creates a fresh cache. There is no background\nprefetch or disk cache.\nNo full canvas or converted pixel copy is allocated or written during preparation.\nCombined canvases support S/T/C/Z/Y/X data: S is composed spatially in Y/X, C\nremains separate layers, and T/Z remain lazy dimensions, chunked one plane at a\ntime. Scenes must match in shape, calibration and pyramid structure and share\nT/Z origins, without rotation, shear or extra affine transforms. Unsupported\nscenes retain separate layers.\n\nSwitch modes after loading without reopening the file. Display-mode changes\napply to the selected layer's source load; other images and repeated loads of\nthe same file are not converted. Native S stacks follow napari's shared\ndimension sliders; separate-layer dock sliders retain independent scene indices.\nChannel visibility settings are retained across scene switches and when\nreturning to canvas. Selecting an unrelated layer disables the controls.\nCZI-derived VZIPs use the same scene controls, but retain their existing\ntile-assembly limitations.\n\nA native S stack requires matching scenes on every acquisition channel, including\nthe same scene membership. Otherwise the complete source retains separate layers\nfor the dock slider. A single CZI scene containing multiple separated scan regions\nstill counts as one scene; the reader does not invent scene boundaries. The\ncontrols require multiple OME image series exposed by refkv.\n\n- **Zarr structure** shows expandable groups and arrays, including original\n  shapes, dtypes, attributes, chunk grids and codec configuration.\n- **Metadata** shows the selected layer's OME metadata, source and channel\n  information, plus original scene transforms for stacked CZI images.\n- A filter finds matching properties; selecting a row shows its complete,\n  selectable value below the tree.\n\nThe older screenshot below illustrates metadata contents; it shows the\nhistorical separate-dock layout, not the current controls.\n\n<img src=\"https://raw.githubusercontent.com/sebi06/napari-virtual-reader/main/_images/czi_virtual_omezarr2.png\" alt=\"Historical screenshot illustrating metadata contents in the earlier separate metadata dock\" style=\"width:80%; height:auto;\">\n\nThe inspector uses a metadata-only snapshot collected during reader preparation\n(in the background when using the plugin's **Open** button). It does not scan\npixel data or reconstruct the source hierarchy from displayed layer shapes.\nSelecting an unrelated layer clears the inspector.\n\n## Scope\n\n- **Lazy CZI mosaic assembly:** for 2D slide-scan series with an OME image and\n  refkv's live pyramid-factor summary, the plugin assembles irregular and\n  overlapping tiles alongside the existing image levels. Full resolution is\n  included when native tiles are available. Each requested output chunk is at\n  most 1024 x 1024 pixels per acquisition channel and reads only intersecting\n  source regions. This bounds output tasks, not total memory: a compressed source\n  chunk can require full decoding, and concurrent tasks use separate buffers.\n  No full mosaic or converted image is written.\n- Mosaic levels share the finest level's spatial extent. Coarse levels use\n  nearest-neighbour sampling to align differing origins and clipped/odd edges\n  with napari's shape-derived pyramid transforms. Native full-resolution\n  pixels are not resampled. Gaps are zero; overlaps use **later numeric refkv\n  tile wins**, with tiles drawn over any existing assembled level. This is\n  deterministic, not blending or image registration, and is not guaranteed to\n  match ZEN/libCZI overlap selection or codec rounding pixel-for-pixel.\n  `metadata[\"czi_assembly\"]` records bounds, factors, full-resolution availability,\n  tile count, and compositing policy. The inspector's Zarr tree still describes\n  the original reference store, not the runtime mosaic.\n  Missing resolution levels are not generated, and gaps at one level are not\n  filled from another. Source read/decode errors propagate; they are not replaced\n  with zero-filled pixels.\n- **Remaining incomplete CZI views:** time/Z tile stacks, scenes without an\n  OME image, unclassified tile scales, and VZIPs without the live calibration\n  summary are not assembled by this implementation. Unsupported tiles retain\n  the napari warning once per source load and `metadata[\"reader_warning\"]`.\n  An input without any supported OME image still fails explicitly. Use\n  napari-czitools for those cases; do not assume a displayed pyramid is complete\n  when the warning is present.\n- CZI, TIFF/OME-TIFF, and other refkv-supported files that expose OME image series.\n  Reader registration includes common microscopy and volumetric image extensions;\n  actual support is determined by refkv's parser and the file's metadata/codecs.\n  The extra tile assembler and incomplete-tile warning are CZI-specific; absence\n  of that warning for another format does not establish that its view is complete.\n- One layer per acquisition channel. Packed-colour CZI images (`Bgr24`, `Bgr48`,\n  `Bgr96Float`, and `Bgra32`) open as RGB/RGBA layers rather than separate colour\n  components. Detection uses refkv's CZI profile and component chunk layout,\n  not channel count or names. Component order is corrected per pyramid level:\n  raw/Zstd/LZW BGR(A) is reordered, while JPEG/JPEG-XR RGB(A) is retained.\n  Complex-valued packed-colour CZI pixels are not supported.\n- GUI loads compact compatible CZI scenes into one layer per channel with a\n  leading **S** axis; matching scenes also use one lazy spatial canvas per\n  channel in canvas mode without reopening the source. Incompatible scenes retain the\n  separate-layer dock slider. Other formats retain separate series layers\n  without CZI scene controls. Scripted `read_images(path)` calls also stack\n  compatible CZI scenes lazily by default; pass `stack_scenes=False` to request\n  individual scene/channel layer descriptions.\n- RGB/RGBA keeps its component axis last, outside napari's dimension sliders;\n  ordinary fluorescence channels remain separate additive layers. Loading and\n  reordering stay lazy, preserve pixel dtype, and do not write converted images.\n- CZI stacking requires matching axes, shapes, dtypes, physical scales and\n  pyramid levels. Incompatible scenes remain separate without cropping or\n  resampling. Axes with differing scene origins use zero translation on the\n  stacked layer; shared origins are retained. Original origins and metadata\n  remain available in the layer's `metadata[\"scenes\"]` list. These compatibility\n  restrictions apply to native S stacks, not the dock's separate-layer slider.\n- Stored multiscale pyramids, OME axis ordering, physical scale/origin, channel\n  names, colors, and display windows.\n- Regular and rectilinear chunk grids, without scanning complete lazy arrays\n  for contrast limits. Files without display windows use dtype bounds (0-1 for\n  floating point); adjust contrast in napari as needed.\n- OME-Zarr 0.4 and 0.5 image metadata, including nested image hierarchies.\n\nThis is deliberately not a replacement for every refkv dataset interface:\nnon-image tables, audio, arbitrary tensors, remote inputs, and stores without\nOME image metadata are outside this first version. Time and Z use napari's\ndimension sliders; the dock adds CZI scene-display controls.\n\n## Development\n\n```powershell\ngit clone https://github.com/sebi06/napari-virtual-reader.git\ncd napari-virtual-reader\npython -m pip install -e \".[testing]\"\npython -m pytest\npython -m ruff check .\n```\n\nInstall a Qt backend as above if the development environment does not already\nprovide one. Development installs register the same napari plugin as PyPI installs.\n\nSource guide:\n\n- [_reader.py](src/napari_virtual_reader/_reader.py): reference stores, lazy\n  layers, axes, colours, scenes, warnings and archive saving.\n- [_czi_mosaic.py](src/napari_virtual_reader/_czi_mosaic.py): native tile\n  placement, spatial indexing and on-demand pyramid composition.\n- [_widget.py](src/napari_virtual_reader/_widget.py): loading controls,\n  preparation workers and Qt-thread delivery of layers.\n- [_metadata.py](src/napari_virtual_reader/_metadata.py): shared dock access\n  and a read-only inspector built from metadata snapshots.\n\n## Releases\n\nVersion [0.0.4](_release_notes/v0.0.4.md) adds multidimensional scene canvases,\nnative scene navigation, bounded overview caching and load-on-release slider\ndragging. It includes refreshed visual guides and a current-UI screenshot.\nThe package remains experimental Beta software; review\n[Scope](#scope) before using it for analysis.\n\nThe package workflow tests pull requests and pushes to `main` against\n`refkv[zarr,images]==0.2.0` from PyPI on Linux, Windows, and macOS with\nPython 3.12, 3.13, and 3.14. The runtime requirement remains refkv 0.2.0 or newer.\nPyPI publishing\nruns only after its test matrix passes on a pushed tag beginning with `v`;\nuse the release convention `vX.Y.Z`.\n\nSet `project.version` in `pyproject.toml` and the runtime `__version__` to the\nintended release version before\ntagging; tags do not change the package version. PyPI requires a new\nversion for every upload. Manual runs of the package workflow test and build\nwithout publishing to PyPI. The separate documentation workflow publishes\nGitHub Pages on relevant pushes to `main` or a manual run on `main`.\n\nSee the [changelog](CHANGELOG.md) for the change history and the\n[release notes](_release_notes/) for release-specific features, validation, and\nlimitations. Published tags and release details are available on\n[GitHub Releases](https://github.com/sebi06/napari-virtual-reader/releases).\n",
+    "description_content_type": "text/markdown",
+    "keywords": "napari,ome-zarr,plugin,virtual",
+    "home_page": null,
+    "download_url": null,
+    "author": null,
+    "author_email": "Sebastian Rhode <sebrhode@gmail.com>",
+    "maintainer": null,
+    "maintainer_email": null,
+    "license": null,
+    "classifier": [
+      "Development Status :: 4 - Beta",
+      "Framework :: napari",
+      "Intended Audience :: Science/Research",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Programming Language :: Python :: 3.14",
+      "Topic :: Scientific/Engineering :: Image Processing"
+    ],
+    "requires_dist": [
+      "dask[array]>=2024.1",
+      "napari>=0.10.0",
+      "numpy>=2",
+      "qtpy>=2.4",
+      "refkv[images,zarr]>=0.2.0",
+      "superqt>=0.7",
+      "zarr>=3.4",
+      "pytest-qt>=4.4; extra == 'testing'",
+      "pytest>=8; extra == 'testing'",
+      "ruff>=0.9; extra == 'testing'",
+      "tifffile; extra == 'testing'"
+    ],
+    "requires_python": ">=3.12",
+    "requires_external": null,
+    "project_url": [
+      "Homepage, https://github.com/sebi06/napari-virtual-reader",
+      "Bug Tracker, https://github.com/sebi06/napari-virtual-reader/issues",
+      "Documentation, https://github.com/sebi06/napari-virtual-reader#readme",
+      "Source Code, https://github.com/sebi06/napari-virtual-reader"
+    ],
+    "provides_extra": [
+      "testing"
+    ],
+    "provides_dist": null,
+    "obsoletes_dist": null
+  },
+  "npe1_shim": false
+}
